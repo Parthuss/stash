@@ -1,0 +1,13 @@
+#define name Stash
+#define color violet
+#define glyph archive
+#define inputs url
+#define from sharesheet
+#define noinput stopwith "Share a URL to Stash."
+
+#include 'actions/documents'
+
+@note = prompt("note?")
+@entry = "{ShortcutInput} | {@note}"
+appendToFile("stash-inbox.txt", @entry)
+showNotification("stashed")
