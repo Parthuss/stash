@@ -92,6 +92,18 @@ class Config:
     #: question that mattered the night the LAN receiver silently wasn't.
     daemon_state_path: Path = ROOT / ".stash-daemon-state.json"
 
+    #: How the phone learns a save finished: imessage | ntfy | none.
+    #: `imessage` needs no app install but does need a one-time Automation
+    #: grant; `ntfy` needs the free app but no permissions. Whichever is set,
+    #: the other is tried as a fallback — see stash/notify.py.
+    notify_backend: str = os.environ.get("STASH_NOTIFY", "none")
+    #: Phone number or Apple ID to iMessage. Yours — this notifies you, not anyone else.
+    notify_imessage_to: str = os.environ.get("STASH_NOTIFY_IMESSAGE_TO", "")
+    #: ntfy topics on the public server are unauthenticated, so this string is
+    #: effectively the credential. Make it long and random.
+    ntfy_topic: str = os.environ.get("STASH_NTFY_TOPIC", "")
+    ntfy_server: str = os.environ.get("STASH_NTFY_SERVER", "https://ntfy.sh")
+
     def ensure_dirs(self) -> None:
         self.media_dir.mkdir(parents=True, exist_ok=True)
         self.vault_dir.mkdir(parents=True, exist_ok=True)
