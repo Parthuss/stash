@@ -28,20 +28,30 @@ GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 #: exists to work around it, so do not raise this hoping for fewer round trips.
 MAX_IMAGES_PER_REQUEST = 3
 
-#: Longest edge images are scaled to before upload.
+#: Longest edge images are scaled to before upload. Do not raise this.
 #:
-#: Measured against the live API, one image costs **804 prompt tokens at 512px,
-#: 768px and 1024px alike** — Groq normalises images to a flat token cost, so
-#: resolution is free and the only thing shrinking buys is upload bytes. 1024
-#: is used because OCR is the whole point of the vision pass (the best note this
-#: pipeline has produced came from reading a repo URL off-screen that the audio
-#: deliberately withheld), and at 512px that text starts dropping out.
+#: Two things were measured against the live API, and the second is
+#: counter-intuitive enough to be worth writing down:
+#:
+#: 1. Token cost is **flat across resolution** — one image bills the same
+#:    prompt tokens at 512px, 768px and 1024px (804 on a simple frame, 818 on a
+#:    dense one, identical across six runs each). Groq normalises images to a
+#:    fixed budget, so a larger upload buys no extra detail allowance.
+#: 2. Larger is *worse* for OCR. On a dense GitHub-screenshot frame, 512px
+#:    returned 1328 chars including "MIT license" and the full file tree, while
+#:    1024px returned 653-748 chars and garbled text the smaller version got
+#:    right — "blade humanizer" for "blader / humanizer", commit "1b48564" read
+#:    as "lb48564". The model downsamples internally either way; handing it a
+#:    clean ffmpeg resize beats making it do its own.
+#:
+#: Reading text the audio deliberately withholds is the highest-value thing
+#: this pass does, so this is tuned for OCR fidelity, not file size.
 #:
 #: Budget check: 3 images ≈ 2.4K tokens against a measured 8,000 TPM ceiling
 #: (`x-ratelimit-limit-tokens`), so a 5-slide carousel is two batches plus the
 #: final extraction call and fits inside a minute. `_groq_request` backs off on
 #: 429 for the cases that don't.
-VISION_IMAGE_PX = 1024
+VISION_IMAGE_PX = 512
 
 TOPICS = [
     "agent-building", "automation", "tooling", "prompting", "rag",
