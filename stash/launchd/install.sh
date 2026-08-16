@@ -19,8 +19,17 @@ if ! grep -q '^STASH_WORKER_URL=.\+' "$REPO/.env" 2>/dev/null; then
   exit 1
 fi
 
+# Resolve Homebrew's bin from a tool we actually need, rather than hardcoding a
+# path — Apple Silicon uses /opt/homebrew/bin, Intel /usr/local/bin.
+YTDLP="$(command -v yt-dlp || true)"
+if [ -z "$YTDLP" ]; then
+  echo "yt-dlp not on PATH — brew install yt-dlp first (the daemon cannot fetch without it)" >&2
+  exit 1
+fi
+BREW_BIN="$(dirname "$YTDLP")"
+
 mkdir -p "$HOME/Library/LaunchAgents"
-sed -e "s|{{PYTHON}}|$PYTHON|g" -e "s|{{REPO}}|$REPO|g" \
+sed -e "s|{{PYTHON}}|$PYTHON|g" -e "s|{{REPO}}|$REPO|g" -e "s|{{BREW_BIN}}|$BREW_BIN|g" \
   "$REPO/stash/launchd/com.stash.daemon.plist.template" > "$DEST"
 
 # bootout is allowed to fail (nothing loaded yet, first install) — the -q hides that.
