@@ -8,6 +8,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from . import daemon as daemon_mod
 from . import db, pipeline, vault, watch as watch_mod
 from .config import CONFIG
 
@@ -39,6 +40,13 @@ def main(argv: list[str] | None = None) -> int:
     p_receive = sub.add_parser("receive", help="receive links directly from the iPhone Shortcut")
     p_receive.add_argument("--port", type=int, default=CONFIG.local_port)
 
+    p_daemon = sub.add_parser(
+        "daemon", help="poll the Cloudflare Worker — capture that survives Wi-Fi/sleep"
+    )
+    p_daemon.add_argument("--min-interval", type=int, default=30)
+    p_daemon.add_argument("--max-interval", type=int, default=300)
+    p_daemon.add_argument("--once", action="store_true", help="one poll, then exit")
+
     sub.add_parser("status", help="queue and vault health")
     sub.add_parser("topics", help="what you save most")
     sub.add_parser("doctor", help="check the toolchain and credentials")
@@ -54,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
 
     return {
         "add": _add, "process": _process, "search": _search, "status": _status,
-        "watch": _watch, "receive": _receive,
+        "watch": _watch, "receive": _receive, "daemon": _daemon,
         "topics": _topics, "doctor": _doctor, "reindex": _reindex, "used": _used,
     }[args.command](conn, args)
 
@@ -125,6 +133,18 @@ def _receive(conn, args) -> int:
     return 0
 
 
+def _daemon(conn, args) -> int:
+    try:
+        daemon_mod.run(
+            conn, min_interval=args.min_interval, max_interval=args.max_interval,
+            once=args.once,
+        )
+    except RuntimeError as exc:
+        print(exc)
+        return 1
+    return 0
+
+
 def _status(conn, args) -> int:
     stats = db.queue_stats(conn)
     notes = conn.execute("SELECT COUNT(*) n FROM note").fetchone()["n"]
@@ -142,6 +162,10 @@ def _status(conn, args) -> int:
     if inbox.exists():
         queued = len(watch_mod.read_inbox(inbox))
         print(f"\ninbox: {queued} line(s) in {inbox.name}")
+
+    if CONFIG.uses_remote_queue:
+        alive, reason = daemon_mod.is_alive()
+        print(f"\ndaemon: {'ALIVE' if alive else 'DOWN'} — {reason}")
 
     dead = db.dead_letters(conn)
     if dead:
@@ -240,6 +264,12 @@ def _doctor(conn, args) -> int:
     print("\nqueue:")
     print(f"  {'remote (D1)' if CONFIG.uses_remote_queue else 'local SQLite'}"
           f" — {CONFIG.db_path if not CONFIG.uses_remote_queue else CONFIG.worker_url}")
+
+    if CONFIG.uses_remote_queue:
+        alive, reason = daemon_mod.is_alive()
+        check(f"daemon ({reason})", alive,
+              "`stash daemon` in a terminal, or load the launchd job — "
+              "see stash/launchd/README.md")
 
     print(f"\n{'all good' if not problems else f'{problems} thing(s) to fix'}")
     return 1 if problems else 0
