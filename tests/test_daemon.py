@@ -169,3 +169,39 @@ def test_backoff_only_kicks_in_after_a_few_empty_polls(monkeypatch):
 
     state = daemon.read_state()
     assert state["interval"] == 60  # backed off once, after the 3rd empty poll
+
+
+def test_drain_does_not_burn_all_retries_in_one_pass(monkeypatch, tmp_path):
+    """A failing capture returns to 'pending' and claim_next always hands back
+    the oldest pending row — so without a guard, one drain pass re-claims the
+    same item three times and dead-letters it in seconds. Retries are supposed
+    to be spread across polls."""
+    from stash import db, pipeline
+
+    # Force the local-queue branch: the real .env may point at a deployed
+    # Worker, which would make drain() claim from D1 instead of this fixture.
+    monkeypatch.setattr(
+        pipeline, "CONFIG",
+        dataclasses.replace(pipeline.CONFIG, worker_url="", worker_secret=""),
+    )
+
+    conn = db.connect(tmp_path / "t.sqlite")
+    db.add_capture(conn, source="cli", permalink="https://x/always-fails")
+
+    attempts = {"n": 0}
+
+    def always_fails(conn_, capture, **kwargs):
+        attempts["n"] += 1
+        raise RuntimeError("yt-dlp is not installed")
+
+    monkeypatch.setattr(pipeline, "process", always_fails)
+    monkeypatch.setattr(pipeline.notify, "notify", lambda *a, **k: False)
+
+    pipeline.drain(conn, verbose=False)
+
+    # Exactly one attempt this pass, not MAX_ATTEMPTS worth.
+    assert attempts["n"] == 1
+    row = conn.execute("SELECT status, attempts FROM capture").fetchone()
+    assert row["status"] == "pending"   # still retryable
+    assert row["attempts"] == 1         # not exhausted
+    conn.close()

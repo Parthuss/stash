@@ -266,7 +266,13 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
                 ),
                 verbose=verbose,
             )
-            continue
+            # Stop the pass rather than continuing. A failure puts the capture
+            # back to 'pending' and claim_next always returns the oldest pending
+            # row, so continuing re-claims this very item — burning all three
+            # attempts in a tight loop and dead-lettering in seconds, when the
+            # point of retrying is to try again *later*. The daemon's next poll
+            # picks up from the top; anything queued behind this waits one tick.
+            break
 
         _finish(conn, capture["id"], ok=True, remote_mode=remote_mode, title=result.title)
         notify.notify(

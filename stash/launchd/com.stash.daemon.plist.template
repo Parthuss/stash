@@ -23,6 +23,18 @@
     <key>WorkingDirectory</key>
     <string>{{REPO}}</string>
 
+    <!-- launchd starts jobs with a bare PATH (/usr/bin:/bin:/usr/sbin:/sbin) and
+         does NOT read your shell profile, so Homebrew is invisible without this.
+         Symptom if you drop it: every capture dead-letters with "yt-dlp is not
+         installed" even though it plainly is — the daemon just cannot see it.
+         {{BREW_BIN}} is resolved at install time so this works on both Apple
+         Silicon (/opt/homebrew/bin) and Intel (/usr/local/bin). -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>{{BREW_BIN}}:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
     <!-- Starts the moment you log in, and restarts it if it ever exits — the
          two properties that fix "I thought it was running." KeepAlive alone
          would not survive a reboot; RunAtLoad alone would not survive a crash. -->
