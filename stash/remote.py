@@ -62,15 +62,37 @@ def claim_next() -> Row | None:
     return Row(capture) if capture else None
 
 
-def finish_capture(capture_id: str, *, ok: bool, error: str | None = None) -> None:
+def finish_capture(
+    capture_id: str, *, ok: bool, error: str | None = None, title: str | None = None
+) -> None:
+    """Report a capture done or failed. ``title`` is what makes ``/status/:id``
+    (and the phone notification that reads it) show something a human can
+    recognize instead of just a status word."""
     response = httpx.post(
         f"{CONFIG.worker_url}/complete",
         headers=_headers(),
-        json={"id": capture_id, "ok": ok, "error": error},
+        json={"id": capture_id, "ok": ok, "error": error, "title": title},
         timeout=30,
     )
     if response.status_code != 200:
         raise RemoteError(f"complete {response.status_code}: {response.text[:200]}")
+
+
+def status_of(capture_id: str) -> dict[str, Any] | None:
+    """``{"status": "pending"|"claimed"|"done"|"failed", "title", "error"}``.
+
+    ``None`` for an id the Worker has never seen — distinct from a capture that
+    exists but hasn't finished, which is why this returns Optional rather than
+    a default dict.
+    """
+    response = httpx.get(
+        f"{CONFIG.worker_url}/status/{capture_id}", headers=_headers(), timeout=15
+    )
+    if response.status_code == 404:
+        return None
+    if response.status_code != 200:
+        raise RemoteError(f"status {response.status_code}: {response.text[:200]}")
+    return response.json()
 
 
 def media_url_for(capture: Row) -> str | None:

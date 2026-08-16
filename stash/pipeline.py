@@ -255,18 +255,24 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
                 print(f"  failed: {exc}", flush=True)
             continue
 
-        _finish(conn, capture["id"], ok=True, remote_mode=remote_mode)
+        _finish(conn, capture["id"], ok=True, remote_mode=remote_mode, title=result.title)
         results.append(result)
     return results
 
 
 def _finish(
     conn: sqlite3.Connection, capture_id: str, *, ok: bool,
-    error: str | None = None, remote_mode: bool,
+    error: str | None = None, title: str | None = None, remote_mode: bool,
 ) -> None:
+    """Mark a capture done or failed and report it wherever confirmation lives.
+
+    ``title`` only matters in remote mode — it's what makes the Worker's
+    ``/status/:id`` (and the phone notification reading it) show a real title
+    instead of just "done".
+    """
     if remote_mode:
         from . import remote
 
-        remote.finish_capture(capture_id, ok=ok, error=error)
+        remote.finish_capture(capture_id, ok=ok, error=error, title=title)
     else:
         db.finish_capture(conn, capture_id, ok=ok, error=error)
