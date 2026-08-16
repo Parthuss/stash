@@ -1,0 +1,27 @@
+[project]
+name = "stash"
+version = "0.1.0"
+description = "Instagram capture -> enriched vault -> Claude auto-recall"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp>=2.0"]
+local-whisper = ["faster-whisper>=1.0"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+stash = "stash.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["stash*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

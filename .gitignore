@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.stash-local-secret
+shortcuts/.stash-local.cherri
+.pytest_cache/
+media/
+vault/
+stash.sqlite
+stash.sqlite-*
+worker/node_modules/
+worker/.wrangler/
+.DS_Store
+*.egg-info/

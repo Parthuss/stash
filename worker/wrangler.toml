@@ -1,0 +1,22 @@
+name = "stash"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# Free plan: 100k requests/day, always on. No card required.
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stash"
+# Filled in by: wrangler d1 create stash
+database_id = "REPLACE_ME"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "stash-media"
+
+# Secrets are NOT set here — they would end up in git. Set each once with:
+#   wrangler secret put STASH_SECRET        # any long random string; also goes in stash/.env
+#   wrangler secret put IG_VERIFY_TOKEN     # Phase 2: any string, echoed to Meta
+#   wrangler secret put IG_APP_SECRET       # Phase 2: from the Meta app dashboard
+#   wrangler secret put IG_ACCESS_TOKEN     # Phase 2: long-lived IG token

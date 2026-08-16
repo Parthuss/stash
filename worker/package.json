@@ -1,0 +1,18 @@
+{
+  "name": "stash-worker",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "migrate": "wrangler d1 migrations apply stash --remote",
+    "migrate:local": "wrangler d1 migrations apply stash --local",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260816.1",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.123.0"
+  }
+}
