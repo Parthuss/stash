@@ -11,9 +11,17 @@ database_name = "stash"
 # Filled in by: wrangler d1 create stash
 database_id = "REPLACE_ME"
 
-[[r2_buckets]]
-binding = "MEDIA"
-bucket_name = "stash-media"
+# R2 is deliberately NOT configured here. Every route Phase 1 needs — /ingest,
+# /pending, /claim, /complete, /status/:id — runs on Workers + D1 alone, which
+# is free with no payment method required. R2 is only used by the Phase-2
+# Instagram DM webhook (stashing an expiring CDN link before it dies), and it's
+# the one Cloudflare product on this list that asks for a card even on its free
+# tier. src/index.ts guards every env.MEDIA use, so the Worker runs correctly
+# without this block. Add it back only when Phase 2 is worth that trade:
+#
+#   [[r2_buckets]]
+#   binding = "MEDIA"
+#   bucket_name = "stash-media"
 
 # Secrets are NOT set here — they would end up in git. Set each once with:
 #   wrangler secret put STASH_SECRET        # any long random string; also goes in stash/.env

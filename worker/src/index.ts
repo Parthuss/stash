@@ -12,19 +12,32 @@
  * it is I/O, not compute.
  *
  * Routes
- *   POST /ingest      shortcut / backfill / manual        (X-Stash-Secret)
- *   GET  /pending     what the Mac worker should do next  (X-Stash-Secret)
- *   POST /claim       take one, with an attempt count     (X-Stash-Secret)
- *   POST /complete    report done or failed               (X-Stash-Secret)
- *   GET  /media/:key  hand the stashed R2 object to the Mac worker
- *   GET  /webhook/ig  Meta's subscription challenge       (Phase 2)
- *   POST /webhook/ig  a shared reel arrives               (Phase 2, HMAC-verified)
+ *   POST /ingest        shortcut / backfill / manual        (X-Stash-Secret)
+ *   GET  /pending        what the Mac worker should do next  (X-Stash-Secret)
+ *   POST /claim          take one, with an attempt count     (X-Stash-Secret)
+ *   POST /complete       report done or failed, with a title (X-Stash-Secret)
+ *   GET  /status/:id     has this specific capture finished?  (X-Stash-Secret)
+ *   GET  /media/:key     hand the stashed R2 object to the Mac worker
+ *   GET  /webhook/ig     Meta's subscription challenge       (Phase 2)
+ *   POST /webhook/ig     a shared reel arrives               (Phase 2, HMAC-verified)
  *   GET  /health
+ *
+ * `/status/:id` exists because "the phone's POST succeeded" and "the reel was
+ * actually processed into a note" are different facts, and conflating them is
+ * exactly what made an earlier version of the phone Shortcut lie — it showed
+ * "stashed" for a request that reached Cloudflare fine but never got a working
+ * receiver on the other end. Polling status closes that gap.
+ *
+ * MEDIA (R2) is optional. It only matters for the Phase-2 Instagram DM webhook,
+ * which does not exist yet, and R2 is the one Cloudflare product that asks for
+ * a payment method even on its free tier — every other route here works with
+ * Workers + D1 alone, no card required. Every env.MEDIA use below is guarded so
+ * the Worker still runs correctly with the binding entirely absent.
  */
 
 export interface Env {
   DB: D1Database;
-  MEDIA: R2Bucket;
+  MEDIA?: R2Bucket;
   STASH_SECRET: string;
   IG_VERIFY_TOKEN?: string;
   IG_APP_SECRET?: string;
@@ -230,18 +243,19 @@ export default {
 
     if (path === "/complete" && request.method === "POST") {
       const body = (await request.json().catch(() => null)) as
-        | { id?: string; ok?: boolean; error?: string }
+        | { id?: string; ok?: boolean; error?: string; title?: string }
         | null;
       if (!body?.id) return json({ error: "need id" }, 400);
 
       if (body.ok) {
         await env.DB.prepare(
-          "UPDATE capture SET status='done', processed_at=?, error=NULL WHERE id=?",
+          "UPDATE capture SET status='done', processed_at=?, error=NULL, title=? WHERE id=?",
         )
-          .bind(new Date().toISOString(), body.id)
+          .bind(new Date().toISOString(), (body.title ?? "").slice(0, 300) || null, body.id)
           .run();
       } else {
         // Back to pending, not failed: transient breakage should retry itself.
+        // Once MAX_ATTEMPTS is hit, /status reports it as a dead letter — see below.
         await env.DB.prepare("UPDATE capture SET status='pending', error=? WHERE id=?")
           .bind((body.error ?? "").slice(0, 2000), body.id)
           .run();
@@ -249,7 +263,25 @@ export default {
       return json({ ok: true });
     }
 
+    if (path.startsWith("/status/") && request.method === "GET") {
+      const captureId = decodeURIComponent(path.slice("/status/".length));
+      const row = await env.DB.prepare(
+        "SELECT status, attempts, error, title FROM capture WHERE id = ?",
+      )
+        .bind(captureId)
+        .first<{ status: string; attempts: number; error: string | null; title: string | null }>();
+      if (!row) return json({ error: "unknown id" }, 404);
+
+      const dead = row.status === "pending" && row.attempts >= MAX_ATTEMPTS;
+      return json({
+        status: dead ? "failed" : row.status,
+        title: row.title,
+        error: row.error,
+      });
+    }
+
     if (path.startsWith("/media/") && request.method === "GET") {
+      if (!env.MEDIA) return json({ error: "R2 not configured on this deploy" }, 501);
       const key = decodeURIComponent(path.slice("/media/".length));
       const object = await env.MEDIA.get(key);
       if (!object) return new Response("not found", { status: 404 });
@@ -303,8 +335,12 @@ async function handleInstagram(raw: string, env: Env, ctx: ExecutionContext): Pr
           }
         }
 
+        // Without R2 configured there is nowhere to put the media, so it is
+        // left for the Mac to fetch directly from media_url — which works
+        // right up until that CDN link expires. Add the R2 binding (and its
+        // required payment method) once Phase 2 is worth that trade.
         let mediaKey: string | null = null;
-        if (cdnUrl) {
+        if (cdnUrl && env.MEDIA) {
           mediaKey = `ig/${Date.now()}-${id()}.mp4`;
           work.push(stashMedia(env, cdnUrl, mediaKey));
         }
@@ -338,6 +374,7 @@ async function handleInstagram(raw: string, env: Env, ctx: ExecutionContext): Pr
 }
 
 async function stashMedia(env: Env, cdnUrl: string, key: string): Promise<void> {
+  if (!env.MEDIA) return;
   const response = await fetch(cdnUrl);
   if (!response.ok || !response.body) return;
   await env.MEDIA.put(key, response.body, {
