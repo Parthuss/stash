@@ -87,54 +87,82 @@ artifact — the SQLite index is derived and `stash reindex` rebuilds it from di
 
 ## Capture from your phone
 
-The included `Stash` Shortcut appears in the iOS share sheet and accepts URLs:
+Three pieces: a Shortcut that posts to Cloudflare, a Worker that holds the
+queue, and a daemon on the Mac that drains it. Set up in that order.
 
-```
-Receive URL from Share Sheet
-  → Ask for Input      "note?"
-  → Text               <Shortcut Input> | <Provided Input>
-  → Append File        Shortcuts/stash-inbox.txt in iCloud Drive
-  → Show Notification  "stashed"
-```
+### 1. Deploy the Worker
 
-Run the local watcher on the Mac:
-
-```bash
-.venv/bin/python -m stash watch
-```
-
-Three taps, same as DMing yourself — and it also catches TikTok, YouTube, X, and
-any web page. The Mac can be asleep when you share: iCloud holds the line and the
-watcher processes it when the Mac next wakes and the watcher runs.
-
-The Shortcut source and signed import live in `shortcuts/`. Rebuild with Cherri:
-
-```bash
-cherri shortcuts/Stash.cherri --derive-uuids --skip-sign --output=shortcuts/Stash-unsigned.shortcut
-shortcuts sign --mode anyone --input shortcuts/Stash_unsigned.shortcut --output shortcuts/Stash.shortcut
-```
-
-For capture that processes immediately while the Mac is offline, replace the
-Append File step with the Worker POST described in the next section.
-
-## The always-on half
-
-The Worker exists so a capture is never lost when the laptop is asleep, and so
-Instagram's expiring CDN URLs get grabbed the moment they arrive.
+This is what makes capture independent of your Mac — the phone talks to
+Cloudflare over HTTPS from anywhere: cellular, a café, lid shut.
 
 ```bash
 cd worker && npm install
+npx wrangler login                    # browser, free account, no card
 npx wrangler d1 create stash          # paste the id into wrangler.toml
-npx wrangler r2 bucket create stash-media
 npx wrangler d1 migrations apply stash --remote
-npx wrangler secret put STASH_SECRET  # same value goes in ../.env
+npx wrangler secret put STASH_SECRET  # any long random string
 npx wrangler deploy
 ```
 
-Then set `STASH_WORKER_URL` and `STASH_SECRET` in `.env` and the Mac worker polls
-the Worker instead of the local queue. Notes still land locally either way.
+Put the deployed URL and the same secret into `.env` as `STASH_WORKER_URL` and
+`STASH_SECRET`. Everything downstream switches to the remote queue on its own.
 
-Free tier throughout: Workers 100k req/day, D1 5 GB, R2 10 GB.
+Free tier throughout: Workers 100k req/day, D1 5 GB. **No R2 and therefore no
+payment method** — R2 is the one product here that asks for a card, and it is
+only needed for the Phase-2 DM webhook, so it is left unconfigured.
+
+### 2. Build and install the Shortcut
+
+```bash
+sh shortcuts/build.sh
+```
+
+Renders `shortcuts/Stash.cherri.template` with your Worker URL and secret,
+compiles it with [Cherri](https://cherrilang.org), and signs it. AirDrop the
+resulting `Stash.shortcut` to your phone, or open it on a Mac on the same Apple
+ID and it syncs.
+
+**Delete every older Stash shortcut.** Several near-identical entries in the
+share sheet, some pointing at endpoints that no longer exist, is how this
+silently broke before.
+
+The Shortcut says **"Queued"**, not "saved" — deliberately. It only knows the
+request reached Cloudflare. Confirmation that a note actually exists comes
+separately, from step 4.
+
+### 3. Run the daemon
+
+```bash
+sh stash/launchd/install.sh   # starts at login, restarts on crash
+```
+
+Or `stash daemon` in a terminal to watch it work. Either way:
+
+```bash
+stash status    # says ALIVE/DOWN, checking pid liveness AND heartbeat age
+```
+
+That check exists because a receiver process once died quietly and nothing
+said so. A hung-but-not-exited daemon is reported down too, not just a dead one.
+
+### 4. Turn on confirmation
+
+```bash
+stash notify          # sends a test; --fail for the failure shape
+```
+
+Set `STASH_NOTIFY` to `ntfy` or `imessage` in `.env` first — see the comments
+there. Both are free; `ntfy` is verified working, `imessage` needs no app
+install but does need a one-time Automation grant, so test it before trusting it.
+
+### What still needs the Mac
+
+Processing. A save is never lost — it sits in D1 — but the note appears when the
+Mac is next awake with the daemon running. Capture is the part that no longer
+depends on anything.
+
+The old iCloud-file path (`shortcuts/Stash-icloud.cherri` + `stash watch`) still
+works and needs no accounts at all, if you'd rather have zero infrastructure.
 
 ## Instagram DMs (Phase 2)
 
@@ -208,6 +236,17 @@ command" or "link in bio" that point at the screen. Idea borrowed from
 frame; a screen recording gets frames at the moments that matter; a silent reel
 falls back to even sampling. Capped at 5 — frames dominate token cost.
 
+Two vision limits worth knowing before you tune anything, both measured against
+the live API rather than assumed:
+
+- **3 images per request is a hard API cap**, not a choice. A 4th returns
+  HTTP 400. `_describe_visuals` batches around it.
+- **512px is the optimum, and bigger is worse.** Token cost is flat across
+  resolution (Groq normalises images to a fixed budget), but on a dense
+  screenshot 512px transcribed 1328 chars including "MIT license" while 1024px
+  managed ~700 and garbled text the smaller version read correctly. Raising it
+  looks free and isn't.
+
 ```bash
 .venv/bin/python -m pytest tests/ -q
 ```
@@ -221,11 +260,17 @@ stash/
   fetch.py        CDN direct / yt-dlp / cobalt
   transcribe.py   groq or faster-whisper, with per-segment confidence
   frames.py       the confidence gate
-  extract.py      claude CLI (subscription) or API fallback
+  extract.py      groq vision + structured JSON
   vault.py        markdown + frontmatter
   pipeline.py     orchestration
-  remote.py       Worker-backed queue
+  remote.py       Worker-backed queue client
+  daemon.py       poll loop + heartbeat (the durable capture path)
+  notify.py       iMessage / ntfy confirmation
+  local_receiver.py  LAN receiver (superseded by the Worker)
+  watch.py        iCloud-file watcher (zero-infrastructure fallback)
   mcp_server.py   recall tools
-worker/           Cloudflare Worker + D1 + R2
+  launchd/        run the daemon at login
+worker/           Cloudflare Worker + D1 (no R2 — see above)
+shortcuts/        Cherri source for the iOS Shortcut
 scripts/          data-export backfill
 ```
