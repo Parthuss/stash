@@ -41,7 +41,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS capture_permalink
 
 CREATE TABLE IF NOT EXISTS note (
   id          TEXT PRIMARY KEY,
-  capture_id  TEXT REFERENCES capture(id),
+  -- Provenance only, deliberately NOT a foreign key. In remote-queue mode
+  -- (stash/remote.py) the capture this note came from lives in the Worker's
+  -- D1, never in this local table, so a real FK constraint here would reject
+  -- every note the daemon writes — which is exactly the bug that happened
+  -- the first time this ran end to end against a deployed Worker.
+  capture_id  TEXT,
   path        TEXT NOT NULL,           -- vault-relative markdown path
   title       TEXT NOT NULL DEFAULT '',
   summary     TEXT NOT NULL DEFAULT '',

@@ -13,3 +13,5 @@ worker/node_modules/
 worker/.wrangler/
 .DS_Store
 *.egg-info/
+.stash-daemon-state.json
+.stash-daemon.log

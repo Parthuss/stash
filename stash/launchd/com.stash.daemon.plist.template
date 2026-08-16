@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Template, not the real plist — {{PYTHON}} and {{REPO}} get substituted by
+  stash/launchd/install.sh, which also copies the result into
+  ~/Library/LaunchAgents/ (a path launchd requires; it will not load a job
+  from anywhere else). Never edit the installed copy directly — re-run
+  install.sh after changing this file, or your edits vanish on the next run.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.stash.daemon</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>{{PYTHON}}</string>
+        <string>-m</string>
+        <string>stash</string>
+        <string>daemon</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>{{REPO}}</string>
+
+    <!-- Starts the moment you log in, and restarts it if it ever exits — the
+         two properties that fix "I thought it was running." KeepAlive alone
+         would not survive a reboot; RunAtLoad alone would not survive a crash. -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>{{REPO}}/.stash-daemon.log</string>
+    <key>StandardErrorPath</key>
+    <string>{{REPO}}/.stash-daemon.log</string>
+
+    <!-- Cloudflare's free tier does not need this to be aggressive; leave the
+         Mac's normal power management alone rather than fighting App Nap. -->
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>
