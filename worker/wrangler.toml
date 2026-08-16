@@ -8,8 +8,8 @@ workers_dev = true
 [[d1_databases]]
 binding = "DB"
 database_name = "stash"
-# Filled in by: wrangler d1 create stash
-database_id = "REPLACE_ME"
+# Created by: wrangler d1 create stash  (region APAC)
+database_id = "316292dc-3896-4545-8acd-92deade5f02a"
 
 # R2 is deliberately NOT configured here. Every route Phase 1 needs — /ingest,
 # /pending, /claim, /complete, /status/:id — runs on Workers + D1 alone, which
