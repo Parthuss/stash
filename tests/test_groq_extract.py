@@ -111,3 +111,50 @@ def test_groq_structured_result_is_coerced(monkeypatch):
     assert result["topic"] == "other"
     assert result["difficulty"] == "afternoon"
     assert result["tools"] == ["groq", "yt-dlp"]
+
+
+def test_max_images_per_request_is_the_models_hard_limit():
+    """Not a tuning knob: a 4th image returns HTTP 400 'This model supports up
+    to 3 images'. Verified against the live API. Raising this to save round
+    trips would break every carousel."""
+    assert extract.MAX_IMAGES_PER_REQUEST == 3
+
+
+def test_vision_resolution_is_not_shrunk_for_token_reasons():
+    """Measured on the live API: one image costs 804 prompt tokens at 512px,
+    768px and 1024px identically — Groq normalises images to a flat cost. So
+    downscaling buys nothing but lost OCR, and OCR is the point of the vision
+    pass."""
+    assert extract.VISION_IMAGE_PX >= 1024
+
+
+def test_rate_limit_logging_warns_only_when_budget_is_low(capsys):
+    class Response:
+        def __init__(self, remaining):
+            self.headers = {
+                "x-ratelimit-remaining-tokens": str(remaining),
+                "x-ratelimit-limit-tokens": "8000",
+                "x-ratelimit-reset-tokens": "12s",
+            }
+
+    extract._log_rate_limit(Response(7000))
+    assert capsys.readouterr().out == ""
+
+    extract._log_rate_limit(Response(500))
+    out = capsys.readouterr().out
+    assert "groq tokens low" in out
+    assert "500/8000" in out
+
+
+def test_rate_limit_logging_never_breaks_on_an_odd_response(capsys):
+    """Observability must not be able to fail a capture."""
+    class NoHeaders:
+        pass
+
+    class JunkHeaders:
+        headers = {"x-ratelimit-remaining-tokens": "not-a-number",
+                   "x-ratelimit-limit-tokens": "8000"}
+
+    extract._log_rate_limit(NoHeaders())   # must not raise
+    extract._log_rate_limit(JunkHeaders())  # must not raise
+    assert capsys.readouterr().out == ""

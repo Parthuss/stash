@@ -22,9 +22,26 @@ import httpx
 from .config import CONFIG
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
-# Images are resized to 512px before transport, allowing three slides to fit in
-# the free tier's 8K TPM window without changing the downloaded originals.
+
+#: A hard API limit, not a tuning choice — the model rejects a 4th image with
+#: "This model supports up to 3 images" (HTTP 400). Batching in `_describe_visuals`
+#: exists to work around it, so do not raise this hoping for fewer round trips.
 MAX_IMAGES_PER_REQUEST = 3
+
+#: Longest edge images are scaled to before upload.
+#:
+#: Measured against the live API, one image costs **804 prompt tokens at 512px,
+#: 768px and 1024px alike** — Groq normalises images to a flat token cost, so
+#: resolution is free and the only thing shrinking buys is upload bytes. 1024
+#: is used because OCR is the whole point of the vision pass (the best note this
+#: pipeline has produced came from reading a repo URL off-screen that the audio
+#: deliberately withheld), and at 512px that text starts dropping out.
+#:
+#: Budget check: 3 images ≈ 2.4K tokens against a measured 8,000 TPM ceiling
+#: (`x-ratelimit-limit-tokens`), so a 5-slide carousel is two batches plus the
+#: final extraction call and fits inside a minute. `_groq_request` backs off on
+#: 429 for the cases that don't.
+VISION_IMAGE_PX = 1024
 
 TOPICS = [
     "agent-building", "automation", "tooling", "prompting", "rag",
@@ -250,13 +267,44 @@ def _extract_groq(
     return _coerce(payload)
 
 
+def _log_rate_limit(response: httpx.Response) -> None:
+    """Warn when the token budget is nearly gone.
+
+    Groq reports the real ceiling on every response, so the image budget above
+    can stay a measured number rather than a guess. Only speaks up below 25%
+    remaining — a line on every call would be noise, and the number only
+    matters when it is about to bite.
+    """
+    # Observability must never be able to break extraction, so anything
+    # unexpected about the response shape is a silent no-op rather than a raise.
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return
+    remaining = headers.get("x-ratelimit-remaining-tokens")
+    limit = headers.get("x-ratelimit-limit-tokens")
+    if not (remaining and limit):
+        return
+    try:
+        remaining_n, limit_n = int(remaining), int(limit)
+    except ValueError:
+        return
+    if limit_n and remaining_n < limit_n * 0.25:
+        reset = response.headers.get("x-ratelimit-reset-tokens", "?")
+        print(
+            f"  groq tokens low: {remaining_n}/{limit_n} left, resets in {reset}",
+            flush=True,
+        )
+
+
 def _vision_image(path: Path) -> tuple[bytes, str]:
     """Return a compact visual copy; never alter the cached original."""
     if shutil.which("ffmpeg"):
         proc = subprocess.run(
             [
                 "ffmpeg", "-v", "error", "-i", str(path),
-                "-vf", "scale=512:512:force_original_aspect_ratio=decrease",
+                "-vf",
+                f"scale={VISION_IMAGE_PX}:{VISION_IMAGE_PX}"
+                ":force_original_aspect_ratio=decrease",
                 "-frames:v", "1", "-f", "image2pipe", "-vcodec", "mjpeg",
                 "-q:v", "3", "-",
             ],
@@ -291,6 +339,7 @@ def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[st
             break
         time.sleep(_retry_delay(response))
     assert response is not None
+    _log_rate_limit(response)
     if response.status_code != 200:
         raise ExtractError(f"groq {response.status_code}: {response.text[:300]}")
     try:
