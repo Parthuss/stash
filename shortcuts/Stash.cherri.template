@@ -1,0 +1,38 @@
+// Stash — share sheet capture, via the Cloudflare Worker.
+//
+// Template, not buildable as-is: {{WORKER_URL}} and {{SECRET}} are substituted
+// by shortcuts/build.sh from .env, so the shared secret never lands in git.
+//
+// Why this posts to Cloudflare rather than the Mac: a LAN receiver needs the
+// Mac awake, running, and on the same Wi-Fi at the exact moment you share.
+// This works from cellular, from a café, with the lid shut. The save lands in
+// D1 and `stash daemon` drains it whenever the Mac is next up.
+//
+// The notification deliberately says "queued", not "saved". Those are
+// different facts, and an earlier version of this Shortcut claiming "stashed"
+// for a request that reached a dead receiver is precisely why nothing arrived
+// for an evening. Final confirmation — with the real note title — arrives
+// separately from stash/notify.py once the note actually exists.
+
+#define name Stash
+#define color violet
+#define glyph archive
+#define inputs url
+#define from sharesheet
+#define noinput stopwith "Share a link to Stash."
+
+#include 'actions/web'
+
+@note = prompt("note?")
+
+@res = jsonRequest("{{WORKER_URL}}/ingest", "POST", {"url": "{ShortcutInput}", "note": "{@note}"}, {"X-Stash-Secret": "{{SECRET}}"})
+
+// Surface the Worker's actual reply. A wrong secret, a malformed URL or a bad
+// deploy all come back as {"error": ...} — showing that beats a hardcoded
+// success string that cannot tell the difference.
+@err = text(@res['error'])
+if @err != "" {
+	alert("{@err}", "Stash — not queued")
+} else {
+	showNotification("Queued — you'll get a second alert when the note is ready")
+}

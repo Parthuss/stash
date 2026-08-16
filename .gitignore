@@ -4,6 +4,8 @@ __pycache__/
 .env
 .stash-local-secret
 shortcuts/.stash-local.cherri
+shortcuts/.Stash.rendered.cherri
+shortcuts/*.shortcut
 .pytest_cache/
 media/
 vault/
