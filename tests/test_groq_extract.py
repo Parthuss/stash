@@ -120,12 +120,15 @@ def test_max_images_per_request_is_the_models_hard_limit():
     assert extract.MAX_IMAGES_PER_REQUEST == 3
 
 
-def test_vision_resolution_is_not_shrunk_for_token_reasons():
-    """Measured on the live API: one image costs 804 prompt tokens at 512px,
-    768px and 1024px identically — Groq normalises images to a flat cost. So
-    downscaling buys nothing but lost OCR, and OCR is the point of the vision
-    pass."""
-    assert extract.VISION_IMAGE_PX >= 1024
+def test_vision_resolution_stays_at_the_measured_optimum():
+    """Counter-intuitive, so pinned: bigger is WORSE here.
+
+    Token cost is flat across resolution (Groq normalises images to a fixed
+    budget), but on a dense GitHub-screenshot frame 512px transcribed 1328
+    chars including "MIT license" while 1024px managed 653-748 and garbled
+    text the smaller version read correctly. Raising this looks free and is
+    not."""
+    assert extract.VISION_IMAGE_PX == 512
 
 
 def test_rate_limit_logging_warns_only_when_budget_is_low(capsys):
