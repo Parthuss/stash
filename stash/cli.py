@@ -47,6 +47,12 @@ def main(argv: list[str] | None = None) -> int:
     p_daemon.add_argument("--max-interval", type=int, default=300)
     p_daemon.add_argument("--once", action="store_true", help="one poll, then exit")
 
+    p_notify = sub.add_parser(
+        "notify", help="send a test notification, to prove the backend actually works"
+    )
+    p_notify.add_argument("--fail", action="store_true",
+                          help="send the failure-shaped message instead")
+
     sub.add_parser("status", help="queue and vault health")
     sub.add_parser("topics", help="what you save most")
     sub.add_parser("doctor", help="check the toolchain and credentials")
@@ -62,7 +68,7 @@ def main(argv: list[str] | None = None) -> int:
 
     return {
         "add": _add, "process": _process, "search": _search, "status": _status,
-        "watch": _watch, "receive": _receive, "daemon": _daemon,
+        "watch": _watch, "receive": _receive, "daemon": _daemon, "notify": _notify,
         "topics": _topics, "doctor": _doctor, "reindex": _reindex, "used": _used,
     }[args.command](conn, args)
 
@@ -143,6 +149,34 @@ def _daemon(conn, args) -> int:
         print(exc)
         return 1
     return 0
+
+
+def _notify(conn, args) -> int:
+    """Prove the notification path works before trusting it in production.
+
+    Worth an explicit command rather than assuming: the iMessage backend needs
+    a one-time Automation grant that only prompts on the first real send, so
+    "it is configured" and "it delivers" are different facts.
+    """
+    from . import notify as notify_mod
+
+    if CONFIG.notify_backend.lower() in ("", "none"):
+        print("STASH_NOTIFY is not set (imessage | ntfy). Nothing to test.")
+        return 1
+
+    message = (
+        notify_mod.for_failure("reel/TESTFAIL", "this is a test failure notification")
+        if args.fail
+        else notify_mod.for_success(
+            "Stash test notification", topic="tooling", tools=["stash"],
+        )
+    )
+    print(f"backend: {CONFIG.notify_backend}")
+    if notify_mod.notify(message):
+        print("sent — check your phone")
+        return 0
+    print("delivery failed (see the error above)")
+    return 1
 
 
 def _status(conn, args) -> int:

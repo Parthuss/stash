@@ -11,10 +11,10 @@ without media there is nothing to say.
 from __future__ import annotations
 
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import db, extract, fetch, frames, transcribe, vault
+from . import db, extract, fetch, frames, notify, transcribe, vault
 from .config import CONFIG
 
 
@@ -27,6 +27,9 @@ class Result:
     frames_used: int
     transcript_chars: int
     via: str
+    #: Carried so the success notification can show what the reel was actually
+    #: about without re-reading the note off disk.
+    tools: list[str] = field(default_factory=list)
 
 
 def process(
@@ -176,6 +179,7 @@ def process(
         frames_used=len(images),
         transcript_chars=len(transcript_text),
         via=media.via,
+        tools=fields["tools"],
     )
 
 
@@ -219,6 +223,7 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
     return Result(
         capture_id=capture["id"], note_path=path, title=fields["title"],
         topic=fields["topic"], frames_used=0, transcript_chars=0, via="caption-only",
+        tools=fields["tools"],
     )
 
 
@@ -253,11 +258,35 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             _finish(conn, capture["id"], ok=False, error=str(exc), remote_mode=remote_mode)
             if verbose:
                 print(f"  failed: {exc}", flush=True)
+            # Notify on failure too. A save that silently goes nowhere is the
+            # exact thing this project keeps getting bitten by.
+            notify.notify(
+                notify.for_failure(
+                    _short_label(capture), str(exc), url=capture["permalink"] or ""
+                ),
+                verbose=verbose,
+            )
             continue
 
         _finish(conn, capture["id"], ok=True, remote_mode=remote_mode, title=result.title)
+        notify.notify(
+            notify.for_success(
+                result.title, topic=result.topic, tools=result.tools,
+                url=capture["permalink"] or "",
+            ),
+            verbose=verbose,
+        )
         results.append(result)
     return results
+
+
+def _short_label(capture) -> str:
+    """Something recognisable for a failure notification, since there is no
+    title yet — the whole point is that processing did not get that far."""
+    permalink = capture["permalink"] or ""
+    if permalink:
+        return permalink.rstrip("/").rsplit("/", 1)[-1] or permalink
+    return str(capture["id"])
 
 
 def _finish(
