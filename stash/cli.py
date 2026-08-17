@@ -43,8 +43,8 @@ def main(argv: list[str] | None = None) -> int:
     p_daemon = sub.add_parser(
         "daemon", help="poll the Cloudflare Worker — capture that survives Wi-Fi/sleep"
     )
-    p_daemon.add_argument("--min-interval", type=int, default=30)
-    p_daemon.add_argument("--max-interval", type=int, default=300)
+    p_daemon.add_argument("--min-interval", type=int, default=15)
+    p_daemon.add_argument("--max-interval", type=int, default=90)
     p_daemon.add_argument("--once", action="store_true", help="one poll, then exit")
 
     p_notify = sub.add_parser(
