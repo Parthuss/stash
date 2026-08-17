@@ -19,9 +19,15 @@ prompted it was invisible:
    would still show a stale heartbeat and get flagged.
 2. **Backoff that isn't silence.** An idle inbox backs the poll interval off
    from ``min_interval`` towards ``max_interval`` so a quiet daemon isn't
-   hammering Cloudflare every 30 seconds all day. A network error does the
-   same — the Worker being briefly unreachable should degrade gracefully, not
-   spin or crash.
+   hammering Cloudflare all day. A network error does the same — the Worker
+   being briefly unreachable should degrade gracefully, not spin or crash.
+
+   The ceiling is deliberately modest (90s, not the 300s a "polite API client"
+   default would suggest) because the cost side of that tradeoff is fictional
+   at this scale: even polling every 20s around the clock is ~4,300 requests a
+   day against a 100k/day free tier. The real cost is a person staring at their
+   phone wondering if the share worked, so the backoff favors that against a
+   free budget with room to spare.
 """
 
 from __future__ import annotations
@@ -94,8 +100,8 @@ def is_alive(state: dict | None = None) -> tuple[bool, str]:
 def run(
     conn: sqlite3.Connection,
     *,
-    min_interval: int = 30,
-    max_interval: int = 300,
+    min_interval: int = 15,
+    max_interval: int = 90,
     once: bool = False,
 ) -> None:
     """Poll the Worker forever (or once, for tests and manual runs)."""
