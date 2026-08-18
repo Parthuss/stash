@@ -41,6 +41,8 @@ def _conn():
 
 
 def _render(items: list[dict[str, Any]]) -> str:
+    """Full detail — every field. Used only by get_stash_note, which is called
+    on exactly one note the caller already decided matters."""
     if not items:
         return "No matching saves."
     out = []
@@ -65,6 +67,48 @@ def _render(items: list[dict[str, Any]]) -> str:
     return "\n\n".join(out)
 
 
+#: Compact-hit summaries are truncated here, not left to run on — a search
+#: result set is meant to be scanned to decide what's worth a full read, and a
+#: long summary defeats that by making the compact form nearly as expensive as
+#: the thing it's supposed to be cheaper than.
+_SUMMARY_CLIP = 140
+
+
+def _render_compact(items: list[dict[str, Any]]) -> str:
+    """One line per hit: enough to decide what's worth reading in full.
+
+    This is what turned search_stash from ~1,341 tokens for 5 hits into a
+    fraction of that — the full rendered record (summary, tools, relevance,
+    next_step, why_saved, permalink) was being sent for every result even
+    though a caller only ever acts on one or two of them. get_stash_note
+    pulls the rest for whichever id turns out to matter.
+
+    No numeric relevance score is surfaced. `search_notes` fuses two
+    incomparable scales (BM25, cosine distance) via rank position, not a
+    combined score with real meaning, so a raw float here would be precision
+    theatre; list order already *is* the relevance signal.
+    """
+    if not items:
+        return "No matching saves."
+    lines = []
+    for item in items:
+        summary = (item.get("summary") or "").strip()
+        if len(summary) > _SUMMARY_CLIP:
+            summary = summary[: _SUMMARY_CLIP - 1].rstrip() + "…"
+        tools = ", ".join(item.get("tools") or []) or "—"
+        # `id` (16 hex chars), not the vault filename (60+ chars) — get_note
+        # accepts either, and the filename's slug mostly restates the title
+        # already shown above it. Its one distinct signal, the date prefix,
+        # is kept explicitly instead.
+        date = (item.get("created_at") or "")[:10]
+        lines.append(
+            f"- **{item['title']}** — {summary}\n"
+            f"  `{item['id']}` · {date} · {item['topic']} · {item['status']} · tools: {tools}"
+        )
+    lines.append("\n(call get_stash_note(id) for transcript, next step, why saved, and the permalink)")
+    return "\n".join(lines)
+
+
 @mcp.tool()
 def search_stash(
     query: str, topic: str = "", status: str = "", limit: int = 5
@@ -74,6 +118,10 @@ def search_stash(
     Use this at the START of any agent-building, automation, tooling, or research
     task, before proposing an approach — the user saves material intending to use
     it and reliably forgets it exists. Search first, mention what you find.
+
+    Returns compact hits (title, one-line summary, tools) — call
+    get_stash_note(id) on whichever one turns out to matter for the full
+    transcript, next step, and permalink.
 
     Args:
         query: Free text. Topic words, tool names, or a description of the problem.
@@ -86,7 +134,7 @@ def search_stash(
         rows = db.search_notes(
             conn, query, topic=topic or None, status=status or None, limit=limit
         )
-        return _render(db.rows_to_dicts(rows))
+        return _render_compact(db.rows_to_dicts(rows))
     finally:
         conn.close()
 
@@ -138,7 +186,7 @@ def recent_stash(limit: int = 10, status: str = "") -> str:
     conn = _conn()
     try:
         rows = db.recent_notes(conn, limit=limit, status=status or None)
-        return _render(db.rows_to_dicts(rows))
+        return _render_compact(db.rows_to_dicts(rows))
     finally:
         conn.close()
 
