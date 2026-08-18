@@ -24,7 +24,14 @@ import httpx
 from .config import CONFIG
 
 GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
-GROQ_MODEL = "whisper-large-v3-turbo"
+
+#: The full model, not -turbo. Groq's free tier gives both the identical quota
+#: (2,000 req/day, 7,200 audio-sec/hour), so turbo's speed/cost advantage buys
+#: nothing here — it exists to be cheaper at scale on a paid plan, and this is
+#: neither. Turbo is a pruned, fine-tuned distillation of this model built to
+#: trade a little accuracy for a lot of speed; at a few captures a day, there
+#: is no reason to take that trade for free.
+GROQ_MODEL = "whisper-large-v3"
 
 #: Below this mean volume we treat the track as silent. Muted reels are common
 #: and transcribing them wastes a request to produce hallucinated filler.
