@@ -56,7 +56,11 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("status", help="queue and vault health")
     sub.add_parser("topics", help="what you save most")
     sub.add_parser("doctor", help="check the toolchain and credentials")
-    sub.add_parser("reindex", help="rebuild the index from the markdown vault")
+    p_reindex = sub.add_parser("reindex", help="rebuild the index from the markdown vault")
+    p_reindex.add_argument(
+        "--no-embed", action="store_true",
+        help="skip vector embedding (keyword search only for this run)",
+    )
 
     p_used = sub.add_parser("used", help="mark a note as actually used")
     p_used.add_argument("note_id")
@@ -229,16 +233,44 @@ def _used(conn, args) -> int:
 
 
 def _reindex(conn, args) -> int:
-    """Rebuild the index from disk. The markdown is the source of truth."""
+    """Rebuild the index from disk. The markdown is the source of truth.
+
+    Backfills vector embeddings by default — upsert_note writes a chunk
+    whenever has_vectors(conn) is true, so this is a normal side effect, not a
+    separate step. The one thing worth calling out explicitly is the ~130MB
+    model download on first use: doing it here, at a command the user runs by
+    hand and can see progress on, is deliberate — the daemon downloading that
+    silently mid-capture would look like a hang, not a first-run cost.
+    """
+    if not args.no_embed:
+        from . import embed
+        if not embed.available():
+            print("(vector search unavailable this run — keyword search only; "
+                  "see `stash doctor`)")
+        elif conn.execute(  # is this the very first embed, i.e. worth a heads-up?
+            "SELECT 1 FROM meta WHERE key='embedding_model'"
+        ).fetchone() is None:
+            print("loading embedding model (one-time download, ~65MB)…")
+
+    # chunk_vec must be cleared explicitly, not just note. `chunk` cascades
+    # from `note` on delete, but chunk_vec is a virtual table with no FK
+    # support and does not — bulk-deleting every note here without also
+    # clearing chunk_vec leaves every old vector rowid sitting in the table,
+    # and since `chunk.id` is a plain (non-AUTOINCREMENT) rowid alias that
+    # SQLite is free to reuse, the very next chunk insert can collide with a
+    # leftover chunk_vec rowid and fail with "UNIQUE constraint failed" —
+    # hit exactly this running reindex for real, not hypothetically.
+    if db.has_vectors(conn):
+        conn.execute("DELETE FROM chunk_vec")
     conn.execute("DELETE FROM note")
     conn.commit()
-    count = 0
+    count = embedded = 0
     for path in sorted(CONFIG.vault_dir.glob("*.md")):
         front = vault.read_frontmatter(path)
         if not front:
             continue
         body = front.pop("_body", "")
-        db.upsert_note(conn, {
+        note = {
             "path": path.name,
             "title": front.get("title", path.stem),
             "summary": body.split("\n\n")[1] if "\n\n" in body else "",
@@ -253,9 +285,34 @@ def _reindex(conn, args) -> int:
             "permalink": front.get("url"),
             "source": front.get("source", ""),
             "status": front.get("status", "unused"),
-        })
+        }
+        # Only set the key when frontmatter actually has a date. upsert_note's
+        # setdefault('created_at', now()) only fires when the key is ABSENT,
+        # not when it's present-but-None — so leaving it out entirely (rather
+        # than setting it to None) is what preserves that fallback correctly.
+        # Without this, every reindex stamps every note with today's date,
+        # silently destroying real capture history. `captured` is date-only
+        # (YYYY-MM-DD); that's a valid ISO prefix, sorts correctly next to the
+        # full timestamps normal upserts write, and is all the frontmatter
+        # actually records.
+        if front.get("captured"):
+            note["created_at"] = front["captured"]
+        db.upsert_note(conn, note)
         count += 1
-    print(f"reindexed {count} note(s)")
+
+    if args.no_embed:
+        # Let the normal path run (it writes chunks whenever the connection has
+        # vectors, same as any other upsert) and clear the result afterward —
+        # simpler and less surprising than threading a bypass through
+        # has_vectors()/upsert_note() for what is a rarely-used debug flag.
+        if db.has_vectors(conn):
+            conn.execute("DELETE FROM chunk_vec")
+        conn.execute("DELETE FROM chunk")
+        conn.commit()
+    else:
+        embedded = conn.execute("SELECT COUNT(DISTINCT note_id) c FROM chunk").fetchone()["c"]
+
+    print(f"reindexed {count} note(s)" + (f", {embedded} embedded" if embedded else ""))
     return 0
 
 
@@ -294,6 +351,30 @@ def _doctor(conn, args) -> int:
         bool(CONFIG.groq_api_key),
         "free key at console.groq.com/keys -> GROQ_API_KEY in stash/.env",
     )
+
+    print("\nsearch:")
+    check("FTS5 keyword index", True)  # always present, part of core SCHEMA
+    vectors_ok = db.has_vectors(conn)
+    check(
+        "sqlite-vec (semantic search)", vectors_ok,
+        "pip install sqlite-vec — search will degrade to keyword-only without it",
+    )
+    if vectors_ok:
+        from . import embed
+        check(f"fastembed model ({embed.MODEL_NAME})", embed.available(),
+              "pip install fastembed")
+        if not db.embedding_model_matches(conn, embed.MODEL_NAME):
+            check("stored vectors match the configured model", False,
+                  "model changed since these were embedded — run `stash reindex` "
+                  "to re-embed, or every stored vector is being compared in the "
+                  "wrong space and results will be silently wrong")
+        total = conn.execute("SELECT COUNT(*) c FROM note").fetchone()["c"]
+        embedded = conn.execute(
+            "SELECT COUNT(DISTINCT note_id) c FROM chunk"
+        ).fetchone()["c"]
+        if total and embedded < total:
+            check(f"{embedded}/{total} notes embedded", False,
+                  "run `stash reindex` to embed the rest")
 
     print("\nqueue:")
     print(f"  {'remote (D1)' if CONFIG.uses_remote_queue else 'local SQLite'}"
