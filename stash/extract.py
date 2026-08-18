@@ -1,8 +1,13 @@
 """Turn captions, transcripts, and ordered visuals into an actionable note.
 
-Groq handles both stages: Qwen vision describes images in batches of at most
-five, then the same model produces the final JSON object. This keeps carousel
-order explicit and removes Claude usage from the processing path.
+Groq handles both stages: Qwen describes each image one at a time — see
+VISION_BATCH_SIZE for why that is 1 despite the API allowing more — then the
+same model produces the final JSON object. Both calls run with reasoning
+switched on (REASONING_EFFORT); this is a personal knowledge base doing a
+handful of captures a day, not a high-throughput service, so trading some
+speed for a pass that reliably reads what is actually on screen is the right
+default. This keeps carousel order explicit and removes Claude usage from the
+processing path.
 """
 
 from __future__ import annotations
@@ -23,15 +28,49 @@ from .config import CONFIG
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-#: A hard API limit, not a tuning choice — the model rejects a 4th image with
-#: "This model supports up to 3 images" (HTTP 400). Batching in `_describe_visuals`
-#: exists to work around it, so do not raise this hoping for fewer round trips.
+#: A hard API limit on how many images ONE request may contain — the model
+#: rejects a 4th with "This model supports up to 3 images" (HTTP 400). This is
+#: a ceiling, not the number we actually pack per request; see
+#: VISION_BATCH_SIZE below for why those are different numbers.
 MAX_IMAGES_PER_REQUEST = 3
 
-#: Longest edge images are scaled to before upload. Do not raise this.
+#: How many images actually go in one vision request. Deliberately 1, despite
+#: the API allowing up to 3.
 #:
-#: Two things were measured against the live API, and the second is
-#: counter-intuitive enough to be worth writing down:
+#: Measured on the same dense GitHub-repo frame that motivated this file's
+#: OCR tuning, holding image resolution, prompt, and reasoning all equal:
+#: sending it ALONE, the model transcribed all ten folder/file names correctly,
+#: twice, reliably. Sent as one of TWO images in a shared JSON response, the
+#: same frame's description dropped every folder name and became a generic
+#: "shows a file directory listing" — not because it ran out of tokens
+#: (`finish_reason: "stop"`, ~1300 of an 1800-token budget used), but because
+#: asking for N uniform items in one array measurably compresses per-item
+#: detail even when there is room to spare. One image per request avoids that
+#: compression entirely. It costs more requests, which is a real trade against
+#: the 8,000 TPM ceiling below — but at personal-project volume, a multi-frame
+#: reel taking an extra 30–60s beats a note that silently dropped the one
+#: detail the audio was withholding.
+VISION_BATCH_SIZE = 1
+
+#: Reasoning mode for every Groq call this module makes (vision AND the final
+#: structuring call — both run through the same `_groq_request`). Qwen on Groq
+#: only accepts "none" or "default"; "none" is non-thinking/fast-dialogue mode.
+#:
+#: This used to be "none", which was the actual cause of the OCR miss above —
+#: not resolution, not batching. With reasoning "none", the SAME single frame
+#: at the SAME 512px produced the vague, folder-name-free description; visibly
+#: switching the model into its <think> mode (leaving reasoning at its
+#: contract default with no override) is what let it read the dense file tree
+#: correctly and repeatably. "none" trades that away for speed, which is the
+#: wrong trade for a personal knowledge base processing a handful of saves a
+#: day: the whole point of the vision pass is reading text the audio
+#: deliberately withholds, so it should not be running in the mode that reads
+#: worst.
+REASONING_EFFORT = "default"
+
+#: Longest edge images are scaled to before upload.
+#:
+#: Two things were measured against the live API:
 #:
 #: 1. Token cost is **flat across resolution** — one image bills the same
 #:    prompt tokens at 512px, 768px and 1024px (804 on a simple frame, 818 on a
@@ -44,14 +83,27 @@ MAX_IMAGES_PER_REQUEST = 3
 #:    as "lb48564". The model downsamples internally either way; handing it a
 #:    clean ffmpeg resize beats making it do its own.
 #:
-#: Reading text the audio deliberately withholds is the highest-value thing
-#: this pass does, so this is tuned for OCR fidelity, not file size.
-#:
-#: Budget check: 3 images ≈ 2.4K tokens against a measured 8,000 TPM ceiling
-#: (`x-ratelimit-limit-tokens`), so a 5-slide carousel is two batches plus the
-#: final extraction call and fits inside a minute. `_groq_request` backs off on
-#: 429 for the cases that don't.
+#: Both measurements predate the REASONING_EFFORT fix above and hold up under
+#: it too — 512px + reasoning "default" + one image per request is what
+#: reliably reads a dense frame completely. Do not raise this expecting more
+#: detail; the two levers that actually mattered were reasoning and batching,
+#: not resolution.
 VISION_IMAGE_PX = 512
+
+#: Per-image vision budget. Measured completion at 512px + reasoning "default"
+#: on a dense frame: ~1274 tokens (headroom for the <think> block plus a full
+#: answer), comfortably under this with room for denser frames.
+VISION_MAX_TOKENS = 2000
+
+#: Budget check: at VISION_BATCH_SIZE=1, one image is roughly 800 prompt +
+#: ~1300 completion tokens ≈ 2.1K against a measured 8,000 TPM ceiling
+#: (`x-ratelimit-limit-tokens`) — about 3–4 images per minute before backing
+#: off. A 5-frame reel plus the final extraction call can span two or three
+#: TPM windows; `_groq_request` backs off on 429 for exactly that case. This
+#: is slower than the old batched approach, and that is the correct trade at
+#: personal-project volume: nothing here is time-critical, and the alternative
+#: is a faster note that silently dropped detail.
+FINAL_MAX_TOKENS = 4000
 
 TOPICS = [
     "agent-building", "automation", "tooling", "prompting", "rag",
@@ -201,10 +253,10 @@ def _chunks(values: list[T], size: int) -> list[list[T]]:
 
 def _describe_visuals(frames: list[Path], labels: list[str]) -> list[str]:
     notes: list[str] = []
-    for start in range(0, len(frames), MAX_IMAGES_PER_REQUEST):
+    for start in range(0, len(frames), VISION_BATCH_SIZE):
         notes.extend(_describe_batch(
-            frames[start:start + MAX_IMAGES_PER_REQUEST],
-            labels[start:start + MAX_IMAGES_PER_REQUEST],
+            frames[start:start + VISION_BATCH_SIZE],
+            labels[start:start + VISION_BATCH_SIZE],
             start=start + 1,
         ))
     return notes
@@ -230,7 +282,9 @@ def _describe_batch(frames: list[Path], labels: list[str], *, start: int) -> lis
             "type": "image_url",
             "image_url": {"url": f"data:{mime};base64,{encoded}", "detail": "low"},
         })
-    payload = _groq_request([{"role": "user", "content": content}], max_tokens=640)
+    payload = _groq_request(
+        [{"role": "user", "content": content}], max_tokens=VISION_MAX_TOKENS
+    )
     items = payload.get("items") if isinstance(payload, dict) else None
     if not isinstance(items, list) or len(items) != len(frames):
         raise ExtractError("groq vision returned the wrong number of visual descriptions")
@@ -271,7 +325,7 @@ def _extract_groq(
     payload = _groq_request([
         {"role": "system", "content": system},
         {"role": "user", "content": prompt},
-    ], max_tokens=2048)
+    ], max_tokens=FINAL_MAX_TOKENS)
     if "title" not in payload:
         raise ExtractError("groq extraction returned JSON without a title")
     return _coerce(payload)
@@ -339,15 +393,29 @@ def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[st
                 "model": CONFIG.extract_model,
                 "messages": messages,
                 "response_format": {"type": "json_object"},
-                "reasoning_effort": "none",
+                "reasoning_effort": REASONING_EFFORT,
                 "temperature": 0.1,
                 "max_completion_tokens": max_tokens,
             },
             timeout=300,
         )
-        if response.status_code != 429 or attempt == 2:
-            break
-        time.sleep(_retry_delay(response))
+        if response.status_code == 429 and attempt < 2:
+            time.sleep(_retry_delay(response))
+            continue
+        # Observed live: an occasional 400 "json_validate_failed" with an
+        # EMPTY failed_generation — not a malformed request (the identical
+        # payload succeeds on immediate retry), so this reads as a transient
+        # hiccup in the reasoning model rather than anything wrong with what
+        # we sent. A real schema mismatch would carry the bad output in
+        # failed_generation and would not be worth retrying; an empty one is
+        # cheap to retry and has recovered every time it's been seen.
+        if response.status_code == 400 and attempt < 2:
+            try:
+                if not response.json().get("error", {}).get("failed_generation"):
+                    continue
+            except (ValueError, AttributeError):
+                pass
+        break
     assert response is not None
     _log_rate_limit(response)
     if response.status_code != 200:
