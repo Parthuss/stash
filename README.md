@@ -210,17 +210,44 @@ while .venv/bin/python -m stash process --limit 1 | grep -q wrote; do sleep 45; 
 
 This is the part that decides whether you still use it in a month.
 
-**MCP server** — `.venv/bin/python -m stash.mcp_server`. Register it and Claude
-gets `search_stash`, `get_stash_note`, `list_stash_topics`, `recent_stash`,
-`mark_stash_used`.
+**MCP server** — `stash/mcp_server.py`, registered at **user** scope:
 
-**Claude Code skill** — `../.claude/skills/stash-recall/`, already in place. It's
-written to fire when you *start* technical work, not when you ask it to search,
-because you will never think to ask.
+```bash
+claude mcp add --scope user stash -- /path/to/stash/.venv/bin/python -m stash.mcp_server
+```
+
+User scope, not project scope — it's connected in every Claude Code session
+regardless of which repo you're in, not only inside this one. Gives Claude
+`search_stash`, `get_stash_note`, `list_stash_topics`, `recent_stash`,
+`mark_stash_used`. `search_stash` returns compact hits (short id, title,
+one-line summary, tools) to keep it cheap to call often; `get_stash_note`
+pulls full detail — transcript, next step, permalink — for whichever hit
+turns out to matter.
+
+**Claude Code skill** — `~/.claude/skills/stash-recall/`, also user scope and
+for the same reason: the material in the vault isn't specific to any one
+project, so the skill needs to fire wherever you happen to be working. It's
+written to trigger when you *start* technical work, not when you ask it to
+search, because you will never think to ask.
 
 **`mark_stash_used`** looks optional and isn't. `used` vs `unused` is the only
 measure of whether this is a knowledge base or a graveyard. If nothing is ever
 marked used after a month, change how recall works rather than filing more notes.
+
+**Search is hybrid** — FTS5 (exact tokens: a repo name, a product name) fused
+with local vector search (meaning) via weighted Reciprocal Rank Fusion. Plain
+keyword search alone missed things by paraphrase: *"how do I make videos
+automatically"* ranked the two notes actually about generating video 6th and
+8th, behind a WhatsApp chatbot, because BM25 has no notion that "automatically"
+and "generation" are related ideas. Embeddings run locally via
+[fastembed](https://github.com/qdrant/fastembed) + `BAAI/bge-small-en-v1.5` (no
+API key, no network, no PyTorch) and RRF fusion runs through
+[sqlite-vec](https://github.com/asg017/sqlite-vec) inside the same SQLite file
+as everything else — no separate vector database. Degrades to keyword-only,
+with a one-time warning, if either is unavailable; a capture can never fail
+over search infrastructure. `stash doctor` reports vector status and flags if
+stored vectors were embedded under a different model than the one currently
+configured.
 
 ## How the frame gate works
 
