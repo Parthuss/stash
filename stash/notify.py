@@ -140,7 +140,12 @@ def notify(notification: Notification, *, verbose: bool = True) -> bool:
             else:
                 continue
             if verbose and candidate != backend:
-                print(f"  notified via {candidate} (fallback)", flush=True)
+                # The primary backend didn't just get skipped — it threw. That's
+                # worth seeing even though delivery still succeeded, or the next
+                # person to debug "why is it always falling back" has nothing to
+                # go on but a guess (see notify.py's own module docstring).
+                print(f"  notified via {candidate} (fallback) — primary failed: "
+                      f"{'; '.join(errors)}", flush=True)
             return True
         except Exception as exc:  # noqa: BLE001 — try the next backend
             errors.append(f"{candidate}: {exc}")
