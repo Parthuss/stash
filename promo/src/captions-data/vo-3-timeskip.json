@@ -1,0 +1,16 @@
+[
+  {
+    "text": "Days",
+    "startMs": 380,
+    "endMs": 680,
+    "timestampMs": 640,
+    "confidence": 1
+  },
+  {
+    "text": " later.",
+    "startMs": 680,
+    "endMs": 2000,
+    "timestampMs": 1020,
+    "confidence": 0.999954
+  }
+]

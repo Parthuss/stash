@@ -1,0 +1,79 @@
+[
+  {
+    "text": "One",
+    "startMs": 300,
+    "endMs": 320,
+    "timestampMs": 520,
+    "confidence": 0.763007
+  },
+  {
+    "text": " share",
+    "startMs": 320,
+    "endMs": 790,
+    "timestampMs": 780,
+    "confidence": 0.593144
+  },
+  {
+    "text": " to",
+    "startMs": 790,
+    "endMs": 1000,
+    "timestampMs": 960,
+    "confidence": 0.980696
+  },
+  {
+    "text": " Stash,",
+    "startMs": 1000,
+    "endMs": 1680,
+    "timestampMs": 1320,
+    "confidence": 0.589008
+  },
+  {
+    "text": " and",
+    "startMs": 1680,
+    "endMs": 1800,
+    "timestampMs": 1760,
+    "confidence": 0.748198
+  },
+  {
+    "text": " it's",
+    "startMs": 1800,
+    "endMs": 2000,
+    "timestampMs": 1860,
+    "confidence": 0.973428
+  },
+  {
+    "text": " already",
+    "startMs": 2000,
+    "endMs": 2180,
+    "timestampMs": 2120,
+    "confidence": 0.98334
+  },
+  {
+    "text": " transcribed,",
+    "startMs": 2180,
+    "endMs": 3120,
+    "timestampMs": 2660,
+    "confidence": 0.95619
+  },
+  {
+    "text": " tagged,",
+    "startMs": 3120,
+    "endMs": 3720,
+    "timestampMs": 3540,
+    "confidence": 0.748002
+  },
+  {
+    "text": " filed",
+    "startMs": 3720,
+    "endMs": 3910,
+    "timestampMs": 3940,
+    "confidence": 0.807667
+  },
+  {
+    "text": " away.",
+    "startMs": 3910,
+    "endMs": 4500,
+    "timestampMs": 4220,
+    "confidence": 0.994268
+  }
+]

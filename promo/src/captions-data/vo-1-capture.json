@@ -1,0 +1,86 @@
+[
+  {
+    "text": "You",
+    "startMs": 250,
+    "endMs": 330,
+    "timestampMs": 420,
+    "confidence": 0.918569
+  },
+  {
+    "text": " save",
+    "startMs": 330,
+    "endMs": 590,
+    "timestampMs": 660,
+    "confidence": 0.990735
+  },
+  {
+    "text": " a",
+    "startMs": 590,
+    "endMs": 670,
+    "timestampMs": 820,
+    "confidence": 0.992048
+  },
+  {
+    "text": " reel,",
+    "startMs": 670,
+    "endMs": 1260,
+    "timestampMs": 1040,
+    "confidence": 0.870401
+  },
+  {
+    "text": " mid-scroll,",
+    "startMs": 1260,
+    "endMs": 2160,
+    "timestampMs": 1460,
+    "confidence": 0.825167
+  },
+  {
+    "text": " telling",
+    "startMs": 2160,
+    "endMs": 2480,
+    "timestampMs": 2400,
+    "confidence": 0.673564
+  },
+  {
+    "text": " yourself",
+    "startMs": 2480,
+    "endMs": 2880,
+    "timestampMs": 2760,
+    "confidence": 0.979165
+  },
+  {
+    "text": " you'll",
+    "startMs": 2880,
+    "endMs": 3000,
+    "timestampMs": 2960,
+    "confidence": 0.793615
+  },
+  {
+    "text": " come",
+    "startMs": 3000,
+    "endMs": 3330,
+    "timestampMs": 3220,
+    "confidence": 0.974332
+  },
+  {
+    "text": " back",
+    "startMs": 3330,
+    "endMs": 3650,
+    "timestampMs": 3420,
+    "confidence": 0.980234
+  },
+  {
+    "text": " to",
+    "startMs": 3650,
+    "endMs": 3800,
+    "timestampMs": 3640,
+    "confidence": 0.998662
+  },
+  {
+    "text": " it.",
+    "startMs": 3800,
+    "endMs": 4080,
+    "timestampMs": 3840,
+    "confidence": 0.999668
+  }
+]

@@ -1,0 +1,100 @@
+[
+  {
+    "text": "Capture",
+    "startMs": 300,
+    "endMs": 440,
+    "timestampMs": 640,
+    "confidence": 0.908282
+  },
+  {
+    "text": " that",
+    "startMs": 440,
+    "endMs": 690,
+    "timestampMs": 920,
+    "confidence": 0.990444
+  },
+  {
+    "text": " survives",
+    "startMs": 690,
+    "endMs": 1190,
+    "timestampMs": 1360,
+    "confidence": 0.982727
+  },
+  {
+    "text": " you",
+    "startMs": 1190,
+    "endMs": 1370,
+    "timestampMs": 1560,
+    "confidence": 0.992941
+  },
+  {
+    "text": " forgetting.",
+    "startMs": 1370,
+    "endMs": 2200,
+    "timestampMs": 1980,
+    "confidence": 0.990189
+  },
+  {
+    "text": " Recall",
+    "startMs": 2200,
+    "endMs": 2660,
+    "timestampMs": 2780,
+    "confidence": 0.997257
+  },
+  {
+    "text": " that",
+    "startMs": 2660,
+    "endMs": 2800,
+    "timestampMs": 3040,
+    "confidence": 0.988365
+  },
+  {
+    "text": " doesn't",
+    "startMs": 2800,
+    "endMs": 3220,
+    "timestampMs": 3240,
+    "confidence": 0.975208
+  },
+  {
+    "text": " wait",
+    "startMs": 3220,
+    "endMs": 3480,
+    "timestampMs": 3440,
+    "confidence": 0.995165
+  },
+  {
+    "text": " to",
+    "startMs": 3480,
+    "endMs": 3580,
+    "timestampMs": 3580,
+    "confidence": 0.997893
+  },
+  {
+    "text": " be",
+    "startMs": 3580,
+    "endMs": 3700,
+    "timestampMs": 3740,
+    "confidence": 0.999336
+  },
+  {
+    "text": " asked.",
+    "startMs": 3700,
+    "endMs": 4200,
+    "timestampMs": 4100,
+    "confidence": 0.997253
+  },
+  {
+    "text": " That's",
+    "startMs": 4200,
+    "endMs": 4850,
+    "timestampMs": 4700,
+    "confidence": 0.995497
+  },
+  {
+    "text": " Stash.",
+    "startMs": 4850,
+    "endMs": 5700,
+    "timestampMs": 5060,
+    "confidence": 0.860981
+  }
+]
