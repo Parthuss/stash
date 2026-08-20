@@ -17,3 +17,12 @@ worker/.wrangler/
 *.egg-info/
 .stash-daemon-state.json
 .stash-daemon.log
+
+# promo/ (Remotion video project)
+promo/node_modules/
+promo/whisper.cpp/
+promo/tts/.venv/
+promo/tts/__pycache__/
+promo/captions/out/
+promo/out/
+promo/real-footage/
