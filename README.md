@@ -10,7 +10,7 @@ while you work.
 
 ```
 share sheet ─┐
-IG DM webhook ┼─► /ingest ─► queue ─► fetch ─► transcribe ─► frame gate ─► extract ─► vault/*.md + FTS5
+             ├─► /ingest ─► queue ─► fetch ─► transcribe ─► frame gate ─► extract ─► vault/*.md + FTS5
 data export ─┘                                                                              │
                                                             Claude Code skill · MCP · weekly digest ◄┘
 ```
@@ -42,8 +42,7 @@ ship blank on purpose. Public reels download fine anonymously; measured on real
 saved posts in August 2026, metadata and full video+audio both came back with no
 session at all.
 
-This contradicts a lot of writing on the subject, including several open yt-dlp
-issues, so check before believing either side:
+Verify it yourself before trusting this:
 
 ```bash
 yt-dlp --skip-download --print "%(id)s | %(uploader)s" "https://www.instagram.com/reel/XXXX/"
@@ -108,8 +107,8 @@ Put the deployed URL and the same secret into `.env` as `STASH_WORKER_URL` and
 `STASH_SECRET`. Everything downstream switches to the remote queue on its own.
 
 Free tier throughout: Workers 100k req/day, D1 5 GB. **No R2 and therefore no
-payment method** — R2 is the one product here that asks for a card, and it is
-only needed for the Phase-2 DM webhook, so it is left unconfigured.
+payment method** — R2 is the one product here that asks for a card, and
+nothing currently running needs it, so it is left unconfigured.
 
 ### 2. Build and install the Shortcut
 
@@ -163,28 +162,6 @@ depends on anything.
 
 The old iCloud-file path (`shortcuts/Stash-icloud.cherri` + `stash watch`) still
 works and needs no accounts at all, if you'd rather have zero infrastructure.
-
-## Instagram DMs (Phase 2)
-
-**You do not need App Review.** Review exists so an app can serve *other
-people's* accounts. You are the only user, so a Meta app in **Development Mode**
-with your own creator account as owner/tester delivers live `messages` webhooks
-indefinitely on Standard Access. No business verification, no Facebook Page —
-Instagram Login hasn't needed one since 2024.
-
-1. Receiving account → Professional/Creator.
-2. Meta app → **Instagram API with Instagram Login**.
-3. Permissions: `instagram_business_basic`, `instagram_business_manage_messages`.
-4. Webhook field `messages`, callback `https://<worker>.workers.dev/webhook/ig`.
-5. `wrangler secret put IG_VERIFY_TOKEN` and `IG_APP_SECRET`.
-
-The Worker verifies `X-Hub-Signature-256` on every POST — the endpoint is public,
-so an unsigned body must not be able to write to your queue.
-
-One sharp edge worth knowing: Meta's docs say only the media URL is included when
-someone shares a post, so you often get **no permalink**. The Worker reconstructs
-one from the media id and records `permalink_verified: false` in the note rather
-than pretending it's authoritative.
 
 ## Backfilling your existing saves
 
