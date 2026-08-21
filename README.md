@@ -8,7 +8,7 @@ never triage it, and nothing surfaces it when it would be useful. This is not a
 bookmarking tool. It transcribes what you saved and hands it back unprompted
 while you work.
 
-https://github.com/Parthuss/stash/raw/main/docs/demo.mp4
+https://github.com/user-attachments/assets/14edb1e5-5f7a-46ea-96dd-a7c2c51c223e
 
 ```
 share sheet ─┐
