@@ -142,6 +142,7 @@ def test_notify_never_raises_into_the_pipeline(monkeypatch):
 
     _configure(monkeypatch, notify_backend="ntfy", ntfy_topic="t")
     monkeypatch.setattr(notify, "send_ntfy", explode)
+    monkeypatch.setattr(notify, "send_imessage", explode)
     assert notify.notify(notify.for_success("a note"), verbose=False) is False
 
 
