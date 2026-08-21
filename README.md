@@ -8,6 +8,8 @@ never triage it, and nothing surfaces it when it would be useful. This is not a
 bookmarking tool. It transcribes what you saved and hands it back unprompted
 while you work.
 
+https://github.com/Parthuss/stash/raw/main/docs/demo.mp4
+
 ```
 share sheet ─┐
              ├─► /ingest ─► queue ─► fetch ─► transcribe ─► frame gate ─► extract ─► vault/*.md + FTS5
