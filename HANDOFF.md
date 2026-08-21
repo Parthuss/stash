@@ -1,6 +1,6 @@
 # Stash — handoff
 
-Written 2026-08-20, last updated 2026-08-20. Everything in this file was checked
+Written 2026-08-20, last updated 2026-08-21. Everything in this file was checked
 live against the running system, not recalled from memory — commands to
 re-verify each claim are included so a new session can trust or re-check
 anything here in seconds.
@@ -21,19 +21,22 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
-## Current state — verified 2026-08-20
+## Current state — verified 2026-08-21
 
 ```
 tests:     97 passing (.venv/bin/python -m pytest tests/ -q)
-git:       CASE_STUDY.md, HANDOFF.md, and docs/case-study-assets/ are staged
-           but not committed — 15 commits on master otherwise, no remote configured
-vault:     19 notes, all embedded (hybrid search fully indexed)
+git:       public on GitHub — github.com/Parthuss/stash, clean working tree,
+           HEAD 7d78def. Verified: no .env, no vault/, no real API key or
+           contact/phone data anywhere in commit history, not just HEAD.
+vault:     23 notes, all embedded (hybrid search fully indexed)
 worker:    https://stash.parthus.workers.dev — healthy, deployed, current
 daemon:    running under launchd (com.stash.daemon), polling every 15-90s,
            confirmed running CURRENT code as of this update (see the gotcha below)
 mcp:       'stash' server registered at user scope, connected
 skill:     ~/.claude/skills/stash-recall/ (global, fires in any project)
 doctor:    all green (.venv/bin/python -m stash doctor)
+promo/:    a 37s demo video exists — see its own section below, this is a
+           separate Remotion project inside the repo, not part of the pipeline
 ```
 
 Re-verify any of this:
@@ -44,6 +47,7 @@ cd /Users/parthus/Work/Experiment/stash
 .venv/bin/python -m stash status
 curl -s https://stash.parthus.workers.dev/health
 claude mcp list
+git -C . remote -v && git -C . log --oneline -1
 ```
 
 ## ⚠️ The one operational gotcha that will bite you
@@ -95,7 +99,7 @@ git HEAD." If you build one, that's a good use of five minutes.
    stash/mcp_server.py    → 5 tools, registered at user scope
    ~/.claude/skills/stash-recall/  → fires proactively, any project
    stash/db.py search_notes()      → hybrid: FTS5 + sqlite-vec, weighted RRF
-   stash/notify.py                 → ntfy push when a capture finishes (or fails)
+   stash/notify.py                 → iMessage when a capture finishes (or fails)
 ```
 
 ## Hard-won findings — do not re-litigate these without re-measuring
@@ -149,6 +153,17 @@ it.
    directly; it widens the margin over off-target results, so `stash/embed.py`
    applies it explicitly.
 
+8. **Large sustained downloads over Node's HTTP/2 client fail on this
+   machine; plain `curl` over HTTP/1.1 doesn't.** Hit this getting whisper.cpp's
+   1.5GB model — Node's undici reset the connection with `ECONNRESET` at
+   30-50% three times in a row, while `curl --http1.1` pulled the same URL in
+   100MB chunks at ~6MB/s with zero resets. Not whisper-specific — this is
+   about the runtime's HTTP client on this machine, not the file. If any
+   future large download (another model, a big asset) starts failing
+   partway through in Node, don't assume the server or the file is bad —
+   try `curl -L --http1.1 -C -` to the same URL before spending time
+   elsewhere.
+
 ## What's real vs. what's legacy in the file tree
 
 **Primary path (this is what's actually running):**
@@ -173,6 +188,47 @@ Neither legacy path is broken, and both have real tests
 (`tests/test_local_receiver.py`). They're just not what real captures flow
 through today. Safe to ignore unless you're specifically working on
 resilience-without-a-Worker.
+
+## promo/ — the demo video
+
+A separate Remotion project living inside this repo (`promo/`), not part of
+the capture/recall pipeline. Built this session, 37s vertical (1080×1920),
+final render at `promo/out/stash-promo.mp4` (gitignored — regenerate, don't
+expect it to exist after a fresh clone).
+
+**What's real vs. composed**, in order:
+1. First ~10s is an actual screen recording (`promo/public/capture.mp4`) of
+   sharing a real reel to Stash — contacts and faces blurred with ffmpeg
+   before the footage touched anything else. The unblurred original never
+   left the machine it was recorded on and isn't in git.
+2. Voiceover is [Kokoro-82M](https://github.com/hexgrad/kokoro), run fully
+   local (`promo/tts/generate_voiceover.py`), one WAV per scene so narration
+   timing tracks the cut regardless of how fast a line reads.
+3. Captions are word-level whisper.cpp timestamps
+   (`promo/captions/transcribe.mjs`) rendered through Remotion's own
+   `@remotion/captions`, same approach as their official `template-tiktok`.
+   Only 3 of 5 scenes carry them — the other 2 already show on-screen text
+   that says nearly the same thing the narration does, so captions there
+   would just duplicate it.
+4. The Claude Code terminal, notification banners, and the recall moment are
+   Remotion components built to match the real UI, not screen-recorded —
+   they show something that hasn't happened yet (a future recall), so they
+   can't be.
+
+**Rebuilding it from a fresh clone:**
+```bash
+cd promo && npm install
+npm run dev                                    # scrub in Remotion Studio
+npx remotion render StashPromo out/stash-promo.mp4
+```
+Voiceover and captions do NOT regenerate as part of a normal render — the
+generated output already lives in `promo/public/*.wav` and
+`promo/src/captions-data/*.json`, both tracked in git. Only touch
+`generate_voiceover.py` / `transcribe.mjs` if you're changing the actual
+script.
+
+No new secrets anywhere in this — Kokoro and whisper.cpp both run fully
+local, no API key involved.
 
 ## Credentials — what's set, where, how to check without exposing values
 
@@ -203,7 +259,11 @@ in sync.
    handles Meta's subscription challenge) but needs `IG_VERIFY_TOKEN` and
    `IG_APP_SECRET` from a registered Meta app — neither is set. Today, capture
    only happens via the explicit share-sheet Shortcut, not by DMing yourself a
-   reel the way the original idea envisioned.
+   reel the way the original idea envisioned. As of 2026-08-21 the README no
+   longer documents this as a setup step — it was pulled deliberately
+   (repo is public now; documenting an inactive feature as ready-to-configure
+   was misleading). The code stays, still commented `(Phase 2)` inline. Add
+   the README section back when this actually gets activated, not before.
 
 2. **Weekly digest was planned, never built.** No code exists for it. The
    `mcp__scheduled-tasks__create_scheduled_task` tool was the intended
@@ -238,6 +298,16 @@ in sync.
    quotes), not dev-relevant. If asked to "import everything," check with the
    user first; this was a considered choice, not an oversight.
 
+7. **The promo video has no background music, on purpose.** Discussed adding
+   an instrumental bed ducked under the Kokoro voiceover; user decided
+   against it after hearing one candidate track. Not a gap to silently fix —
+   if this comes up again, it was a considered no, not an oversight.
+
+8. **Repo went public 2026-08-21** at github.com/Parthuss/stash. Distribution
+   (Instagram post, cross-posting, a comment-to-DM funnel via ManyChat) was
+   discussed but not built — the video and repo exist, nothing has been
+   posted publicly yet as of this writing.
+
 ## How to resume work in a new session
 
 1. Run the verification block at the top of this file. If anything's red, fix
@@ -255,3 +325,8 @@ in sync.
    `get_stash_note`, `recent_stash`, `list_stash_topics`, `mark_stash_used`.
    Use `recent_stash` first to see what's actually in the vault right now
    rather than trusting this document's snapshot.
+6. Working in `promo/`: `node_modules`, the whisper.cpp build + model
+   (~2GB), and the Python venv under `promo/tts/` are all gitignored —
+   `npm install` first, and if you need to regenerate captions, see the
+   curl-vs-Node-HTTP/2 finding above before you burn time on a mysterious
+   download failure.
