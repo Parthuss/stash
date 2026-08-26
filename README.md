@@ -17,29 +17,52 @@ data export ─┘                                                              
                                                             Claude Code skill · MCP · weekly digest ◄┘
 ```
 
-## Setup
+## Try it (5 minutes)
+
+The whole pipeline, no phone and no Cloudflare required yet — just a free
+[Groq key](https://console.groq.com/keys) (Groq Whisper transcribes
+reel/video audio; `qwen/qwen3.6-27b` reads posts, carousels, and reel frames
+into the final JSON note; no Claude call happens while processing).
 
 ```bash
-cd stash
-/opt/homebrew/bin/python3.12 -m venv .venv
-.venv/bin/pip install -e ".[mcp]"
-cp .env.example .env
-.venv/bin/python -m stash doctor
+git clone https://github.com/Parthuss/stash && cd stash
+bash install.sh   # Homebrew deps, venv, pip install, .env, prompts for the Groq key
 ```
 
-`doctor` names anything missing and the exact command to fix it. Three things
-matter:
+Skipped the key prompt? Add `GROQ_API_KEY=...` to `.env` and re-run
+`.venv/bin/python -m stash doctor` — it names anything still missing and the
+exact command to fix it. For transcription-only offline (no vision/extraction
+fallback), `.venv/bin/pip install -e ".[local-whisper]"`.
 
-**1. `brew install ffmpeg yt-dlp`**
+```bash
+.venv/bin/python -m stash add "https://www.instagram.com/reel/..." -n "why I saved it" --process
+.venv/bin/python -m stash search "agent memory"
+```
 
-**2. A Groq key.** Get one at
-[console.groq.com/keys](https://console.groq.com/keys) and put it in `.env`.
-Groq Whisper transcribes reel/video audio; `qwen/qwen3.6-27b` reads static posts,
-carousel slides, and selected reel frames, then returns the final JSON note.
-No Claude call is made while processing. For transcription only, the offline
-alternative remains `.venv/bin/pip install -e ".[local-whisper]"`.
+Notes land in `vault/` as markdown with YAML frontmatter — that's the durable
+artifact, `stash.sqlite` is a derived index `stash reindex` rebuilds from disk.
 
-**3. Instagram cookies — you probably don't need any.** Both cookie settings
+Then wire up recall so Claude finds these on its own instead of you having to
+search:
+
+```bash
+claude mcp add --scope user stash -- /path/to/stash/.venv/bin/python -m stash.mcp_server
+cp -r stash-recall ~/.claude/skills/stash-recall
+```
+
+User scope on both, not project scope — connected in every Claude Code
+session regardless of which repo you're in. Gives Claude `search_stash`,
+`get_stash_note`, `list_stash_topics`, `recent_stash`, `mark_stash_used`, and
+the skill fires proactively when you *start* related work, not only when you
+ask it to search — see [Recall](#recall) below for how that's built.
+
+That's the whole loop: save something, ask Claude about it later, watch it
+already know. Everything past here is optional — capturing from your phone
+instead of `stash add`, and the internals if you want them.
+
+### Instagram cookies — you probably don't need any
+
+Both cookie settings
 ship blank on purpose. Public reels download fine anonymously; measured on real
 saved posts in August 2026, metadata and full video+audio both came back with no
 session at all.
@@ -74,17 +97,8 @@ slide; Groq's per-request image limit is handled automatically in ordered
 batches. Mixed carousels also transcribe each video slide. Reels keep the
 existing Whisper plus selective-frame path.
 
-## Use it
-
-```bash
-.venv/bin/python -m stash add "https://www.instagram.com/reel/..." -n "why I saved it"
-.venv/bin/python -m stash process
-.venv/bin/python -m stash search "agent memory"
-.venv/bin/python -m stash status
-```
-
-Notes land in `vault/` as markdown with YAML frontmatter. That's the durable
-artifact — the SQLite index is derived and `stash reindex` rebuilds it from disk.
+`add` without `--process` just queues — run `stash process` whenever, and
+`stash status` for queue/vault health.
 
 ## Capture from your phone
 
@@ -187,27 +201,23 @@ while .venv/bin/python -m stash process --limit 1 | grep -q wrote; do sleep 45; 
 
 ## Recall
 
-This is the part that decides whether you still use it in a month.
+This is the part that decides whether you still use it in a month. Both
+pieces get installed in [Try it](#try-it-5-minutes) above — this is what
+they actually do.
 
-**MCP server** — `stash/mcp_server.py`, registered at **user** scope:
+**MCP server** — `stash/mcp_server.py`, user scope: connected in every
+Claude Code session regardless of which repo you're in, not only inside this
+one. Gives Claude `search_stash`, `get_stash_note`, `list_stash_topics`,
+`recent_stash`, `mark_stash_used`. `search_stash` returns compact hits (short
+id, title, one-line summary, tools) to keep it cheap to call often;
+`get_stash_note` pulls full detail — transcript, next step, permalink — for
+whichever hit turns out to matter.
 
-```bash
-claude mcp add --scope user stash -- /path/to/stash/.venv/bin/python -m stash.mcp_server
-```
-
-User scope, not project scope — it's connected in every Claude Code session
-regardless of which repo you're in, not only inside this one. Gives Claude
-`search_stash`, `get_stash_note`, `list_stash_topics`, `recent_stash`,
-`mark_stash_used`. `search_stash` returns compact hits (short id, title,
-one-line summary, tools) to keep it cheap to call often; `get_stash_note`
-pulls full detail — transcript, next step, permalink — for whichever hit
-turns out to matter.
-
-**Claude Code skill** — `~/.claude/skills/stash-recall/`, also user scope and
-for the same reason: the material in the vault isn't specific to any one
-project, so the skill needs to fire wherever you happen to be working. It's
-written to trigger when you *start* technical work, not when you ask it to
-search, because you will never think to ask.
+**Claude Code skill** — `stash-recall/`, also user scope and for the same
+reason: the material in the vault isn't specific to any one project, so the
+skill needs to fire wherever you happen to be working. It's written to
+trigger when you *start* technical work, not when you ask it to search,
+because you will never think to ask.
 
 **`mark_stash_used`** looks optional and isn't. `used` vs `unused` is the only
 measure of whether this is a knowledge base or a graveyard. If nothing is ever
@@ -260,6 +270,8 @@ the live API rather than assumed:
 ## Layout
 
 ```
+install.sh        Homebrew deps, venv, pip install, .env, Groq key prompt
+stash-recall/     the Claude Code skill — copy to ~/.claude/skills/
 stash/
   config.py       env + paths
   db.py           capture queue + FTS5 note index

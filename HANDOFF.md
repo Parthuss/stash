@@ -254,6 +254,16 @@ in sync.
 
 ## Known gaps — real, not hypothetical TODOs
 
+0. ~~Fresh clone was actually broken.~~ **Resolved 2026-08-26** —
+   `worker/wrangler.toml` had the author's real D1 `database_id` hardcoded
+   (anyone deploying got pointed at a database they couldn't access), and
+   `stash-recall/` — the whole point of the project — was referenced in the
+   README but never committed, so recall couldn't be set up by anyone but
+   the original author. Both fixed. Also added `install.sh` (collapses
+   Homebrew/venv/pip/`.env`/Groq-key setup into one command) and split the
+   README into a 5-minute try-it path vs. the phone-capture section, since
+   18 manual steps up front was losing people before they saw it work.
+
 1. **Phase 2 (Instagram DM webhook) is code-complete but not activated.**
    `worker/src/index.ts` has `/webhook/ig` fully implemented (HMAC-verified,
    handles Meta's subscription challenge) but needs `IG_VERIFY_TOKEN` and
