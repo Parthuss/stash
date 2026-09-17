@@ -85,7 +85,7 @@ class Config:
     ).expanduser()
 
     #: Vision + structured extraction model. It supports images and JSON mode.
-    extract_model: str = os.environ.get("STASH_EXTRACT_MODEL", "qwen/qwen3.6-27b")
+    extract_model: str = os.environ.get("STASH_EXTRACT_MODEL", "qwen/qwen3.8-27b")
 
     #: Where `stash daemon` writes its heartbeat (pid, last poll, last result).
     #: `stash doctor` reads this to answer "is it actually running?" — the
