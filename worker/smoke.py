@@ -124,4 +124,11 @@ c.post("/v1/ingest", headers=vh, json={"url": "https://www.instagram.com/reel/VI
 assert c.post(f"/admin/users/{victim['id']}/revoke", headers=adm).json() == {"ok": True}
 assert c.get("/v1/notes", headers=vh).status_code == 401
 assert c.post(f"/admin/users/{victim['id']}/revoke").status_code == 401
+# ---- admin overview: owner only ----
+ov = c.get("/v1/admin/overview", headers=own); assert ov.status_code == 200, ov.text
+body = ov.json(); assert {"overview", "users"} <= body.keys() and any(u["name"] == "owner" for u in body["users"])
+assert "own_key" in body["users"][0] and "waiting" in body["overview"]
+assert c.get("/v1/admin/overview", headers=h(ann)).status_code == 404     # users can't even see it exists
+assert c.get("/v1/admin/overview").status_code == 401
+ann_row = next(u for u in body["users"] if u["name"] == "ann"); assert ann_row["last_seen"]
 print("ALL OK")

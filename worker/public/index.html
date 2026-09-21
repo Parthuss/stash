@@ -136,7 +136,16 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 
 
 /* setup / onboarding */
-#setup { display: none; }
+#setup, #admin { display: none; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 6px 0 16px; }
+.stat { background: rgb(255 255 255 / .88); border-radius: 22px; padding: 14px 16px; box-shadow: var(--lift-1); }
+.stat b { display: block; font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 13px; }
+.ucard { background: rgb(255 255 255 / .88); border-radius: 24px; padding: 16px 18px; box-shadow: var(--lift-1); margin: 10px 0; }
+.ucard header { position: static; padding: 0; display: flex; align-items: center; gap: 10px; background: none; }
+.ucard h3 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0; flex: 1; }
+.ucard dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 12px; margin: 12px 0 0; }
+.ucard dt { color: var(--muted); font-size: 12px; } .ucard dd { margin: 0; font-weight: 600; }
 .setup-head { padding: 22px 0 8px; }
 .setup-head h1 { font-family: var(--display); font-weight: 400; font-size: 40px; line-height: 1.05; margin: 12px 0 6px; letter-spacing: -.02em; }
 .setup-head p { color: var(--muted); margin: 0 0 6px; }
@@ -147,6 +156,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .group summary small { display: block; color: var(--muted); font-family: var(--ui); font-size: 14px; margin-top: 2px; }
 .badge { flex: none; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; background: var(--peach); color: var(--peach-ink); }
 .badge.done { background: var(--mint); color: #17603f; }
+.badge.bad { background: #ffd5d0; color: #8c2415; }
 .badge.opt { background: var(--lavender); color: #3d3577; }
 .gbody { padding: 0 20px 22px; }
 .tabs { display: inline-flex; background: var(--bg); border-radius: 999px; padding: 4px; margin-bottom: 14px; }
@@ -207,7 +217,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 
 <section id="lib" style="display:none">
   <header>
-    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
+    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="adminBtn" hidden>Admin</button><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
     <p class="sub" id="sub">Your saves, all in one place.</p>
     <div class="search"><input id="q" type="search" placeholder="Search your saves" aria-label="Search"></div>
     <div class="chips" id="chips" role="group" aria-label="Filters"></div>
@@ -283,6 +293,13 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
       <p style="color:var(--muted);font-size:14px">Export gives you everything as one JSON file. Resetting your token signs out every device and breaks your old connector link. Deleting erases all your saves for good.</p>
     </div>
   </details>
+</section>
+
+<section id="admin">
+  <div class="row" style="padding-top:18px"><button class="btn soft" id="adminBack">← Back</button></div>
+  <div class="setup-head"><h1>Admin</h1><p id="adminHealth"></p></div>
+  <div class="stats" id="adminStats"></div>
+  <div id="adminUsers"></div>
 </section>
 
 <section id="note">

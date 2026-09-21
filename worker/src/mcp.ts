@@ -163,7 +163,7 @@ export async function handleMcp(request: Request, env: Env, path: string): Promi
       break;
     case "tools/call":
       try {
-        if (userId) await env.DB.prepare("UPDATE user SET mcp_calls = mcp_calls + 1 WHERE id = ?").bind(userId).run();
+        if (userId) await env.DB.prepare("UPDATE user SET mcp_calls = mcp_calls + 1, last_seen = ? WHERE id = ?").bind(new Date().toISOString(), userId).run();
         const text = await callTool(env, userId, msg.params?.name, msg.params?.arguments);
         body = rpc(msg.id, { content: [{ type: "text", text }] });
       } catch (e) {

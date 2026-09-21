@@ -15,7 +15,7 @@ async function api(path, opts = {}) {
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
-function show(which) { for (const id of ["auth", "lib", "note", "setup"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
+function show(which) { for (const id of ["auth", "lib", "note", "setup", "admin"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
 function signOut() { store.del("stash_token"); token = null; show("auth"); }
 
 // ---- markdown: escape FIRST, then add structure. Notes contain third-party captions. ----
@@ -121,6 +121,7 @@ async function refreshSetup() {
   set("bSave", phone); set("bClaude", st.claude_connected); set("bGroq", st.has_groq_key, "Optional");
   $("setupDot").hidden = phone && st.claude_connected;
   $("cmdCode").textContent = `claude mcp add --transport http stash ${mcpUrl()}`;
+  $("adminBtn").hidden = !st.owner;
   if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
 }
@@ -186,3 +187,34 @@ $("deleteBtn").addEventListener("click", async () => {
   const r = await api("/v1/account", { method: "DELETE", body: JSON.stringify({ confirm: "delete" }) });
   if (r.ok) { store.del("stash_welcomed"); signOut(); toast("Account deleted."); } else toast("Couldn't delete it. Try again.");
 });
+
+// ---------------- admin (owner only) ----------------
+const ago = (iso) => {
+  if (!iso) return "never"; const m = Math.max(0, (Date.now() - Date.parse(iso)) / 60000);
+  return m < 2 ? "just now" : m < 90 ? Math.round(m) + " min ago" : m < 2880 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago";
+};
+async function openAdmin() {
+  show("admin"); scrollTo(0, 0);
+  const r = await api("/v1/admin/overview"); if (!r.ok) return toast("Couldn't load admin.");
+  const { overview: o, users } = await r.json();
+  const stuck = o.oldest_waiting && Date.now() - Date.parse(o.oldest_waiting) > 3600000;
+  const bits = [stuck ? "Queue looks stuck" : "", o.failed ? `${o.failed} failed` : ""].filter(Boolean);
+  $("adminHealth").innerHTML = bits.length ? `<span class="badge bad">${esc(bits.join(" · "))}</span>` : `<span class="badge done">Healthy</span>`;
+  const stat = (n, label) => `<div class="stat"><b>${esc(n)}</b><span>${esc(label)}</span></div>`;
+  $("adminStats").innerHTML = stat(o.users, "people") + stat(o.saves_24h, "saves, last 24h")
+    + stat(`${o.notes_24h} / ~25`, "processed today (free Groq cap)") + stat(o.waiting, "waiting now")
+    + stat(o.failed, "gave up") + stat(ago(o.last_note), "last note finished");
+  $("adminUsers").innerHTML = users.map((u) => {
+    const active = u.saves_7d > 0 && u.last_seen && Date.now() - Date.parse(u.last_seen) < 3 * 864e5;
+    const chip = u.name === "owner" ? ["you", "opt"] : !u.saves ? ["no saves yet", ""] : active ? ["active", "done"] : ["quiet", "opt"];
+    const pct = u.notes ? Math.round((100 * u.opened) / u.notes) + "%" : "n/a";
+    return `<div class="ucard"><header><h3>${esc(u.name)}</h3><span class="badge ${chip[1]}">${chip[0]}</span></header>
+      <dl><div><dt>Joined</dt><dd>${esc(ago(u.created_at))}</dd></div><div><dt>Last active</dt><dd>${esc(ago(u.last_seen || u.last_save))}</dd></div>
+      <div><dt>Saves (7d)</dt><dd>${u.saves_7d}</dd></div><div><dt>Notes</dt><dd>${u.notes}</dd></div>
+      <div><dt>Reopened</dt><dd>${pct}</dd></div><div><dt>Used</dt><dd>${u.used}</dd></div>
+      <div><dt>Claude</dt><dd>${u.mcp_calls ? "connected" : "no"}</dd></div><div><dt>Own key</dt><dd>${u.own_key ? "yes" : "no"}</dd></div>
+      <div><dt>Waiting / failed</dt><dd>${u.waiting} / ${u.failed}</dd></div></dl></div>`;
+  }).join("");
+}
+$("adminBtn").addEventListener("click", openAdmin);
+$("adminBack").addEventListener("click", () => { show("lib"); load(); });

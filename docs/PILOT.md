@@ -25,7 +25,13 @@ building the store apps. Full reasoning: the plan in `~/.claude/plans/` and `DES
      connector (or the `claude mcp add` command for Claude Code).
    - **Groq key (optional):** they paste their own key; it's validated, encrypted, and their
      saves then run on it instead of the shared free-tier quota.
-3. Watch it: 
+3. **Dashboard:** sign in as yourself and tap **Admin** in the header. It shows every person
+   (joined, last active, saves this week, notes, reopened %, used, Claude connected, own key,
+   waiting/failed) plus queue health. It's owner-only; everyone else gets a 404 for it.
+   **Alerts:** a Cloudflare cron runs every 30 min and pings your ntfy topic (`NTFY_TOPIC` secret)
+   when the oldest waiting save is over an hour old, when saves give up after 3 tries, or when
+   someone new joins. Each problem alerts at most once per 6 hours.
+   Raw numbers, if you prefer curl: 
    ```bash
    curl -s -H "X-Stash-Secret: $STASH_SECRET" $STASH_WORKER_URL/admin/stats
    ```

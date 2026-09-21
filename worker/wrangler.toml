@@ -5,6 +5,10 @@ compatibility_date = "2026-08-01"
 # Free plan: 100k requests/day, always on. No card required.
 workers_dev = true
 
+# Health check + phone alerts (needs the NTFY_TOPIC secret; without it this is a no-op).
+[triggers]
+crons = ["*/30 * * * *"]
+
 # The web library + Android share-target PWA. Files here are served directly;
 # anything else (/v1, /mcp, /ingest, ...) falls through to the Worker.
 [assets]

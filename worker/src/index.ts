@@ -38,7 +38,7 @@
  */
 
 import { handleMcp } from "./mcp";
-import { createUser, decryptKey, deleteUser, handleV1, userFromBearer } from "./v1";
+import { adminOverview, createUser, decryptKey, deleteUser, handleV1, userFromBearer } from "./v1";
 
 export interface Env {
   DB: D1Database;
@@ -48,6 +48,7 @@ export interface Env {
   IG_APP_SECRET?: string;
   IG_ACCESS_TOKEN?: string;
   JOIN_CODE?: string; // shared invite code for /join; unset = self-serve joining is closed
+  NTFY_TOPIC?: string; // set to get phone alerts when the queue is stuck, captures fail, or someone joins
   MAX_JOIN?: string; // cap on accounts created via /join (default 50)
 }
 
@@ -173,7 +174,32 @@ async function insertCapture(
   return { id: captureId, created: true };
 }
 
+/** Cron (every 30 min): tell the owner when something needs a human. */
+async function checkHealth(env: Env): Promise<void> {
+  if (!env.NTFY_TOPIC) return;
+  const { overview: o } = await adminOverview(env);
+  const problems: [string, string][] = [];
+  const oldest = o?.oldest_waiting ? Date.now() - Date.parse(o.oldest_waiting as string) : 0;
+  if (oldest > 60 * 60_000) problems.push(["stuck", `Queue stuck: oldest save has waited ${Math.round(oldest / 60_000)} min (${o!.waiting} waiting). Is the runner or the Mac down?`]);
+  if (Number(o?.failed) > 0) problems.push(["failed", `${o!.failed} save(s) gave up after 3 tries. Check /v1/admin/overview, then POST /requeue.`]);
+  const fresh = await env.DB.prepare("SELECT COUNT(*) n FROM user WHERE created_at > ?")
+    .bind(new Date(Date.now() - 30 * 60_000).toISOString()).first<{ n: number }>();
+  if ((fresh?.n ?? 0) > 0) problems.push(["joined:" + new Date().toISOString().slice(0, 13), `${fresh!.n} new user(s) joined Stash.`]);
+  for (const [key, message] of problems) {
+    // Same problem at most every 6 hours (a join is its own key per hour).
+    const last = await env.DB.prepare("SELECT at FROM alert_state WHERE key = ?").bind(key).first<{ at: string }>();
+    if (last && Date.now() - Date.parse(last.at) < 6 * 3600_000) continue;
+    await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, { method: "POST", body: message, headers: { Title: "Stash" } }).catch(() => {});
+    await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
+      .bind(key, new Date().toISOString()).run();
+  }
+}
+
 export default {
+  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(checkHealth(env));
+  },
+
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";

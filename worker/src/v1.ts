@@ -31,6 +31,37 @@ export function allowedUrl(raw: string): string | null {
   return ALLOWED_HOSTS.some((d) => h === d || h.endsWith("." + d)) ? u.toString() : null;
 }
 
+/** Everything the owner needs to see who's using Stash and whether it's healthy. */
+export async function adminOverview(env: Env) {
+  const day = new Date(Date.now() - 86_400_000).toISOString();
+  const week = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const { results: users } = await env.DB.prepare(
+    `SELECT COALESCE(u.name, 'owner') AS name, u.id AS id, u.created_at, u.joined_via, u.last_seen,
+       COALESCE(u.mcp_calls, 0) AS mcp_calls, (u.groq_key_enc IS NOT NULL) AS own_key,
+       (SELECT COUNT(*) FROM capture c WHERE c.user_id IS u.id) AS saves,
+       (SELECT COUNT(*) FROM capture c WHERE c.user_id IS u.id AND c.captured_at >= ?) AS saves_7d,
+       (SELECT COUNT(*) FROM capture c WHERE c.user_id IS u.id AND c.status IN ('pending','claimed') AND c.attempts < 3) AS waiting,
+       (SELECT COUNT(*) FROM capture c WHERE c.user_id IS u.id AND c.status = 'pending' AND c.attempts >= 3) AS failed,
+       (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id) AS notes,
+       (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id AND n.opens > 0) AS opened,
+       (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id AND n.status = 'used') AS used,
+       (SELECT MAX(captured_at) FROM capture c WHERE c.user_id IS u.id) AS last_save
+     FROM (SELECT id, name, created_at, joined_via, last_seen, mcp_calls, groq_key_enc FROM user
+           UNION ALL SELECT NULL, NULL, NULL, NULL, NULL, 0, NULL) u
+     ORDER BY u.created_at DESC`,
+  ).bind(week).all();
+  const o = await env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM user) AS users,
+            (SELECT COUNT(*) FROM capture WHERE captured_at >= ?) AS saves_24h,
+            (SELECT COUNT(*) FROM note WHERE created_at >= ?) AS notes_24h,
+            (SELECT COUNT(*) FROM capture WHERE status IN ('pending','claimed') AND attempts < 3) AS waiting,
+            (SELECT COUNT(*) FROM capture WHERE status = 'pending' AND attempts >= 3) AS failed,
+            (SELECT MIN(captured_at) FROM capture WHERE status IN ('pending','claimed') AND attempts < 3) AS oldest_waiting,
+            (SELECT MAX(created_at) FROM note) AS last_note`,
+  ).bind(day, day).first();
+  return { overview: o, users: users ?? [] };
+}
+
 /** Wipe a user and everything they saved. Used by self-delete and admin revoke. */
 export async function deleteUser(env: Env, userId: string): Promise<void> {
   await env.DB.batch([
@@ -118,6 +149,15 @@ export async function handleV1(
   ) => Promise<{ id: string; created: boolean }>,
 ): Promise<Response> {
   const url = new URL(request.url);
+  if (userId) {
+    await env.DB.prepare("UPDATE user SET last_seen = ? WHERE id = ? AND (last_seen IS NULL OR last_seen < ?)")
+      .bind(new Date().toISOString(), userId, new Date(Date.now() - 300_000).toISOString()).run();
+  }
+
+  if (path === "/v1/admin/overview" && request.method === "GET") {
+    if (userId !== null) return json({ error: "not found" }, 404);   // owner only, and don't confirm it exists
+    return json(await adminOverview(env));
+  }
 
   if (path === "/v1/ingest" && request.method === "POST") {
     const body = (await request.json().catch(() => null)) as { url?: string; note?: string; source?: string } | null;
