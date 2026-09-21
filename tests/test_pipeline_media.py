@@ -113,3 +113,12 @@ def test_guest_capture_never_touches_the_owners_vault_index_or_alerts(tmp_path, 
     result = pipeline.process(sqlite3.connect(":memory:"), capture, verbose=False)
     assert result.title == "Ordered carousel" and pushed == ["g1"]
     assert pipeline._is_guest(capture) and not pipeline._is_guest({"id": "o", "user_id": None})
+
+
+def test_url_allowlist_blocks_lan_and_lookalikes():
+    ok = pipeline.is_allowed_url
+    assert ok("https://www.instagram.com/reel/abc/") and ok("https://youtu.be/x") and ok("https://vm.tiktok.com/x")
+    for bad in ("http://www.instagram.com/reel/abc/", "https://192.168.1.1/x", "https://localhost:8799/",
+                "https://instagram.com.evil.com/x", "https://evilinstagram.com/x", "file:///etc/passwd",
+                "https://user:pw@instagram.com/x", "https://instagram.com:8443/x", "", None):
+        assert not ok(bad), bad

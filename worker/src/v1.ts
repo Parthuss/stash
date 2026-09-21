@@ -15,8 +15,31 @@ import type { Env } from "./index";
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", "cache-control": "no-store", "x-content-type-options": "nosniff" },
   });
+
+// Only these sites are fetchable. The Mac/cloud runner downloads whatever URL a
+// user submits, so an open URL field would let a guest aim it at the owner's
+// home network (http://192.168.x.x, localhost, cloud metadata). Keep this list
+// in sync with ALLOWED_HOSTS in stash/pipeline.py, which re-checks on the runner.
+const ALLOWED_HOSTS = ["instagram.com", "tiktok.com", "youtube.com", "youtu.be", "x.com", "twitter.com", "threads.net", "threads.com"];
+export function allowedUrl(raw: string): string | null {
+  let u: URL;
+  try { u = new URL(raw); } catch { return null; }
+  if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443") || raw.length > 500) return null;
+  const h = u.hostname.toLowerCase();
+  return ALLOWED_HOSTS.some((d) => h === d || h.endsWith("." + d)) ? u.toString() : null;
+}
+
+/** Wipe a user and everything they saved. Used by self-delete and admin revoke. */
+export async function deleteUser(env: Env, userId: string): Promise<void> {
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM note WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM capture WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM user WHERE id = ?").bind(userId),
+  ]);
+}
 
 export async function sha256(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -99,10 +122,20 @@ export async function handleV1(
   if (path === "/v1/ingest" && request.method === "POST") {
     const body = (await request.json().catch(() => null)) as { url?: string; note?: string; source?: string } | null;
     if (!body?.url) return json({ error: "need url" }, 400);
+    const safeUrl = allowedUrl(body.url);
+    if (!safeUrl) return json({ error: "That link isn't supported. Stash takes Instagram, TikTok, YouTube, X and Threads links." }, 400);
+    if (userId) {  // per-user brakes so one account can't flood the queue
+      const q = await env.DB.prepare(
+        `SELECT SUM(status IN ('pending','claimed')) AS waiting,
+                SUM(captured_at > ?) AS today FROM capture WHERE user_id = ?`,
+      ).bind(new Date(Date.now() - 86_400_000).toISOString(), userId).first<{ waiting: number | null; today: number | null }>();
+      if ((q?.waiting ?? 0) >= 25) return json({ error: "You have 25 saves waiting. Let those finish first." }, 429);
+      if ((q?.today ?? 0) >= 200) return json({ error: "That's 200 saves today. Try again tomorrow." }, 429);
+    }
     // Which front door was used is what the setup checklist reads.
     const source = ["shortcut", "web", "pwa"].includes(body.source ?? "") ? body.source! : "app";
     const result = await insertCapture(env, {
-      source, permalink: body.url, note: body.note ?? null, user_id: userId,
+      source, permalink: safeUrl, note: (body.note ?? "").slice(0, 500) || null, user_id: userId,
     });
     return json(result, result.created ? 202 : 200);
   }
@@ -114,6 +147,21 @@ export async function handleV1(
     if (!row) return json({ error: "unknown id" }, 404);
     const dead = row.status === "pending" && row.attempts >= 3;
     return json({ status: dead ? "failed" : row.status, title: row.title, error: row.error });
+  }
+
+  if (path === "/v1/token/rotate" && request.method === "POST") {
+    if (userId === null) return json({ error: "The owner token is the STASH_SECRET. Rotate it with wrangler." }, 400);
+    const token = "stk_" + [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
+    await env.DB.prepare("UPDATE user SET token_hash = ? WHERE id = ?").bind(await sha256(token), userId).run();
+    return json({ token });  // shown once; the old token and any connector link stop working now
+  }
+
+  if (path === "/v1/account" && request.method === "DELETE") {
+    if (userId === null) return json({ error: "The owner account can't be deleted here." }, 400);
+    const body = (await request.json().catch(() => null)) as { confirm?: string } | null;
+    if (body?.confirm !== "delete") return json({ error: 'Send {"confirm":"delete"} to delete everything.' }, 400);
+    await deleteUser(env, userId);
+    return json({ ok: true });
   }
 
   if (path === "/v1/setup" && request.method === "GET") {

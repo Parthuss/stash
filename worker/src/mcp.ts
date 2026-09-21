@@ -167,7 +167,8 @@ export async function handleMcp(request: Request, env: Env, path: string): Promi
         const text = await callTool(env, userId, msg.params?.name, msg.params?.arguments);
         body = rpc(msg.id, { content: [{ type: "text", text }] });
       } catch (e) {
-        body = rpc(msg.id, { content: [{ type: "text", text: String(e) }], isError: true });
+        // Don't echo internals (SQL, stack text) back to whoever holds the link.
+        body = rpc(msg.id, { content: [{ type: "text", text: "Something went wrong. Try again." }], isError: true });
       }
       break;
     default:

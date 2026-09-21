@@ -91,4 +91,37 @@ assert c.post("/join", json={"name": "Zed2", "code": "letmein"}).status_code == 
 c.post("/ingest", headers=adm, json={"url": "https://www.instagram.com/reel/OWNER1/"})   # owner capture (user_id NULL)
 got = [c.post("/claim?scope=guests", headers=adm).json()["capture"] for _ in range(20)]
 assert all(x is None or x["user_id"] for x in got), "guests scope leaked an owner capture"
+# ---- hardening ----
+sec = user("sec"); hs = h(sec)
+for bad in ["http://www.instagram.com/reel/x/", "https://192.168.1.1/a", "https://localhost:8799/x", "https://instagram.com.evil.com/x",
+            "file:///etc/passwd", "https://user:pw@instagram.com/x", "https://instagram.com:8443/x", "javascript:alert(1)", "notaurl"]:
+    r = c.post("/v1/ingest", headers=hs, json={"url": bad}); assert r.status_code == 400, (bad, r.status_code)
+assert c.post("/v1/ingest", headers=hs, json={"url": "https://vm.tiktok.com/abc/"}).status_code == 202
+assert c.post("/v1/ingest", headers=hs, json={"url": "https://youtu.be/abc", "note": "x" * 5000}).status_code == 202
+for i in range(30):
+    r = c.post("/v1/ingest", headers=hs, json={"url": f"https://www.instagram.com/reel/Q{i}/"})
+    if r.status_code == 429: break
+assert r.status_code == 429, "queue-flood brake missing"
+assert c.get("/health").headers.get("x-content-type-options") in (None, "nosniff")
+r = c.get("/v1/notes", headers=hs); assert r.headers["cache-control"] == "no-store" and r.headers["x-content-type-options"] == "nosniff"
+# MCP never echoes internals
+e = c.post(f"/mcp/{sec['token']}", json={"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "nope", "arguments": {}}}).json()
+assert "unknown tool" not in str(e) and e["result"]["isError"]
+# rotate: old token + old connector link die, new works; owner can't rotate
+nt = c.post("/v1/token/rotate", headers=hs).json()["token"]
+assert c.get("/v1/notes", headers=hs).status_code == 401 and c.post(f"/mcp/{sec['token']}", json={"jsonrpc":"2.0","id":1,"method":"ping"}).status_code == 401
+assert c.get("/v1/notes", headers={"Authorization": f"Bearer {nt}"}).status_code == 200
+assert c.post("/v1/token/rotate", headers=own).status_code == 400
+# delete account: needs confirm, then all data gone; owner can't
+hn = {"Authorization": f"Bearer {nt}"}
+assert c.request("DELETE", "/v1/account", headers=hn, json={}).status_code == 400
+assert c.request("DELETE", "/v1/account", headers=own, json={"confirm": "delete"}).status_code == 400
+assert c.request("DELETE", "/v1/account", headers=hn, json={"confirm": "delete"}).status_code == 200
+assert c.get("/v1/notes", headers=hn).status_code == 401
+# admin revoke wipes a user
+victim = user("victim"); vh = h(victim)
+c.post("/v1/ingest", headers=vh, json={"url": "https://www.instagram.com/reel/VIC/"})
+assert c.post(f"/admin/users/{victim['id']}/revoke", headers=adm).json() == {"ok": True}
+assert c.get("/v1/notes", headers=vh).status_code == 401
+assert c.post(f"/admin/users/{victim['id']}/revoke").status_code == 401
 print("ALL OK")

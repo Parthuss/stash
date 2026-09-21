@@ -54,6 +54,9 @@ def process(
     user_note = capture["note"]
     caption = capture["caption"]
 
+    if _is_guest(capture) and permalink and not is_allowed_url(permalink):
+        raise fetch.FetchError("link isn't from a supported site")
+
     say("fetching…")
     try:
         media = fetch.fetch(permalink=permalink, media_url=media_url)
@@ -231,6 +234,27 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
         topic=fields["topic"], frames_used=0, transcript_chars=0, via="caption-only",
         tools=fields["tools"],
     )
+
+
+#: Keep in sync with ALLOWED_HOSTS in worker/src/v1.ts. The Worker filters at
+#: ingest; this re-checks on the machine that actually fetches, so a bug or a
+#: forged row upstream can't turn the owner's Mac into a scanner of its own LAN.
+ALLOWED_HOSTS = ("instagram.com", "tiktok.com", "youtube.com", "youtu.be",
+                 "x.com", "twitter.com", "threads.net", "threads.com")
+
+
+def is_allowed_url(raw: str | None) -> bool:
+    from urllib.parse import urlsplit
+
+    try:
+        u = urlsplit(raw or "")
+        host = (u.hostname or "").lower()
+        port = u.port
+    except ValueError:
+        return False
+    if u.scheme != "https" or u.username or u.password or port not in (None, 443):
+        return False
+    return any(host == d or host.endswith("." + d) for d in ALLOWED_HOSTS)
 
 
 def _is_guest(capture) -> bool:

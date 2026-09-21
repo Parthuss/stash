@@ -38,7 +38,7 @@
  */
 
 import { handleMcp } from "./mcp";
-import { createUser, decryptKey, handleV1, userFromBearer } from "./v1";
+import { createUser, decryptKey, deleteUser, handleV1, userFromBearer } from "./v1";
 
 export interface Env {
   DB: D1Database;
@@ -350,6 +350,13 @@ export default {
         ).bind(b.title, b.summary ?? "", b.markdown, noteId, userId ?? ""),
       ]);
       return json({ id: noteId });
+    }
+
+    // Cut someone off and erase their data (abuse, or a leaked token).
+    const revoke = path.match(/^\/admin\/users\/([^/]+)\/revoke$/);
+    if (revoke && request.method === "POST") {
+      await deleteUser(env, decodeURIComponent(revoke[1]));
+      return json({ ok: true });
     }
 
     // Pilot dashboard: one row per user (owner included as "owner").
