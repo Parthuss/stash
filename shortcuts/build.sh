@@ -1,59 +1,28 @@
 #!/bin/sh
-# Usage: build.sh [user-token [name]]   (no args = build the owner's shortcut)
-# Render Stash.cherri.template with the real Worker URL + secret from .env,
-# compile it with cherri, and sign it so iOS will import it.
+# Build the ONE generic Stash iOS Shortcut and put it where the Worker serves it
+# (worker/public/Stash.shortcut, deployed at <worker>/Stash.shortcut).
 #
-# The rendered .cherri and the compiled .shortcut both contain the shared
-# secret, so both are gitignored — only the template is committed.
+# It holds no secret: iOS asks for the user's token when they add it. Signed with
+# `-s=anyone` so it imports on any iPhone. Needs macOS + `brew install cherri`.
 set -eu
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-OUT_DIR="$REPO/shortcuts"
-RENDERED="$OUT_DIR/.Stash.rendered.cherri"
-COMPILED="$OUT_DIR/Stash${2:+-$2}.shortcut"
+RENDERED="$REPO/shortcuts/.Stash.rendered.cherri"
+OUT="$REPO/worker/public/Stash.shortcut"
 
-if ! command -v cherri >/dev/null 2>&1; then
-  echo "cherri not installed — brew install cherri (or see cherrilang.org)" >&2
-  exit 1
-fi
+command -v cherri >/dev/null 2>&1 || { echo "cherri not installed — brew install cherri" >&2; exit 1; }
 
-# Last non-empty wins: .env accumulates duplicate keys as it gets edited, and
-# taking every match would splice newlines into the sed pattern below.
-env_value() {
-  grep -E "^$1=" "$REPO/.env" 2>/dev/null | cut -d= -f2- | grep -v '^$' | tail -1 || true
-}
-
-WORKER_URL=$(env_value STASH_WORKER_URL)
-SECRET=${1:-$(env_value STASH_SECRET)}
-NAME=${2:-}
-
-if [ -z "${WORKER_URL:-}" ] || [ -z "${SECRET:-}" ]; then
-  cat >&2 <<'MSG'
-STASH_WORKER_URL and STASH_SECRET must both be set in .env first.
-
-Deploy the Worker, then put its URL and the secret you set with
-`wrangler secret put STASH_SECRET` into .env:
-
-  cd worker
-  npx wrangler login
-  npx wrangler d1 create stash        # paste the id into wrangler.toml
-  npx wrangler d1 migrations apply stash --remote
-  npx wrangler secret put STASH_SECRET
-  npx wrangler deploy
-MSG
-  exit 1
-fi
-
+# Last non-empty wins: .env accumulates duplicate keys as it gets edited.
+WORKER_URL=$(grep -E "^STASH_WORKER_URL=" "$REPO/.env" 2>/dev/null | cut -d= -f2- | grep -v '^$' | tail -1 || true)
+[ -n "${WORKER_URL:-}" ] || { echo "STASH_WORKER_URL must be set in .env" >&2; exit 1; }
 WORKER_URL=${WORKER_URL%/}
 
-sed -e "s|{{WORKER_URL}}|$WORKER_URL|g" -e "s|{{SECRET}}|$SECRET|g" \
-  "$OUT_DIR/Stash.cherri.template" > "$RENDERED"
-
-cherri "$RENDERED" -o "$COMPILED"
+sed -e "s|{{WORKER_URL}}|$WORKER_URL|g" "$REPO/shortcuts/Stash.cherri.template" > "$RENDERED"
+# cherri names its output after `#define name` and writes it next to the source
+# (it ignores -o's directory), so build in place, then move it into the Worker's assets.
+cherri "$RENDERED" -s=anyone
+mv "$REPO/shortcuts/Stash.shortcut" "$OUT"
 
 echo
-echo "built $COMPILED  (points at $WORKER_URL)"
-echo
-echo "To install: AirDrop it to your iPhone, or open it on a Mac signed into"
-echo "the same Apple ID and it syncs. Then DELETE every older Stash shortcut —"
-echo "sharing to a stale one that points at a dead endpoint is how this broke before."
+echo "built $OUT  (points at $WORKER_URL, no secret inside)"
+echo "Deploy the Worker to publish it at $WORKER_URL/Stash.shortcut"

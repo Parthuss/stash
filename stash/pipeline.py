@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import db, extract, fetch, frames, notify, transcribe, vault
-from .config import CONFIG
+from .config import CONFIG, using_groq_key
 
 
 @dataclass
@@ -277,7 +277,11 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             print(f"\n[{capture['id']}] {label}", flush=True)
 
         try:
-            result = process(conn, capture, verbose=verbose, media_url=override)
+            # Rows from the Worker carry the user's own Groq key when they
+            # brought one; local-queue rows have no such column.
+            own_key = capture["groq_key"] if "groq_key" in capture.keys() else None
+            with using_groq_key(own_key):
+                result = process(conn, capture, verbose=verbose, media_url=override)
         except Exception as exc:  # noqa: BLE001 - one bad capture must not stop the drain
             _finish(conn, capture["id"], ok=False, error=str(exc), remote_mode=remote_mode)
             if verbose:

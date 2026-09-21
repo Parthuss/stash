@@ -24,7 +24,7 @@ from typing import Any, TypeVar
 
 import httpx
 
-from .config import CONFIG
+from .config import CONFIG, groq_key
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -227,7 +227,7 @@ def extract(
 ) -> dict[str, Any]:
     """Describe all visuals, then extract the final structured note with Groq."""
     del timeout  # httpx timeouts are set at the request boundary.
-    if not CONFIG.groq_api_key:
+    if not groq_key(CONFIG):
         raise ExtractError("GROQ_API_KEY is required for visual and structured extraction")
     frames = frames or []
     labels = frame_reasons or [f"Visual {index}" for index in range(1, len(frames) + 1)]
@@ -384,7 +384,7 @@ def _post_groq(messages: list[dict[str, Any]], max_tokens: int) -> httpx.Respons
     return httpx.post(
         GROQ_CHAT_URL,
         headers={
-            "Authorization": f"Bearer {CONFIG.groq_api_key}",
+            "Authorization": f"Bearer {groq_key(CONFIG)}",
             "Content-Type": "application/json",
         },
         json={
