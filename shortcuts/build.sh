@@ -1,4 +1,5 @@
 #!/bin/sh
+# Usage: build.sh [user-token [name]]   (no args = build the owner's shortcut)
 # Render Stash.cherri.template with the real Worker URL + secret from .env,
 # compile it with cherri, and sign it so iOS will import it.
 #
@@ -9,6 +10,7 @@ set -eu
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 OUT_DIR="$REPO/shortcuts"
 RENDERED="$OUT_DIR/.Stash.rendered.cherri"
+COMPILED="$OUT_DIR/Stash${2:+-$2}.shortcut"
 
 if ! command -v cherri >/dev/null 2>&1; then
   echo "cherri not installed — brew install cherri (or see cherrilang.org)" >&2
@@ -22,7 +24,8 @@ env_value() {
 }
 
 WORKER_URL=$(env_value STASH_WORKER_URL)
-SECRET=$(env_value STASH_SECRET)
+SECRET=${1:-$(env_value STASH_SECRET)}
+NAME=${2:-}
 
 if [ -z "${WORKER_URL:-}" ] || [ -z "${SECRET:-}" ]; then
   cat >&2 <<'MSG'
@@ -46,10 +49,10 @@ WORKER_URL=${WORKER_URL%/}
 sed -e "s|{{WORKER_URL}}|$WORKER_URL|g" -e "s|{{SECRET}}|$SECRET|g" \
   "$OUT_DIR/Stash.cherri.template" > "$RENDERED"
 
-cherri "$RENDERED" -o "$OUT_DIR/Stash.shortcut"
+cherri "$RENDERED" -o "$COMPILED"
 
 echo
-echo "built $OUT_DIR/Stash.shortcut  (points at $WORKER_URL)"
+echo "built $COMPILED  (points at $WORKER_URL)"
 echo
 echo "To install: AirDrop it to your iPhone, or open it on a Mac signed into"
 echo "the same Apple ID and it syncs. Then DELETE every older Stash shortcut —"
