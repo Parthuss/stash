@@ -21,7 +21,7 @@ from pathlib import Path
 
 import httpx
 
-from .config import CONFIG, groq_key
+from .config import CONFIG, groq_key, record_usage
 
 GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
@@ -132,7 +132,9 @@ def transcribe(video: Path) -> Transcript:
         return Transcript(skipped=True, reason=f"silent track ({mean_dbfs:.0f} dBFS)")
 
     if groq_key(CONFIG):
-        return _groq(wav)
+        result = _groq(wav)
+        record_usage("whisper", GROQ_MODEL, seconds=duration)
+        return result
     return _local(wav)
 
 

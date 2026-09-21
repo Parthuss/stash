@@ -135,3 +135,28 @@ def using_groq_key(key: str | None):
         yield
     finally:
         _groq_override.reset(token)
+
+
+# Per-capture record of every paid API call, so usage can be attributed to a
+# person. `collect_usage()` scopes a list; call sites just `record_usage(...)`.
+_usage: ContextVar[list | None] = ContextVar("usage", default=None)
+
+
+def record_usage(kind: str, model: str, *, prompt: int = 0, completion: int = 0, seconds: float = 0.0) -> None:
+    bucket = _usage.get()
+    if bucket is not None:
+        bucket.append({
+            "kind": kind, "model": model, "prompt_tokens": int(prompt or 0),
+            "completion_tokens": int(completion or 0), "seconds": round(float(seconds or 0), 2),
+            "key_type": "own" if _groq_override.get() else "shared",
+        })
+
+
+@contextmanager
+def collect_usage():
+    bucket: list = []
+    token = _usage.set(bucket)
+    try:
+        yield bucket
+    finally:
+        _usage.reset(token)
