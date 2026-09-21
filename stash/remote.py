@@ -117,6 +117,30 @@ def pending(limit: int = 20) -> list[Row]:
     return [Row(c) for c in response.json().get("captures", [])]
 
 
+def push_note(
+    capture: Row, fields: dict[str, Any], markdown: str, permalink: str | None
+) -> None:
+    """Hand a finished note to the Worker so the app and the Claude connector
+    can read it without this Mac being awake. Idempotent per capture."""
+    response = httpx.post(
+        f"{CONFIG.worker_url}/note",
+        headers=_headers(),
+        json={
+            "capture_id": capture["id"],
+            "user_id": capture["user_id"],
+            "title": fields["title"],
+            "summary": fields["summary"],
+            "topic": fields["topic"],
+            "tools": fields["tools"],
+            "permalink": permalink,
+            "markdown": markdown,
+        },
+        timeout=30,
+    )
+    if response.status_code != 200:
+        raise RemoteError(f"note {response.status_code}: {response.text[:200]}")
+
+
 def dead() -> list[dict[str, Any]]:
     """Captures that exhausted their attempts and stopped being offered."""
     response = httpx.get(f"{CONFIG.worker_url}/dead", headers=_headers(), timeout=30)

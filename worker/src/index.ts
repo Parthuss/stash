@@ -37,6 +37,8 @@
  * the Worker still runs correctly with the binding entirely absent.
  */
 
+import { createUser, handleV1, userFromBearer } from "./v1";
+
 export interface Env {
   DB: D1Database;
   MEDIA?: R2Bucket;
@@ -135,11 +137,14 @@ async function insertCapture(
     media_url?: string | null;
     media_key?: string | null;
     note?: string | null;
+    user_id?: string | null; // null/absent = the owner
   },
 ): Promise<{ id: string; created: boolean }> {
   if (row.permalink) {
-    const existing = await env.DB.prepare("SELECT id FROM capture WHERE permalink = ?")
-      .bind(row.permalink)
+    const existing = await env.DB.prepare(
+      "SELECT id FROM capture WHERE permalink = ? AND COALESCE(user_id, '') = ?",
+    )
+      .bind(row.permalink, row.user_id ?? "")
       .first<{ id: string }>();
     if (existing) return { id: existing.id, created: false };
   }
@@ -147,8 +152,8 @@ async function insertCapture(
   const captureId = id();
   await env.DB.prepare(
     `INSERT INTO capture (id, source, permalink, permalink_ok, media_url, media_key,
-                          note, status, attempts, captured_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?)`,
+                          note, status, attempts, captured_at, user_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?)`,
   )
     .bind(
       captureId,
@@ -159,6 +164,7 @@ async function insertCapture(
       row.media_key ?? null,
       row.note ?? null,
       new Date().toISOString(),
+      row.user_id ?? null,
     )
     .run();
   return { id: captureId, created: true };
@@ -195,6 +201,13 @@ export default {
         return handleInstagram(raw, env, ctx);
       }
       return new Response("method not allowed", { status: 405 });
+    }
+
+    // ---- per-user API (bearer token) -----------------------------------
+    if (path.startsWith("/v1/")) {
+      const userId = await userFromBearer(request, env);
+      if (!userId) return json({ error: "unauthorized" }, 401);
+      return handleV1(request, env, path, userId, insertCapture);
     }
 
     // ---- everything below is for us only -------------------------------
@@ -263,6 +276,42 @@ export default {
           .run();
       }
       return json({ ok: true });
+    }
+
+    if (path === "/admin/users" && request.method === "POST") {
+      const body = (await request.json().catch(() => null)) as { name?: string } | null;
+      return json(await createUser(env, body?.name ?? ""), 201);
+    }
+
+    // The Mac worker hands over a finished note so the web library and the
+    // Claude connector can serve it without the Mac being awake. Idempotent per
+    // capture: a retried capture replaces its note instead of duplicating it.
+    if (path === "/note" && request.method === "POST") {
+      const b = (await request.json().catch(() => null)) as Record<string, any> | null;
+      if (!b?.capture_id || !b?.title || !b?.markdown) {
+        return json({ error: "need capture_id, title, markdown" }, 400);
+      }
+      const userId: string | null = b.user_id ?? null;
+      const prior = await env.DB.prepare("SELECT id FROM note WHERE capture_id = ?")
+        .bind(b.capture_id).first<{ id: string }>();
+      const noteId = prior?.id ?? id();
+      await env.DB.batch([
+        env.DB.prepare(
+          `INSERT INTO note (id, user_id, capture_id, title, summary, topic, tools, permalink,
+                             markdown, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(capture_id) DO UPDATE SET title=excluded.title, summary=excluded.summary,
+             topic=excluded.topic, tools=excluded.tools, permalink=excluded.permalink,
+             markdown=excluded.markdown`,
+        ).bind(noteId, userId, b.capture_id, b.title, b.summary ?? null, b.topic ?? null,
+               JSON.stringify(b.tools ?? []), b.permalink ?? null, b.markdown,
+               new Date().toISOString()),
+        env.DB.prepare("DELETE FROM note_fts WHERE note_id = ?").bind(noteId),
+        env.DB.prepare(
+          "INSERT INTO note_fts (title, summary, markdown, note_id, user_id) VALUES (?, ?, ?, ?, ?)",
+        ).bind(b.title, b.summary ?? "", b.markdown, noteId, userId ?? ""),
+      ]);
+      return json({ id: noteId });
     }
 
     // Dead letters: pending rows that hit MAX_ATTEMPTS and silently stopped being
