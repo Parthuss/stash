@@ -79,4 +79,12 @@ if real:  # optional: full round trip with a real key (never printed)
     assert not c.get("/v1/setup", headers=h(ann)).json()["has_groq_key"]
 ex = c.get("/v1/export", headers=h(ann)); assert ex.status_code == 200 and len(ex.json()["notes"]) == 1
 assert "markdown" in ex.json()["notes"][0]
+# ---- /join (start the dev server with --var JOIN_CODE:letmein) ----
+j = c.post("/join", json={"name": "Zed", "code": "letmein"}); assert j.status_code == 201, j.text
+zed = j.json()["token"]; assert c.get("/v1/notes", headers={"Authorization": f"Bearer {zed}"}).status_code == 200
+assert c.post("/join", json={"name": "", "code": "letmein"}).status_code == 400
+assert c.post("/join", json={"name": "X", "code": "nope"}).status_code == 403
+for _ in range(10): r = c.post("/join", json={"name": "X", "code": "nope"})
+assert r.status_code == 429, r.status_code                                   # throttled after repeated misses
+assert c.post("/join", json={"name": "Zed2", "code": "letmein"}).status_code == 429  # even the right code, same IP
 print("ALL OK")

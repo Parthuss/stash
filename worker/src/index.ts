@@ -47,6 +47,8 @@ export interface Env {
   IG_VERIFY_TOKEN?: string;
   IG_APP_SECRET?: string;
   IG_ACCESS_TOKEN?: string;
+  JOIN_CODE?: string; // shared invite code for /join; unset = self-serve joining is closed
+  MAX_JOIN?: string; // cap on accounts created via /join (default 50)
 }
 
 const MAX_ATTEMPTS = 3;
@@ -205,6 +207,29 @@ export default {
     }
 
     if (path.startsWith("/mcp/")) return handleMcp(request, env, path);
+
+    // ---- self-serve join with the shared invite code -------------------
+    if (path === "/join" && request.method === "POST") {
+      if (!env.JOIN_CODE) return json({ error: "Joining is closed right now." }, 403);
+      const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
+      const recent = await env.DB.prepare(
+        "SELECT COUNT(*) n FROM join_attempt WHERE ip = ? AND at > ?",
+      ).bind(ip, new Date(Date.now() - 10 * 60_000).toISOString()).first<{ n: number }>();
+      if ((recent?.n ?? 0) >= 8) return json({ error: "Too many tries. Wait a few minutes." }, 429);
+
+      const body = (await request.json().catch(() => null)) as { name?: string; code?: string } | null;
+      const name = (body?.name ?? "").trim().slice(0, 40);
+      if (!name) return json({ error: "Tell us your name." }, 400);
+      if (!safeEqual((body?.code ?? "").trim(), env.JOIN_CODE)) {
+        await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
+        return json({ error: "That invite code isn't right." }, 403);
+      }
+      const joined = await env.DB.prepare("SELECT COUNT(*) n FROM user WHERE joined_via = 'invite'").first<{ n: number }>();
+      if ((joined?.n ?? 0) >= (Number(env.MAX_JOIN) || 50)) return json({ error: "We're full for now." }, 403);
+      const user = await createUser(env, name);
+      await env.DB.prepare("UPDATE user SET joined_via = 'invite' WHERE id = ?").bind(user.id).run();
+      return json({ token: user.token }, 201);
+    }
 
     // ---- per-user API (bearer token) -----------------------------------
     if (path.startsWith("/v1/")) {

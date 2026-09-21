@@ -6,7 +6,16 @@ building the store apps. Full reasoning: the plan in `~/.claude/plans/` and `DES
 ## Run it
 1. Keep the Mac daemon running (`stash status` → daemon ALIVE). Processing happens
    on your home IP, which Instagram doesn't block; captures queue safely when the Mac is off.
-2. Invite someone: `shortcuts/invite.sh ann` mints their token and prints what to send:
+2. **Self-serve joining:** friends open the site, type their name and the shared invite code
+   (or you send `https://<worker>/#code=<CODE>` and it's prefilled) and are signed in.
+   Change or close it any time:
+   ```bash
+   cd worker && npx wrangler secret put JOIN_CODE      # new code
+   cd worker && npx wrangler secret delete JOIN_CODE   # close joining entirely
+   ```
+   It's throttled (8 wrong tries / 10 min / IP) and capped at 50 joins (`MAX_JOIN`).
+   Prefer to hand-pick? Use the per-person invite below.
+   Invite someone individually: `shortcuts/invite.sh ann` mints their token and prints what to send:
    the site URL + the token. On first sign-in the app opens a **Set up** guide with
    visuals, copy buttons and redirects for each step:
    - **iPhone:** "Get the Shortcut" (one generic signed file at `/Stash.shortcut`; iOS asks

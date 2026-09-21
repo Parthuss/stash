@@ -119,6 +119,11 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 #auth { display: none; padding-top: 16vh; text-align: center; }
 #auth .brand { font-size: 64px; flex: none; }
 #auth p { color: var(--muted); }
+.or { margin: 22px 0 0 !important; font-size: 14px; }
+.joinbox { max-width: 420px; margin: 12px auto 0; background: rgb(255 255 255 / .85); border-radius: 28px; padding: 22px 20px; box-shadow: var(--lift-1); display: flex; flex-direction: column; gap: 10px; backdrop-filter: blur(8px); }
+.joinbox h2 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0; color: var(--ink); }
+.joinbox p { margin: 0 0 4px; font-size: 15px; }
+.joinbox input { height: 52px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); text-align: center; }
 .authhelp { max-width: 420px; margin: 34px auto 0; text-align: left; background: rgb(255 255 255 / .8); border-radius: 24px; padding: 18px 20px; box-shadow: var(--lift-1); backdrop-filter: blur(8px); }
 .authhelp h2 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0 0 6px; color: var(--ink); }
 .authhelp p { margin: 0 0 10px; font-size: 15px; }
@@ -178,12 +183,22 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
     <button class="btn" type="submit">Open my stash</button>
   </form>
   <p id="authErr" role="alert"></p>
+  <p class="or">— or —</p>
+  <form id="joinForm" class="joinbox">
+    <h2>Have an invite code?</h2>
+    <p>Join with the code you were given — no token needed.</p>
+    <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your name" required>
+    <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" required>
+    <button class="btn" type="submit">Join Stash</button>
+    <p id="joinErr" role="alert" class="msg err"></p>
+  </form>
   <div class="authhelp">
     <h2>What’s an access token?</h2>
     <p>Stash is invite-only for now. Your token is a private password that starts with <code>stk_</code>. It’s how Stash knows which saves are yours.</p>
     <ol>
       <li><b>Got an invite link?</b> Just open it — you’ll be signed in automatically, no token to paste.</li>
       <li><b>Got a message with a token?</b> Paste it above.</li>
+      <li><b>Got an invite code?</b> Use the Join box.</li>
       <li><b>Neither?</b> Ask the person who told you about Stash to send you an invite.</li>
     </ol>
     <p class="fine">Keep your token private — anyone who has it can see your saves. You can find it again later in <i>Set up → Your account</i>.</p>
@@ -300,6 +315,8 @@ const store = { get: (k) => { try { return localStorage.getItem(k); } catch { re
                 set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
                 del: (k) => { try { localStorage.removeItem(k); } catch {} } };
 { const m = location.hash.match(/^#t=([\w-]+)/); if (m) { store.set("stash_token", m[1]); history.replaceState(null, "", location.pathname + location.search); } }
+const joinCodeFromLink = (location.hash.match(/^#code=([\w-]+)/) || [])[1];
+if (joinCodeFromLink) history.replaceState(null, "", location.pathname + location.search);
 let token = store.get("stash_token"), notes = [], filter = "all", current = null, timer;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -375,6 +392,14 @@ async function open(id) {
   show("note"); scrollTo(0, 0);
 }
 
+if (joinCodeFromLink) $("joinCode").value = joinCodeFromLink;
+$("joinForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const err = $("joinErr"); err.textContent = "";
+  const r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value }) });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) { err.textContent = body.error || "Couldn’t join. Try again."; return; }
+  token = body.token; store.set("stash_token", token); start();
+});
 $("authForm").addEventListener("submit", async (e) => {
   e.preventDefault(); token = $("token").value.trim();
   const r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } });
