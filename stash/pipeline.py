@@ -147,30 +147,32 @@ def process(
         caption=caption,
         frame_reasons=reasons,
     )
-    path = vault.write(content, vault.note_path(fields["title"]))
-    say(f"wrote {path.name}")
+    guest = _is_guest(capture)
+    path = Path(f"remote-{capture['id']}.md") if guest else vault.write(content, vault.note_path(fields["title"]))
+    say("sent to the Worker" if guest else f"wrote {path.name}")
     _sync_note(capture, fields, content, permalink, say)
 
-    db.upsert_note(
-        conn,
-        {
-            "capture_id": capture["id"],
-            "path": path.name,
-            "title": fields["title"],
-            "summary": fields["summary"],
-            "topic": fields["topic"],
-            "tools": fields["tools"],
-            "why_saved": fields["why_saved"],
-            "next_step": fields["next_step"],
-            "difficulty": fields["difficulty"],
-            "relevance": fields["relevance"],
-            "transcript": transcript_text,
-            "frame_notes": fields["frame_notes"],
-            "permalink": permalink,
-            "source": capture["source"],
-            "status": "unused",
-        },
-    )
+    if not guest:
+        db.upsert_note(
+            conn,
+            {
+                "capture_id": capture["id"],
+                "path": path.name,
+                "title": fields["title"],
+                "summary": fields["summary"],
+                "topic": fields["topic"],
+                "tools": fields["tools"],
+                "why_saved": fields["why_saved"],
+                "next_step": fields["next_step"],
+                "difficulty": fields["difficulty"],
+                "relevance": fields["relevance"],
+                "transcript": transcript_text,
+                "frame_notes": fields["frame_notes"],
+                "permalink": permalink,
+                "source": capture["source"],
+                "status": "unused",
+            },
+        )
 
     return Result(
         capture_id=capture["id"],
@@ -209,24 +211,36 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
         caption=caption,
         user_note=user_note,
     )
-    path = vault.write(content, vault.note_path(fields["title"]))
-    say(f"wrote {path.name} (caption-only)")
+    guest = _is_guest(capture)
+    path = Path(f"remote-{capture['id']}.md") if guest else vault.write(content, vault.note_path(fields["title"]))
+    say("sent to the Worker (caption-only)" if guest else f"wrote {path.name} (caption-only)")
     _sync_note(capture, fields, content, permalink, say)
 
-    db.upsert_note(conn, {
-        "capture_id": capture["id"], "path": path.name,
-        "title": fields["title"], "summary": fields["summary"],
-        "topic": fields["topic"], "tools": fields["tools"],
-        "why_saved": fields["why_saved"], "next_step": fields["next_step"],
-        "difficulty": fields["difficulty"], "relevance": fields["relevance"],
-        "transcript": "", "frame_notes": caption,
-        "permalink": permalink, "source": capture["source"], "status": "unused",
-    })
+    if not guest:
+        db.upsert_note(conn, {
+            "capture_id": capture["id"], "path": path.name,
+            "title": fields["title"], "summary": fields["summary"],
+            "topic": fields["topic"], "tools": fields["tools"],
+            "why_saved": fields["why_saved"], "next_step": fields["next_step"],
+            "difficulty": fields["difficulty"], "relevance": fields["relevance"],
+            "transcript": "", "frame_notes": caption,
+            "permalink": permalink, "source": capture["source"], "status": "unused",
+        })
     return Result(
         capture_id=capture["id"], note_path=path, title=fields["title"],
         topic=fields["topic"], frames_used=0, transcript_chars=0, via="caption-only",
         tools=fields["tools"],
     )
+
+
+def _is_guest(capture) -> bool:
+    """A capture saved by someone other than the owner (the Mac's operator).
+
+    Their note must live only in the Worker — never in this Mac's vault/, its
+    search index, its iMessage alerts, or the owner's Claude recall — or the
+    owner's own stash would fill up with (and leak) other people's saves.
+    """
+    return "user_id" in capture.keys() and bool(capture["user_id"])
 
 
 def _sync_note(capture, fields, content: str, permalink, say) -> None:
@@ -288,12 +302,13 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
                 print(f"  failed: {exc}", flush=True)
             # Notify on failure too. A save that silently goes nowhere is the
             # exact thing this project keeps getting bitten by.
-            notify.notify(
-                notify.for_failure(
-                    _short_label(capture), str(exc), url=capture["permalink"] or ""
-                ),
-                verbose=verbose,
-            )
+            if not _is_guest(capture):  # never iMessage the owner about someone else's saves
+                notify.notify(
+                    notify.for_failure(
+                        _short_label(capture), str(exc), url=capture["permalink"] or ""
+                    ),
+                    verbose=verbose,
+                )
             # Stop the pass rather than continuing. A failure puts the capture
             # back to 'pending' and claim_next always returns the oldest pending
             # row, so continuing re-claims this very item — burning all three
@@ -303,13 +318,14 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             break
 
         _finish(conn, capture["id"], ok=True, remote_mode=remote_mode, title=result.title)
-        notify.notify(
-            notify.for_success(
-                result.title, topic=result.topic, tools=result.tools,
-                url=capture["permalink"] or "",
-            ),
-            verbose=verbose,
-        )
+        if not _is_guest(capture):
+            notify.notify(
+                notify.for_success(
+                    result.title, topic=result.topic, tools=result.tools,
+                    url=capture["permalink"] or "",
+                ),
+                verbose=verbose,
+            )
         results.append(result)
     return results
 
