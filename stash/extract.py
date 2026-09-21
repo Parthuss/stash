@@ -380,28 +380,44 @@ def _vision_image(path: Path) -> tuple[bytes, str]:
     return path.read_bytes(), mimetypes.guess_type(path.name)[0] or "image/jpeg"
 
 
+def _post_groq(messages: list[dict[str, Any]], max_tokens: int) -> httpx.Response:
+    return httpx.post(
+        GROQ_CHAT_URL,
+        headers={
+            "Authorization": f"Bearer {CONFIG.groq_api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": CONFIG.extract_model,
+            "messages": messages,
+            "response_format": {"type": "json_object"},
+            "reasoning_effort": REASONING_EFFORT,
+            "temperature": 0.1,
+            "max_completion_tokens": max_tokens,
+        },
+        timeout=300,
+    )
+
+
 def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[str, Any]:
     response = None
     for attempt in range(3):
-        response = httpx.post(
-            GROQ_CHAT_URL,
-            headers={
-                "Authorization": f"Bearer {CONFIG.groq_api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": CONFIG.extract_model,
-                "messages": messages,
-                "response_format": {"type": "json_object"},
-                "reasoning_effort": REASONING_EFFORT,
-                "temperature": 0.1,
-                "max_completion_tokens": max_tokens,
-            },
-            timeout=300,
-        )
-        if response.status_code == 429 and attempt < 2:
-            time.sleep(_retry_delay(response))
-            continue
+        # 429s get their own budget here and never consume `attempt`.
+        for _ in range(6):
+            response = _post_groq(messages, max_tokens)
+            if response.status_code != 429:
+                break
+            if "Request too large" in response.text:
+                # Free-tier OTPM ceiling is 1000 output tokens; waiting never
+                # helps, only a smaller max_tokens does.
+                if max_tokens <= 900:
+                    break
+                max_tokens = 900
+                continue
+            delay = _retry_delay(response)
+            if delay > 120:  # daily quota (TPD): fail now, the queue retries later
+                break
+            time.sleep(delay)
         # Observed live: an occasional 400 "json_validate_failed" with an
         # EMPTY failed_generation — not a malformed request (the identical
         # payload succeeds on immediate retry), so this reads as a transient
@@ -431,12 +447,18 @@ def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[st
 
 
 def _retry_delay(response: httpx.Response) -> float:
+    """Seconds Groq says to wait. Uncapped: the caller decides what is too long."""
     raw = response.headers.get("retry-after", "")
     try:
-        return min(max(float(raw), 1.0), 65.0)
+        return max(float(raw), 1.0)
     except ValueError:
-        match = re.search(r"try again in\s+([0-9.]+)s", response.text, re.IGNORECASE)
-        return min(max(float(match.group(1)) + 0.25, 1.0), 65.0) if match else 10.0
+        match = re.search(
+            r"try again in\s+(?:(\d+)h)?(?:(\d+)m(?!s))?(?:([0-9.]+)s)?", response.text, re.IGNORECASE
+        )
+        if not match or not any(match.groups()):
+            return 10.0
+        hours, minutes, seconds = (float(g or 0) for g in match.groups())
+        return max(hours * 3600 + minutes * 60 + seconds + 0.25, 1.0)
 
 
 _FENCE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)

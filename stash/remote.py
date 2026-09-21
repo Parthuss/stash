@@ -117,6 +117,14 @@ def pending(limit: int = 20) -> list[Row]:
     return [Row(c) for c in response.json().get("captures", [])]
 
 
+def dead() -> list[dict[str, Any]]:
+    """Captures that exhausted their attempts and stopped being offered."""
+    response = httpx.get(f"{CONFIG.worker_url}/dead", headers=_headers(), timeout=30)
+    if response.status_code != 200:
+        raise RemoteError(f"dead {response.status_code}: {response.text[:200]}")
+    return response.json().get("dead", [])
+
+
 def health() -> bool:
     try:
         return httpx.get(f"{CONFIG.worker_url}/health", timeout=10).status_code == 200

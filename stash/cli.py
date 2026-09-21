@@ -204,6 +204,14 @@ def _status(conn, args) -> int:
     if CONFIG.uses_remote_queue:
         alive, reason = daemon_mod.is_alive()
         print(f"\ndaemon: {'ALIVE' if alive else 'DOWN'} — {reason}")
+        try:
+            from . import remote
+
+            dead = remote.dead()
+            if dead:
+                print(f"dead-lettered: {len(dead)} capture(s) gave up — POST /requeue to retry")
+        except Exception:  # older Worker without /dead, or offline: status must still print
+            pass
 
     dead = db.dead_letters(conn)
     if dead:
