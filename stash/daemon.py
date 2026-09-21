@@ -144,7 +144,7 @@ def run(
             if quiet:
                 print(f"processed {len(results)}", flush=True)
             for result in [] if quiet else results:
-                print(f"  -> {result.title}", flush=True)
+                print("  -> (a friend's save)" if result.guest else f"  -> {result.title}", flush=True)
             state.last_result = "ok"
             state.last_error = ""
             state.consecutive_empty = 0
