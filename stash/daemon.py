@@ -103,6 +103,7 @@ def run(
     min_interval: int = 15,
     max_interval: int = 90,
     once: bool = False,
+    quiet: bool = False,
 ) -> None:
     """Poll the Worker forever (or once, for tests and manual runs)."""
     if not CONFIG.uses_remote_queue:
@@ -114,9 +115,10 @@ def run(
 
     state = State(pid=os.getpid(), started_at=time.time(), interval=min_interval)
     _write_state(state)
-    print(f"stash daemon: polling {CONFIG.worker_url}")
-    print(f"heartbeat: {CONFIG.daemon_state_path}")
-    print(f"interval: {min_interval}s idle -> backs off to {max_interval}s — ctrl-c to stop\n")
+    if not quiet:
+        print(f"stash daemon: polling {CONFIG.worker_url}")
+        print(f"heartbeat: {CONFIG.daemon_state_path}")
+        print(f"interval: {min_interval}s idle -> backs off to {max_interval}s — ctrl-c to stop\n")
 
     while True:
         state.last_poll_at = time.time()
@@ -125,12 +127,13 @@ def run(
             # separate /pending pre-check would just be a second round trip
             # asking the same question. Its own return value tells us whether
             # this tick was worth doing.
-            results = pipeline.drain(conn, verbose=True)
+            results = pipeline.drain(conn, verbose=not quiet)
         except Exception as exc:  # noqa: BLE001 — a transient Cloudflare blip must not kill this
             state.last_result = "error"
             state.last_error = str(exc)
             state.interval = min(max_interval, (state.interval or min_interval) * 2)
-            print(f"  poll failed: {exc}  (retrying in {state.interval}s)", flush=True)
+            # Quiet mode runs in public CI logs: say it failed, never why.
+            print("  poll failed" if quiet else f"  poll failed: {exc}  (retrying in {state.interval}s)", flush=True)
             _write_state(state)
             if once:
                 return
@@ -138,7 +141,9 @@ def run(
             continue
 
         if results:
-            for result in results:
+            if quiet:
+                print(f"processed {len(results)}", flush=True)
+            for result in [] if quiet else results:
                 print(f"  -> {result.title}", flush=True)
             state.last_result = "ok"
             state.last_error = ""

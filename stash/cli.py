@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import shutil
 import sys
@@ -46,6 +47,14 @@ def main(argv: list[str] | None = None) -> int:
     p_daemon.add_argument("--min-interval", type=int, default=15)
     p_daemon.add_argument("--max-interval", type=int, default=90)
     p_daemon.add_argument("--once", action="store_true", help="one poll, then exit")
+    p_daemon.add_argument(
+        "--guests-only", action="store_true",
+        help="only process other people's saves (for the cloud runner)",
+    )
+    p_daemon.add_argument(
+        "--quiet", action="store_true",
+        help="print counts only, never links or titles (public CI logs)",
+    )
 
     p_notify = sub.add_parser(
         "notify", help="send a test notification, to prove the backend actually works"
@@ -144,10 +153,12 @@ def _receive(conn, args) -> int:
 
 
 def _daemon(conn, args) -> int:
+    if args.guests_only:
+        os.environ["STASH_CLAIM_SCOPE"] = "guests"
     try:
         daemon_mod.run(
             conn, min_interval=args.min_interval, max_interval=args.max_interval,
-            once=args.once,
+            once=args.once, quiet=args.quiet,
         )
     except RuntimeError as exc:
         print(exc)

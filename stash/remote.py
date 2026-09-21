@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import os
+
 import httpx
 
 from .config import CONFIG
@@ -55,7 +57,12 @@ def add_capture(
 
 
 def claim_next() -> Row | None:
-    response = httpx.post(f"{CONFIG.worker_url}/claim", headers=_headers(), timeout=30)
+    # STASH_CLAIM_SCOPE=guests is how the cloud runner says "not the owner's saves".
+    scope = os.environ.get("STASH_CLAIM_SCOPE")
+    response = httpx.post(
+        f"{CONFIG.worker_url}/claim", headers=_headers(),
+        params={"scope": scope} if scope else None, timeout=30,
+    )
     if response.status_code != 200:
         raise RemoteError(f"claim {response.status_code}: {response.text[:200]}")
     capture = response.json().get("capture")
