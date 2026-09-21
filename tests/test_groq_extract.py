@@ -252,3 +252,16 @@ def test_real_json_validation_failure_is_not_retried(monkeypatch):
     except extract.ExtractError:
         pass
     assert calls["n"] == 1
+
+
+def test_retry_delay_parses_groq_wait_formats():
+    import httpx
+    from stash.extract import _retry_delay
+
+    def resp(text, headers=None):
+        return httpx.Response(429, text=text, headers=headers or {})
+
+    assert _retry_delay(resp("x", {"retry-after": "12"})) == 12
+    assert abs(_retry_delay(resp("Please try again in 23m45.6s.")) - 1425.85) < 0.01
+    assert abs(_retry_delay(resp("try again in 58.4s")) - 58.65) < 0.01
+    assert _retry_delay(resp("nothing useful")) == 10

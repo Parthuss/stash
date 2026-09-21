@@ -16,6 +16,8 @@
  *   GET  /pending        what the Mac worker should do next  (X-Stash-Secret)
  *   POST /claim          take one, with an attempt count     (X-Stash-Secret)
  *   POST /complete       report done or failed, with a title (X-Stash-Secret)
+ *   GET  /dead           dead-lettered captures              (X-Stash-Secret)
+ *   POST /requeue        {since} reset their attempts        (X-Stash-Secret)
  *   GET  /status/:id     has this specific capture finished?  (X-Stash-Secret)
  *   GET  /media/:key     hand the stashed R2 object to the Mac worker
  *   GET  /webhook/ig     Meta's subscription challenge       (Phase 2)
@@ -261,6 +263,30 @@ export default {
           .run();
       }
       return json({ ok: true });
+    }
+
+    // Dead letters: pending rows that hit MAX_ATTEMPTS and silently stopped being
+    // offered by /pending. Listed here so failures can't hide, and /requeue
+    // gives them a fresh set of attempts (e.g. after fixing a rate-limit bug).
+    if (path === "/dead" && request.method === "GET") {
+      const { results } = await env.DB.prepare(
+        `SELECT id, permalink, captured_at, attempts, error FROM capture
+         WHERE status='pending' AND attempts >= ? ORDER BY captured_at DESC`,
+      )
+        .bind(MAX_ATTEMPTS)
+        .all();
+      return json({ dead: results ?? [] });
+    }
+
+    if (path === "/requeue" && request.method === "POST") {
+      const body = (await request.json().catch(() => null)) as { since?: string } | null;
+      const r = await env.DB.prepare(
+        `UPDATE capture SET attempts=0, error=NULL
+         WHERE status='pending' AND attempts >= ? AND captured_at >= ?`,
+      )
+        .bind(MAX_ATTEMPTS, body?.since ?? "")
+        .run();
+      return json({ requeued: r.meta.changes });
     }
 
     if (path.startsWith("/status/") && request.method === "GET") {
