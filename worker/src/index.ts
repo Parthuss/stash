@@ -298,18 +298,22 @@ export default {
       // ?scope=guests: only other people's captures. The cloud runner uses it so
       // the owner's own saves stay local-first (vault/ on the Mac).
       const guestsOnly = url.searchParams.get("scope") === "guests";
+      // A claim older than 30 min means that worker died; hand the capture out again.
+      const staleBefore = new Date(Date.now() - 30 * 60_000).toISOString();
       const row = await env.DB.prepare(
-        `SELECT * FROM capture WHERE status='pending' AND attempts < ?
+        `SELECT * FROM capture
+         WHERE (status='pending' OR (status='claimed' AND (claimed_at IS NULL OR claimed_at < ?)))
+           AND attempts < ?
          ${guestsOnly ? "AND user_id IS NOT NULL" : ""}
          ORDER BY captured_at LIMIT 1`,
       )
-        .bind(MAX_ATTEMPTS)
+        .bind(staleBefore, MAX_ATTEMPTS)
         .first();
       if (!row) return json({ capture: null });
       await env.DB.prepare(
-        "UPDATE capture SET status='claimed', attempts = attempts + 1 WHERE id = ?",
+        "UPDATE capture SET status='claimed', claimed_at=?, attempts = attempts + 1 WHERE id = ?",
       )
-        .bind(row.id)
+        .bind(new Date().toISOString(), row.id)
         .run();
       // A user who brought their own Groq key is processed on it. It rides this
       // admin-authenticated response to the Mac worker only; it is never logged.

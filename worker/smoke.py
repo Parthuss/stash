@@ -131,4 +131,9 @@ assert "own_key" in body["users"][0] and "waiting" in body["overview"]
 assert c.get("/v1/admin/overview", headers=h(ann)).status_code == 404     # users can't even see it exists
 assert c.get("/v1/admin/overview").status_code == 401
 ann_row = next(u for u in body["users"] if u["name"] == "ann"); assert ann_row["last_seen"]
+# ---- stale claims come back; fresh ones don't ----
+sc = c.post("/ingest", headers=adm, json={"url": "https://www.instagram.com/reel/STALE1/"}).json()["id"]
+def claim_ids(n=30): return [x["id"] for x in (c.post("/claim", headers=adm).json()["capture"] for _ in range(n)) if x]
+assert sc in claim_ids()                    # claimed once
+assert sc not in claim_ids()                # fresh claim is not handed out again
 print("ALL OK")
