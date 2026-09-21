@@ -70,7 +70,8 @@ def claim_next() -> Row | None:
 
 
 def finish_capture(
-    capture_id: str, *, ok: bool, error: str | None = None, title: str | None = None
+    capture_id: str, *, ok: bool, error: str | None = None, title: str | None = None,
+    usage: list | None = None,
 ) -> None:
     """Report a capture done or failed. ``title`` is what makes ``/status/:id``
     (and the phone notification that reads it) show something a human can
@@ -78,7 +79,7 @@ def finish_capture(
     response = httpx.post(
         f"{CONFIG.worker_url}/complete",
         headers=_headers(),
-        json={"id": capture_id, "ok": ok, "error": error, "title": title},
+        json={"id": capture_id, "ok": ok, "error": error, "title": title, "usage": usage or []},
         timeout=30,
     )
     if response.status_code != 200:

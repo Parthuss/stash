@@ -24,7 +24,7 @@ from typing import Any, TypeVar
 
 import httpx
 
-from .config import CONFIG, groq_key
+from .config import CONFIG, groq_key, record_usage
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -445,6 +445,11 @@ def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[st
     _log_rate_limit(response)
     if response.status_code != 200:
         raise ExtractError(f"groq {response.status_code}: {response.text[:300]}")
+    try:
+        u = response.json().get("usage") or {}
+        record_usage("chat", CONFIG.extract_model, prompt=u.get("prompt_tokens", 0), completion=u.get("completion_tokens", 0))
+    except (ValueError, AttributeError):
+        pass
     try:
         raw = response.json()["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:

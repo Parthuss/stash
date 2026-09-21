@@ -9,7 +9,7 @@
  * ponytail: secret-URL auth; move to OAuth if connectors go beyond a pilot.
  */
 import type { Env } from "./index";
-import { ftsQuery, userFromToken } from "./v1";
+import { ftsQuery, logEvent, userFromToken } from "./v1";
 
 const INSTRUCTIONS =
   "The user's own saved Instagram/TikTok/YouTube content, transcribed and indexed. " +
@@ -164,6 +164,7 @@ export async function handleMcp(request: Request, env: Env, path: string): Promi
     case "tools/call":
       try {
         if (userId) await env.DB.prepare("UPDATE user SET mcp_calls = mcp_calls + 1, last_seen = ? WHERE id = ?").bind(new Date().toISOString(), userId).run();
+        await logEvent(env, userId, "api", "mcp:" + String(msg.params?.name ?? "?").slice(0, 40));
         const text = await callTool(env, userId, msg.params?.name, msg.params?.arguments);
         body = rpc(msg.id, { content: [{ type: "text", text }] });
       } catch (e) {

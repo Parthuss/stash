@@ -9,14 +9,31 @@ let token = store.get("stash_token"), notes = [], filter = "all", current = null
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+// ---- banners: one at a time, keyed so each condition can clear itself ----
+let bannerKey = null;
+function setBanner(key, kind, text, label, fn) {
+  const b = $("banner"); bannerKey = key; b.className = "banner " + kind; b.hidden = false;
+  b.innerHTML = `<span>${esc(text)}</span>` + (label ? `<button type="button">${esc(label)}</button>` : "");
+  if (label) b.querySelector("button").onclick = fn;
+}
+function clearBanner(key) { if (!key || bannerKey === key) { $("banner").hidden = true; bannerKey = null; } }
+
 async function api(path, opts = {}) {
-  const r = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + token, "content-type": "application/json" } });
-  if (r.status === 401) { signOut(); throw new Error("unauthorized"); }
+  let r;
+  try {
+    r = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + token, "content-type": "application/json" } });
+  } catch {
+    setBanner("net", "warn", "Can't reach Stash. You're offline, or it's having a moment. What you see may be out of date.", "Try again", () => load());
+    throw new Error("offline");
+  }
+  if (r.status === 401) { signOut("You were signed out (your token changed or was reset). Paste it again to get back in."); throw new Error("unauthorized"); }
+  if (r.status >= 500) { setBanner("net", "err", "Stash hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
+  else if (bannerKey === "net") clearBanner("net");
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
 function show(which) { for (const id of ["auth", "lib", "note", "setup", "admin"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
-function signOut() { store.del("stash_token"); token = null; show("auth"); }
+function signOut(msg) { store.del("stash_token"); token = null; show("auth"); $("authErr").textContent = typeof msg === "string" ? msg : ""; }
 
 // ---- markdown: escape FIRST, then add structure. Notes contain third-party captions. ----
 function md(src) {
@@ -49,6 +66,18 @@ function card(n, i) {
     <div class="tint" style="background:${tintOf(n.topic)}"><span class="tag ${unused ? "unused" : ""}">${unused ? "Unused" : "Used ✓"}</span><b aria-hidden="true">${initial}</b></div>
     <div class="cbody"><h2>${esc(n.title)}</h2><small>${esc(n.topic || "")}</small></div></button>`;
 }
+const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "link"; } };
+function capCard(c) {
+  if (c.state === "failed") {
+    return `<div class="card wait"><div class="tint" style="background:#ffe9e5"><span class="tag err">Couldn't read</span><b aria-hidden="true">!</b></div>
+      <div class="cbody"><h2>${esc(hostOf(c.url))}</h2><p class="why">${esc(c.reason)}</p>
+      <div class="acts"><button data-retry="${esc(c.id)}">Retry</button><button class="soft" data-del="${esc(c.id)}">Remove</button></div></div></div>`;
+  }
+  return `<div class="card wait" aria-busy="true"><div class="tint shimmer"><span class="tag">Reading…</span></div>
+    <div class="cbody"><h2>${esc(hostOf(c.url))}</h2><small>${esc(ago(c.at))}</small></div></div>`;
+}
+function skeleton() { return Array.from({ length: 4 }, () => '<div class="skel shimmer" aria-hidden="true"></div>').join(""); }
+
 function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
   $("count").textContent = `${unused} unused`;
@@ -56,20 +85,44 @@ function render() {
   const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
   $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}</button>`).join("");
   const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
-  $("list").innerHTML = shown.length ? shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to save a link, or share a reel to Stash."}</div>`;
+  const caps = filter === "all" && !$("q").value.trim() ? captures.map(capCard).join("") : "";
+  $("list").innerHTML = (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to save a link, or share a reel to Stash."}</div>`;
 }
+let captures = [], loaded = false, known = null, pollTimer = null;
 async function load() {
+  if (!loaded) $("list").innerHTML = skeleton();
   const q = $("q").value.trim();
-  const r = await api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200");
-  notes = (await r.json()).notes; render();
+  const [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]);
+  if (!nr.ok) { toast("Couldn't load your saves. Try again."); return; }
+  notes = (await nr.json()).notes; captures = cr.ok ? (await cr.json()).captures : []; loaded = true;
+  // A note we hadn't seen before means something just finished processing.
+  const ids = new Set(notes.map((n) => n.id));
+  if (known && !q) { const fresh = notes.find((n) => !known.has(n.id)); if (fresh) toast("Ready: " + fresh.title); }
+  if (!q) known = ids;
+  // Slow queue? Say so, and point at the fix.
+  const slow = captures.some((c) => c.state === "processing" && Date.now() - Date.parse(c.at) > 15 * 60000);
+  if (slow) setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", "Add my own Groq key", () => openSetup(false));
+  else clearBanner("busy");
+  render(); schedulePoll();
+}
+function schedulePoll() {
+  clearTimeout(pollTimer);
+  const waiting = captures.some((c) => c.state === "processing");
+  pollTimer = setTimeout(() => document.visibilityState === "visible" && $("lib").style.display !== "none" ? load().catch(() => schedulePoll()) : schedulePoll(), waiting ? 8000 : 30000);
 }
 async function ingest(url) {
-  const r = await api("/v1/ingest", { method: "POST", body: JSON.stringify({ url, source: matchMedia("(display-mode: standalone)").matches ? "pwa" : "web" }) });
-  if (!r.ok) { toast("Couldn't save that link"); return; }
-  toast((await r.json()).created ? "Saved. Takes a minute or two." : "Already in your stash");
+  let r;
+  try { r = await api("/v1/ingest", { method: "POST", body: JSON.stringify({ url, source: matchMedia("(display-mode: standalone)").matches ? "pwa" : "web" }) }); }
+  catch (e) { if (e.message === "offline") toast("You're offline. That link wasn't saved."); return; }
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) { toast(body.error || "Couldn't save that link. Try again."); return; }
+  toast(body.created ? "Saved. Takes a minute or two." : "You already saved that one.");
+  load().catch(() => {});
 }
 async function open(id) {
-  const r = await api("/v1/notes/" + encodeURIComponent(id)); current = await r.json();
+  const r = await api("/v1/notes/" + encodeURIComponent(id));
+  if (!r.ok) { toast("That note isn't there anymore."); load().catch(() => {}); return; }
+  current = await r.json();
   $("nTitle").textContent = current.title;
   $("nHero").style.background = tintOf(current.topic);
   const unused = current.status === "unused";
@@ -83,15 +136,20 @@ async function open(id) {
 if (joinCodeFromLink) $("joinCode").value = joinCodeFromLink;
 $("joinForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const err = $("joinErr"); err.textContent = "";
-  const r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value }) });
+  let r;
+  try { r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value }) }); }
+  catch { err.textContent = "Can't reach Stash. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({}));
   if (!r.ok) { err.textContent = body.error || "Couldn’t join. Try again."; return; }
   token = body.token; store.set("stash_token", token); start();
 });
 $("authForm").addEventListener("submit", async (e) => {
   e.preventDefault(); token = $("token").value.trim();
-  const r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } });
-  if (r.ok) { store.set("stash_token", token); start(); } else { $("authErr").textContent = "That token didn't work."; token = null; }
+  let r;
+  try { r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } }); }
+  catch { $("authErr").textContent = "Can't reach Stash. Check your connection and try again."; token = null; return; }
+  if (r.ok) { store.set("stash_token", token); $("authErr").textContent = ""; start(); }
+  else { $("authErr").textContent = r.status === 401 ? "That token didn't work. Check you copied all of it (it starts with stk_)." : "Stash had a problem. Try again in a minute."; token = null; }
 });
 const sheet = (open) => { document.body.classList.toggle("sheet-open", open); if (open) setTimeout(() => $("link").focus(), 250); };
 $("fab").addEventListener("click", () => sheet(true));
@@ -100,7 +158,12 @@ $("cancel").addEventListener("click", () => sheet(false));
 $("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; sheet(false); await ingest(u); } });
 $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(load, 200); });
 $("chips").addEventListener("click", (e) => { const f = e.target.dataset.f; if (f) { filter = f; render(); } });
-$("list").addEventListener("click", (e) => { const c = e.target.closest(".card"); if (c) open(c.dataset.id); });
+$("list").addEventListener("click", async (e) => {
+  const retry = e.target.closest("[data-retry]"), del = e.target.closest("[data-del]");
+  if (retry) { const r = await api("/v1/captures/" + retry.dataset.retry + "/retry", { method: "POST" }); toast(r.ok ? "Trying again." : "Couldn't retry that one."); return load(); }
+  if (del) { const r = await api("/v1/captures/" + del.dataset.del, { method: "DELETE" }); toast(r.ok ? "Removed." : "Couldn't remove that one."); return load(); }
+  const c = e.target.closest(".card[data-id]"); if (c) open(c.dataset.id);
+});
 $("back").addEventListener("click", () => { show("lib"); load(); });
 $("nUsed").addEventListener("click", async () => { await api("/v1/notes/" + current.id + "/used", { method: "POST" }); toast("Marked as used"); $("nUsed").hidden = true; });
 
@@ -166,7 +229,7 @@ async function start() {
   await load();
   refreshSetup();
   if (!store.get("stash_welcomed") && !toSave) { store.set("stash_welcomed", "1"); openSetup(true); }
-  setInterval(() => document.visibilityState === "visible" && $("lib").style.display !== "none" && load(), 30000);
+  document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && $("lib").style.display !== "none" && load().catch(() => {}));
 }
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 // A share that arrives before sign-in must survive the sign-in screen.
@@ -195,7 +258,8 @@ const ago = (iso) => {
 };
 async function openAdmin() {
   show("admin"); scrollTo(0, 0);
-  const r = await api("/v1/admin/overview"); if (!r.ok) return toast("Couldn't load admin.");
+  $("adminHealth").textContent = "Loading…"; $("adminStats").innerHTML = ""; $("adminUsers").innerHTML = skeleton();
+  const r = await api("/v1/admin/overview"); if (!r.ok) { $("adminHealth").textContent = "Couldn't load admin. Go back and try again."; $("adminUsers").innerHTML = ""; return; }
   const { overview: o, users } = await r.json();
   const stuck = o.oldest_waiting && Date.now() - Date.parse(o.oldest_waiting) > 3600000;
   const bits = [stuck ? "Queue looks stuck" : "", o.failed ? `${o.failed} failed` : ""].filter(Boolean);
@@ -218,3 +282,9 @@ async function openAdmin() {
 }
 $("adminBtn").addEventListener("click", openAdmin);
 $("adminBack").addEventListener("click", () => { show("lib"); load(); });
+
+// Anything unhandled becomes a plain message, not a silent dead button.
+window.addEventListener("unhandledrejection", (e) => {
+  const m = e.reason && e.reason.message; if (m === "offline" || m === "unauthorized") return;
+  toast("Something went wrong. Try again.");
+});

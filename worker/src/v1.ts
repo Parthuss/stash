@@ -31,6 +31,35 @@ export function allowedUrl(raw: string): string | null {
   return ALLOWED_HOSTS.some((d) => h === d || h.endsWith("." + d)) ? u.toString() : null;
 }
 
+/** Turn a raw worker error into something a person can act on. Never returns raw text. */
+export function friendlyReason(error: string | null, failed: boolean): string {
+  const e = (error ?? "").toLowerCase();
+  if (!e) return failed ? "Something went wrong reading this one." : "Reading this now.";
+  if (e.includes("429") || e.includes("rate limit") || e.includes("request too large") || e.includes("tokens per"))
+    return failed ? "Stash was too busy to finish this. Retry it, or add your own Groq key in Set up." : "Stash is busy. It'll retry on its own.";
+  if (e.includes("empty media") || e.includes("private") || e.includes("not accessible") || e.includes("login required") || e.includes("unavailable"))
+    return "Instagram wouldn't let us read this one. It may be private or deleted.";
+  if (e.includes("not a bot") || e.includes("sign in to confirm")) return "This site is blocking our downloads right now (YouTube does this a lot). Try again later.";
+  if (e.includes("supported site")) return "That link isn't from a site Stash supports.";
+  if (e.includes("connection") || e.includes("timed out") || e.includes("disconnected") || e.includes("broken pipe"))
+    return failed ? "The connection dropped too many times. Retry it." : "The connection dropped. It'll retry on its own.";
+  return failed ? "Something went wrong reading this one. Retry, or remove it." : "Working on it. Hit a snag, retrying.";
+}
+
+/** Append one row to the usage log. `userId` null = the owner. Never throws: logging must not break a request. */
+export async function logEvent(
+  env: Env, userId: string | null, kind: "api" | "groq", action: string,
+  extra: { model?: string; key_type?: string; prompt?: number; completion?: number; seconds?: number; capture_id?: string } = {},
+): Promise<void> {
+  try {
+    await env.DB.prepare(
+      `INSERT INTO usage_event (at, user_id, kind, action, model, key_type, prompt_tokens, completion_tokens, seconds, capture_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(new Date().toISOString(), userId, kind, action, extra.model ?? null, extra.key_type ?? null,
+           extra.prompt ?? 0, extra.completion ?? 0, extra.seconds ?? 0, extra.capture_id ?? null).run();
+  } catch { /* usage table missing or full: keep serving */ }
+}
+
 /** Everything the owner needs to see who's using Stash and whether it's healthy. */
 export async function adminOverview(env: Env) {
   const day = new Date(Date.now() - 86_400_000).toISOString();
@@ -45,11 +74,14 @@ export async function adminOverview(env: Env) {
        (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id) AS notes,
        (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id AND n.opens > 0) AS opened,
        (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id AND n.status = 'used') AS used,
-       (SELECT MAX(captured_at) FROM capture c WHERE c.user_id IS u.id) AS last_save
+       (SELECT MAX(captured_at) FROM capture c WHERE c.user_id IS u.id) AS last_save,
+       (SELECT COALESCE(SUM(prompt_tokens + completion_tokens), 0) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'groq' AND e.at >= ?) AS groq_tokens_7d,
+       (SELECT COUNT(*) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'api' AND e.at >= ?) AS api_calls_7d,
+       (SELECT MAX(at) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'api') AS last_api
      FROM (SELECT id, name, created_at, joined_via, last_seen, mcp_calls, groq_key_enc FROM user
            UNION ALL SELECT NULL, NULL, NULL, NULL, NULL, 0, NULL) u
      ORDER BY u.created_at DESC`,
-  ).bind(week).all();
+  ).bind(week, week, week).all();
   const o = await env.DB.prepare(
     `SELECT (SELECT COUNT(*) FROM user) AS users,
             (SELECT COUNT(*) FROM capture WHERE captured_at >= ?) AS saves_24h,
@@ -57,9 +89,16 @@ export async function adminOverview(env: Env) {
             (SELECT COUNT(*) FROM capture WHERE status IN ('pending','claimed') AND attempts < 3) AS waiting,
             (SELECT COUNT(*) FROM capture WHERE status = 'pending' AND attempts >= 3) AS failed,
             (SELECT MIN(captured_at) FROM capture WHERE status IN ('pending','claimed') AND attempts < 3) AS oldest_waiting,
-            (SELECT MAX(created_at) FROM note) AS last_note`,
-  ).bind(day, day).first();
-  return { overview: o, users: users ?? [] };
+            (SELECT MAX(created_at) FROM note) AS last_note,
+            (SELECT COALESCE(SUM(prompt_tokens + completion_tokens), 0) FROM usage_event WHERE kind = 'groq' AND key_type = 'shared' AND at >= ?) AS shared_tokens_24h,
+            (SELECT COALESCE(SUM(seconds), 0) FROM usage_event WHERE kind = 'groq' AND action = 'whisper' AND at >= ?) AS whisper_sec_24h`,
+  ).bind(day, day, day, day).first();
+  const { results: recent } = await env.DB.prepare(
+    `SELECT e.at, COALESCE(u.name, 'owner') AS name, e.kind, e.action, e.model, e.key_type,
+            e.prompt_tokens + e.completion_tokens AS tokens, e.seconds
+     FROM usage_event e LEFT JOIN user u ON u.id = e.user_id ORDER BY e.id DESC LIMIT 40`,
+  ).all();
+  return { overview: o, users: users ?? [], recent: recent ?? [] };
 }
 
 /** Wipe a user and everything they saved. Used by self-delete and admin revoke. */
@@ -174,6 +213,7 @@ export async function handleV1(
     }
     // Which front door was used is what the setup checklist reads.
     const source = ["shortcut", "web", "pwa"].includes(body.source ?? "") ? body.source! : "app";
+    await logEvent(env, userId, "api", "ingest");
     const result = await insertCapture(env, {
       source, permalink: safeUrl, note: (body.note ?? "").slice(0, 500) || null, user_id: userId,
     });
@@ -193,6 +233,7 @@ export async function handleV1(
     if (userId === null) return json({ error: "The owner token is the STASH_SECRET. Rotate it with wrangler." }, 400);
     const token = "stk_" + [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
     await env.DB.prepare("UPDATE user SET token_hash = ? WHERE id = ?").bind(await sha256(token), userId).run();
+    await logEvent(env, userId, "api", "token_reset");
     return json({ token });  // shown once; the old token and any connector link stop working now
   }
 
@@ -202,6 +243,34 @@ export async function handleV1(
     if (body?.confirm !== "delete") return json({ error: 'Send {"confirm":"delete"} to delete everything.' }, 400);
     await deleteUser(env, userId);
     return json({ ok: true });
+  }
+
+  if (path === "/v1/captures" && request.method === "GET") {
+    const { results } = await env.DB.prepare(
+      `SELECT id, permalink, captured_at, status, attempts, error FROM capture
+       WHERE user_id IS ? AND status != 'done' ORDER BY captured_at DESC LIMIT 50`,
+    ).bind(userId).all<any>();
+    return json({
+      captures: (results ?? []).map((r) => {
+        const failed = r.status === "pending" && r.attempts >= 3;
+        return { id: r.id, url: r.permalink, at: r.captured_at, state: failed ? "failed" : "processing", reason: friendlyReason(r.error, failed) };
+      }),
+    });
+  }
+
+  const capMatch = path.match(/^\/v1\/captures\/([^/]+)(\/retry)?$/);
+  if (capMatch) {
+    const capId = decodeURIComponent(capMatch[1]);
+    if (capMatch[2] && request.method === "POST") {
+      const r = await env.DB.prepare(
+        "UPDATE capture SET attempts = 0, error = NULL, status = 'pending' WHERE id = ? AND user_id IS ? AND status != 'done'",
+      ).bind(capId, userId).run();
+      return r.meta.changes ? json({ ok: true }) : json({ error: "unknown id" }, 404);
+    }
+    if (!capMatch[2] && request.method === "DELETE") {
+      const r = await env.DB.prepare("DELETE FROM capture WHERE id = ? AND user_id IS ? AND status != 'done'").bind(capId, userId).run();
+      return r.meta.changes ? json({ ok: true }) : json({ error: "unknown id" }, 404);
+    }
   }
 
   if (path === "/v1/setup" && request.method === "GET") {
@@ -234,6 +303,7 @@ export async function handleV1(
       const check = await fetch("https://api.groq.com/openai/v1/models", { headers: { Authorization: `Bearer ${key}` } });
       if (!check.ok) return json({ error: "Groq rejected that key. Copy it again from console.groq.com/keys." }, 400);
       await env.DB.prepare("UPDATE user SET groq_key_enc = ? WHERE id = ?").bind(await encryptKey(env, key), userId).run();
+      await logEvent(env, userId, "api", "own_key_saved");
       return json({ ok: true });
     }
   }
@@ -262,6 +332,7 @@ export async function handleV1(
   if (path === "/v1/search" && request.method === "GET") {
     const q = ftsQuery(url.searchParams.get("q") ?? "");
     if (!q) return json({ notes: [] });
+    await logEvent(env, userId, "api", "search");
     const { results } = await env.DB.prepare(
       `SELECT n.id, n.title, n.summary, n.topic, n.tools, n.permalink, n.status, n.created_at
        FROM note_fts f JOIN note n ON n.id = f.note_id
@@ -284,7 +355,10 @@ export async function handleV1(
       const row = await env.DB.prepare(
         `SELECT ${NOTE_COLUMNS}, markdown FROM note WHERE id = ? AND user_id IS ?`,
       ).bind(noteId, userId).first();
-      if (row) await env.DB.prepare("UPDATE note SET opens = opens + 1 WHERE id = ?").bind(noteId).run();
+      if (row) {
+        await env.DB.prepare("UPDATE note SET opens = opens + 1 WHERE id = ?").bind(noteId).run();
+        await logEvent(env, userId, "api", "open");
+      }
       return row ? json(row) : json({ error: "unknown id" }, 404);
     }
   }

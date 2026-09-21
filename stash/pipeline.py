@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import db, extract, fetch, frames, notify, transcribe, vault
-from .config import CONFIG, using_groq_key
+from .config import CONFIG, collect_usage, using_groq_key
 
 
 @dataclass
@@ -319,11 +319,12 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
         try:
             # Rows from the Worker carry the user's own Groq key when they
             # brought one; local-queue rows have no such column.
+            usage: list = []
             own_key = capture["groq_key"] if "groq_key" in capture.keys() else None
-            with using_groq_key(own_key):
+            with using_groq_key(own_key), collect_usage() as usage:
                 result = process(conn, capture, verbose=verbose, media_url=override)
         except Exception as exc:  # noqa: BLE001 - one bad capture must not stop the drain
-            _finish(conn, capture["id"], ok=False, error=str(exc), remote_mode=remote_mode)
+            _finish(conn, capture["id"], ok=False, error=str(exc), remote_mode=remote_mode, usage=usage)
             if verbose:
                 print(f"  failed: {exc}", flush=True)
             # Notify on failure too. A save that silently goes nowhere is the
@@ -343,7 +344,7 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             # picks up from the top; anything queued behind this waits one tick.
             break
 
-        _finish(conn, capture["id"], ok=True, remote_mode=remote_mode, title=result.title)
+        _finish(conn, capture["id"], ok=True, remote_mode=remote_mode, title=result.title, usage=usage)
         if not _is_guest(capture):
             notify.notify(
                 notify.for_success(
@@ -369,6 +370,7 @@ def _short_label(capture) -> str:
 def _finish(
     conn: sqlite3.Connection, capture_id: str, *, ok: bool,
     error: str | None = None, title: str | None = None, remote_mode: bool,
+    usage: list | None = None,
 ) -> None:
     """Mark a capture done or failed and report it wherever confirmation lives.
 
@@ -379,6 +381,6 @@ def _finish(
     if remote_mode:
         from . import remote
 
-        remote.finish_capture(capture_id, ok=ok, error=error, title=title)
+        remote.finish_capture(capture_id, ok=ok, error=error, title=title, usage=usage)
     else:
         db.finish_capture(conn, capture_id, ok=ok, error=error)

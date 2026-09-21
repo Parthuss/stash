@@ -136,4 +136,36 @@ sc = c.post("/ingest", headers=adm, json={"url": "https://www.instagram.com/reel
 def claim_ids(n=30): return [x["id"] for x in (c.post("/claim", headers=adm).json()["capture"] for _ in range(n)) if x]
 assert sc in claim_ids()                    # claimed once
 assert sc not in claim_ids()                # fresh claim is not handed out again
+# ---- captures list (processing/failed) + retry/remove + friendly reasons ----
+cu = user("capuser"); ch = h(cu)
+c1 = c.post("/v1/ingest", headers=ch, json={"url": "https://www.instagram.com/reel/PROC1/"}).json()["id"]
+lst = c.get("/v1/captures", headers=ch).json()["captures"]
+assert [x["id"] for x in lst] == [c1] and lst[0]["state"] == "processing"
+assert c1 not in [x["id"] for x in c.get("/v1/captures", headers=h(ann)).json()["captures"]]   # isolation
+burned = 0
+for _ in range(80):                                                                       # burn 3 attempts with a raw error
+    got = c.post("/claim", headers=adm).json()["capture"]
+    if got and got["id"] == c1:
+        c.post("/complete", headers=adm, json={"id": c1, "ok": False, "error": "yt-dlp: ERROR: Instagram sent an empty media response. private?"})
+        burned += 1
+        if burned == 3: break
+assert burned == 3
+lst = c.get("/v1/captures", headers=ch).json()["captures"]
+assert lst[0]["state"] == "failed" and "private or deleted" in lst[0]["reason"] and "yt-dlp" not in lst[0]["reason"]
+assert c.post(f"/v1/captures/{c1}/retry", headers=h(ann)).status_code == 404               # can't retry someone else's
+assert c.post(f"/v1/captures/{c1}/retry", headers=ch).status_code == 200
+assert c.get("/v1/captures", headers=ch).json()["captures"][0]["state"] == "processing"
+assert c.request("DELETE", f"/v1/captures/{c1}", headers=h(ann)).status_code == 404
+assert c.request("DELETE", f"/v1/captures/{c1}", headers=ch).status_code == 200
+assert c.get("/v1/captures", headers=ch).json()["captures"] == []
+# ---- usage attribution ----
+u1 = c.post("/v1/ingest", headers=ch, json={"url": "https://www.instagram.com/reel/USE1/"}).json()["id"]
+c.post("/complete", headers=adm, json={"id": u1, "ok": True, "title": "t", "usage": [
+    {"kind": "chat", "model": "m", "prompt_tokens": 1000, "completion_tokens": 500, "key_type": "shared"},
+    {"kind": "whisper", "model": "w", "seconds": 30, "key_type": "own"}]})
+ov = c.get("/v1/admin/overview", headers=own).json()
+row = next(u for u in ov["users"] if u["name"] == "capuser")
+assert row["groq_tokens_7d"] == 1500 and ov["overview"]["shared_tokens_24h"] >= 1500 and ov["overview"]["whisper_sec_24h"] >= 30
+assert any(e["name"] == "capuser" and e["kind"] == "groq" for e in ov["recent"]) and any(e["action"] == "ingest" for e in ov["recent"])
+assert row["api_calls_7d"] >= 2 and row["last_api"]
 print("ALL OK")

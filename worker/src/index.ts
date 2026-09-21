@@ -38,7 +38,7 @@
  */
 
 import { handleMcp } from "./mcp";
-import { adminOverview, createUser, decryptKey, deleteUser, handleV1, userFromBearer } from "./v1";
+import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer } from "./v1";
 
 export interface Env {
   DB: D1Database;
@@ -254,6 +254,7 @@ export default {
       if ((joined?.n ?? 0) >= (Number(env.MAX_JOIN) || 50)) return json({ error: "We're full for now." }, 403);
       const user = await createUser(env, name);
       await env.DB.prepare("UPDATE user SET joined_via = 'invite' WHERE id = ?").bind(user.id).run();
+      await logEvent(env, user.id, "api", "join");
       return json({ token: user.token }, 201);
     }
 
@@ -326,9 +327,21 @@ export default {
 
     if (path === "/complete" && request.method === "POST") {
       const body = (await request.json().catch(() => null)) as
-        | { id?: string; ok?: boolean; error?: string; title?: string }
+        | { id?: string; ok?: boolean; error?: string; title?: string; usage?: any[] }
         | null;
       if (!body?.id) return json({ error: "need id" }, 400);
+
+      // Attribute each AI call this capture caused to the person who saved it.
+      if (Array.isArray(body.usage) && body.usage.length) {
+        const cap = await env.DB.prepare("SELECT user_id FROM capture WHERE id = ?").bind(body.id).first<{ user_id: string | null }>();
+        for (const u of body.usage.slice(0, 50)) {
+          await logEvent(env, cap?.user_id ?? null, "groq", String(u.kind ?? "chat").slice(0, 20), {
+            model: String(u.model ?? "").slice(0, 60), key_type: u.key_type === "own" ? "own" : "shared",
+            prompt: Number(u.prompt_tokens) || 0, completion: Number(u.completion_tokens) || 0,
+            seconds: Number(u.seconds) || 0, capture_id: body.id,
+          });
+        }
+      }
 
       if (body.ok) {
         await env.DB.prepare(

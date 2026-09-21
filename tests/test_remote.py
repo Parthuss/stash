@@ -59,7 +59,7 @@ def test_finish_capture_sends_title_on_success(monkeypatch):
     assert seen["url"].endswith("/complete")
     assert seen["secret"] == "testsecret"
     assert seen["json"] == {
-        "id": "abc123", "ok": True, "error": None, "title": "video-shotcraft plugin",
+        "id": "abc123", "ok": True, "error": None, "title": "video-shotcraft plugin", "usage": [],
     }
 
 
@@ -153,3 +153,29 @@ def test_sync_note_skips_local_queue_rows(monkeypatch):
     conn.row_factory = sqlite3.Row
     row = conn.execute("SELECT 'c1' AS id").fetchone()
     pipeline._sync_note(row, _fields(), "m", None, lambda _: None)
+
+
+def test_finish_capture_sends_usage(monkeypatch):
+    seen = {}
+
+    def handler(request):
+        import json
+        seen["json"] = json.loads(request.content)
+        return httpx.Response(200, json={"ok": True})
+
+    _patch_client(monkeypatch, handler)
+    row = {"kind": "chat", "model": "m", "prompt_tokens": 10, "completion_tokens": 5, "seconds": 0, "key_type": "own"}
+    remote.finish_capture("abc", ok=True, usage=[row])
+    assert seen["json"]["usage"] == [row]
+
+
+def test_usage_is_collected_and_attributed_by_key_type():
+    from stash.config import collect_usage, record_usage, using_groq_key
+
+    record_usage("chat", "m", prompt=1)          # outside a collector: dropped, no error
+    with collect_usage() as bucket:
+        record_usage("chat", "m", prompt=100, completion=20)
+        with using_groq_key("theirs"):
+            record_usage("whisper", "w", seconds=12.5)
+    assert [(b["kind"], b["key_type"]) for b in bucket] == [("chat", "shared"), ("whisper", "own")]
+    assert bucket[0]["prompt_tokens"] == 100 and bucket[1]["seconds"] == 12.5

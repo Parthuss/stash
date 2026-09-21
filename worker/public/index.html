@@ -46,7 +46,8 @@ button { cursor: pointer; }
 
 header { padding: 22px 0 6px; }
 .row { display: flex; gap: 10px; align-items: center; }
-.brand { font-family: var(--display); font-size: 38px; line-height: 1; letter-spacing: -.02em; margin: 0; flex: 1; }
+.brand { font-family: var(--display); font-size: 32px; line-height: 1; letter-spacing: -.02em; margin: 0; flex: 1; }
+.pill, .setup-pill { white-space: nowrap; }
 .pill { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--peach); color: var(--peach-ink); font-size: 14px; font-weight: 500; }
 .sub { color: var(--muted); margin: 6px 0 16px; }
 
@@ -176,6 +177,20 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .msg { font-size: 14px; margin: 8px 2px 0; min-height: 1.2em; }
 .msg.err { color: #a02d1a; } .msg.ok { color: #17603f; }
 .note-box { background: var(--butter); border-radius: 18px; padding: 12px 14px; font-size: 14px; margin-top: 10px; }
+.banner { margin: 10px 0 4px; padding: 12px 16px; border-radius: 20px; font-size: 14px; display: flex; gap: 12px; align-items: center; box-shadow: var(--lift-1); }
+.banner span { flex: 1; }
+.banner button { flex: none; border: 0; height: 32px; padding: 0 14px; border-radius: 999px; background: #fff; font-weight: 600; box-shadow: var(--lift-1); }
+.banner.info { background: var(--sky); } .banner.warn { background: var(--butter); } .banner.err { background: #ffd5d0; color: #8c2415; }
+.card.wait { cursor: default; } .card.wait:active { transform: none; }
+.shimmer { background: linear-gradient(100deg, #ece9fb 30%, #f8f7ff 50%, #ece9fb 70%) 0 0 / 220% 100%; animation: shim 1.5s linear infinite; }
+@keyframes shim { to { background-position: -120% 0; } }
+.skel { aspect-ratio: 3 / 4; border-radius: var(--r-card); box-shadow: var(--lift-1); }
+.tag.err { background: #ffd5d0; color: #8c2415; }
+.cbody .why { color: var(--muted); font-size: 13px; line-height: 1.35; margin: 0 0 10px; }
+.cbody .acts { display: flex; gap: 6px; }
+.cbody .acts button { height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--ink); color: #fff; font-weight: 600; font-size: 13px; }
+.cbody .acts button.soft { background: var(--bg); color: var(--ink); }
+.help p { margin: 0 0 12px; font-size: 15px; } .help p:last-child { margin: 0; }
 .setup-pill { border: 0; height: 30px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .85); box-shadow: var(--lift-1); font-weight: 500; position: relative; }
 .setup-pill i { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #e8590c; }
 
@@ -217,11 +232,12 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 
 <section id="lib" style="display:none">
   <header>
-    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="adminBtn" hidden>Admin</button><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
+    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
     <p class="sub" id="sub">Your saves, all in one place.</p>
     <div class="search"><input id="q" type="search" placeholder="Search your saves" aria-label="Search"></div>
     <div class="chips" id="chips" role="group" aria-label="Filters"></div>
   </header>
+  <div id="banner" class="banner" hidden role="status"></div>
   <div id="list" aria-live="polite"></div>
 </section>
 
@@ -229,6 +245,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
   <div class="row" style="padding-top:18px"><button class="btn soft" id="setupBack">← Back</button></div>
   <div class="setup-head">
     <h1 id="setupTitle">Set up Stash</h1>
+    <button class="btn sm soft" id="adminBtn" hidden style="margin:2px 0 10px">Open admin</button>
     <p>Three things to set up. Do them now or later.</p>
   </div>
 
@@ -282,6 +299,18 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
           <form class="field" id="groqForm"><input id="groqKey" type="password" autocomplete="off" placeholder="gsk_…" aria-label="Groq API key"><button class="btn sm" type="submit">Save key</button></form>
           <p class="msg" id="groqMsg" role="status"></p></li>
       </ol>
+    </div>
+  </details>
+
+  <details class="group" id="gHelp">
+    <summary><div style="flex:1"><h2>Good to know</h2><small>Limits, timing, privacy</small></div></summary>
+    <div class="gbody help">
+      <p><b>What can I save?</b> Links from Instagram, TikTok, YouTube, X and Threads.</p>
+      <p><b>How long does it take?</b> A minute or two. Longer when Stash is busy, and you'll see a banner when it is.</p>
+      <p><b>Limits.</b> 25 saves waiting at once, 200 a day. The AI that reads reels has a free daily allowance shared by everyone. Add your own Groq key above to get your own.</p>
+      <p><b>Why did a save fail?</b> Usually the post is private or deleted, or YouTube blocked the download. Tap Retry once. If it fails again, remove it.</p>
+      <p><b>Who can see my saves?</b> Only you, in the app. But whoever runs Stash can read the database. Don't save anything you'd hate for them to see.</p>
+      <p><b>Leaving?</b> Export your notes or delete your account under Your account. Deleting is permanent.</p>
     </div>
   </details>
 
