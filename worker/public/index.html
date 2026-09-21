@@ -4,125 +4,173 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Stash</title>
-<meta name="theme-color" content="#16161a">
+<meta name="theme-color" content="#f8f7ff">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600&family=Gloock&display=swap" rel="stylesheet">
 <style>
+/* Design language borrowed from the portfolio's "ethereal" theme: cool lavender-white
+   ground, lavender / mint / peach pastels, Gloock (display serif) + Familjen Grotesk,
+   generously rounded corners, soft low-alpha elevation. Light mode only, by choice. */
 :root {
-  --bg: #faf9f6; --surface: #ffffff; --ink: #16161a; --muted: #6b6b76; --line: #e7e5df;
-  --accent: #e8590c; /* used ONLY to mean "unused" — the number that matters */
-  --r-card: 14px; --r-chip: 999px;
-  --ui: ui-sans-serif, -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #16161a; --surface: #1f1f25; --ink: #f4f1ea; --muted: #9a9aa6; --line: #2c2c34; }
+  --bg: #f8f7ff; --surface: #ffffff; --ink: #1d1b2e; --muted: #6a6880; --line: #ebe8f7;
+  --lavender: #dcd8ff; --mint: #cdf3e1; --peach: #ffd8cb; --sky: #d6ebff; --butter: #fff0c4;
+  --peach-ink: #8a3b1f; /* text on --peach: the "unused" badge */
+  --r-card: 24px; --r-input: 999px; --r-btn: 999px;
+  --lift-1: 0 1px 2px rgb(60 50 120 / .05), 0 6px 18px rgb(60 50 120 / .07);
+  --lift-2: 0 4px 10px rgb(60 50 120 / .08), 0 18px 40px rgb(60 50 120 / .12);
+  --display: "Gloock", Georgia, "Times New Roman", serif;
+  --ui: "Familjen Grotesk", ui-sans-serif, -apple-system, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; color-scheme: light; }
 body {
   margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--ui);
-  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
+  padding: env(safe-area-inset-top) 18px calc(env(safe-area-inset-bottom) + 110px);
+  min-height: 100svh; position: relative; overflow-x: hidden;
 }
-main { max-width: 720px; margin: 0 auto; }
+/* soft drifting orbs — the ethereal hero, turned down to ambience */
+body::before, body::after { content: ""; position: fixed; border-radius: 50%; filter: blur(70px); z-index: -1; pointer-events: none; opacity: .75; }
+body::before { width: 62vmax; height: 62vmax; top: -30vmax; left: -18vmax; background: #d9d3ff; animation: drift-a 14s ease-in-out infinite alternate; }
+body::after { width: 48vmax; height: 48vmax; bottom: -22vmax; right: -16vmax; background: #ffdbd0; animation: drift-b 17s ease-in-out infinite alternate; }
+@keyframes drift-a { to { transform: translate(6vmax, 5vmax); } }
+@keyframes drift-b { to { transform: translate(-5vmax, -4vmax); } }
+main { max-width: 760px; margin: 0 auto; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
-:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
-header { position: sticky; top: 0; background: var(--bg); padding: 16px 0 10px; z-index: 2; }
-.row { display: flex; gap: 8px; align-items: center; }
-h1 { font-size: 20px; margin: 0; letter-spacing: -0.02em; flex: 1; }
-.count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
-.count b { color: var(--accent); font-weight: 600; }
+header { padding: 22px 0 6px; }
+.row { display: flex; gap: 10px; align-items: center; }
+.brand { font-family: var(--display); font-size: 38px; line-height: 1; letter-spacing: -.02em; margin: 0; flex: 1; }
+.pill { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--peach); color: var(--peach-ink); font-size: 14px; font-weight: 500; }
+.sub { color: var(--muted); margin: 6px 0 16px; }
 
-input[type=search], input[type=url], input[type=password] {
-  width: 100%; height: 44px; padding: 0 14px; background: var(--surface);
-  border: 1px solid var(--line); border-radius: 12px;
+.search { position: relative; }
+.search input {
+  width: 100%; height: 52px; padding: 0 20px; border: 0; border-radius: var(--r-input);
+  background: rgb(255 255 255 / .9); box-shadow: var(--lift-1); backdrop-filter: blur(8px);
 }
-.chips { display: flex; gap: 6px; overflow-x: auto; padding: 10px 0 2px; scrollbar-width: none; }
+.search input::placeholder { color: var(--muted); }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 14px 2px 6px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
-.chip {
-  flex: none; height: 32px; padding: 0 12px; border-radius: var(--r-chip);
-  border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 14px;
-}
-.chip[aria-pressed=true] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip { flex: none; height: 36px; padding: 0 16px; border-radius: 999px; border: 0; background: rgb(255 255 255 / .75); color: var(--muted); font-weight: 500; box-shadow: var(--lift-1); }
+.chip[aria-pressed=true] { background: var(--ink); color: #fff; }
 
+/* two-up grid of tinted cards — the "recipe box" feel */
+#list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding-top: 10px; }
+@media (min-width: 640px) { #list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .card {
-  display: block; width: 100%; text-align: left; background: var(--surface);
-  border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px 16px; margin: 10px 0;
-  animation: rise .22s ease-out both;
+  display: flex; flex-direction: column; text-align: left; padding: 0; border: 0; overflow: hidden;
+  background: var(--surface); border-radius: var(--r-card); box-shadow: var(--lift-1);
+  animation: rise .35s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 30ms);
+  transition: transform .18s cubic-bezier(.2,.7,.2,1), box-shadow .18s;
 }
-.card:active, .btn:active, .chip:active { transform: scale(.98); }
-.card, .btn, .chip { transition: transform .12s ease; }
-.card h2 { font-size: 16px; line-height: 1.35; margin: 0 0 4px; letter-spacing: -0.01em; }
-.card p { margin: 0 0 8px; color: var(--muted); font-size: 14px; }
-.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex: none; }
-.dot.unused { background: var(--accent); }
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
-@media (prefers-reduced-motion: reduce) { .card { animation: none; } * { transition: none !important; } }
+.card:active { transform: scale(.97); }
+@media (hover: hover) { .card:hover { transform: translateY(-3px); box-shadow: var(--lift-2); } }
+.tint { position: relative; aspect-ratio: 4 / 3; display: grid; place-items: center; }
+.tint b { font-family: var(--display); font-weight: 400; font-size: 64px; line-height: 1; color: rgb(29 27 46 / .82); }
+.tag { position: absolute; left: 10px; top: 10px; height: 24px; padding: 0 10px; border-radius: 999px; background: rgb(255 255 255 / .7); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; backdrop-filter: blur(6px); }
+.tag.unused { background: var(--peach); color: var(--peach-ink); }
+.cbody { padding: 12px 14px 16px; }
+.card h2 { font-size: 15px; line-height: 1.3; font-weight: 600; margin: 0 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.card small { color: var(--muted); font-size: 12px; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+.empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 64px 12px; }
+.empty b { display: block; font-family: var(--display); font-weight: 400; font-size: 26px; color: var(--ink); margin-bottom: 6px; }
 
-.btn { height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); font-weight: 600; }
-.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-.empty { text-align: center; color: var(--muted); padding: 56px 8px; }
-.toast {
-  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 20px); transform: translateX(-50%);
-  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 9;
-}
+.btn { height: 48px; padding: 0 22px; border-radius: var(--r-btn); border: 0; background: var(--ink); color: #fff; font-weight: 600; transition: transform .12s; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.btn:active { transform: scale(.97); }
+.btn.soft { background: rgb(255 255 255 / .85); color: var(--ink); box-shadow: var(--lift-1); }
+
+/* floating add button + bottom sheet */
+.fab { position: fixed; right: 20px; bottom: calc(env(safe-area-inset-bottom) + 22px); width: 60px; height: 60px; border-radius: 50%; border: 0; background: var(--ink); color: #fff; font-size: 30px; line-height: 1; box-shadow: var(--lift-2); z-index: 5; transition: transform .15s; }
+.fab:active { transform: scale(.94); }
+.scrim { position: fixed; inset: 0; background: rgb(29 27 46 / .28); z-index: 6; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 7; background: #fff; border-radius: 28px 28px 0 0; padding: 22px 20px calc(env(safe-area-inset-bottom) + 24px); box-shadow: var(--lift-2); transform: translateY(105%); transition: transform .28s cubic-bezier(.2,.7,.2,1); max-width: 760px; margin: 0 auto; }
+body.sheet-open .scrim { opacity: 1; pointer-events: auto; }
+body.sheet-open .sheet { transform: none; }
+.sheet h2 { font-family: var(--display); font-weight: 400; font-size: 28px; margin: 0 0 4px; }
+.sheet p { color: var(--muted); margin: 0 0 14px; }
+.sheet input { width: 100%; height: 52px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); margin-bottom: 12px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 96px); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 999px; font-size: 14px; z-index: 9; max-width: 90vw; text-align: center; }
 
 /* note view */
 #note { display: none; }
-#note h1 { font-size: 24px; line-height: 1.25; flex: none; margin: 8px 0 12px; }
-.body h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 24px 0 6px; }
+.hero { border-radius: 32px; padding: 26px 22px 24px; margin-top: 14px; box-shadow: var(--lift-1); }
+.hero h1 { font-family: var(--display); font-weight: 400; font-size: clamp(30px, 6vw, 44px); line-height: 1.1; letter-spacing: -.015em; margin: 14px 0 12px; }
+.hero .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.hero .tag { position: static; }
+.actions { display: flex; gap: 10px; margin: 18px 0 8px; flex-wrap: wrap; }
+.body { background: rgb(255 255 255 / .85); border-radius: 28px; padding: 6px 22px 22px; box-shadow: var(--lift-1); margin-top: 14px; backdrop-filter: blur(8px); }
+.body h2 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 22px 0 6px; }
 .body p, .body li { font-size: 16px; }
-.body blockquote { margin: 8px 0; padding-left: 12px; border-left: 2px solid var(--line); color: var(--muted); }
-.body code { font-family: var(--mono); font-size: 14px; background: var(--surface); padding: 1px 5px; border-radius: 6px; }
-.body a { color: inherit; text-underline-offset: 3px; }
-.actions { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+.body ul { padding-left: 20px; }
+.body blockquote { margin: 8px 0; padding: 4px 0 4px 14px; border-left: 3px solid var(--lavender); color: var(--muted); }
+.body code { font-family: var(--mono); font-size: 14px; background: var(--bg); padding: 2px 6px; border-radius: 8px; }
+.body a { color: inherit; text-underline-offset: 3px; word-break: break-all; }
 
 /* sign-in */
-#auth { display: none; padding-top: 12vh; }
+#auth { display: none; padding-top: 16vh; text-align: center; }
+#auth .brand { font-size: 64px; flex: none; }
 #auth p { color: var(--muted); }
+#auth form { max-width: 420px; margin: 26px auto 0; flex-direction: column; align-items: stretch; }
+#auth input { height: 52px; padding: 0 20px; border-radius: 999px; border: 0; background: rgb(255 255 255 / .9); box-shadow: var(--lift-1); text-align: center; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 <main>
 
 <section id="auth">
-  <h1>Stash</h1>
-  <p>Paste your access token to open your library.</p>
-  <form id="authForm" class="row" style="margin-top:16px">
-    <input id="token" type="password" autocomplete="off" placeholder="stk_…" aria-label="Access token" required>
-    <button class="btn" type="submit">Open</button>
+  <h1 class="brand">Stash</h1>
+  <p>Save it. Find it. Actually use it.</p>
+  <form id="authForm" class="row">
+    <input id="token" type="password" autocomplete="off" placeholder="Paste your access token" aria-label="Access token" required>
+    <button class="btn" type="submit">Open my stash</button>
   </form>
   <p id="authErr" role="alert"></p>
 </section>
 
 <section id="lib" style="display:none">
   <header>
-    <div class="row"><h1>Stash</h1><span class="count" id="count"></span></div>
-    <form id="saveForm" class="row" style="margin-top:10px">
-      <input id="link" type="url" placeholder="Paste a link to save" aria-label="Link to save">
-      <button class="btn" type="submit">Save</button>
-    </form>
-    <div class="row" style="margin-top:8px"><input id="q" type="search" placeholder="Search your saves" aria-label="Search"></div>
+    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span></div>
+    <p class="sub" id="sub">Everything you saved, ready when you need it.</p>
+    <div class="search"><input id="q" type="search" placeholder="Search your saves" aria-label="Search"></div>
     <div class="chips" id="chips" role="group" aria-label="Filters"></div>
   </header>
   <div id="list" aria-live="polite"></div>
 </section>
 
 <section id="note">
-  <div class="row" style="padding-top:16px"><button class="btn ghost" id="back">← Back</button></div>
-  <h1 id="nTitle"></h1>
-  <div class="meta" id="nMeta"></div>
+  <div class="row" style="padding-top:18px"><button class="btn soft" id="back">← Back</button></div>
+  <div class="hero" id="nHero">
+    <div class="tags" id="nMeta"></div>
+    <h1 id="nTitle"></h1>
+  </div>
   <div class="actions">
-    <a class="btn ghost" id="nOpen" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none">Open original</a>
-    <button class="btn" id="nUsed">Mark used</button>
+    <a class="btn soft" id="nOpen" target="_blank" rel="noopener">Open original</a>
+    <button class="btn" id="nUsed">Mark as used</button>
   </div>
   <div class="body" id="nBody"></div>
 </section>
 
 </main>
+
+<button class="fab" id="fab" aria-label="Save a link">+</button>
+<div class="scrim" id="scrim"></div>
+<form class="sheet" id="saveForm" aria-label="Save a link">
+  <h2>Save something</h2>
+  <p>Paste a reel, TikTok, Short or any link. It’ll be in your library in a minute or two.</p>
+  <input id="link" type="url" placeholder="https://…" aria-label="Link to save" required>
+  <div class="row"><button class="btn" type="submit" style="flex:1">Save</button><button class="btn soft" type="button" id="cancel">Cancel</button></div>
+</form>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -140,12 +188,12 @@ async function api(path, opts = {}) {
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
-function show(which) { for (const id of ["auth", "lib", "note"]) $(id).style.display = id === which ? "block" : "none"; }
+function show(which) { for (const id of ["auth", "lib", "note"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
 function signOut() { store.del("stash_token"); token = null; show("auth"); }
 
 // ---- markdown: escape FIRST, then add structure. Notes contain third-party captions. ----
 function md(src) {
-  src = src.replace(/^---\n[\s\S]*?\n---\n/, "").replace(/^# .*\n/, "");
+  src = src.replace(/^---\n[\s\S]*?\n---\n/, "").replace(/^\s*# .*\n/, "");
   const out = []; let list = false;
   const inline = (t) => esc(t)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
@@ -164,20 +212,24 @@ function md(src) {
   return out.join("");
 }
 
-function toolsOf(n) { try { return JSON.parse(n.tools || "[]"); } catch { return []; } }
-function card(n) {
-  const tools = toolsOf(n).slice(0, 3).join(" · ");
-  return `<button class="card" data-id="${esc(n.id)}"><h2>${esc(n.title)}</h2><p>${esc((n.summary || "").slice(0, 160))}</p>
-    <div class="meta"><span class="dot ${n.status === "unused" ? "unused" : ""}" aria-hidden="true"></span>
-    <span>${esc(n.status)}</span><span>${esc(n.topic || "")}</span>${tools ? `<span>${esc(tools)}</span>` : ""}</div></button>`;
+const TINTS = { design: "--lavender", tooling: "--mint", business: "--peach", prompting: "--sky", other: "--butter",
+  automation: "--mint", "agent-building": "--lavender", rag: "--sky", research: "--butter", inspiration: "--peach", infrastructure: "--sky" };
+const tintOf = (t) => `var(${TINTS[t] || "--lavender"})`;
+function card(n, i) {
+  const initial = esc((n.title || "?").trim().charAt(0).toUpperCase());
+  const unused = n.status === "unused";
+  return `<button class="card" data-id="${esc(n.id)}" style="--i:${Math.min(i, 12)}">
+    <div class="tint" style="background:${tintOf(n.topic)}"><span class="tag ${unused ? "unused" : ""}">${unused ? "Unused" : "Used ✓"}</span><b aria-hidden="true">${initial}</b></div>
+    <div class="cbody"><h2>${esc(n.title)}</h2><small>${esc(n.topic || "")}</small></div></button>`;
 }
 function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
-  $("count").innerHTML = `${notes.length} saved · <b>${unused}</b> unused`;
+  $("count").textContent = `${unused} unused`;
+  $("sub").textContent = notes.length ? `${notes.length} saved. ${unused ? "Pick one and put it to use." : "Nice — everything's been used."}` : "Everything you saved, ready when you need it.";
   const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
   $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}</button>`).join("");
   const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
-  $("list").innerHTML = shown.length ? shown.map(card).join("") : `<div class="empty">${$("q").value ? "Nothing matches." : "Nothing saved yet. Paste a link above, or share a reel to Stash."}</div>`;
+  $("list").innerHTML = shown.length ? shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to save a link, or share a reel to Stash."}</div>`;
 }
 async function load() {
   const q = $("q").value.trim();
@@ -192,7 +244,9 @@ async function ingest(url) {
 async function open(id) {
   const r = await api("/v1/notes/" + encodeURIComponent(id)); current = await r.json();
   $("nTitle").textContent = current.title;
-  $("nMeta").innerHTML = `<span class="dot ${current.status === "unused" ? "unused" : ""}"></span><span>${esc(current.status)}</span><span>${esc(current.topic || "")}</span>`;
+  $("nHero").style.background = tintOf(current.topic);
+  const unused = current.status === "unused";
+  $("nMeta").innerHTML = `<span class="tag ${unused ? "unused" : ""}">${unused ? "Unused" : "Used ✓"}</span><span class="tag">${esc(current.topic || "other")}</span>`;
   $("nBody").innerHTML = md(current.markdown);
   const o = $("nOpen"); o.hidden = !current.permalink; if (current.permalink) o.href = current.permalink;
   $("nUsed").hidden = current.status === "used";
@@ -204,7 +258,11 @@ $("authForm").addEventListener("submit", async (e) => {
   const r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } });
   if (r.ok) { store.set("stash_token", token); start(); } else { $("authErr").textContent = "That token didn't work."; token = null; }
 });
-$("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; await ingest(u); } });
+const sheet = (open) => { document.body.classList.toggle("sheet-open", open); if (open) setTimeout(() => $("link").focus(), 250); };
+$("fab").addEventListener("click", () => sheet(true));
+$("scrim").addEventListener("click", () => sheet(false));
+$("cancel").addEventListener("click", () => sheet(false));
+$("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; sheet(false); await ingest(u); } });
 $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(load, 200); });
 $("chips").addEventListener("click", (e) => { const f = e.target.dataset.f; if (f) { filter = f; render(); } });
 $("list").addEventListener("click", (e) => { const c = e.target.closest(".card"); if (c) open(c.dataset.id); });

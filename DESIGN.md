@@ -34,14 +34,19 @@ Rule: nothing over ~250ms; respect Reduce Motion; no animation on the share exte
 - **Playwright CLI**: screenshot every screen of the web pilot so the design gets checked against the render, not the code. [5 Free Tools]
 - Library pins for `CLAUDE.md` (web pilot side): motion, lenis, cmdk, sonner, lucide, recharts, date-fns. React Native side: Reanimated, FlashList, expo-image, lucide-react-native. [Curated library list]
 
-## Proposed identity (to react to, not sourced)
-- **Feel:** a quiet personal library, not a feed. Stash's whole point is coming back to things, so density and calm over engagement bait.
-- **Surfaces:** near-white and near-black themes, one accent used only for "unused / needs attention", since the unused count is the product's core metric.
-- **Type:** one neutral grotesque for UI, one mono for tool names, commands and timestamps (notes are full of both).
-- **Cards:** thumbnail-led masonry; title, topic chip, status dot (processing / ready / failed). Two radii total (cards, chips).
-- **Empty / onboarding:** the only place for texture (dither or gradient) and larger motion.
+## Identity (decided 2026-09-21)
+Reference feel: **Simmr** (save from social → tidy tinted card library, floating "+" to add), in the
+visual language of the portfolio's "ethereal" theme (`portfolio-v2/components/ethereal-portfolio.tsx`).
+- **Light mode only.** Ground `#f8f7ff`, soft drifting lavender/peach orbs behind content.
+- **Pastels:** lavender `#dcd8ff`, mint `#cdf3e1`, peach `#ffd8cb`, sky `#d6ebff`, butter `#fff0c4`. Each topic gets a fixed tint; cards lead with a big serif initial until real thumbnails exist.
+- **Peach means "unused"** (the badge and counter). It's the one semantic colour: the unused count is the product's core metric.
+- **Type:** Gloock (display serif) for the wordmark, titles and section heads; Familjen Grotesk for UI and body.
+- **Shape:** generous radii (cards 24px, hero 32px, sheets 28px, everything interactive is a pill), soft low-alpha elevation instead of borders.
+- **Motion:** cards rise + fade with a short stagger, press = scale .97, bottom sheet slides in; all disabled under reduced-motion.
+- **Add flow:** floating + button → bottom sheet, mirroring Simmr's share/add pattern.
+Implemented in `worker/public/index.html`.
 
-## Open questions for you
-1. Which existing app's *feel* do you want (Simmr, Things, Raycast, Are.na)? A single "like this" reference beats any adjective list.
-2. Accent color: any strong preference or a color you want to avoid?
-3. Do you want a mascot/wordmark, or type only?
+## Still open
+1. Real thumbnails: fetch and store a small cover image per save (needs R2 or inline blob) so cards look like Simmr's.
+2. Collections beyond auto-topics.
+3. Wordmark: currently just "Stash" set in Gloock.
