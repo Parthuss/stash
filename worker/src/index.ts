@@ -269,8 +269,12 @@ export default {
     }
 
     if (path === "/claim" && request.method === "POST") {
+      // ?scope=guests: only other people's captures. The cloud runner uses it so
+      // the owner's own saves stay local-first (vault/ on the Mac).
+      const guestsOnly = url.searchParams.get("scope") === "guests";
       const row = await env.DB.prepare(
         `SELECT * FROM capture WHERE status='pending' AND attempts < ?
+         ${guestsOnly ? "AND user_id IS NOT NULL" : ""}
          ORDER BY captured_at LIMIT 1`,
       )
         .bind(MAX_ATTEMPTS)

@@ -87,4 +87,8 @@ assert c.post("/join", json={"name": "X", "code": "nope"}).status_code == 403
 for _ in range(10): r = c.post("/join", json={"name": "X", "code": "nope"})
 assert r.status_code == 429, r.status_code                                   # throttled after repeated misses
 assert c.post("/join", json={"name": "Zed2", "code": "letmein"}).status_code == 429  # even the right code, same IP
+# ---- /claim?scope=guests never hands out the owner's captures ----
+c.post("/ingest", headers=adm, json={"url": "https://www.instagram.com/reel/OWNER1/"})   # owner capture (user_id NULL)
+got = [c.post("/claim?scope=guests", headers=adm).json()["capture"] for _ in range(20)]
+assert all(x is None or x["user_id"] for x in got), "guests scope leaked an owner capture"
 print("ALL OK")

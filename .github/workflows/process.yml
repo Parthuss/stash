@@ -1,0 +1,38 @@
+# Cloud runner: drains other people's saves so the pilot doesn't need the owner's
+# Mac awake. The owner's own saves stay local-first (the Mac daemon claims those).
+#
+# Runs in a PUBLIC repo, so logs are public: --quiet prints counts only, never
+# links or titles. Secrets (Actions > Secrets): STASH_WORKER_URL, STASH_SECRET, GROQ_API_KEY.
+#
+# Limits: GitHub cron can't go under 5 min and often runs late. A run drains
+# everything pending, it is not one save per tick.
+name: process
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: stash-process
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  drain:
+    if: github.repository == 'Parthuss/stash'   # forks have no secrets; don't run there
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q httpx PyYAML yt-dlp sqlite-vec
+      - run: ffmpeg -version | head -1
+      - run: python -m stash daemon --once --guests-only --quiet
+        env:
+          STASH_WORKER_URL: ${{ secrets.STASH_WORKER_URL }}
+          STASH_SECRET: ${{ secrets.STASH_SECRET }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
