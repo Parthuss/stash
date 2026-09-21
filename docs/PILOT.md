@@ -6,14 +6,16 @@ building the store apps. Full reasoning: the plan in `~/.claude/plans/` and `DES
 ## Run it
 1. Keep the Mac daemon running (`stash status` → daemon ALIVE). Processing happens
    on your home IP, which Instagram doesn't block; captures queue safely when the Mac is off.
-2. Invite someone: `shortcuts/invite.sh ann`. It mints their token and builds their
-   personal iOS Shortcut, then prints what to send: web library URL + token, Claude
-   connector URL, and the `.shortcut` file to AirDrop.
-   - **iPhone:** install the Shortcut, share a reel to it.
-   - **Android:** open the web library in Chrome → menu → *Install app*; Stash then
-     appears in the share sheet. (Or paste links into the box on the page.)
-   - **Claude:** claude.ai → Settings → Connectors → add custom connector → paste the
-     connector URL. The URL contains their token; treat it like a password.
+2. Invite someone: `shortcuts/invite.sh ann` mints their token and prints what to send:
+   the site URL + the token. On first sign-in the app opens a **Set up** guide with
+   visuals, copy buttons and redirects for each step:
+   - **iPhone:** "Get the Shortcut" (one generic signed file at `/Stash.shortcut`; iOS asks
+     for the token when it's added). Rebuild it with `shortcuts/build.sh` if the Worker URL changes.
+   - **Android:** Chrome menu → *Install app*; Stash then appears in the share sheet.
+   - **Claude:** copy the connector link → claude.ai/settings/connectors → add custom
+     connector (or the `claude mcp add` command for Claude Code).
+   - **Groq key (optional):** they paste their own key; it's validated, encrypted, and their
+     saves then run on it instead of the shared free-tier quota.
 3. Watch it: 
    ```bash
    curl -s -H "X-Stash-Secret: $STASH_SECRET" $STASH_WORKER_URL/admin/stats
