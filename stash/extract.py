@@ -162,6 +162,15 @@ Rules:
 - `next_step` is one real move doable in about 20 minutes, not a study plan.
 - If the material is thin or promotional, say so plainly.
 - Return one JSON object matching the supplied schema and no prose.
+
+How to write it:
+- Sound like a blunt friend texting. Plain words, contractions, short sentences.
+- No em dashes or en dashes. Use a comma, a period, or parentheses.
+- No hype or filler: never use leverage, robust, seamlessly, streamline, unlock, elevate,
+  curate, craft (as a verb), delve, holistic, ecosystem (unless literal), or "game-changer".
+- Don't compliment the post. If it's fluff, say "mostly fluff" and why. If it's good, say what's useful in it.
+- `summary` is what the post actually says, in one or two plain sentences.
+- `why_saved` is your best guess at why they saved it, stated flat, no hedging.
 """
 
 

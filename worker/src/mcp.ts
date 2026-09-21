@@ -13,7 +13,7 @@ import { ftsQuery, userFromToken } from "./v1";
 
 const INSTRUCTIONS =
   "The user's own saved Instagram/TikTok/YouTube content, transcribed and indexed. " +
-  "Search it at the start of technical work rather than waiting to be asked — " +
+  "Search it at the start of technical work rather than waiting to be asked. " +
   "they save things intending to use them and forget they exist.";
 
 const TOOLS = [
@@ -55,7 +55,7 @@ const TOOLS = [
   {
     name: "mark_stash_used",
     description:
-      "Mark a save as acted on. Call it when you actually used a note — it is the only signal " +
+      "Mark a save as acted on. Call it when you actually used a note. It is the only signal " +
       "that separates a knowledge base from a graveyard.",
     inputSchema: {
       type: "object",
@@ -72,12 +72,12 @@ function compact(rows: any[]): string {
   const lines = rows.map((r) => {
     let summary = (r.summary ?? "").trim();
     if (summary.length > CLIP) summary = summary.slice(0, CLIP - 1).trimEnd() + "…";
-    let tools = "—";
+    let tools = "none";
     try {
       const t = JSON.parse(r.tools ?? "[]");
       if (t.length) tools = t.join(", ");
     } catch {}
-    return `- **${r.title}** — ${summary}\n  \`${r.id}\` · ${(r.created_at ?? "").slice(0, 10)} · ${r.topic} · ${r.status} · tools: ${tools}`;
+    return `- **${r.title}**: ${summary}\n  \`${r.id}\` · ${(r.created_at ?? "").slice(0, 10)} · ${r.topic} · ${r.status} · tools: ${tools}`;
   });
   lines.push("\n(call get_stash_note(id) for the full note)");
   return lines.join("\n");
