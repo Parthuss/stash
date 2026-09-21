@@ -30,6 +30,7 @@ class Result:
     #: Carried so the success notification can show what the reel was actually
     #: about without re-reading the note off disk.
     tools: list[str] = field(default_factory=list)
+    guest: bool = False
 
 
 def process(
@@ -310,7 +311,8 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             break
 
         override = remote.media_url_for(capture) if remote_mode else None
-        label = capture["permalink"] or capture["media_url"] or capture["id"]
+        # A guest's link never goes in this machine's log, only the owner's own.
+        label = capture["id"] if _is_guest(capture) else (capture["permalink"] or capture["media_url"] or capture["id"])
         if verbose:
             print(f"\n[{capture['id']}] {label}", flush=True)
 
@@ -350,6 +352,7 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
                 ),
                 verbose=verbose,
             )
+        result.guest = _is_guest(capture)
         results.append(result)
     return results
 
