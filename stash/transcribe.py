@@ -21,7 +21,7 @@ from pathlib import Path
 
 import httpx
 
-from .config import CONFIG
+from .config import CONFIG, groq_key
 
 GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
@@ -131,7 +131,7 @@ def transcribe(video: Path) -> Transcript:
     if mean_dbfs <= SILENCE_DBFS:
         return Transcript(skipped=True, reason=f"silent track ({mean_dbfs:.0f} dBFS)")
 
-    if CONFIG.groq_api_key:
+    if groq_key(CONFIG):
         return _groq(wav)
     return _local(wav)
 
@@ -140,7 +140,7 @@ def _groq(wav: Path) -> Transcript:
     with wav.open("rb") as handle:
         response = httpx.post(
             GROQ_URL,
-            headers={"Authorization": f"Bearer {CONFIG.groq_api_key}"},
+            headers={"Authorization": f"Bearer {groq_key(CONFIG)}"},
             files={"file": (wav.name, handle, "audio/wav")},
             data={
                 "model": GROQ_MODEL,

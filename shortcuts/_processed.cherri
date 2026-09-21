@@ -1,0 +1,373 @@
+/*
+Basic Actions and Global Types
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// [Doc]: Stop Shortcut: Stops the shortcut.
+
+
+// [Doc]: Nothing: Clear the current output.
+
+
+// [Doc]: Comment: Add an explicit comment.
+
+
+// [Doc]: Get Type: Get the type of input.
+
+
+// [Doc]: Get Object of Class: Get the object of `class` from a variable.
+
+
+// [Doc]: [Output] Show Result: Show `input`.
+
+
+// [Doc]: [Output] Quick Look: Preview `input` in Quick Look.
+
+
+// [Doc]: [Output] Stop and Output: Stop and output `output`. Do nothing if there is nowhere to output.
+
+
+// [Doc]: [Output] Output or Copy to Clipboard: Stop and output `output`. Copy to the clipboard if there is nowhere to output.
+
+
+
+
+// [Doc]: [Output] Must Output: Stop and output `output`. Respond with response if there is nowhere to output.
+
+
+
+
+// [Doc]: [Output] Content Graph: Display input as a content graph.
+
+
+
+
+
+
+
+
+
+
+// [Doc]: Count: Returns a count of `type` of items in `input`.
+
+
+// [Doc]: [Notifications] Alert: Shows an alert with text and optional title and an OK button to proceed.
+
+
+
+
+// [Doc]: [Notifications] Confirm: Shows an alert with text and optional title. It displays an OK button to proceed, and a cancel button that stops the Shortcut.
+
+
+
+
+// [Doc]: [Notifications] Show Notification: Shows a custom notification message.
+
+
+
+
+
+
+
+// [Doc]: [Numbers] Number: Create a number value.
+
+
+// [Doc]: [Numbers] Format Number: Format number based on decimal place.
+
+
+// [Doc]: [Numbers] Get Numbers: Get numbers from input.
+
+
+// [Doc]: [Numbers] Random Number: Returns a random number between `min` and `max`.
+
+
+
+
+// [Doc]: [Control Flow] Wait: Wait a specified number of seconds.
+
+
+// [Doc]: [Control Flow] Wait to Return: Wait for the user to return to Shortcuts.
+
+
+// [Doc]: [Search] Search/Spotlight: Get results from search on iOS or iPadOS, and Spotlight on macOS.
+
+
+// [Doc]: [Dictionaries] Get Dictionary: Get the dictionary from `input`.
+
+
+// [Doc]: [Dictionaries] Get Keys from Dictionary: Get only the keys from the `dictionary`.
+
+
+
+
+// [Doc]: [Dictionaries] Get Values from Dictionary: Get only the values from the `dictionary`.
+
+
+
+
+// [Doc]: [Dictionaries] Get Value from Dictionary: For constants only, otherwise `dictionary['key']` syntax should be used.
+
+
+
+
+// [Doc]: [Dictionaries] Set Value in Dictionary: Set the value of `key` to `value` in `dictionary`.
+
+
+// [Doc]: [Items] Get Name: Get the name of an item.
+
+
+// [Doc]: [Items] Set Name: Set the name of an item.
+
+
+// [Doc]: [Lists] Choose from List: Prompts the user to choose from a list.
+
+
+
+
+
+
+
+// [Doc]: [Lists] Get First Item: Get first item in a list.
+
+
+
+
+// [Doc]: [Lists] Get Last Item: Get the last item in a list.
+
+
+
+
+// [Doc]: [Lists] Get Random Item: Get random item from list.
+
+
+
+
+// [Doc]: [Lists] Get List Item: Get item from `list` at `index`. Keep in mind Shortcuts starts counting indexes at 1.
+
+
+
+
+// [Doc]: [Lists] Get List Items: Get items from a `list` between two indexes. Keep in mind Shortcuts starts counting indexes at 1.
+
+
+
+
+
+// Stash — share sheet capture, via the Cloudflare Worker.
+//
+// Template, not buildable as-is: https://stash.parthus.workers.dev is substituted by shortcuts/build.sh
+// from .env. It contains NO secret — iOS asks for the user's Stash token once, when
+// they add the Shortcut (an "import question"), so one signed file serves everyone
+// and is safe to host publicly at /Stash.shortcut.
+//
+// Why this posts to Cloudflare rather than the Mac: a LAN receiver needs the
+// Mac awake, running, and on the same Wi-Fi at the exact moment you share.
+// This works from cellular, from a café, with the lid shut. The save lands in
+// D1 and `stash daemon` drains it whenever the Mac is next up.
+//
+// The notification deliberately says "queued", not "saved". Those are
+// different facts, and an earlier version of this Shortcut claiming "stashed"
+// for a request that reached a dead receiver is precisely why nothing arrived
+// for an evening. Final confirmation — with the real note title — arrives
+// separately from stash/notify.py once the note actually exists.
+
+#define name Stash
+#define color violet
+#define glyph archive
+#define inputs url
+#define from sharesheet
+#define noinput stopwith "Share a link to Stash."
+
+/*
+Web Actions
+*/
+
+// [Doc]: [URLs] Open URL: Open URL in default browser.
+
+
+
+
+// [Doc]: [URLs] Expand URL: Get the expanded version of a URL. For instance, returns the full URL for a short URL, or the URL which a URL immediately redirects to, etc.
+
+
+// [Doc]: [URLs] Get URLs: Get URLs from `input`.
+
+
+
+
+
+
+
+
+
+
+
+
+
+// [Doc]: [URLs] Get URL Detail: Get a detail about a URL.
+
+
+// [Doc]: [URLs] Get URL Headers: Get the headers from a URL.
+
+
+// [Doc]: [URLs] URL Encode: Encode text for a URL.
+
+
+
+
+// [Doc]: [URLs] URL Decode: Decode text from URL encoding.
+
+
+
+
+// [Doc]: [URLs] Open X-Callback URL
+
+
+// [Doc]: [Safari] Get Current URL: Get current URL in Safari.
+
+
+// [Doc]: [Safari] Show Webpage: Show webpage using Safari.
+
+
+// [Doc]: [Safari] Run JavaScript on Webpage: Run some custom JavaScript on the current webpage in Safari.
+
+
+
+
+
+
+
+
+
+// [Doc]: [Safari] Get Webpage Detail: Get a detail about a provided webpage.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// [Doc]: [Safari] Search Web: Search the web using a provided search engine and query.
+
+
+// [Doc]: [Safari] Get Webpage Contents: Get contents of Webpage from Safari.
+
+
+// [Doc]: [Giphy] Get GIFs from Giphy: Gets a number of GIFs from Giphy for a search query.
+
+
+
+
+// [Doc]: [Giphy] Search Giphy: Gets GIFs from Giphy for a search query.
+
+
+// [Doc]: [Articles] Get Article: Get article from webpage.
+
+
+// [Doc]: [Articles] Get Article Detail: Get a detail about an article.
+
+
+// [Doc]: [RSS] Get RSS: Get RSS feed contents at URL. Limited by number of items.
+
+
+// [Doc]: [RSS] Get RSS Feeds: Get feeds from multiple URLs.
+
+
+
+
+
+
+
+
+
+// [Doc]: [HTTP] Download URL: Download the contents of a URL.
+
+
+
+
+// [Doc]: [HTTP] Form Request: Send a `method` request to `url` with `body` and optional `headers.
+
+
+
+
+
+
+
+
+
+// [Doc]: [HTTP] JSON Request: Send a `method` JSON request to `url` with `body` and optional `headers.
+
+
+
+
+
+
+
+
+
+// [Doc]: [HTTP] File Request: Send a `method` file request to `url` with `body` and optional `headers.
+
+
+
+
+
+
+
+
+
+
+#question tok "Paste your Stash access token (Stash → Set up → Copy token)" "stk_"
+@token = text(tok)
+
+@note = prompt("note?")
+
+@res = jsonRequest("https://stash.parthus.workers.dev/v1/ingest", "POST", {"url": "{ShortcutInput}", "note": "{@note}", "source": "shortcut"}, {"Authorization": "Bearer {@token}"})
+
+// Surface the Worker's actual reply. A wrong secret, a malformed URL or a bad
+// deploy all come back as {"error": ...} — showing that beats a hardcoded
+// success string that cannot tell the difference.
+@err = text(@res['error'])
+if @err != "" {
+	alert("{@err}", "Stash — not queued")
+} else {
+	showNotification("Queued — you'll get a second alert when the note is ready")
+}

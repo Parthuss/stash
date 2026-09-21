@@ -1,9 +1,9 @@
 // Stash — share sheet capture, via the Cloudflare Worker.
 //
-// Template, not buildable as-is: {{WORKER_URL}} and {{SECRET}} are substituted
-// by shortcuts/build.sh (from .env, or from a user token passed as its first
-// argument), so no secret ever lands in git. {{SECRET}} is a bearer token: the
-// owner's STASH_SECRET, or a per-user token minted by shortcuts/invite.sh.
+// Template, not buildable as-is: {{WORKER_URL}} is substituted by shortcuts/build.sh
+// from .env. It contains NO secret — iOS asks for the user's Stash token once, when
+// they add the Shortcut (an "import question"), so one signed file serves everyone
+// and is safe to host publicly at /Stash.shortcut.
 //
 // Why this posts to Cloudflare rather than the Mac: a LAN receiver needs the
 // Mac awake, running, and on the same Wi-Fi at the exact moment you share.
@@ -25,9 +25,12 @@
 
 #include 'actions/web'
 
+#question tok "Paste your Stash access token (Stash → Set up → Copy token)" "stk_"
+@token = text(tok)
+
 @note = prompt("note?")
 
-@res = jsonRequest("{{WORKER_URL}}/v1/ingest", "POST", {"url": "{ShortcutInput}", "note": "{@note}"}, {"Authorization": "Bearer {{SECRET}}"})
+@res = jsonRequest("{{WORKER_URL}}/v1/ingest", "POST", {"url": "{ShortcutInput}", "note": "{@note}", "source": "shortcut"}, {"Authorization": "Bearer {@token}"})
 
 // Surface the Worker's actual reply. A wrong secret, a malformed URL or a bad
 // deploy all come back as {"error": ...} — showing that beats a hardcoded

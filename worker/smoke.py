@@ -62,4 +62,21 @@ st = {u["name"]: u for u in c.get("/admin/stats", headers=adm).json()["users"]}
 assert st["ann"]["saves"] == 1 and st["ann"]["notes"] == 1 and st["ann"]["opened"] == 1 and st["ann"]["mcp_calls"] == 2, st["ann"]
 assert st["owner"]["notes"] == 1 and st["owner"]["used"] == 1, st["owner"]
 assert c.get("/admin/stats").status_code == 401
+# ---- setup, BYO key, export ----
+import os
+assert c.get("/v1/setup", headers=h(ann)).json() == {"owner": False, "saved_from": {"app": 1}, "claude_connected": True, "has_groq_key": False}, c.get("/v1/setup", headers=h(ann)).text
+assert c.put("/v1/settings/groq", headers=h(ann), json={"key": "hello"}).status_code == 400           # bad shape
+assert c.put("/v1/settings/groq", headers=h(ann), json={"key": "gsk_" + "a" * 40}).status_code == 400  # Groq rejects it
+assert c.put("/v1/settings/groq", headers=own, json={"key": "gsk_" + "a" * 40}).status_code == 400     # owner has no per-user key
+real = os.environ.get("GROQ_API_KEY")
+if real:  # optional: full round trip with a real key (never printed)
+    assert c.put("/v1/settings/groq", headers=h(ann), json={"key": real}).status_code == 200
+    su = c.get("/v1/setup", headers=h(ann)); assert su.json()["has_groq_key"] and real not in su.text
+    bbb = c.post("/v1/ingest", headers=h(ann), json={"url": "https://www.instagram.com/reel/BBB/", "source": "shortcut"}).json()["id"]
+    cl2 = next(x for x in (c.post("/claim", headers=adm).json()["capture"] for _ in range(5)) if x and x["id"] == bbb)
+    assert cl2["user_id"] == ann["id"] and cl2["groq_key"] == real and cl2["source"] == "shortcut"
+    assert c.delete("/v1/settings/groq", headers=h(ann)).status_code == 200
+    assert not c.get("/v1/setup", headers=h(ann)).json()["has_groq_key"]
+ex = c.get("/v1/export", headers=h(ann)); assert ex.status_code == 200 and len(ex.json()["notes"]) == 1
+assert "markdown" in ex.json()["notes"][0]
 print("ALL OK")

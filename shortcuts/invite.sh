@@ -1,7 +1,7 @@
 #!/bin/sh
-# Mint a pilot user and build their personal iOS Shortcut.
+# Mint a pilot user. The Shortcut is generic (worker/public/Stash.shortcut) and asks
+# for the token on install, so all an invite needs is the token and the link.
 #   shortcuts/invite.sh ann
-# Prints everything to send them: web library, MCP connector URL, Shortcut file.
 set -eu
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 NAME=${1:?usage: invite.sh <name>}
@@ -13,12 +13,11 @@ TOKEN=$(curl -fsS -X POST "$URL/admin/users" -H "X-Stash-Secret: $SECRET" \
   -H 'content-type: application/json' -d "{\"name\":\"$NAME\"}" \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
 
-"$REPO/shortcuts/build.sh" "$TOKEN" "$NAME" >/dev/null
 cat <<MSG
 
-Invited $NAME. Send them (the token is shown once — it is not recoverable):
+Invited $NAME. Send them this (the token is shown once — it is not recoverable):
 
-  Web library / Android:  $URL          sign in with:  $TOKEN
-  Claude connector URL:   $URL/mcp/$TOKEN     (claude.ai → Settings → Connectors → Add custom)
-  iPhone Shortcut:        $REPO/shortcuts/Stash-$NAME.shortcut   (AirDrop it)
+  1. Open  $URL  and paste this token:  $TOKEN
+  2. Tap "Set up" inside the app — it walks them through the iPhone Shortcut,
+     connecting Claude, and (optionally) their own Groq key.
 MSG

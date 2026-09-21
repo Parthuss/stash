@@ -9,6 +9,8 @@ file rather than in D1. Configuration only ever *adds* capability.
 from __future__ import annotations
 
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -114,3 +116,22 @@ class Config:
 
 
 CONFIG = Config()
+
+
+# A user who brought their own Groq key gets their captures processed on it, so
+# their usage never touches the shared free-tier quota. Scoped per capture with a
+# context manager; call sites pass the CONFIG they already hold (tests swap it).
+_groq_override: ContextVar[str | None] = ContextVar("groq_override", default=None)
+
+
+def groq_key(cfg) -> str:
+    return _groq_override.get() or cfg.groq_api_key
+
+
+@contextmanager
+def using_groq_key(key: str | None):
+    token = _groq_override.set(key or None)
+    try:
+        yield
+    finally:
+        _groq_override.reset(token)

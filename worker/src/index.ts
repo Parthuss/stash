@@ -38,7 +38,7 @@
  */
 
 import { handleMcp } from "./mcp";
-import { createUser, handleV1, userFromBearer } from "./v1";
+import { createUser, decryptKey, handleV1, userFromBearer } from "./v1";
 
 export interface Env {
   DB: D1Database;
@@ -256,7 +256,13 @@ export default {
       )
         .bind(row.id)
         .run();
-      return json({ capture: row });
+      // A user who brought their own Groq key is processed on it. It rides this
+      // admin-authenticated response to the Mac worker only; it is never logged.
+      const owner = row.user_id
+        ? await env.DB.prepare("SELECT groq_key_enc FROM user WHERE id = ?").bind(row.user_id).first<{ groq_key_enc: string | null }>()
+        : null;
+      const groq_key = owner?.groq_key_enc ? await decryptKey(env, owner.groq_key_enc).catch(() => null) : null;
+      return json({ capture: { ...row, groq_key } });
     }
 
     if (path === "/complete" && request.method === "POST") {

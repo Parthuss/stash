@@ -57,6 +57,25 @@ export async function createUser(env: Env, name: string): Promise<{ id: string; 
   return { id, token };
 }
 
+// ---- BYO Groq key: AES-GCM, key derived from STASH_SECRET ---------------------
+async function aesKey(env: Env): Promise<CryptoKey> {
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(env.STASH_SECRET + "|groq-key-v1"));
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
+const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+export async function encryptKey(env: Env, plain: string): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await aesKey(env), new TextEncoder().encode(plain)));
+  return b64(iv) + "." + b64(ct);
+}
+export async function decryptKey(env: Env, enc: string): Promise<string> {
+  const [iv, ct] = enc.split(".");
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(iv) }, await aesKey(env), unb64(ct));
+  return new TextDecoder().decode(pt);
+}
+
 /** FTS5 MATCH chokes on punctuation; quote each word so user text is never syntax. */
 export function ftsQuery(raw: string): string {
   const words = raw.match(/[\p{L}\p{N}_]+/gu) ?? [];
@@ -78,10 +97,12 @@ export async function handleV1(
   const url = new URL(request.url);
 
   if (path === "/v1/ingest" && request.method === "POST") {
-    const body = (await request.json().catch(() => null)) as { url?: string; note?: string } | null;
+    const body = (await request.json().catch(() => null)) as { url?: string; note?: string; source?: string } | null;
     if (!body?.url) return json({ error: "need url" }, 400);
+    // Which front door was used is what the setup checklist reads.
+    const source = ["shortcut", "web", "pwa"].includes(body.source ?? "") ? body.source! : "app";
     const result = await insertCapture(env, {
-      source: "app", permalink: body.url, note: body.note ?? null, user_id: userId,
+      source, permalink: body.url, note: body.note ?? null, user_id: userId,
     });
     return json(result, result.created ? 202 : 200);
   }
@@ -93,6 +114,49 @@ export async function handleV1(
     if (!row) return json({ error: "unknown id" }, 404);
     const dead = row.status === "pending" && row.attempts >= 3;
     return json({ status: dead ? "failed" : row.status, title: row.title, error: row.error });
+  }
+
+  if (path === "/v1/setup" && request.method === "GET") {
+    const sources = await env.DB.prepare(
+      "SELECT source, COUNT(*) n FROM capture WHERE user_id IS ? GROUP BY source",
+    ).bind(userId).all<{ source: string; n: number }>();
+    const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
+    const u = userId
+      ? await env.DB.prepare("SELECT mcp_calls, groq_key_enc FROM user WHERE id = ?").bind(userId).first<any>()
+      : null;
+    return json({
+      owner: userId === null,
+      saved_from: counts,
+      claude_connected: (u?.mcp_calls ?? 0) > 0,
+      has_groq_key: Boolean(u?.groq_key_enc),
+    });
+  }
+
+  if (path === "/v1/settings/groq") {
+    if (userId === null) return json({ error: "the owner's key lives in the Mac's .env" }, 400);
+    if (request.method === "DELETE") {
+      await env.DB.prepare("UPDATE user SET groq_key_enc = NULL WHERE id = ?").bind(userId).run();
+      return json({ ok: true });
+    }
+    if (request.method === "PUT") {
+      const body = (await request.json().catch(() => null)) as { key?: string } | null;
+      const key = (body?.key ?? "").trim();
+      if (!/^gsk_[A-Za-z0-9]{20,}$/.test(key)) return json({ error: "That doesn't look like a Groq key (it starts with gsk_)." }, 400);
+      // Prove it works now, so a typo fails here instead of silently at 3am.
+      const check = await fetch("https://api.groq.com/openai/v1/models", { headers: { Authorization: `Bearer ${key}` } });
+      if (!check.ok) return json({ error: "Groq rejected that key. Copy it again from console.groq.com/keys." }, 400);
+      await env.DB.prepare("UPDATE user SET groq_key_enc = ? WHERE id = ?").bind(await encryptKey(env, key), userId).run();
+      return json({ ok: true });
+    }
+  }
+
+  if (path === "/v1/export" && request.method === "GET") {
+    const { results } = await env.DB.prepare(
+      `SELECT ${NOTE_COLUMNS}, markdown FROM note WHERE user_id IS ? ORDER BY created_at`,
+    ).bind(userId).all();
+    return new Response(JSON.stringify({ exported_at: new Date().toISOString(), notes: results ?? [] }, null, 2), {
+      headers: { "content-type": "application/json", "content-disposition": 'attachment; filename="stash-export.json"' },
+    });
   }
 
   if (path === "/v1/notes" && request.method === "GET") {

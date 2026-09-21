@@ -265,3 +265,17 @@ def test_retry_delay_parses_groq_wait_formats():
     assert abs(_retry_delay(resp("Please try again in 23m45.6s.")) - 1425.85) < 0.01
     assert abs(_retry_delay(resp("try again in 58.4s")) - 58.65) < 0.01
     assert _retry_delay(resp("nothing useful")) == 10
+
+
+def test_groq_key_override_is_scoped():
+    from types import SimpleNamespace
+
+    from stash.config import groq_key, using_groq_key
+
+    cfg = SimpleNamespace(groq_api_key="shared")
+    assert groq_key(cfg) == "shared"
+    with using_groq_key("theirs"):
+        assert groq_key(cfg) == "theirs"
+        with using_groq_key(None):  # falsy override falls back to the shared key
+            assert groq_key(cfg) == "shared"
+    assert groq_key(cfg) == "shared"
