@@ -17,7 +17,9 @@ cat <<MSG
 
 Invited $NAME. Send them this (the token is shown once — it is not recoverable):
 
-  1. Open  $URL  and paste this token:  $TOKEN
-  2. Tap "Set up" inside the app — it walks them through the iPhone Shortcut,
-     connecting Claude, and (optionally) their own Groq key.
+  1. Open this link on their phone (it signs them in automatically):
+       $URL/#t=$TOKEN
+     (If the link doesn't work, they can open $URL and paste the token: $TOKEN)
+  2. The app then opens a Set up guide: iPhone Shortcut, connecting Claude, and
+     (optionally) their own Groq key.
 MSG

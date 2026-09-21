@@ -119,6 +119,13 @@ body.sheet-open .sheet { transform: none; }
 #auth { display: none; padding-top: 16vh; text-align: center; }
 #auth .brand { font-size: 64px; flex: none; }
 #auth p { color: var(--muted); }
+.authhelp { max-width: 420px; margin: 34px auto 0; text-align: left; background: rgb(255 255 255 / .8); border-radius: 24px; padding: 18px 20px; box-shadow: var(--lift-1); backdrop-filter: blur(8px); }
+.authhelp h2 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0 0 6px; color: var(--ink); }
+.authhelp p { margin: 0 0 10px; font-size: 15px; }
+.authhelp ol { margin: 0 0 10px; padding-left: 20px; color: var(--ink); font-size: 15px; }
+.authhelp li { margin-bottom: 6px; } .authhelp li b { font-weight: 600; }
+.authhelp .fine { font-size: 13px; margin: 0; }
+.authhelp code { font-family: var(--mono); font-size: 13px; background: var(--bg); padding: 1px 6px; border-radius: 8px; }
 #auth form { max-width: 420px; margin: 26px auto 0; flex-direction: column; align-items: stretch; }
 #auth input { height: 52px; padding: 0 20px; border-radius: 999px; border: 0; background: rgb(255 255 255 / .9); box-shadow: var(--lift-1); text-align: center; }
 
@@ -171,6 +178,16 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
     <button class="btn" type="submit">Open my stash</button>
   </form>
   <p id="authErr" role="alert"></p>
+  <div class="authhelp">
+    <h2>What’s an access token?</h2>
+    <p>Stash is invite-only for now. Your token is a private password that starts with <code>stk_</code>. It’s how Stash knows which saves are yours.</p>
+    <ol>
+      <li><b>Got an invite link?</b> Just open it — you’ll be signed in automatically, no token to paste.</li>
+      <li><b>Got a message with a token?</b> Paste it above.</li>
+      <li><b>Neither?</b> Ask the person who told you about Stash to send you an invite.</li>
+    </ol>
+    <p class="fine">Keep your token private — anyone who has it can see your saves. You can find it again later in <i>Set up → Your account</i>.</p>
+  </div>
 </section>
 
 <section id="lib" style="display:none">
@@ -282,6 +299,7 @@ const $ = (id) => document.getElementById(id);
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
                 set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
                 del: (k) => { try { localStorage.removeItem(k); } catch {} } };
+{ const m = location.hash.match(/^#t=([\w-]+)/); if (m) { store.set("stash_token", m[1]); history.replaceState(null, "", location.pathname + location.search); } }
 let token = store.get("stash_token"), notes = [], filter = "all", current = null, timer;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
