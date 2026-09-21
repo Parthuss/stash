@@ -108,3 +108,48 @@ def test_row_returns_none_for_missing_keys_instead_of_raising():
     row = remote.Row({"id": "abc123", "permalink": "https://x/1"})
     assert row["media_key"] is None
     assert row["permalink"] == "https://x/1"
+
+
+def _fields():
+    return {"title": "T", "summary": "S", "topic": "tooling", "tools": ["x"]}
+
+
+def test_push_note_sends_owner_and_body(monkeypatch):
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["path"], seen["secret"] = request.url.path, request.headers["x-stash-secret"]
+        seen["json"] = __import__("json").loads(request.content)
+        return httpx.Response(200, json={"id": "n1"})
+
+    _patch_client(monkeypatch, handler)
+    remote.push_note(remote.Row({"id": "c1", "user_id": "u9"}), _fields(), "# md", "https://x/y")
+    assert seen["path"] == "/note" and seen["secret"] == "testsecret"
+    assert seen["json"]["capture_id"] == "c1" and seen["json"]["user_id"] == "u9"
+    assert seen["json"]["markdown"] == "# md"
+
+
+def test_sync_note_failure_raises_for_users_but_not_owner(monkeypatch):
+    from stash import pipeline
+
+    def boom(*a, **k):
+        raise remote.RemoteError("down")
+
+    monkeypatch.setattr(remote, "push_note", boom)
+    logs = []
+    pipeline._sync_note(remote.Row({"id": "c", "user_id": None}), _fields(), "m", None, logs.append)
+    assert "kept locally" in logs[0]
+    with pytest.raises(remote.RemoteError):
+        pipeline._sync_note(remote.Row({"id": "c", "user_id": "u1"}), _fields(), "m", None, logs.append)
+
+
+def test_sync_note_skips_local_queue_rows(monkeypatch):
+    import sqlite3
+
+    from stash import pipeline
+
+    monkeypatch.setattr(remote, "push_note", lambda *a, **k: pytest.fail("must not push"))
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT 'c1' AS id").fetchone()
+    pipeline._sync_note(row, _fields(), "m", None, lambda _: None)

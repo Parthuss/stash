@@ -149,6 +149,7 @@ def process(
     )
     path = vault.write(content, vault.note_path(fields["title"]))
     say(f"wrote {path.name}")
+    _sync_note(capture, fields, content, permalink, say)
 
     db.upsert_note(
         conn,
@@ -210,6 +211,7 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
     )
     path = vault.write(content, vault.note_path(fields["title"]))
     say(f"wrote {path.name} (caption-only)")
+    _sync_note(capture, fields, content, permalink, say)
 
     db.upsert_note(conn, {
         "capture_id": capture["id"], "path": path.name,
@@ -225,6 +227,28 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
         topic=fields["topic"], frames_used=0, transcript_chars=0, via="caption-only",
         tools=fields["tools"],
     )
+
+
+def _sync_note(capture, fields, content: str, permalink, say) -> None:
+    """Mirror the note to the Worker (remote mode only).
+
+    Another user's note exists nowhere else, so a failed push fails the capture
+    and the queue retries it. The owner's note is safe in vault/ already, so a
+    blip there is logged and not worth redoing the whole pipeline for."""
+    # Rows claimed from the Worker always carry a user_id key (NULL for the
+    # owner); rows from the local sqlite queue have no such column. Keying off
+    # the row, not CONFIG, means a local-mode run can never push to the Worker
+    # just because a .env happens to be present.
+    if "user_id" not in capture.keys():
+        return
+    from . import remote
+
+    try:
+        remote.push_note(capture, fields, content, permalink)
+    except Exception as exc:  # noqa: BLE001
+        if capture["user_id"]:
+            raise
+        say(f"note push failed (kept locally): {exc}")
 
 
 def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> list[Result]:
