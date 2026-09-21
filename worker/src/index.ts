@@ -317,6 +317,23 @@ export default {
       return json({ id: noteId });
     }
 
+    // Pilot dashboard: one row per user (owner included as "owner").
+    if (path === "/admin/stats" && request.method === "GET") {
+      const { results } = await env.DB.prepare(
+        `SELECT COALESCE(u.name, 'owner') AS name, u.id AS id,
+           (SELECT COUNT(*) FROM capture c WHERE c.user_id IS u.id) AS saves,
+           (SELECT COUNT(*) FROM capture c WHERE c.user_id IS u.id
+              AND c.captured_at >= datetime('now','-7 days')) AS saves_7d,
+           (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id) AS notes,
+           (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id AND n.opens > 0) AS opened,
+           (SELECT COUNT(*) FROM note n WHERE n.user_id IS u.id AND n.status='used') AS used,
+           COALESCE(u.mcp_calls, 0) AS mcp_calls,
+           (SELECT MAX(captured_at) FROM capture c WHERE c.user_id IS u.id) AS last_save
+         FROM (SELECT id, name, mcp_calls FROM user UNION ALL SELECT NULL, NULL, 0) u`,
+      ).all();
+      return json({ users: results ?? [] });
+    }
+
     // Dead letters: pending rows that hit MAX_ATTEMPTS and silently stopped being
     // offered by /pending. Listed here so failures can't hide, and /requeue
     // gives them a fresh set of attempts (e.g. after fixing a rate-limit bug).

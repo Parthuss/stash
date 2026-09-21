@@ -57,4 +57,9 @@ assert "No note matching" in call(ann["token"], "get_stash_note", {"note_id": o}
 assert "design: 1" in call("adm", "list_stash_topics", {})
 assert "Marked" in call("adm", "mark_stash_used", {"note_id": o})
 assert "Owner secret sauce" in call("adm", "recent_stash", {})
+assert c.get(f"/v1/notes/{n1}", headers=h(ann)).status_code == 200  # counts as an open
+st = {u["name"]: u for u in c.get("/admin/stats", headers=adm).json()["users"]}
+assert st["ann"]["saves"] == 1 and st["ann"]["notes"] == 1 and st["ann"]["opened"] == 1 and st["ann"]["mcp_calls"] == 2, st["ann"]
+assert st["owner"]["notes"] == 1 and st["owner"]["used"] == 1, st["owner"]
+assert c.get("/admin/stats").status_code == 401
 print("ALL OK")

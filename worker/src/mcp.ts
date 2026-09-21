@@ -102,6 +102,7 @@ async function callTool(env: Env, userId: string | null, name: string, a: any): 
     case "get_stash_note": {
       const row = await env.DB.prepare("SELECT markdown FROM note WHERE id = ? AND user_id IS ?")
         .bind(String(a?.note_id ?? ""), userId).first<{ markdown: string }>();
+      if (row) await env.DB.prepare("UPDATE note SET opens = opens + 1 WHERE id = ?").bind(String(a.note_id)).run();
       return row ? row.markdown : `No note matching ${JSON.stringify(a?.note_id)}.`;
     }
     case "recent_stash": {
@@ -162,6 +163,7 @@ export async function handleMcp(request: Request, env: Env, path: string): Promi
       break;
     case "tools/call":
       try {
+        if (userId) await env.DB.prepare("UPDATE user SET mcp_calls = mcp_calls + 1 WHERE id = ?").bind(userId).run();
         const text = await callTool(env, userId, msg.params?.name, msg.params?.arguments);
         body = rpc(msg.id, { content: [{ type: "text", text }] });
       } catch (e) {

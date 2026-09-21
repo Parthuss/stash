@@ -132,6 +132,7 @@ export async function handleV1(
       const row = await env.DB.prepare(
         `SELECT ${NOTE_COLUMNS}, markdown FROM note WHERE id = ? AND user_id IS ?`,
       ).bind(noteId, userId).first();
+      if (row) await env.DB.prepare("UPDATE note SET opens = opens + 1 WHERE id = ?").bind(noteId).run();
       return row ? json(row) : json({ error: "unknown id" }, 404);
     }
   }
