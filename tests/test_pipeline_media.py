@@ -86,3 +86,30 @@ def test_pipeline_preserves_mixed_carousel_order(tmp_path, monkeypatch):
     assert seen["caption"] == "metadata caption"
     assert seen["transcript_text"] == "[Slide 2 video]\nvideo words"
     assert result.frames_used == 3
+
+
+def test_guest_capture_never_touches_the_owners_vault_index_or_alerts(tmp_path, monkeypatch):
+    """Someone else's save must live only in the Worker — not in this Mac's
+    vault/, search index, or iMessage alerts (it would leak into the owner's recall)."""
+    img = tmp_path / "a.jpg"
+    img.write_bytes(b"x")
+    bundle = MediaBundle(items=[MediaItem(1, "image", path=img)], via="yt-dlp",
+                         title="t", uploader="u", caption="c")
+    monkeypatch.setattr(pipeline.fetch, "fetch", lambda **kw: bundle)
+    monkeypatch.setattr(pipeline.extract, "extract", lambda **kw: FIELDS)
+    monkeypatch.setattr(pipeline.vault, "render", lambda *a, **k: "note")
+    pushed = []
+    monkeypatch.setattr(pipeline, "_sync_note", lambda cap, fields, content, permalink, say: pushed.append(cap["id"]))
+    monkeypatch.setattr(pipeline.vault, "write", lambda *a, **k: (_ for _ in ()).throw(AssertionError("wrote to vault")))
+    monkeypatch.setattr(pipeline.db, "upsert_note", lambda *a, **k: (_ for _ in ()).throw(AssertionError("indexed locally")))
+    monkeypatch.setattr(pipeline.notify, "notify", lambda *a, **k: (_ for _ in ()).throw(AssertionError("notified owner")))
+
+    from stash import remote
+
+    capture = remote.Row({
+        "id": "g1", "user_id": "friend", "permalink": "https://instagram.com/p/x/", "permalink_ok": 1,
+        "media_url": None, "note": None, "caption": "", "source": "shortcut",
+    })
+    result = pipeline.process(sqlite3.connect(":memory:"), capture, verbose=False)
+    assert result.title == "Ordered carousel" and pushed == ["g1"]
+    assert pipeline._is_guest(capture) and not pipeline._is_guest({"id": "o", "user_id": None})
