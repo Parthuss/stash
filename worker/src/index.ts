@@ -37,6 +37,7 @@
  * the Worker still runs correctly with the binding entirely absent.
  */
 
+import { handleMcp } from "./mcp";
 import { createUser, handleV1, userFromBearer } from "./v1";
 
 export interface Env {
@@ -203,10 +204,12 @@ export default {
       return new Response("method not allowed", { status: 405 });
     }
 
+    if (path.startsWith("/mcp/")) return handleMcp(request, env, path);
+
     // ---- per-user API (bearer token) -----------------------------------
     if (path.startsWith("/v1/")) {
       const userId = await userFromBearer(request, env);
-      if (!userId) return json({ error: "unauthorized" }, 401);
+      if (userId === undefined) return json({ error: "unauthorized" }, 401);
       return handleV1(request, env, path, userId, insertCapture);
     }
 

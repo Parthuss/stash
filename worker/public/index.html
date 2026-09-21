@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stash</title>
+<meta name="theme-color" content="#16161a">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<style>
+:root {
+  --bg: #faf9f6; --surface: #ffffff; --ink: #16161a; --muted: #6b6b76; --line: #e7e5df;
+  --accent: #e8590c; /* used ONLY to mean "unused" — the number that matters */
+  --r-card: 14px; --r-chip: 999px;
+  --ui: ui-sans-serif, -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #16161a; --surface: #1f1f25; --ink: #f4f1ea; --muted: #9a9aa6; --line: #2c2c34; }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--ui);
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
+}
+main { max-width: 720px; margin: 0 auto; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+header { position: sticky; top: 0; background: var(--bg); padding: 16px 0 10px; z-index: 2; }
+.row { display: flex; gap: 8px; align-items: center; }
+h1 { font-size: 20px; margin: 0; letter-spacing: -0.02em; flex: 1; }
+.count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.count b { color: var(--accent); font-weight: 600; }
+
+input[type=search], input[type=url], input[type=password] {
+  width: 100%; height: 44px; padding: 0 14px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px;
+}
+.chips { display: flex; gap: 6px; overflow-x: auto; padding: 10px 0 2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; height: 32px; padding: 0 12px; border-radius: var(--r-chip);
+  border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 14px;
+}
+.chip[aria-pressed=true] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+.card {
+  display: block; width: 100%; text-align: left; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px 16px; margin: 10px 0;
+  animation: rise .22s ease-out both;
+}
+.card:active, .btn:active, .chip:active { transform: scale(.98); }
+.card, .btn, .chip { transition: transform .12s ease; }
+.card h2 { font-size: 16px; line-height: 1.35; margin: 0 0 4px; letter-spacing: -0.01em; }
+.card p { margin: 0 0 8px; color: var(--muted); font-size: 14px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex: none; }
+.dot.unused { background: var(--accent); }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } * { transition: none !important; } }
+
+.btn { height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); font-weight: 600; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.empty { text-align: center; color: var(--muted); padding: 56px 8px; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 20px); transform: translateX(-50%);
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 9;
+}
+
+/* note view */
+#note { display: none; }
+#note h1 { font-size: 24px; line-height: 1.25; flex: none; margin: 8px 0 12px; }
+.body h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 24px 0 6px; }
+.body p, .body li { font-size: 16px; }
+.body blockquote { margin: 8px 0; padding-left: 12px; border-left: 2px solid var(--line); color: var(--muted); }
+.body code { font-family: var(--mono); font-size: 14px; background: var(--surface); padding: 1px 5px; border-radius: 6px; }
+.body a { color: inherit; text-underline-offset: 3px; }
+.actions { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+
+/* sign-in */
+#auth { display: none; padding-top: 12vh; }
+#auth p { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+
+<section id="auth">
+  <h1>Stash</h1>
+  <p>Paste your access token to open your library.</p>
+  <form id="authForm" class="row" style="margin-top:16px">
+    <input id="token" type="password" autocomplete="off" placeholder="stk_…" aria-label="Access token" required>
+    <button class="btn" type="submit">Open</button>
+  </form>
+  <p id="authErr" role="alert"></p>
+</section>
+
+<section id="lib" style="display:none">
+  <header>
+    <div class="row"><h1>Stash</h1><span class="count" id="count"></span></div>
+    <form id="saveForm" class="row" style="margin-top:10px">
+      <input id="link" type="url" placeholder="Paste a link to save" aria-label="Link to save">
+      <button class="btn" type="submit">Save</button>
+    </form>
+    <div class="row" style="margin-top:8px"><input id="q" type="search" placeholder="Search your saves" aria-label="Search"></div>
+    <div class="chips" id="chips" role="group" aria-label="Filters"></div>
+  </header>
+  <div id="list" aria-live="polite"></div>
+</section>
+
+<section id="note">
+  <div class="row" style="padding-top:16px"><button class="btn ghost" id="back">← Back</button></div>
+  <h1 id="nTitle"></h1>
+  <div class="meta" id="nMeta"></div>
+  <div class="actions">
+    <a class="btn ghost" id="nOpen" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none">Open original</a>
+    <button class="btn" id="nUsed">Mark used</button>
+  </div>
+  <div class="body" id="nBody"></div>
+</section>
+
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+                del: (k) => { try { localStorage.removeItem(k); } catch {} } };
+let token = store.get("stash_token"), notes = [], filter = "all", current = null, timer;
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + token, "content-type": "application/json" } });
+  if (r.status === 401) { signOut(); throw new Error("unauthorized"); }
+  return r;
+}
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
+function show(which) { for (const id of ["auth", "lib", "note"]) $(id).style.display = id === which ? "block" : "none"; }
+function signOut() { store.del("stash_token"); token = null; show("auth"); }
+
+// ---- markdown: escape FIRST, then add structure. Notes contain third-party captions. ----
+function md(src) {
+  src = src.replace(/^---\n[\s\S]*?\n---\n/, "").replace(/^# .*\n/, "");
+  const out = []; let list = false;
+  const inline = (t) => esc(t)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  for (const line of src.split("\n")) {
+    const li = line.match(/^\s*[-*] (.*)/);
+    if (list && !li) { out.push("</ul>"); list = false; }
+    if (li) { if (!list) { out.push("<ul>"); list = true; } out.push("<li>" + inline(li[1]) + "</li>"); }
+    else if (/^## /.test(line)) out.push("<h2>" + inline(line.slice(3)) + "</h2>");
+    else if (/^> ?/.test(line)) out.push("<blockquote>" + inline(line.replace(/^> ?/, "")) + "</blockquote>");
+    else if (line.startsWith("<sub>") || !line.trim()) continue;
+    else out.push("<p>" + inline(line) + "</p>");
+  }
+  if (list) out.push("</ul>");
+  return out.join("");
+}
+
+function toolsOf(n) { try { return JSON.parse(n.tools || "[]"); } catch { return []; } }
+function card(n) {
+  const tools = toolsOf(n).slice(0, 3).join(" · ");
+  return `<button class="card" data-id="${esc(n.id)}"><h2>${esc(n.title)}</h2><p>${esc((n.summary || "").slice(0, 160))}</p>
+    <div class="meta"><span class="dot ${n.status === "unused" ? "unused" : ""}" aria-hidden="true"></span>
+    <span>${esc(n.status)}</span><span>${esc(n.topic || "")}</span>${tools ? `<span>${esc(tools)}</span>` : ""}</div></button>`;
+}
+function render() {
+  const unused = notes.filter((n) => n.status === "unused").length;
+  $("count").innerHTML = `${notes.length} saved · <b>${unused}</b> unused`;
+  const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
+  $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}</button>`).join("");
+  const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
+  $("list").innerHTML = shown.length ? shown.map(card).join("") : `<div class="empty">${$("q").value ? "Nothing matches." : "Nothing saved yet. Paste a link above, or share a reel to Stash."}</div>`;
+}
+async function load() {
+  const q = $("q").value.trim();
+  const r = await api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200");
+  notes = (await r.json()).notes; render();
+}
+async function ingest(url) {
+  const r = await api("/v1/ingest", { method: "POST", body: JSON.stringify({ url }) });
+  if (!r.ok) { toast("Couldn't save that link"); return; }
+  toast((await r.json()).created ? "Saved — processing takes a minute or two" : "Already in your stash");
+}
+async function open(id) {
+  const r = await api("/v1/notes/" + encodeURIComponent(id)); current = await r.json();
+  $("nTitle").textContent = current.title;
+  $("nMeta").innerHTML = `<span class="dot ${current.status === "unused" ? "unused" : ""}"></span><span>${esc(current.status)}</span><span>${esc(current.topic || "")}</span>`;
+  $("nBody").innerHTML = md(current.markdown);
+  const o = $("nOpen"); o.hidden = !current.permalink; if (current.permalink) o.href = current.permalink;
+  $("nUsed").hidden = current.status === "used";
+  show("note"); scrollTo(0, 0);
+}
+
+$("authForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); token = $("token").value.trim();
+  const r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } });
+  if (r.ok) { store.set("stash_token", token); start(); } else { $("authErr").textContent = "That token didn't work."; token = null; }
+});
+$("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; await ingest(u); } });
+$("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(load, 200); });
+$("chips").addEventListener("click", (e) => { const f = e.target.dataset.f; if (f) { filter = f; render(); } });
+$("list").addEventListener("click", (e) => { const c = e.target.closest(".card"); if (c) open(c.dataset.id); });
+$("back").addEventListener("click", () => { show("lib"); load(); });
+$("nUsed").addEventListener("click", async () => { await api("/v1/notes/" + current.id + "/used", { method: "POST" }); toast("Marked as used"); $("nUsed").hidden = true; });
+
+async function start() {
+  show("lib");
+  // Android share sheet lands here as /?url=…&text=… (manifest share_target).
+  const p = new URLSearchParams(location.search);
+  const shared = p.get("url") || (p.get("text") || "").match(/https?:\/\/\S+/)?.[0];
+  let pending = null; try { pending = sessionStorage.getItem("pending_share"); sessionStorage.removeItem("pending_share"); } catch {}
+  const toSave = shared || pending;
+  if (shared) history.replaceState(null, "", "/");
+  if (toSave) await ingest(toSave);
+  await load();
+  setInterval(() => document.visibilityState === "visible" && $("lib").style.display !== "none" && load(), 30000);
+}
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+// A share that arrives before sign-in must survive the sign-in screen.
+{ const p = new URLSearchParams(location.search), u = p.get("url") || (p.get("text") || "").match(/https?:\/\/\S+/)?.[0];
+  if (u && !token) { try { sessionStorage.setItem("pending_share", u); } catch {} history.replaceState(null, "", "/"); } }
+token ? start().catch(() => {}) : show("auth");
+</script>
+</body>
+</html>

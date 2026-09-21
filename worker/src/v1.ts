@@ -1,7 +1,7 @@
 /**
  * Per-user API. Auth is `Authorization: Bearer <token>`; the token's SHA-256 is
  * looked up in `user`. Everything here is scoped to that user's rows — the
- * `user_id = ?` filter is the whole tenancy boundary, so keep it on every query.
+ * `user_id IS ?` filter is the whole tenancy boundary, so keep it on every query.
  *
  *   POST /v1/ingest        {url, note?}      save a link
  *   GET  /v1/status/:id                      has it finished?
@@ -23,13 +23,27 @@ export async function sha256(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export async function userFromBearer(request: Request, env: Env): Promise<string | null> {
-  const header = request.headers.get("Authorization") ?? "";
-  if (!header.startsWith("Bearer ")) return null;
+/**
+ * Who does this token belong to? A user id, `null` for the owner (STASH_SECRET
+ * doubles as the owner's token, so the owner needs no second credential), or
+ * `undefined` for nobody. Owner rows have user_id NULL, hence `IS ?` below.
+ */
+export async function userFromToken(token: string, env: Env): Promise<string | null | undefined> {
+  if (!token) return undefined;
+  if (env.STASH_SECRET && token.length === env.STASH_SECRET.length) {
+    let diff = 0;
+    for (let i = 0; i < token.length; i++) diff |= token.charCodeAt(i) ^ env.STASH_SECRET.charCodeAt(i);
+    if (diff === 0) return null;
+  }
   const row = await env.DB.prepare("SELECT id FROM user WHERE token_hash = ?")
-    .bind(await sha256(header.slice(7)))
+    .bind(await sha256(token))
     .first<{ id: string }>();
-  return row?.id ?? null;
+  return row?.id;
+}
+
+export async function userFromBearer(request: Request, env: Env): Promise<string | null | undefined> {
+  const header = request.headers.get("Authorization") ?? "";
+  return header.startsWith("Bearer ") ? userFromToken(header.slice(7), env) : undefined;
 }
 
 /** Mint a user + token. The token is shown once; only its hash is kept. */
@@ -55,7 +69,7 @@ export async function handleV1(
   request: Request,
   env: Env,
   path: string,
-  userId: string,
+  userId: string | null,
   insertCapture: (
     env: Env,
     row: { source: string; permalink?: string | null; note?: string | null; user_id?: string | null },
@@ -74,7 +88,7 @@ export async function handleV1(
 
   if (path.startsWith("/v1/status/") && request.method === "GET") {
     const row = await env.DB.prepare(
-      "SELECT status, attempts, error, title FROM capture WHERE id = ? AND user_id = ?",
+      "SELECT status, attempts, error, title FROM capture WHERE id = ? AND user_id IS ?",
     ).bind(decodeURIComponent(path.slice("/v1/status/".length)), userId).first<any>();
     if (!row) return json({ error: "unknown id" }, 404);
     const dead = row.status === "pending" && row.attempts >= 3;
@@ -87,7 +101,7 @@ export async function handleV1(
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 50) || 50, 200);
     const { results } = await env.DB.prepare(
       `SELECT ${NOTE_COLUMNS} FROM note
-       WHERE user_id = ? AND (? IS NULL OR status = ?) AND (? IS NULL OR topic = ?)
+       WHERE user_id IS ? AND (? IS NULL OR status = ?) AND (? IS NULL OR topic = ?)
        ORDER BY created_at DESC LIMIT ?`,
     ).bind(userId, status, status, topic, topic, limit).all();
     return json({ notes: results ?? [] });
@@ -99,7 +113,7 @@ export async function handleV1(
     const { results } = await env.DB.prepare(
       `SELECT n.id, n.title, n.summary, n.topic, n.tools, n.permalink, n.status, n.created_at
        FROM note_fts f JOIN note n ON n.id = f.note_id
-       WHERE note_fts MATCH ? AND f.user_id = ?
+       WHERE note_fts MATCH ? AND f.user_id = COALESCE(?, '')
        ORDER BY bm25(note_fts, 8.0, 3.0, 1.0) LIMIT 20`,
     ).bind(q, userId).all();
     return json({ notes: results ?? [] });
@@ -110,13 +124,13 @@ export async function handleV1(
     const noteId = decodeURIComponent(noteMatch[1]);
     if (noteMatch[2] && request.method === "POST") {
       const r = await env.DB.prepare(
-        "UPDATE note SET status='used', used_at=? WHERE id=? AND user_id=?",
+        "UPDATE note SET status='used', used_at=? WHERE id=? AND user_id IS ?",
       ).bind(new Date().toISOString(), noteId, userId).run();
       return r.meta.changes ? json({ ok: true }) : json({ error: "unknown id" }, 404);
     }
     if (!noteMatch[2] && request.method === "GET") {
       const row = await env.DB.prepare(
-        `SELECT ${NOTE_COLUMNS}, markdown FROM note WHERE id = ? AND user_id = ?`,
+        `SELECT ${NOTE_COLUMNS}, markdown FROM note WHERE id = ? AND user_id IS ?`,
       ).bind(noteId, userId).first();
       return row ? json(row) : json({ error: "unknown id" }, 404);
     }
