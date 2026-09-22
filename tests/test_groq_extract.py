@@ -279,3 +279,45 @@ def test_groq_key_override_is_scoped():
         with using_groq_key(None):  # falsy override falls back to the shared key
             assert groq_key(cfg) == "shared"
     assert groq_key(cfg) == "shared"
+
+
+def test_coerce_preserves_ingredient_and_step_case():
+    from stash.extract import _coerce
+
+    out = _coerce({
+        "title": "t", "summary": "s", "topic": "food", "why_saved": "w", "next_step": "n",
+        "difficulty": "trivial", "frame_notes": "",
+        "tools": ["ChatGPT"], "relevance": [],
+        "ingredients": ["2 cups Flour", "1 tsp Salt"], "steps": ["Preheat oven to 350F", "Mix well"],
+    })
+    assert out["ingredients"] == ["2 cups Flour", "1 tsp Salt"]  # not lowercased, unlike tools
+    assert out["steps"] == ["Preheat oven to 350F", "Mix well"]
+    assert out["tools"] == ["chatgpt"]
+
+
+def test_coerce_defaults_ingredients_and_steps_to_empty():
+    from stash.extract import _coerce
+
+    out = _coerce({"title": "t", "summary": "s", "topic": "other", "why_saved": "w",
+                    "next_step": "n", "difficulty": "trivial", "frame_notes": ""})
+    assert out["ingredients"] == [] and out["steps"] == []
+
+
+def test_build_prompt_includes_top_comments():
+    from stash.extract import build_prompt
+
+    prompt = build_prompt(
+        permalink=None, user_note=None, transcript_text="", transcript_reason="",
+        visual_notes=[], meta={}, comments=["full recipe below!", "made this twice, so good"],
+    )
+    assert "## Top comments" in prompt and "full recipe below!" in prompt
+
+
+def test_build_prompt_omits_comments_section_when_none():
+    from stash.extract import build_prompt
+
+    prompt = build_prompt(
+        permalink=None, user_note=None, transcript_text="", transcript_reason="",
+        visual_notes=[], meta={},
+    )
+    assert "## Top comments" not in prompt

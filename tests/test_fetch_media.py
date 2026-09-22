@@ -55,3 +55,22 @@ def test_media_item_path_is_filled_only_after_download():
     assert item.path is None
     item.path = Path("slide.jpg")
     assert item.path.name == "slide.jpg"
+
+
+def test_top_comments_sorted_by_likes_and_capped():
+    from stash.fetch import MAX_COMMENTS, _top_comments
+
+    raw = [{"text": f"c{i}", "like_count": i} for i in range(MAX_COMMENTS + 5)]
+    raw.append({"text": "  "})       # blank: dropped
+    raw.append({"not_text": "x"})    # malformed: dropped
+    top = _top_comments(raw)
+    assert len(top) == MAX_COMMENTS
+    assert top[0] == f"c{MAX_COMMENTS + 4}"  # highest like_count first
+
+
+def test_top_comments_handles_missing_or_malformed_input():
+    from stash.fetch import _top_comments
+
+    assert _top_comments(None) == []
+    assert _top_comments("not a list") == []
+    assert _top_comments([]) == []

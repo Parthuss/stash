@@ -46,6 +46,21 @@ visual language of the portfolio's "ethereal" theme (`portfolio-v2/components/et
 - **Add flow:** floating + button → bottom sheet, mirroring Simmr's share/add pattern.
 Implemented in `worker/public/index.html`.
 
+## Recipe support (2026-09-22)
+Modeled on Simmr: a save can now come back as ingredients + steps, not just a summary.
+- `topic: food` is a new topic; when set, the note gets an **Ingredients** (bulleted, real
+  quantities) and **Steps** (numbered) section, pulled from wherever the recipe actually is:
+  audio, on-screen text, the caption, or comments.
+- **Comments are fetched** (`stash/fetch.py`, yt-dlp `--write-comments`) for single
+  reels/videos, top 8 by like count, fed into the same extraction prompt as the caption.
+  Creators write "full recipe in the comments" more often than they read it aloud.
+- **Carousel posts (`/p/...` with multiple images) never get comments.** Verified against
+  yt-dlp 2026.7.4's Instagram extractor: it hardcodes `get_comments=False` for the carousel
+  path regardless of flags. Only single-video/reel posts return real comment text. If a
+  future yt-dlp version changes this, re-check before assuming it's fixed.
+- Not done: Simmr also pulls out books/movies/concepts mentioned outside the recipe itself,
+  and lets you search by ingredient specifically (today it is folded into full-text search).
+
 ## Still open
 1. Real thumbnails: fetch and store a small cover image per save (needs R2 or inline blob) so cards look like Simmr's.
 2. Collections beyond auto-topics.

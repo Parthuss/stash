@@ -43,6 +43,14 @@ class MediaBundle:
     title: str = ""
     uploader: str = ""
     caption: str = ""
+    #: Top comments, newest-liked first, plain text only. Recipes and other real
+    #: content often live here or in the caption, not in the audio — a creator
+    #: says "recipe's in the comments" on camera more often than they read it out.
+    #: Empty for carousel posts: yt-dlp hardcodes no comment support for those
+    #: (`get_comments=False` in its Instagram extractor, verified against a real
+    #: carousel vs. a real reel on 2026-09-22 — reels return real comment text,
+    #: carousels return none no matter what flag is passed).
+    comments: list[str] = field(default_factory=list)
 
 
 def _key(url: str) -> str:
@@ -98,7 +106,7 @@ def _cookie_args() -> list[str]:
 
 def _metadata(permalink: str) -> dict[str, Any]:
     argv = [
-        "yt-dlp", "--dump-single-json", "--skip-download",
+        "yt-dlp", "--dump-single-json", "--skip-download", "--write-comments",
         "--ignore-no-formats-error", "--no-warnings", *_cookie_args(), permalink,
     ]
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=300)
@@ -135,7 +143,24 @@ def _yt_dlp(permalink: str, key: str) -> MediaBundle:
         title=meta.get("title") or "",
         uploader=meta.get("uploader") or meta.get("channel") or "",
         caption=meta.get("description") or "",
+        comments=_top_comments(meta.get("comments")),
     )
+
+
+#: Enough to catch a "recipe below" comment without bloating the prompt at
+#: Groq's tight free-tier token budget (see extract.py's TPM comment).
+MAX_COMMENTS = 8
+COMMENT_CHARS = 400
+
+
+def _top_comments(raw: Any) -> list[str]:
+    if not isinstance(raw, list):
+        return []
+    by_likes = sorted(
+        (c for c in raw if isinstance(c, dict) and (c.get("text") or "").strip()),
+        key=lambda c: c.get("like_count") or 0, reverse=True,
+    )
+    return [c["text"].strip()[:COMMENT_CHARS] for c in by_likes[:MAX_COMMENTS]]
 
 
 def _items_from_metadata(meta: dict[str, Any]) -> list[MediaItem]:

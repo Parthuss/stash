@@ -56,7 +56,7 @@ function md(src) {
   return out.join("");
 }
 
-const TINTS = { design: "--lavender", tooling: "--mint", business: "--peach", prompting: "--sky", other: "--butter",
+const TINTS = { design: "--lavender", tooling: "--mint", business: "--peach", prompting: "--sky", other: "--butter", food: "--peach",
   automation: "--mint", "agent-building": "--lavender", rag: "--sky", research: "--butter", inspiration: "--peach", infrastructure: "--sky" };
 const tintOf = (t) => `var(${TINTS[t] || "--lavender"})`;
 function card(n, i) {
