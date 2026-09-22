@@ -107,7 +107,8 @@ FINAL_MAX_TOKENS = 4000
 
 TOPICS = [
     "agent-building", "automation", "tooling", "prompting", "rag",
-    "infrastructure", "design", "research", "inspiration", "business", "other",
+    "infrastructure", "design", "research", "inspiration", "business",
+    "food", "other",
 ]
 
 SCHEMA: dict[str, Any] = {
@@ -137,10 +138,23 @@ SCHEMA: dict[str, Any] = {
             "type": "string",
             "description": "Ordered slide/frame content absent from audio, including exact visible text.",
         },
+        "ingredients": {
+            "type": "array", "items": {"type": "string"},
+            "description": (
+                "Only for topic=food: one ingredient per entry with real quantities, e.g. "
+                "'2 cups flour'. Pull these from wherever they actually are: audio, on-screen "
+                "text, the caption, or the comments (creators often write 'full recipe in "
+                "comments' and never say it out loud). [] for anything that isn't a recipe."
+            ),
+        },
+        "steps": {
+            "type": "array", "items": {"type": "string"},
+            "description": "Only for topic=food: cooking steps in order, one per entry. [] otherwise.",
+        },
     },
     "required": [
         "title", "summary", "topic", "tools", "why_saved", "next_step",
-        "difficulty", "relevance", "frame_notes",
+        "difficulty", "relevance", "frame_notes", "ingredients", "steps",
     ],
     "additionalProperties": False,
 }
@@ -171,6 +185,8 @@ How to write it:
 - Don't compliment the post. If it's fluff, say "mostly fluff" and why. If it's good, say what's useful in it.
 - `summary` is what the post actually says, in one or two plain sentences.
 - `why_saved` is your best guess at why they saved it, stated flat, no hedging.
+- For a recipe (topic=food): check the caption and comments, not just the audio, before
+  saying ingredients/steps are missing. Real quantities beat vague ones ("2 tsp", not "some").
 """
 
 
@@ -198,6 +214,7 @@ def build_prompt(
     transcript_reason: str,
     visual_notes: list[str],
     meta: dict[str, str],
+    comments: list[str] | None = None,
 ) -> str:
     parts = ["# Saved post\n"]
     if permalink:
@@ -218,6 +235,9 @@ def build_prompt(
         parts.extend(f"- {note}" for note in visual_notes)
     else:
         parts.append("\n## Ordered visual notes\n\n(none)")
+    if comments:
+        parts.append("\n## Top comments (real content, especially recipes, often lives here)\n")
+        parts.extend(f"- {comment}" for comment in comments)
     parts.append("\nRequired JSON schema:\n" + json.dumps(SCHEMA, ensure_ascii=False))
     return "\n".join(parts)
 
@@ -232,6 +252,7 @@ def extract(
     frames: list[Path] | None = None,
     frame_reasons: list[str] | None = None,
     meta: dict[str, str] | None = None,
+    comments: list[str] | None = None,
     timeout: int = 300,
 ) -> dict[str, Any]:
     """Describe all visuals, then extract the final structured note with Groq."""
@@ -250,6 +271,7 @@ def extract(
         frames=[],
         frame_reasons=visual_notes,
         meta=meta or {},
+        comments=comments,
     )
 
 
@@ -317,6 +339,7 @@ def _extract_groq(
     frames: list[Path] | None = None,
     frame_reasons: list[str] | None = None,
     meta: dict[str, str] | None = None,
+    comments: list[str] | None = None,
 ) -> dict[str, Any]:
     del frames
     system = SYSTEM.format(
@@ -330,6 +353,7 @@ def _extract_groq(
         transcript_reason=transcript_reason,
         visual_notes=frame_reasons or [],
         meta=meta or {},
+        comments=comments,
     )
     payload = _groq_request([
         {"role": "system", "content": system},
@@ -514,6 +538,9 @@ def _coerce(payload: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, str):
             value = [part.strip() for part in value.split(",")]
         out[key] = [str(part).strip().lower() for part in value if str(part).strip()]
+    for key in ("ingredients", "steps"):  # case matters here ("Preheat" vs a lowercased tool name)
+        value = payload.get(key) or []
+        out[key] = [str(part).strip() for part in value if str(part).strip()] if isinstance(value, list) else []
     if out["topic"] not in TOPICS:
         out["topic"] = "other"
     if out["difficulty"] not in ("trivial", "afternoon", "weekend"):

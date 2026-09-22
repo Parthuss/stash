@@ -17,6 +17,8 @@ FIELDS = {
     "difficulty": "trivial",
     "relevance": [],
     "frame_notes": "Slides in order",
+    "ingredients": [],
+    "steps": [],
 }
 
 
@@ -122,3 +124,34 @@ def test_url_allowlist_blocks_lan_and_lookalikes():
                 "https://instagram.com.evil.com/x", "https://evilinstagram.com/x", "file:///etc/passwd",
                 "https://user:pw@instagram.com/x", "https://instagram.com:8443/x", "", None):
         assert not ok(bad), bad
+
+
+def test_pipeline_passes_comments_to_extract(tmp_path, monkeypatch):
+    """A reel's comments must reach the extraction prompt: recipes often live
+    there ("full recipe in comments"), not in the audio or on-screen text."""
+    video = tmp_path / "v.mp4"
+    video.write_bytes(b"media")
+    bundle = MediaBundle(
+        items=[MediaItem(1, "video", path=video, duration=5)], via="yt-dlp",
+        title="t", uploader="u", caption="c", comments=["full recipe in comments!"],
+    )
+    monkeypatch.setattr(pipeline.fetch, "fetch", lambda **kw: bundle)
+    monkeypatch.setattr(pipeline.transcribe, "transcribe", lambda path: Transcript(skipped=True, reason="no audio"))
+    monkeypatch.setattr(pipeline.frames, "plan_frames", lambda transcript, duration: [])
+    monkeypatch.setattr(pipeline.frames, "extract", lambda path, plan, out_dir: [])
+    seen = {}
+
+    def fake_extract(**kwargs):
+        seen.update(kwargs)
+        return FIELDS
+
+    monkeypatch.setattr(pipeline.extract, "extract", fake_extract)
+    monkeypatch.setattr(pipeline.vault, "render", lambda *a, **k: "note")
+    monkeypatch.setattr(pipeline.vault, "note_path", lambda title: tmp_path / "note.md")
+    monkeypatch.setattr(pipeline.vault, "write", lambda content, path: path)
+    monkeypatch.setattr(pipeline.db, "upsert_note", lambda conn, data: None)
+
+    capture = {"id": "c1", "permalink": "https://instagram.com/reel/x/", "permalink_ok": 1,
+               "media_url": None, "note": None, "caption": "", "source": "shortcut"}
+    pipeline.process(sqlite3.connect(":memory:"), capture, verbose=False)
+    assert seen["comments"] == ["full recipe in comments!"]

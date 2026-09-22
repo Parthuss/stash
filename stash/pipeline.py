@@ -136,6 +136,7 @@ def process(
         frames=images,
         frame_reasons=reasons,
         meta={"creator": media.uploader, "original title": media.title},
+        comments=media.comments,
     )
 
     content = vault.render(

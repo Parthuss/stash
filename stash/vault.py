@@ -87,6 +87,14 @@ def render(
         fields.get("why_saved", ""),
     ]
 
+    if fields.get("ingredients"):
+        body += ["", "## Ingredients", ""]
+        body += [f"- {item}" for item in fields["ingredients"]]
+
+    if fields.get("steps"):
+        body += ["", "## Steps", ""]
+        body += [f"{index}. {step}" for index, step in enumerate(fields["steps"], 1)]
+
     if user_note:
         body += ["", "## Your note at capture", "", f"> {user_note}"]
 
