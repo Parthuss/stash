@@ -53,6 +53,19 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {} },
   },
   {
+    name: "list_stash_mentions",
+    description:
+      "Books, movies, shows, podcasts, places, or people named across every saved post, not just " +
+      "one. Use for 'what books/movies have I saved', regardless of what those posts were mainly about.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        kind: { type: "string", description: 'One of book, movie, show, podcast, place, product, person, other. Omit for all.' },
+        limit: { type: "number" },
+      },
+    },
+  },
+  {
     name: "mark_stash_used",
     description:
       "Mark a save as acted on. Call it when you actually used a note. It is the only signal " +
@@ -116,6 +129,25 @@ async function callTool(env: Env, userId: string | null, name: string, a: any): 
         "SELECT topic, COUNT(*) c FROM note WHERE user_id IS ? GROUP BY topic ORDER BY c DESC",
       ).bind(userId).all<{ topic: string; c: number }>();
       return (results ?? []).map((r) => `${r.topic}: ${r.c}`).join("\n") || "No saves yet.";
+    }
+    case "list_stash_mentions": {
+      const limit = Math.min(Math.max(Number(a?.limit) || 50, 1), 200);
+      const { results } = await env.DB.prepare(
+        "SELECT id, title, mentions FROM note WHERE user_id IS ? AND mentions NOT IN ('', '[]') ORDER BY created_at DESC",
+      ).bind(userId).all<{ id: string; title: string; mentions: string }>();
+      const kind = a?.kind ? String(a.kind) : null;
+      const lines: string[] = [];
+      for (const row of results ?? []) {
+        let items: any[];
+        try { items = JSON.parse(row.mentions); } catch { continue; }
+        for (const m of items) {
+          if (!m?.name || (kind && m.type !== kind)) continue;
+          lines.push(`- **${m.name}** (${m.type ?? "other"}) — saved in "${row.title}" (\`${row.id}\`)`);
+          if (lines.length >= limit) break;
+        }
+        if (lines.length >= limit) break;
+      }
+      return lines.join("\n") || (kind ? `No ${kind} mentions found.` : "Nothing mentioned yet.");
     }
     case "mark_stash_used": {
       const r = await env.DB.prepare(

@@ -8,6 +8,7 @@ must become visible rather than vanish.
 from __future__ import annotations
 
 import sqlite3
+import json
 
 import pytest
 
@@ -167,3 +168,37 @@ def test_migrate_recipe_columns_is_a_noop_on_a_current_database(tmp_path):
     conn = db.connect(tmp_path / "new.sqlite")
     db._migrate_recipe_columns(conn)  # must not raise, must not double-run the FTS rebuild
     assert conn.execute("SELECT 1 FROM note LIMIT 1").fetchall() == []
+
+
+def test_list_mentions_flattens_across_notes_and_filters_by_type(conn):
+    _note(conn, mentions=[{"type": "book", "name": "Atomic Habits"}, {"type": "movie", "name": "Inception"}],
+          path="a.md", title="Post A")
+    _note(conn, mentions=[{"type": "book", "name": "Deep Work"}], path="b.md", title="Post B")
+    _note(conn, mentions=[], path="c.md", title="Post C, nothing mentioned")
+
+    everything = db.list_mentions(conn)
+    assert {m["name"] for m in everything} == {"Atomic Habits", "Inception", "Deep Work"}
+
+    books = db.list_mentions(conn, kind="book")
+    assert {m["name"] for m in books} == {"Atomic Habits", "Deep Work"}
+    assert all(m["type"] == "book" for m in books)
+    hit = next(m for m in books if m["name"] == "Atomic Habits")
+    assert hit["note_title"] == "Post A"
+
+
+def test_list_mentions_tolerates_old_string_shaped_mentions(conn):
+    """Mentions saved before the structured {type, name} format existed must
+    not crash the listing — they show up typed as 'other'."""
+    conn.execute(
+        "INSERT INTO note (id, path, title, mentions, created_at) VALUES "
+        "('old', 'old.md', 'Old note', ?, '2020-01-01')",
+        (json.dumps(["Atomic Habits"]),),
+    )
+    items = db.list_mentions(conn)
+    assert items == [{"type": "other", "name": "Atomic Habits", "note_id": "old", "note_title": "Old note"}]
+
+
+def test_gist_text_reads_structured_and_legacy_mentions():
+    structured = db._gist_text({"title": "t", "mentions": [{"type": "book", "name": "Atomic Habits"}]})
+    legacy = db._gist_text({"title": "t", "mentions": ["Atomic Habits"]})
+    assert "Atomic Habits" in structured and "Atomic Habits" in legacy

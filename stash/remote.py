@@ -140,6 +140,7 @@ def push_note(
             "summary": fields["summary"],
             "topic": fields["topic"],
             "tools": fields["tools"],
+            "mentions": fields.get("mentions", []),
             "permalink": permalink,
             "markdown": markdown,
         },

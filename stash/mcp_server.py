@@ -176,6 +176,31 @@ def list_stash_topics() -> str:
 
 
 @mcp.tool()
+def list_stash_mentions(kind: str = "") -> str:
+    """List books, movies, shows, podcasts, places, or people the user's saves have named.
+
+    This is what turns "did I save a book about X" or "what movies have I saved"
+    into a real answer — it's not one note's worth, it's everything ever
+    mentioned across the whole stash, regardless of what that post was mainly about.
+
+    Args:
+        kind: Optional exact filter: "book", "movie", "show", "podcast", "place",
+            "product", "person", or "other". Omit to list everything.
+    """
+    conn = _conn()
+    try:
+        items = db.list_mentions(conn, kind=kind or None)
+        if not items:
+            return f"No {kind + ' ' if kind else ''}mentions found." if kind else "Nothing mentioned yet."
+        return "\n".join(
+            f"- **{item['name']}** ({item['type']}) — saved in \"{item['note_title']}\" (`{item['note_id']}`)"
+            for item in items
+        )
+    finally:
+        conn.close()
+
+
+@mcp.tool()
 def recent_stash(limit: int = 10, status: str = "") -> str:
     """Show the most recently saved posts.
 

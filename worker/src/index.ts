@@ -372,20 +372,23 @@ export default {
       if (!b?.capture_id || !b?.title || !b?.markdown) {
         return json({ error: "need capture_id, title, markdown" }, 400);
       }
+      const mentions = Array.isArray(b.mentions)
+        ? b.mentions.filter((m: any) => m && typeof m.name === "string" && m.name.trim()).slice(0, 100)
+        : [];
       const userId: string | null = b.user_id ?? null;
       const prior = await env.DB.prepare("SELECT id FROM note WHERE capture_id = ?")
         .bind(b.capture_id).first<{ id: string }>();
       const noteId = prior?.id ?? id();
       await env.DB.batch([
         env.DB.prepare(
-          `INSERT INTO note (id, user_id, capture_id, title, summary, topic, tools, permalink,
+          `INSERT INTO note (id, user_id, capture_id, title, summary, topic, tools, mentions, permalink,
                              markdown, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(capture_id) DO UPDATE SET title=excluded.title, summary=excluded.summary,
-             topic=excluded.topic, tools=excluded.tools, permalink=excluded.permalink,
-             markdown=excluded.markdown`,
+             topic=excluded.topic, tools=excluded.tools, mentions=excluded.mentions,
+             permalink=excluded.permalink, markdown=excluded.markdown`,
         ).bind(noteId, userId, b.capture_id, b.title, b.summary ?? null, b.topic ?? null,
-               JSON.stringify(b.tools ?? []), b.permalink ?? null, b.markdown,
+               JSON.stringify(b.tools ?? []), JSON.stringify(mentions), b.permalink ?? null, b.markdown,
                new Date().toISOString()),
         env.DB.prepare("DELETE FROM note_fts WHERE note_id = ?").bind(noteId),
         env.DB.prepare(

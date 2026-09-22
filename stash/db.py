@@ -384,7 +384,9 @@ def _gist_text(note: dict[str, Any]) -> str:
         note.get("next_step", ""),
         (note.get("frame_notes") or "")[:500],
         " ".join(_list("ingredients")),
-        " ".join(_list("mentions")),
+        # Each mention is {"type", "name"} — a bare string is old data from
+        # before mentions were structured, kept working rather than dropped.
+        " ".join(m["name"] if isinstance(m, dict) else str(m) for m in _list("mentions")),
     ]
     return " ".join(p for p in parts if p).strip()
 
@@ -681,6 +683,33 @@ def list_topics(conn: sqlite3.Connection) -> list[tuple[str, int]]:
            GROUP BY topic ORDER BY n DESC"""
     ).fetchall()
     return [(r["topic"], r["n"]) for r in rows]
+
+
+def list_mentions(conn: sqlite3.Connection, kind: str | None = None) -> list[dict[str, str]]:
+    """Every book/movie/place/etc named across all notes, flattened out of the
+    per-note `mentions` JSON column — this is what makes "what books have I
+    saved" a real question rather than something buried inside one note at a
+    time. Newest note first; ``kind`` narrows to one MENTION_TYPES value.
+    """
+    out: list[dict[str, str]] = []
+    rows = conn.execute(
+        "SELECT id, title, mentions, created_at FROM note WHERE mentions NOT IN ('', '[]') "
+        "ORDER BY created_at DESC"
+    ).fetchall()
+    for row in rows:
+        try:
+            items = json.loads(row["mentions"] or "[]")
+        except json.JSONDecodeError:
+            continue
+        for item in items:
+            if isinstance(item, dict):
+                item_type, name = item.get("type", "other"), item.get("name", "")
+            else:
+                item_type, name = "other", str(item)
+            if not name or (kind and item_type != kind):
+                continue
+            out.append({"type": item_type, "name": name, "note_id": row["id"], "note_title": row["title"]})
+    return out
 
 
 def mark_used(conn: sqlite3.Connection, note_id: str, where: str) -> bool:
