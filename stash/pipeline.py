@@ -173,6 +173,9 @@ def process(
                 "relevance": fields["relevance"],
                 "transcript": transcript_text,
                 "frame_notes": fields["frame_notes"],
+                "ingredients": fields.get("ingredients", []),
+                "steps": fields.get("steps", []),
+                "mentions": fields.get("mentions", []),
                 "permalink": permalink,
                 "source": capture["source"],
                 "status": "unused",
@@ -229,6 +232,8 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
             "why_saved": fields["why_saved"], "next_step": fields["next_step"],
             "difficulty": fields["difficulty"], "relevance": fields["relevance"],
             "transcript": "", "frame_notes": caption,
+            "ingredients": fields.get("ingredients", []), "steps": fields.get("steps", []),
+            "mentions": fields.get("mentions", []),
             "permalink": permalink, "source": capture["source"], "status": "unused",
         })
     return Result(

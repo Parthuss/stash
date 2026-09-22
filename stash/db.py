@@ -84,6 +84,9 @@ CREATE TABLE IF NOT EXISTS note (
   relevance   TEXT NOT NULL DEFAULT '[]',      -- json array of sibling project names
   transcript  TEXT NOT NULL DEFAULT '',
   frame_notes TEXT NOT NULL DEFAULT '',
+  ingredients TEXT NOT NULL DEFAULT '[]',      -- json array, topic=food only
+  steps       TEXT NOT NULL DEFAULT '[]',      -- json array, topic=food only
+  mentions    TEXT NOT NULL DEFAULT '[]',      -- json array: books/people/concepts named, not products
   permalink   TEXT,
   source      TEXT NOT NULL DEFAULT '',
   status      TEXT NOT NULL DEFAULT 'unused',  -- unused | used
@@ -93,26 +96,27 @@ CREATE TABLE IF NOT EXISTS note (
 
 CREATE VIRTUAL TABLE IF NOT EXISTS note_fts USING fts5(
   title, summary, topic, tools, why_saved, next_step, transcript, frame_notes,
+  ingredients, steps, mentions,
   content='note', content_rowid='rowid', tokenize='porter unicode61'
 );
 
 CREATE TRIGGER IF NOT EXISTS note_ai AFTER INSERT ON note BEGIN
-  INSERT INTO note_fts(rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes)
+  INSERT INTO note_fts(rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes, ingredients, steps, mentions)
   VALUES (new.rowid, new.title, new.summary, new.topic, new.tools, new.why_saved,
-          new.next_step, new.transcript, new.frame_notes);
+          new.next_step, new.transcript, new.frame_notes, new.ingredients, new.steps, new.mentions);
 END;
 CREATE TRIGGER IF NOT EXISTS note_ad AFTER DELETE ON note BEGIN
-  INSERT INTO note_fts(note_fts, rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes)
+  INSERT INTO note_fts(note_fts, rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes, ingredients, steps, mentions)
   VALUES ('delete', old.rowid, old.title, old.summary, old.topic, old.tools, old.why_saved,
-          old.next_step, old.transcript, old.frame_notes);
+          old.next_step, old.transcript, old.frame_notes, old.ingredients, old.steps, old.mentions);
 END;
 CREATE TRIGGER IF NOT EXISTS note_au AFTER UPDATE ON note BEGIN
-  INSERT INTO note_fts(note_fts, rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes)
+  INSERT INTO note_fts(note_fts, rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes, ingredients, steps, mentions)
   VALUES ('delete', old.rowid, old.title, old.summary, old.topic, old.tools, old.why_saved,
-          old.next_step, old.transcript, old.frame_notes);
-  INSERT INTO note_fts(rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes)
+          old.next_step, old.transcript, old.frame_notes, old.ingredients, old.steps, old.mentions);
+  INSERT INTO note_fts(rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes, ingredients, steps, mentions)
   VALUES (new.rowid, new.title, new.summary, new.topic, new.tools, new.why_saved,
-          new.next_step, new.transcript, new.frame_notes);
+          new.next_step, new.transcript, new.frame_notes, new.ingredients, new.steps, new.mentions);
 END;
 
 -- The vector half. Plain table, no extension required — safe to create even
@@ -175,8 +179,40 @@ def connect(path: Path) -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.executescript(SCHEMA)
+    _migrate_recipe_columns(conn)
     _load_vector_extension(conn)  # best-effort; search falls back if this fails
     return conn
+
+
+def _migrate_recipe_columns(conn: sqlite3.Connection) -> None:
+    """Add ingredients/steps/mentions to a `note` table created before they
+    existed. `CREATE TABLE IF NOT EXISTS` in SCHEMA is a no-op on an existing
+    table, so a real database predating this needs an explicit ALTER — this is
+    that migration, and it's a no-op itself once the columns are there.
+
+    note_fts is `content='note'` with a fixed column list set at creation, so
+    the new columns cannot just be added to it; the fts5 table has to be
+    dropped and recreated with the wider list, then repopulated from `note`.
+    Safe to run every startup: it only fires when a column is actually missing.
+    """
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(note)")}
+    missing = [c for c in ("ingredients", "steps", "mentions") if c not in existing]
+    if not missing:
+        return
+    for column in missing:
+        conn.execute(f"ALTER TABLE note ADD COLUMN {column} TEXT NOT NULL DEFAULT '[]'")
+    conn.executescript(
+        "DROP TRIGGER IF EXISTS note_ai; DROP TRIGGER IF EXISTS note_ad; "
+        "DROP TRIGGER IF EXISTS note_au; DROP TABLE IF EXISTS note_fts;"
+    )
+    conn.executescript(SCHEMA)  # recreates note_fts + triggers with the new column list
+    conn.execute(
+        "INSERT INTO note_fts(rowid, title, summary, topic, tools, why_saved, next_step, "
+        "transcript, frame_notes, ingredients, steps, mentions) "
+        "SELECT rowid, title, summary, topic, tools, why_saved, next_step, "
+        "transcript, frame_notes, ingredients, steps, mentions FROM note"
+    )
+    conn.commit()
 
 
 def has_vectors(conn: sqlite3.Connection) -> bool:
@@ -330,20 +366,25 @@ def _gist_text(note: dict[str, Any]) -> str:
     or model-synthesized sense of "what this is for" actually lives; a raw
     transcript is spoken language and dilutes that signal in a 384-dim average.
     """
-    tools = note.get("tools") or []
-    if isinstance(tools, str):
-        try:
-            tools = json.loads(tools)
-        except json.JSONDecodeError:
-            tools = []
+    def _list(key: str) -> list[str]:
+        value = note.get(key) or []
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                value = []
+        return value
+
     parts = [
         note.get("title", ""), note.get("title", ""),
         note.get("summary", ""),
         note.get("topic", ""),
-        " ".join(tools),
+        " ".join(_list("tools")),
         note.get("why_saved", ""), note.get("why_saved", ""),
         note.get("next_step", ""),
         (note.get("frame_notes") or "")[:500],
+        " ".join(_list("ingredients")),
+        " ".join(_list("mentions")),
     ]
     return " ".join(p for p in parts if p).strip()
 
@@ -410,9 +451,11 @@ def upsert_note(conn: sqlite3.Connection, note: dict[str, Any]) -> str:
     overwrites its note instead of accumulating duplicates.
     """
     note = dict(note)
-    for key in ("tools", "relevance"):
+    for key in ("tools", "relevance", "ingredients", "steps", "mentions"):
         if isinstance(note.get(key), (list, tuple)):
             note[key] = json.dumps(list(note[key]))
+        elif note.get(key) is None:  # column is NOT NULL DEFAULT '[]'; a caller that omits
+            note[key] = "[]"         # the key (older callers, most tests) must not insert NULL
     note.setdefault("id", uuid.uuid4().hex[:16])
     note.setdefault("created_at", now())
 
@@ -431,7 +474,8 @@ def upsert_note(conn: sqlite3.Connection, note: dict[str, Any]) -> str:
     columns = [
         "id", "capture_id", "path", "title", "summary", "topic", "tools",
         "why_saved", "next_step", "difficulty", "relevance", "transcript",
-        "frame_notes", "permalink", "source", "status", "used_where", "created_at",
+        "frame_notes", "ingredients", "steps", "mentions",
+        "permalink", "source", "status", "used_where", "created_at",
     ]
     values = [note.get(c) for c in columns]
     placeholders = ", ".join("?" * len(columns))

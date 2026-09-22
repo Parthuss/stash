@@ -7,6 +7,8 @@ must become visible rather than vanish.
 
 from __future__ import annotations
 
+import sqlite3
+
 import pytest
 
 from stash import db
@@ -112,3 +114,56 @@ def test_rows_to_dicts_decodes_json_columns(conn):
     item = db.rows_to_dicts(db.recent_notes(conn))[0]
     assert item["tools"] == ["redis", "langgraph"]
     assert item["relevance"] == ["notes-agent"]
+
+
+def test_migrate_recipe_columns_upgrades_a_pre_recipe_database(tmp_path):
+    """A database created before ingredients/steps/mentions existed must gain
+    them (and keep them searchable) the next time it's opened, without losing
+    what's already in it."""
+    path = tmp_path / "old.sqlite"
+    conn = sqlite3.connect(path)
+    conn.executescript("""
+        CREATE TABLE note (
+          id TEXT PRIMARY KEY, capture_id TEXT, path TEXT NOT NULL,
+          title TEXT NOT NULL DEFAULT '', summary TEXT NOT NULL DEFAULT '',
+          topic TEXT NOT NULL DEFAULT '', tools TEXT NOT NULL DEFAULT '[]',
+          why_saved TEXT NOT NULL DEFAULT '', next_step TEXT NOT NULL DEFAULT '',
+          difficulty TEXT NOT NULL DEFAULT '', relevance TEXT NOT NULL DEFAULT '[]',
+          transcript TEXT NOT NULL DEFAULT '', frame_notes TEXT NOT NULL DEFAULT '',
+          permalink TEXT, source TEXT NOT NULL DEFAULT '',
+          status TEXT NOT NULL DEFAULT 'unused', used_where TEXT, created_at TEXT NOT NULL
+        );
+        CREATE VIRTUAL TABLE note_fts USING fts5(
+          title, summary, topic, tools, why_saved, next_step, transcript, frame_notes,
+          content='note', content_rowid='rowid', tokenize='porter unicode61'
+        );
+        INSERT INTO note (id, path, title, summary, created_at)
+        VALUES ('old1', 'old.md', 'Preexisting note', 'from before recipes existed', '2020-01-01');
+        INSERT INTO note_fts(rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes)
+        SELECT rowid, title, summary, topic, tools, why_saved, next_step, transcript, frame_notes FROM note;
+    """)
+    conn.commit()
+    conn.close()
+
+    conn = db.connect(path)
+    cols = {row["name"] for row in conn.execute("PRAGMA table_info(note)")}
+    assert {"ingredients", "steps", "mentions"} <= cols
+    old = conn.execute("SELECT * FROM note WHERE id = 'old1'").fetchone()
+    assert old["title"] == "Preexisting note" and old["ingredients"] == "[]"
+    assert conn.execute("SELECT rowid FROM note_fts WHERE note_fts MATCH 'preexisting'").fetchall()
+
+    db.upsert_note(conn, {
+        "path": "recipe.md", "title": "Garlic Butter Pasta", "summary": "s", "topic": "food",
+        "tools": [], "why_saved": "w", "next_step": "n", "difficulty": "trivial", "relevance": [],
+        "transcript": "", "frame_notes": "", "ingredients": ["3 cloves garlic"], "steps": ["Fry it"],
+        "source": "cli", "status": "unused",
+    })
+    hit = conn.execute("SELECT title FROM note_fts WHERE note_fts MATCH 'garlic'").fetchall()
+    assert any(True for _ in hit)  # the ingredient itself, not just the title, is now searchable
+    conn.close()
+
+
+def test_migrate_recipe_columns_is_a_noop_on_a_current_database(tmp_path):
+    conn = db.connect(tmp_path / "new.sqlite")
+    db._migrate_recipe_columns(conn)  # must not raise, must not double-run the FTS rebuild
+    assert conn.execute("SELECT 1 FROM note LIMIT 1").fetchall() == []
