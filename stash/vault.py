@@ -95,6 +95,10 @@ def render(
         body += ["", "## Steps", ""]
         body += [f"{index}. {step}" for index, step in enumerate(fields["steps"], 1)]
 
+    if fields.get("mentions"):
+        body += ["", "## Mentioned", ""]
+        body += [f"- {item}" for item in fields["mentions"]]
+
     if user_note:
         body += ["", "## Your note at capture", "", f"> {user_note}"]
 

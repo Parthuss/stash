@@ -151,10 +151,18 @@ SCHEMA: dict[str, Any] = {
             "type": "array", "items": {"type": "string"},
             "description": "Only for topic=food: cooking steps in order, one per entry. [] otherwise.",
         },
+        "mentions": {
+            "type": "array", "items": {"type": "string"},
+            "description": (
+                "Named things worth remembering that aren't `tools` (products/libraries): "
+                "a book, film, person, brand, or concept actually named in the material. "
+                "[] if nothing like that came up."
+            ),
+        },
     },
     "required": [
         "title", "summary", "topic", "tools", "why_saved", "next_step",
-        "difficulty", "relevance", "frame_notes", "ingredients", "steps",
+        "difficulty", "relevance", "frame_notes", "ingredients", "steps", "mentions",
     ],
     "additionalProperties": False,
 }
@@ -538,7 +546,7 @@ def _coerce(payload: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, str):
             value = [part.strip() for part in value.split(",")]
         out[key] = [str(part).strip().lower() for part in value if str(part).strip()]
-    for key in ("ingredients", "steps"):  # case matters here ("Preheat" vs a lowercased tool name)
+    for key in ("ingredients", "steps", "mentions"):  # case matters here ("Preheat" vs a lowercased tool name)
         value = payload.get(key) or []
         out[key] = [str(part).strip() for part in value if str(part).strip()] if isinstance(value, list) else []
     if out["topic"] not in TOPICS:
