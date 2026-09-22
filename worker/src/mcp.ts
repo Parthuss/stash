@@ -9,7 +9,7 @@
  * ponytail: secret-URL auth; move to OAuth if connectors go beyond a pilot.
  */
 import type { Env } from "./index";
-import { ftsQuery, logEvent, userFromToken } from "./v1";
+import { ftsQuery, listMentions, logEvent, userFromToken } from "./v1";
 
 const INSTRUCTIONS =
   "The user's own saved Instagram/TikTok/YouTube content, transcribed and indexed. " +
@@ -131,23 +131,10 @@ async function callTool(env: Env, userId: string | null, name: string, a: any): 
       return (results ?? []).map((r) => `${r.topic}: ${r.c}`).join("\n") || "No saves yet.";
     }
     case "list_stash_mentions": {
-      const limit = Math.min(Math.max(Number(a?.limit) || 50, 1), 200);
-      const { results } = await env.DB.prepare(
-        "SELECT id, title, mentions FROM note WHERE user_id IS ? AND mentions NOT IN ('', '[]') ORDER BY created_at DESC",
-      ).bind(userId).all<{ id: string; title: string; mentions: string }>();
       const kind = a?.kind ? String(a.kind) : null;
-      const lines: string[] = [];
-      for (const row of results ?? []) {
-        let items: any[];
-        try { items = JSON.parse(row.mentions); } catch { continue; }
-        for (const m of items) {
-          if (!m?.name || (kind && m.type !== kind)) continue;
-          lines.push(`- **${m.name}** (${m.type ?? "other"}) — saved in "${row.title}" (\`${row.id}\`)`);
-          if (lines.length >= limit) break;
-        }
-        if (lines.length >= limit) break;
-      }
-      return lines.join("\n") || (kind ? `No ${kind} mentions found.` : "Nothing mentioned yet.");
+      const items = await listMentions(env, userId, kind, Math.min(Math.max(Number(a?.limit) || 50, 1), 200));
+      if (!items.length) return kind ? `No ${kind} mentions found.` : "Nothing mentioned yet.";
+      return items.map((m) => `- **${m.name}** (${m.type}) — saved in "${m.note_title}" (\`${m.note_id}\`)`).join("\n");
     }
     case "mark_stash_used": {
       const r = await env.DB.prepare(

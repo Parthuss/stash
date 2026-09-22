@@ -48,7 +48,7 @@ def mcp(token, method, params=None, id=1):
 assert c.post("/mcp/wrong", json={}).status_code == 401
 r = mcp(ann["token"], "initialize", {"protocolVersion": "2025-03-26"}); assert r.json()["result"]["serverInfo"]["name"] == "stash"
 assert c.post(f"/mcp/{ann['token']}", json={"jsonrpc": "2.0", "method": "notifications/initialized"}).status_code == 202
-assert len(mcp(ann["token"], "tools/list").json()["result"]["tools"]) == 5
+assert len(mcp(ann["token"], "tools/list").json()["result"]["tools"]) == 6
 def call(token, name, args): return mcp(token, "tools/call", {"name": name, "arguments": args}).json()["result"]["content"][0]["text"]
 assert "Remotion animation tips" in call(ann["token"], "search_stash", {"query": "remotion stagger"})
 assert "No matching" in call(bob["token"], "search_stash", {"query": "remotion"})
@@ -168,4 +168,18 @@ row = next(u for u in ov["users"] if u["name"] == "capuser")
 assert row["groq_tokens_7d"] == 1500 and ov["overview"]["shared_tokens_24h"] >= 1500 and ov["overview"]["whisper_sec_24h"] >= 30
 assert any(e["name"] == "capuser" and e["kind"] == "groq" for e in ov["recent"]) and any(e["action"] == "ingest" for e in ov["recent"])
 assert row["api_calls_7d"] >= 2 and row["last_api"]
+# ---- /v1/mentions: scoped, filterable, and matches the MCP tool ----
+mu = user("mentions1"); mh = h(mu)
+cid = c.post("/v1/ingest", headers=mh, json={"url": "https://www.instagram.com/reel/BOOKS/"}).json()["id"]
+c.post("/note", headers=adm, json={"capture_id": cid, "user_id": mu["id"], "title": "Books I loved", "topic": "inspiration",
+  "tools": [], "mentions": [{"type": "book", "name": "Atomic Habits"}, {"type": "movie", "name": "Arrival"}],
+  "markdown": "# Books I loved"})
+all_m = c.get("/v1/mentions", headers=mh).json()["mentions"]
+assert {m["name"] for m in all_m} == {"Atomic Habits", "Arrival"}
+books_only = c.get("/v1/mentions", headers=mh, params={"type": "book"}).json()["mentions"]
+assert [m["name"] for m in books_only] == ["Atomic Habits"]
+assert c.get("/v1/mentions", headers=h(ann)).json()["mentions"] == []          # isolation
+assert c.get("/v1/mentions").status_code == 401
+mcp_text = call(mu["token"], "list_stash_mentions", {"kind": "book"})
+assert "Atomic Habits" in mcp_text and "Arrival" not in mcp_text              # REST and MCP agree
 print("ALL OK")

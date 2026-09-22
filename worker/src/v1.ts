@@ -101,6 +101,28 @@ export async function adminOverview(env: Env) {
   return { overview: o, users: users ?? [], recent: recent ?? [] };
 }
 
+export interface Mention { type: string; name: string; note_id: string; note_title: string }
+
+/** Every book/movie/place/etc named across a user's notes, flattened out of the
+ * per-note `mentions` JSON column. Shared by the REST endpoint and the MCP tool
+ * so "what movies have I saved" means the same thing from either surface. */
+export async function listMentions(env: Env, userId: string | null, kind: string | null, limit: number): Promise<Mention[]> {
+  const { results } = await env.DB.prepare(
+    "SELECT id, title, mentions FROM note WHERE user_id IS ? AND mentions NOT IN ('', '[]') ORDER BY created_at DESC",
+  ).bind(userId).all<{ id: string; title: string; mentions: string }>();
+  const out: Mention[] = [];
+  for (const row of results ?? []) {
+    let items: any[];
+    try { items = JSON.parse(row.mentions); } catch { continue; }
+    for (const m of items) {
+      if (!m?.name || (kind && m.type !== kind)) continue;
+      out.push({ type: m.type ?? "other", name: String(m.name), note_id: row.id, note_title: row.title });
+      if (out.length >= limit) return out;
+    }
+  }
+  return out;
+}
+
 /** Wipe a user and everything they saved. Used by self-delete and admin revoke. */
 export async function deleteUser(env: Env, userId: string): Promise<void> {
   await env.DB.batch([
@@ -271,6 +293,12 @@ export async function handleV1(
       const r = await env.DB.prepare("DELETE FROM capture WHERE id = ? AND user_id IS ? AND status != 'done'").bind(capId, userId).run();
       return r.meta.changes ? json({ ok: true }) : json({ error: "unknown id" }, 404);
     }
+  }
+
+  if (path === "/v1/mentions" && request.method === "GET") {
+    const kind = url.searchParams.get("type");
+    const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? 200) || 200, 1), 500);
+    return json({ mentions: await listMentions(env, userId, kind, limit) });
   }
 
   if (path === "/v1/setup" && request.method === "GET") {

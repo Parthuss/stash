@@ -32,7 +32,7 @@ async function api(path, opts = {}) {
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
-function show(which) { for (const id of ["auth", "lib", "note", "setup", "admin"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
+function show(which) { for (const id of ["auth", "lib", "note", "setup", "admin", "mentions"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
 function signOut(msg) { store.del("stash_token"); token = null; show("auth"); $("authErr").textContent = typeof msg === "string" ? msg : ""; }
 
 // ---- markdown: escape FIRST, then add structure. Notes contain third-party captions. ----
@@ -288,3 +288,31 @@ window.addEventListener("unhandledrejection", (e) => {
   const m = e.reason && e.reason.message; if (m === "offline" || m === "unauthorized") return;
   toast("Something went wrong. Try again.");
 });
+
+// ---------------- Saved (mentions across every post) ----------------
+const MENTION_ICONS = { book: "📖", movie: "🎬", show: "📺", podcast: "🎙️", place: "📍", product: "🛍️", person: "🙂", other: "✦" };
+const MENTION_TINTS = { book: "--lavender", movie: "--peach", show: "--sky", podcast: "--butter", place: "--mint", product: "--sky", person: "--lavender", other: "--butter" };
+let mentionFilter = "all", allMentions = [];
+
+function renderMentions() {
+  const kinds = [...new Set(allMentions.map((m) => m.type))].sort();
+  $("mentionChips").innerHTML = ["all", ...kinds].map((k) =>
+    `<button class="chip" aria-pressed="${k === mentionFilter}" data-mk="${esc(k)}">${esc(k === "all" ? "all" : k + "s")}</button>`).join("");
+  const shown = mentionFilter === "all" ? allMentions : allMentions.filter((m) => m.type === mentionFilter);
+  $("mentionList").innerHTML = shown.length
+    ? shown.map((m) => `<button class="mcard" data-open="${esc(m.note_id)}">
+        <span class="kind" style="background:var(${MENTION_TINTS[m.type] || "--butter"})">${MENTION_ICONS[m.type] || "✦"}</span>
+        <span class="info"><h3>${esc(m.name)}</h3><small>${esc(m.type)} · saved in "${esc(m.note_title)}"</small></span></button>`).join("")
+    : `<div class="empty"><b>Nothing saved yet</b>Books, movies, and other things people name in a post show up here.</div>`;
+}
+async function openMentions() {
+  show("mentions"); scrollTo(0, 0);
+  $("mentionList").innerHTML = skeleton();
+  const r = await api("/v1/mentions");
+  if (!r.ok) { $("mentionList").innerHTML = `<div class="empty">Couldn't load this. Go back and try again.</div>`; return; }
+  allMentions = (await r.json()).mentions; mentionFilter = "all"; renderMentions();
+}
+$("mentionsBtn").addEventListener("click", openMentions);
+$("mentionsBack").addEventListener("click", () => { show("lib"); load(); });
+$("mentionChips").addEventListener("click", (e) => { const k = e.target.dataset.mk; if (k) { mentionFilter = k; renderMentions(); } });
+$("mentionList").addEventListener("click", (e) => { const c = e.target.closest("[data-open]"); if (c) open(c.dataset.open); });

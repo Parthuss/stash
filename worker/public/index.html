@@ -45,7 +45,7 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 header { padding: 22px 0 6px; }
-.row { display: flex; gap: 10px; align-items: center; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .brand { font-family: var(--display); font-size: 32px; line-height: 1; letter-spacing: -.02em; margin: 0; flex: 1; }
 .pill, .setup-pill { white-space: nowrap; }
 .pill { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--peach); color: var(--peach-ink); font-size: 14px; font-weight: 500; }
@@ -137,7 +137,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 
 
 /* setup / onboarding */
-#setup, #admin { display: none; }
+#setup, #admin, #mentions { display: none; }
 .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 6px 0 16px; }
 .stat { background: rgb(255 255 255 / .88); border-radius: 22px; padding: 14px 16px; box-shadow: var(--lift-1); }
 .stat b { display: block; font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1.1; }
@@ -191,6 +191,10 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .cbody .acts button { height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--ink); color: #fff; font-weight: 600; font-size: 13px; }
 .cbody .acts button.soft { background: var(--bg); color: var(--ink); }
 .help p { margin: 0 0 12px; font-size: 15px; } .help p:last-child { margin: 0; }
+.mcard { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 18px; padding: 12px 16px; margin: 10px 0; box-shadow: var(--lift-1); text-align: left; width: 100%; border: 0; }
+.mcard .kind { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; }
+.mcard .info { flex: 1; min-width: 0; } .mcard h3 { font-size: 15px; margin: 0 0 2px; font-weight: 600; }
+.mcard small { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .setup-pill { border: 0; height: 30px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .85); box-shadow: var(--lift-1); font-weight: 500; position: relative; }
 .setup-pill i { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #e8590c; }
 
@@ -232,7 +236,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 
 <section id="lib" style="display:none">
   <header>
-    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
+    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="mentionsBtn">Saved</button><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
     <p class="sub" id="sub">Your saves, all in one place.</p>
     <div class="search"><input id="q" type="search" placeholder="Search your saves" aria-label="Search"></div>
     <div class="chips" id="chips" role="group" aria-label="Filters"></div>
@@ -329,6 +333,13 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
   <div class="setup-head"><h1>Admin</h1><p id="adminHealth"></p></div>
   <div class="stats" id="adminStats"></div>
   <div id="adminUsers"></div>
+</section>
+
+<section id="mentions">
+  <div class="row" style="padding-top:18px"><button class="btn soft" id="mentionsBack">← Back</button></div>
+  <div class="setup-head"><h1>Saved</h1><p>Books, movies, shows, and other things you've named across every post.</p></div>
+  <div class="chips" id="mentionChips" role="group" aria-label="Filter by kind"></div>
+  <div id="mentionList"></div>
 </section>
 
 <section id="note">
