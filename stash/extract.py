@@ -111,6 +111,10 @@ TOPICS = [
     "food", "other",
 ]
 
+#: What `mentions` can be, so "books I saved" / "movies I saved" means the
+#: same thing across every note regardless of what the post was actually about.
+MENTION_TYPES = ["book", "movie", "show", "podcast", "place", "product", "person", "other"]
+
 SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -152,11 +156,22 @@ SCHEMA: dict[str, Any] = {
             "description": "Only for topic=food: cooking steps in order, one per entry. [] otherwise.",
         },
         "mentions": {
-            "type": "array", "items": {"type": "string"},
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "enum": MENTION_TYPES},
+                    "name": {"type": "string"},
+                },
+                "required": ["type", "name"],
+            },
             "description": (
-                "Named things worth remembering that aren't `tools` (products/libraries): "
-                "a book, film, person, brand, or concept actually named in the material. "
-                "[] if nothing like that came up."
+                "Named things worth saving that aren't `tools` (products/libraries someone "
+                "would install): a book, film, show, podcast, place, or person actually named "
+                "in the material, e.g. someone recommending a book in passing, a place they "
+                "visited, a movie they reviewed. One entry per thing. [] if nothing like that "
+                "came up. This is what lets the person browse 'books I saved' or 'movies I "
+                "saved' later, across every post, so a real name beats a vague category."
             ),
         },
     },
@@ -195,6 +210,8 @@ How to write it:
 - `why_saved` is your best guess at why they saved it, stated flat, no hedging.
 - For a recipe (topic=food): check the caption and comments, not just the audio, before
   saying ingredients/steps are missing. Real quantities beat vague ones ("2 tsp", not "some").
+- Any post, any topic: if a specific book, movie, show, podcast, place, or person gets named,
+  even in passing, put it in `mentions`. This is not just for topic=food or topic=inspiration.
 """
 
 
@@ -536,6 +553,28 @@ def _parse(raw: str) -> dict[str, Any] | None:
     return payload if payload and "title" in payload else None
 
 
+def _coerce_mentions(raw: Any) -> list[dict[str, str]]:
+    """Defensive: the model is only ever *shown* the schema as prompt text, so
+    a plain string, a wrong-cased type, or a missing key are all real
+    possibilities, not hypothetical ones. Name case is kept (a title, unlike a
+    tool name, is meant to be read); type always lands in MENTION_TYPES."""
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, str]] = []
+    for item in raw:
+        if isinstance(item, str):
+            name, kind = item.strip(), "other"
+        elif isinstance(item, dict):
+            name = str(item.get("name") or "").strip()
+            kind = str(item.get("type") or "").strip().lower()
+        else:
+            continue
+        if not name:
+            continue
+        out.append({"type": kind if kind in MENTION_TYPES else "other", "name": name})
+    return out
+
+
 def _coerce(payload: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for key in ("title", "summary", "topic", "why_saved", "next_step", "difficulty", "frame_notes"):
@@ -546,9 +585,10 @@ def _coerce(payload: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, str):
             value = [part.strip() for part in value.split(",")]
         out[key] = [str(part).strip().lower() for part in value if str(part).strip()]
-    for key in ("ingredients", "steps", "mentions"):  # case matters here ("Preheat" vs a lowercased tool name)
+    for key in ("ingredients", "steps"):  # case matters here ("Preheat" vs a lowercased tool name)
         value = payload.get(key) or []
         out[key] = [str(part).strip() for part in value if str(part).strip()] if isinstance(value, list) else []
+    out["mentions"] = _coerce_mentions(payload.get("mentions"))
     if out["topic"] not in TOPICS:
         out["topic"] = "other"
     if out["difficulty"] not in ("trivial", "afternoon", "weekend"):

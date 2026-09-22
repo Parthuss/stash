@@ -321,3 +321,30 @@ def test_build_prompt_omits_comments_section_when_none():
         visual_notes=[], meta={},
     )
     assert "## Top comments" not in prompt
+
+
+def test_coerce_mentions_structures_and_validates():
+    from stash.extract import _coerce_mentions
+
+    out = _coerce_mentions([
+        {"type": "Book", "name": "Atomic Habits"},   # type gets lowercased
+        {"type": "spaceship", "name": "Weird one"},  # unknown type -> other
+        "Inception",                                 # bare string -> other
+        {"type": "movie", "name": "  "},              # blank name -> dropped
+        {"name": "no type given"},                    # missing type -> other
+        123,                                          # not a dict/string -> dropped
+    ])
+    assert out == [
+        {"type": "book", "name": "Atomic Habits"},
+        {"type": "other", "name": "Weird one"},
+        {"type": "other", "name": "Inception"},
+        {"type": "other", "name": "no type given"},
+    ]
+
+
+def test_coerce_mentions_handles_non_list_input():
+    from stash.extract import _coerce_mentions
+
+    assert _coerce_mentions(None) == []
+    assert _coerce_mentions("Atomic Habits") == []
+    assert _coerce_mentions({"name": "x"}) == []

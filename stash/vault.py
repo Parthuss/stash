@@ -97,7 +97,11 @@ def render(
 
     if fields.get("mentions"):
         body += ["", "## Mentioned", ""]
-        body += [f"- {item}" for item in fields["mentions"]]
+        body += [
+            f"- **{item.get('type', 'other').capitalize()}:** {item.get('name', '')}"
+            if isinstance(item, dict) else f"- {item}"
+            for item in fields["mentions"]
+        ]
 
     if user_note:
         body += ["", "## Your note at capture", "", f"> {user_note}"]
