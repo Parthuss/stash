@@ -202,3 +202,14 @@ def test_gist_text_reads_structured_and_legacy_mentions():
     structured = db._gist_text({"title": "t", "mentions": [{"type": "book", "name": "Atomic Habits"}]})
     legacy = db._gist_text({"title": "t", "mentions": ["Atomic Habits"]})
     assert "Atomic Habits" in structured and "Atomic Habits" in legacy
+
+
+def test_vault_section_parsers_round_trip_recipe_and_mentions():
+    from stash import vault
+
+    body = ("# T\n\nsummary\n\n## Ingredients\n\n- 200g spaghetti\n- 3 cloves garlic\n\n"
+            "## Steps\n\n1. Boil it.\n2. Fry garlic.\n\n## Mentioned\n\n- **Book:** Atomic Habits\n- plain thing\n\n## Transcript\n\nx")
+    assert vault.section_items(body, "Ingredients") == ["200g spaghetti", "3 cloves garlic"]
+    assert vault.section_items(body, "Steps") == ["Boil it.", "Fry garlic."]
+    assert vault.section_mentions(body) == [{"type": "book", "name": "Atomic Habits"}, {"type": "other", "name": "plain thing"}]
+    assert vault.section_items(body, "Nope") == []

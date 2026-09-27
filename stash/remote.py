@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import base64
 import os
 
 import httpx
@@ -126,7 +127,8 @@ def pending(limit: int = 20) -> list[Row]:
 
 
 def push_note(
-    capture: Row, fields: dict[str, Any], markdown: str, permalink: str | None
+    capture: Row, fields: dict[str, Any], markdown: str, permalink: str | None,
+    thumb: bytes | None = None,
 ) -> None:
     """Hand a finished note to the Worker so the app and the Claude connector
     can read it without this Mac being awake. Idempotent per capture."""
@@ -141,6 +143,7 @@ def push_note(
             "topic": fields["topic"],
             "tools": fields["tools"],
             "mentions": fields.get("mentions", []),
+            "thumb": base64.b64encode(thumb).decode("ascii") if thumb else None,
             "permalink": permalink,
             "markdown": markdown,
         },

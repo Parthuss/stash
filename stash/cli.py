@@ -279,6 +279,17 @@ def _reindex(conn, args) -> int:
     # SQLite is free to reuse, the very next chunk insert can collide with a
     # leftover chunk_vec rowid and fail with "UNIQUE constraint failed" —
     # hit exactly this running reindex for real, not hypothetically.
+    # What lives ONLY in the index, never in the markdown, must survive the
+    # rebuild: which capture a note came from (the Worker keys notes by it, so
+    # losing it made the next cloud sync create a duplicate of every note),
+    # and whether/where it was used (the project's core metric). Snapshot by
+    # path, restore after. Hit for real: a reindex duplicated 40 notes in D1.
+    kept = {
+        row["path"]: dict(row)
+        for row in conn.execute(
+            "SELECT path, capture_id, status, used_where, created_at, ingredients, steps, mentions FROM note"
+        )
+    }
     if db.has_vectors(conn):
         conn.execute("DELETE FROM chunk_vec")
     conn.execute("DELETE FROM note")
@@ -316,6 +327,21 @@ def _reindex(conn, args) -> int:
         # actually records.
         if front.get("captured"):
             note["created_at"] = front["captured"]
+        # Recipe/list fields are rendered into the markdown, so they can be
+        # read back from it; the snapshot wins when it has them.
+        note["ingredients"] = vault.section_items(body, "Ingredients")
+        note["steps"] = vault.section_items(body, "Steps")
+        note["mentions"] = vault.section_mentions(body)
+        prior = kept.get(path.name)
+        if prior:
+            note["capture_id"] = prior["capture_id"]
+            if prior["status"] == "used":
+                note["status"], note["used_where"] = "used", prior["used_where"]
+            if prior["created_at"] and len(prior["created_at"]) > len(note.get("created_at") or ""):
+                note["created_at"] = prior["created_at"]   # keep the full timestamp over a date-only one
+            for key in ("ingredients", "steps", "mentions"):
+                if prior[key] and prior[key] != "[]":
+                    note[key] = prior[key]
         db.upsert_note(conn, note)
         count += 1
 

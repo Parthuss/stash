@@ -149,6 +149,25 @@ def read_frontmatter(path: Path) -> dict[str, Any]:
     return front
 
 
+def section_items(body: str, heading: str) -> list[str]:
+    """The bullet (`- x`) or numbered (`1. x`) items under one ``## Heading``."""
+    return [
+        re.sub(r"^(?:[-*]|\d+\.)\s+", "", line.strip())
+        for line in extract_section(body, heading).splitlines()
+        if re.match(r"^\s*(?:[-*]|\d+\.)\s+\S", line)
+    ]
+
+
+def section_mentions(body: str) -> list[dict[str, str]]:
+    """Parse the ``## Mentioned`` section back into ``{type, name}`` items."""
+    out = []
+    for item in section_items(body, "Mentioned"):
+        match = re.match(r"^\*\*(\w+):\*\*\s*(.+)$", item)
+        out.append({"type": match.group(1).lower(), "name": match.group(2).strip()} if match
+                   else {"type": "other", "name": item})
+    return out
+
+
 def extract_section(body: str, heading: str) -> str:
     """Pull one ``## Heading`` section out of a rendered note."""
     pattern = re.compile(

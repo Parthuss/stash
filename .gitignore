@@ -26,3 +26,4 @@ promo/tts/__pycache__/
 promo/captions/out/
 promo/out/
 promo/real-footage/
+worker/wrangler.local.toml

@@ -28,16 +28,21 @@
 #question tok "Paste your Stash access token (Stash → Set up → Copy token)" "stk_"
 @token = text(tok)
 
-@note = prompt("note?")
+@note = prompt("Add a note? (optional, tap Done to skip)")
 
 @res = jsonRequest("{{WORKER_URL}}/v1/ingest", "POST", {"url": "{ShortcutInput}", "note": "{@note}", "source": "shortcut"}, {"Authorization": "Bearer {@token}"})
 
-// Surface the Worker's actual reply. A wrong secret, a malformed URL or a bad
-// deploy all come back as {"error": ...} — showing that beats a hardcoded
-// success string that cannot tell the difference.
+// Surface the Worker's actual reply. A wrong token, an unsupported link or a
+// bad deploy all come back as {"error": ...}; showing that beats a hardcoded
+// success string that cannot tell the difference. The one error a beginner
+// can't act on as-is ("unauthorized") gets translated into what to do.
 @err = text(@res['error'])
-if @err != "" {
-	alert("{@err}", "Stash — not queued")
+if @err == "unauthorized" {
+	alert("Your Stash token didn't work. Open Stash, go to Set up, and add the Shortcut again with the token from there.", "Stash couldn't save this")
 } else {
-	showNotification("Queued — you'll get a second alert when the note is ready")
+	if @err != "" {
+		alert("{@err}", "Stash couldn't save this")
+	} else {
+		showNotification("Saved to Stash. Your note will be ready in a few minutes.")
+	}
 }
