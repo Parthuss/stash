@@ -3,6 +3,21 @@
 Goal: find out whether people actually save to Stash *and come back to it*, before
 building the store apps. Full reasoning: the plan in `~/.claude/plans/` and `DESIGN.md`.
 
+## Before you invite anyone (15 minutes, once)
+1. On your iPhone: open the site, Set up → Save from your phone → Get the Shortcut. Share one
+   reel to it. It should say "Saved to Stash", and the note should appear in a few minutes.
+2. On an Android phone (borrow one): open the site in Chrome → menu → Install app, then share a
+   reel and check Stash appears in the share sheet.
+3. In claude.ai: add the connector from Set up → Connect Claude, then ask "What books have I saved?"
+4. Open Admin (Set up → Open admin) and check the badge says Healthy.
+
+## What to send a friend
+> I'm testing an app called Stash. You share a reel to it and it turns it into a note you can
+> actually find later (recipes come out as ingredients + steps, books/movies land in a list).
+> Open this on your phone, type your first name and tap Join:
+> https://stash.parthus.workers.dev/#code=YOUR_CODE
+> It walks you through the rest. Takes about 3 minutes.
+
 ## Run it
 1. Keep the Mac daemon running (`stash status` → daemon ALIVE). Processing happens
    on your home IP, which Instagram doesn't block; captures queue safely when the Mac is off.

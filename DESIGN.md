@@ -58,10 +58,21 @@ Modeled on Simmr: a save can now come back as ingredients + steps, not just a su
   yt-dlp 2026.7.4's Instagram extractor: it hardcodes `get_comments=False` for the carousel
   path regardless of flags. Only single-video/reel posts return real comment text. If a
   future yt-dlp version changes this, re-check before assuming it's fixed.
-- Not done: Simmr also pulls out books/movies/concepts mentioned outside the recipe itself,
-  and lets you search by ingredient specifically (today it is folded into full-text search).
+- Ingredients render as a tap-to-tick checklist (remembered per device), steps as a
+  numbered list, and the note's button reads "I made this".
+- Ingredient search works through normal search (ingredients are indexed); there's no
+  separate ingredient filter.
+
+## Lists (2026-09-27)
+Books, movies, shows, podcasts, places, products and people named in any save become
+`mentions: [{type, name}]`. The **Lists** screen shows them deduped across posts ("in 3
+posts"), filterable by type, each with a tick ("Read?", "Watched?", "Been?") synced to the
+server, done items sorted last and struck through. Tapping one opens the post it came from.
+
+## Covers (2026-09-27)
+Cards lead with a real cover: a 360px JPEG from the first image or 1s into the video,
+served from D1 at `/t/<id>`. The serif initial stays underneath as the fallback.
 
 ## Still open
-1. Real thumbnails: fetch and store a small cover image per save (needs R2 or inline blob) so cards look like Simmr's.
-2. Collections beyond auto-topics.
-3. Wordmark: currently just "Stash" set in Gloock.
+1. Collections beyond auto-topics.
+2. Wordmark and name: currently "Stash" set in Gloock; a rename is being considered.

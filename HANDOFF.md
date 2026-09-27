@@ -1,9 +1,8 @@
 # Stash — handoff
 
-Written 2026-08-20, last updated 2026-08-21. Everything in this file was checked
-live against the running system, not recalled from memory — commands to
-re-verify each claim are included so a new session can trust or re-check
-anything here in seconds.
+Written 2026-08-20, last updated 2026-09-27. Everything in this file was checked
+live against the running system, not recalled from memory. Commands to
+re-verify each claim are included.
 
 **Also read `CASE_STUDY.md`** if you want the narrative version — same project,
 written for a human audience (or a GitHub repo/portfolio), covering the problem,
@@ -21,34 +20,64 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
-## Current state — verified 2026-08-21
+## Current state (verified 2026-09-27)
+
+Stash is now a multi-user pilot, not just a personal tool. Friends join with an
+invite code, save from their phone, browse in a web app, and connect Claude.
 
 ```
-tests:     97 passing (.venv/bin/python -m pytest tests/ -q)
-git:       public on GitHub — github.com/Parthuss/stash, clean working tree,
-           HEAD 7d78def. Verified: no .env, no vault/, no real API key or
-           contact/phone data anywhere in commit history, not just HEAD.
-vault:     23 notes, all embedded (hybrid search fully indexed)
-worker:    https://stash.parthus.workers.dev — healthy, deployed, current
-daemon:    running under launchd (com.stash.daemon), polling every 15-90s,
-           confirmed running CURRENT code as of this update (see the gotcha below)
-mcp:       'stash' server registered at user scope, connected
-skill:     ~/.claude/skills/stash-recall/ (global, fires in any project)
-doctor:    all green (.venv/bin/python -m stash doctor)
-promo/:    a 37s demo video exists — see its own section below, this is a
-           separate Remotion project inside the repo, not part of the pipeline
+tests:     125 python (.venv/bin/python -m pytest tests/ -q)
+           + worker/smoke.py against a local worker (tenancy, MCP, covers, lists, deletion)
+web app:   https://stash.parthus.workers.dev  (worker/public/: index.html + app.js)
+worker:    D1 migrations 0001-0011 all applied to prod
+vault:     61 notes (owner), all with cover images in D1, 0 duplicates
+pilot:     NO friends have joined yet (admin overview: users 0). Invite code is the
+           JOIN_CODE worker secret; see docs/PILOT.md.
+daemon:    launchd com.stash.daemon, claims everyone's saves while the Mac is on
+cloud:     .github/workflows/process.yml drains friends' saves when the Mac is off.
+           GitHub cron is "every 5 min" on paper, every 2-5 HOURS in practice (measured).
+alerts:    worker cron every 30 min -> ntfy (stuck queue, failures, new joins)
 ```
 
-Re-verify any of this:
+Re-verify:
 ```bash
 cd /Users/parthus/Work/Experiment/stash
 .venv/bin/python -m pytest tests/ -q
-.venv/bin/python -m stash doctor
-.venv/bin/python -m stash status
+.venv/bin/python -m stash doctor && .venv/bin/python -m stash status
 curl -s https://stash.parthus.workers.dev/health
-claude mcp list
-git -C . remote -v && git -C . log --oneline -1
+gh run list -R Parthuss/stash --workflow process --limit 5
 ```
+
+## Deploying the Worker
+
+`worker/wrangler.toml` keeps `REPLACE_ME` as the D1 id on purpose (public repo;
+forks deploy their own). The owner's real config is `worker/wrangler.local.toml`
+(gitignored). Deploy with `worker/deploy.sh`; apply a new migration with
+`worker/deploy.sh migrate migrations/00NN_x.sql` (ALTERs aren't idempotent, so
+only name the new file). Smoke-test first:
+
+```bash
+cd worker
+npx wrangler dev -c wrangler.local.toml --local --persist-to .wrangler/smoke --port 8799 \
+  --var STASH_SECRET:adm --var JOIN_CODE:letmein     # after applying migrations/*.sql --local
+../.venv/bin/python smoke.py                          # must print ALL OK
+```
+
+## Gotcha: which GitHub account pushes
+
+`gh`'s active account may be switched to another project (seen: `itbharatnavya`),
+and then `git push` to Parthuss/stash fails with 403. Don't flip the global
+account; push this repo as Parthuss for one command:
+```bash
+git -c credential.helper= -c 'credential.helper=!f() { echo username=Parthuss; echo "password=$(gh auth token -u Parthuss)"; }; f' push origin master
+```
+
+## Gotcha: `stash reindex` used to destroy data
+
+Before 2026-09-27 reindex rebuilt the index from markdown alone and dropped
+`capture_id`, `used` status and recipe/list fields. The next cloud sync then
+duplicated 40 notes in D1 (repaired). Fixed and regression-tested, but if you
+ever change reindex, keep the snapshot/restore in `cli._reindex`.
 
 ## ⚠️ The one operational gotcha that will bite you
 
@@ -74,32 +103,30 @@ git HEAD." If you build one, that's a good use of five minutes.
 ## Architecture
 
 ```
- iPhone (Instagram Share Sheet)
-        │  "Stash" shortcut → shortcuts/Stash.cherri.template
-        │  POST /ingest  (from anywhere: cellular, other Wi-Fi, Mac asleep)
+ Phone: iOS Shortcut (worker/public/Stash.shortcut, asks for the token on install)
+        or Android installed web app (manifest share_target)
+        or the web app's + button
+        │  POST /v1/ingest  (bearer token; only instagram/tiktok/youtube/x/threads https links)
         ▼
- Cloudflare Worker  (worker/src/index.ts, deployed, stash.parthus.workers.dev)
-        │  writes to D1 (durable queue — capture never lost even if Mac is off)
+ Cloudflare Worker (worker/src/: index.ts routes + admin, v1.ts per-user API, mcp.ts)
+        │  D1: user, capture (queue), note (+FTS), thumb, mention_done, usage_event
         ▼
- Mac daemon  (stash/daemon.py, launchd-managed, polls /pending every 15-90s)
+ Processor: Mac daemon (all saves) or GitHub Actions runner (--guests-only --quiet)
+   fetch.py       → yt-dlp, anonymous, + top 8 comments for single reels
+   transcribe.py  → Groq whisper-large-v3
+   frames.py      → confidence-gated frame selection
+   extract.py     → Groq qwen/qwen3.8-27b: summary, next step, topic, tools,
+                     ingredients/steps (topic=food), mentions [{type,name}]
+   pipeline.py    → cover thumbnail, POST /note to the Worker; a friend's media
+                     is deleted from the machine afterwards
         │
-        ▼
- Pipeline  (stash/pipeline.py)
-   fetch.py       → yt-dlp, anonymous (no cookies needed — verified, see README)
-   transcribe.py  → Groq whisper-large-v3 (full model, not -turbo — same free quota)
-   frames.py      → confidence-gated frame selection from the transcript
-   extract.py     → Groq qwen/qwen3.6-27b, vision one-image-per-request,
-                     reasoning_effort="default" (NOT "none" — see below)
-        │
-        ▼
- vault/*.md  (markdown, source of truth)  +  stash.sqlite  (derived index)
-        │
+        ├─ owner only: vault/*.md (source of truth) + stash.sqlite (hybrid index)
         ▼
  Recall
-   stash/mcp_server.py    → 5 tools, registered at user scope
-   ~/.claude/skills/stash-recall/  → fires proactively, any project
-   stash/db.py search_notes()      → hybrid: FTS5 + sqlite-vec, weighted RRF
-   stash/notify.py                 → iMessage when a capture finishes (or fails)
+   web app        → library (covers), search, Lists (books/movies/places, tick done),
+                     recipe checklist, Set up guide, Admin (owner only)
+   /mcp/<token>   → remote MCP for Claude (6 tools incl. list_stash_mentions)
+   stash/mcp_server.py + ~/.claude/skills/stash-recall/ → owner's local recall
 ```
 
 ## Hard-won findings — do not re-litigate these without re-measuring
@@ -253,6 +280,27 @@ match it. If capture ever starts silently failing auth, check both are still
 in sync.
 
 ## Known gaps — real, not hypothetical TODOs
+
+**Current (2026-09-27), most important first:**
+
+- **Nothing has been tested on a real phone.** The iOS Shortcut builds, is signed
+  and served with the right content type; the Android install/share-target path
+  needs Chrome on a real device (the in-app browser pane can't register service
+  workers). Test both before inviting anyone.
+- **Friends' saves can wait hours when the Mac is off.** The GitHub cron runner
+  fires every 2-5 h in practice. Fix = have the Worker call `workflow_dispatch`
+  on a guest ingest, which needs a fine-grained GitHub token (actions:write on
+  this repo only) set as a Worker secret. Not done: needs the owner to create it.
+- **Shared Groq free tier ≈ 25-30 reels/day for everyone combined.** Friends can
+  add their own key in Set up; the app nudges them when saves are slow.
+- **App name is undecided.** "Stashr" (stashr.me) is live in the same category;
+  a rename was discussed, no name picked. Closest real competitor found:
+  Rescroll / thesecondbrain.io (also transcribes reels, aimed at creators).
+- **Privacy/terms pages are plain-language and not lawyer-reviewed**, and have no
+  contact address (add one before a store launch).
+- **Carousel posts never get comments** (yt-dlp limitation, see DESIGN.md).
+
+**Older:**
 
 0. ~~Fresh clone was actually broken.~~ **Resolved 2026-08-26** —
    `worker/wrangler.toml` had the author's real D1 `database_id` hardcoded
