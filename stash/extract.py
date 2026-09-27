@@ -24,7 +24,7 @@ from typing import Any, TypeVar
 
 import httpx
 
-from .config import CONFIG, groq_key, record_usage
+from .config import CONFIG, groq_key, is_guest_run, record_usage
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -215,6 +215,17 @@ How to write it:
 """
 
 
+OWNER_PERSONA = """Who they are: they build AI agents, automation pipelines, and internal tools. They save
+things on Instagram intending to use them later and almost never do. Make the save
+specific, searchable, and actionable."""
+
+GUEST_PERSONA = """Who they are: someone who saved this to come back to later. You know nothing else about
+them, so don't guess their job, interests or projects, and don't say "your work".
+Make the save specific, searchable, and actionable for anyone."""
+
+assert OWNER_PERSONA in SYSTEM, "OWNER_PERSONA must match the text in SYSTEM exactly"
+
+
 class ExtractError(RuntimeError):
     pass
 
@@ -380,9 +391,12 @@ def _extract_groq(
     comments: list[str] | None = None,
 ) -> dict[str, Any]:
     del frames
-    system = SYSTEM.format(
-        projects="\n".join(f"  - {project}" for project in sibling_projects()) or "  (none)"
-    )
+    if is_guest_run():
+        system = SYSTEM.replace(OWNER_PERSONA, GUEST_PERSONA).format(projects="  (none: leave `relevance` empty)")
+    else:
+        system = SYSTEM.format(
+            projects="\n".join(f"  - {project}" for project in sibling_projects()) or "  (none)"
+        )
     prompt = build_prompt(
         permalink=permalink,
         user_note=user_note,
@@ -399,7 +413,10 @@ def _extract_groq(
     ], max_tokens=FINAL_MAX_TOKENS)
     if "title" not in payload:
         raise ExtractError("groq extraction returned JSON without a title")
-    return _coerce(payload)
+    out = _coerce(payload)
+    if is_guest_run():
+        out["relevance"] = []   # belt and braces: the owner's projects never go in a friend's note
+    return out
 
 
 def _log_rate_limit(response: httpx.Response) -> None:

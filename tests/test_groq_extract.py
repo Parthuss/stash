@@ -365,3 +365,28 @@ def test_single_image_vision_tolerates_unwrapped_or_split_answers(tmp_path, monk
     import pytest
     with pytest.raises(extract.ExtractError):
         extract._describe_batch([img], ["Slide"], start=1)
+
+
+def test_guest_notes_get_a_neutral_prompt_and_no_owner_projects(monkeypatch):
+    """Regression from the pilot audit: a friend's note said the reel 'fits your
+    automation work' and listed the owner's local project folders."""
+    from types import SimpleNamespace
+
+    from stash import extract
+    from stash.config import guest_run
+
+    seen = {}
+
+    def fake_request(messages, **kw):
+        seen["system"] = messages[0]["content"]
+        return {"title": "T", "summary": "s", "topic": "tooling", "relevance": ["owner-secret-project"]}
+
+    monkeypatch.setattr(extract, "_groq_request", fake_request)
+    monkeypatch.setattr(extract, "sibling_projects", lambda: ["owner-secret-project"])
+    monkeypatch.setattr(extract, "CONFIG", SimpleNamespace(groq_api_key="k", extract_model="m"))
+    with guest_run(True):
+        out = extract._extract_groq(permalink=None, user_note=None, transcript_text="t")
+    assert out["relevance"] == []
+    assert "owner-secret-project" not in seen["system"] and "AI agents" not in seen["system"]
+    out = extract._extract_groq(permalink=None, user_note=None, transcript_text="t")
+    assert "owner-secret-project" in seen["system"] and out["relevance"] == ["owner-secret-project"]
