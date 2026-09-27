@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import db, extract, fetch, frames, notify, transcribe, vault
-from .config import CONFIG, collect_usage, using_groq_key
+from .config import CONFIG, collect_usage, guest_run, using_groq_key
 
 
 @dataclass
@@ -376,7 +376,7 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             usage: list = []
             own_key = capture["groq_key"] if "groq_key" in capture.keys() else None
             try:
-                with using_groq_key(own_key), collect_usage() as usage:
+                with using_groq_key(own_key), guest_run(_is_guest(capture)), collect_usage() as usage:
                     result = process(conn, capture, verbose=verbose, media_url=override)
             finally:
                 if _is_guest(capture):

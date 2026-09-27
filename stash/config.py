@@ -160,3 +160,23 @@ def collect_usage():
         yield bucket
     finally:
         _usage.reset(token)
+
+
+# Whose save is being processed. The extraction prompt describes the OWNER
+# (their job, their local project folders); a friend's note must get a neutral
+# prompt instead, or it's written for the wrong person and leaks the owner's
+# project names into someone else's note (this happened in the pilot audit).
+_guest_run: ContextVar[bool] = ContextVar("guest_run", default=False)
+
+
+def is_guest_run() -> bool:
+    return _guest_run.get()
+
+
+@contextmanager
+def guest_run(flag: bool):
+    token = _guest_run.set(bool(flag))
+    try:
+        yield
+    finally:
+        _guest_run.reset(token)
