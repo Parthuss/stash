@@ -14,7 +14,7 @@ https://github.com/user-attachments/assets/14edb1e5-5f7a-46ea-96dd-a7c2c51c223e
 share sheet ─┐
              ├─► /ingest ─► queue ─► fetch ─► transcribe ─► frame gate ─► extract ─► vault/*.md + FTS5
 data export ─┘                                                                              │
-                                                            Claude Code skill · MCP · weekly digest ◄┘
+                                                      Claude Code skill · MCP · web app ◄┘
 ```
 
 ## Try it (5 minutes)
