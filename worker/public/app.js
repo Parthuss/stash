@@ -83,7 +83,7 @@ function skeleton() { return Array.from({ length: 4 }, () => '<div class="skel s
 
 function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
-  $("count").textContent = `${unused} unused`;
+  $("count").textContent = `${unused} unused`; $("count").hidden = !notes.length;
   $("sub").textContent = notes.length ? `${notes.length} saved. ${unused ? "Pick one and put it to use." : "You've used everything."}` : "Your saves, all in one place.";
   const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
   $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}</button>`).join("");
@@ -211,14 +211,23 @@ async function refreshSetup() {
   const st = setupState, phone = ["shortcut", "pwa", "web"].some((k) => (st.saved_from || {})[k]);
   const set = (id, done, todo = "To do") => { const b = $(id); b.textContent = done ? "Done ✓" : todo; b.className = "badge" + (done ? " done" : id === "bGroq" ? " opt" : ""); };
   set("bSave", phone); set("bClaude", st.claude_connected); set("bGroq", st.has_groq_key, "Optional");
-  $("setupDot").hidden = phone && st.claude_connected;
+  $("setupDot").hidden = phone;   // Claude is recommended, not required: don't nag forever
   $("cmdCode").textContent = `claude mcp add --transport http stash ${mcpUrl()}`;
   $("adminBtn").hidden = !st.owner;
   if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
 }
+// Desktop → phone handoff: a QR of the sign-in link (#t=), drawn locally, never sent anywhere.
+const onPhone = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
+document.body.classList.toggle("on-phone", onPhone);
+function drawQr() {
+  if (onPhone || typeof qrcode !== "function" || !token) return;
+  const qr = qrcode(0, "M"); qr.addData(`${location.origin}/#t=${token}`); qr.make();
+  const svg = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  document.querySelectorAll("[data-qr]").forEach((el) => { el.innerHTML = svg; });
+}
 function openSetup(first) {
-  show("setup"); $("setupTitle").textContent = first ? "Welcome to Stash" : "Set up Stash"; scrollTo(0, 0); refreshSetup();
+  show("setup"); $("setupTitle").textContent = first ? "Welcome to Stash" : "Set up Stash"; scrollTo(0, 0); refreshSetup(); drawQr();
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent); setTab(ios || !/Android/.test(navigator.userAgent) ? "ios" : "and");
 }
 function setTab(which) {
@@ -273,7 +282,7 @@ $("rotateBtn").addEventListener("click", async () => {
   if (!confirm("Reset your token? Your old one, and any Claude connector link or Shortcut using it, stops working.")) return;
   const r = await api("/v1/token/rotate", { method: "POST" }); const body = await r.json().catch(() => ({}));
   if (!r.ok) return toast(body.error || "Couldn't reset it.");
-  token = body.token; store.set("stash_token", token); refreshSetup();
+  token = body.token; store.set("stash_token", token); refreshSetup(); drawQr();
   toast("New token saved here. Update your connector and Shortcut.");
 });
 $("deleteBtn").addEventListener("click", async () => {
