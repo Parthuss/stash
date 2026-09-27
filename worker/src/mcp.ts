@@ -134,7 +134,9 @@ async function callTool(env: Env, userId: string | null, name: string, a: any): 
       const kind = a?.kind ? String(a.kind) : null;
       const items = await listMentions(env, userId, kind, Math.min(Math.max(Number(a?.limit) || 50, 1), 200));
       if (!items.length) return kind ? `No ${kind} mentions found.` : "Nothing mentioned yet.";
-      return items.map((m) => `- **${m.name}** (${m.type}) — saved in "${m.note_title}" (\`${m.note_id}\`)`).join("\n");
+      return items.map((m) =>
+        `- **${m.name}** (${m.type}${m.done ? ", done" : ""}) — saved in "${m.note_title}"${m.count > 1 ? ` and ${m.count - 1} more` : ""} (\`${m.note_id}\`)`,
+      ).join("\n");
     }
     case "mark_stash_used": {
       const r = await env.DB.prepare(

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy · Stash</title><meta name="theme-color" content="#f8f7ff"><link rel="icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600&family=Gloock&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#f8f7ff; --ink:#1d1b2e; --muted:#6a6880; --lavender:#dcd8ff; }
+* { box-sizing:border-box; } html { color-scheme: light; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 "Familjen Grotesk", ui-sans-serif, system-ui, sans-serif; padding:24px 18px 60px; }
+main { max-width:680px; margin:0 auto; background:#fff; border-radius:28px; padding:28px 24px; box-shadow:0 4px 10px rgb(60 50 120 / .08), 0 18px 40px rgb(60 50 120 / .10); }
+h1 { font-family:Gloock, Georgia, serif; font-weight:400; font-size:36px; line-height:1.1; margin:6px 0 4px; }
+h2 { font-family:Gloock, Georgia, serif; font-weight:400; font-size:22px; margin:26px 0 6px; }
+.muted { color:var(--muted); font-size:14px; } a { color:inherit; }
+.back { display:inline-block; margin-bottom:10px; text-decoration:none; background:var(--bg); border-radius:999px; padding:8px 16px; font-weight:600; }
+.note { background:#fff0c4; border-radius:16px; padding:12px 14px; font-size:14px; }
+ul { padding-left:20px; } li { margin-bottom:6px; }
+</style></head><body><main><a class="back" href="/">← Stash</a>
+<h1>Privacy</h1>
+<p class="muted">Last updated 27 September 2026. Plain-language version, written for the pilot.</p>
+<p class="note">Stash is a small, invite-only pilot run by one person, not a company. This page says exactly what happens to your data. If anything here isn't true, that's a bug. Tell the person who invited you.</p>
+
+<h2>What Stash stores</h2>
+<ul>
+<li>The name you joined with, and a hashed copy of your access token (never the token itself).</li>
+<li>The links you save, any note you type with them, and when you saved them.</li>
+<li>The note Stash writes for each save: title, summary, next step, transcript, ingredients, and anything named in it (books, films, places).</li>
+<li>A small cover image for each save.</li>
+<li>What you do in the app: saving, searching, opening notes, ticking list items, and when Claude looks something up for you. This is how the owner can see whether the pilot is working.</li>
+<li>Your own Groq key, if you add one. It's encrypted before it's stored.</li>
+</ul>
+
+<h2>How a save gets read</h2>
+<ul>
+<li>Stash downloads the public post you shared from Instagram, TikTok, YouTube, X or Threads.</li>
+<li>The audio is sent to <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener">Groq</a> to be transcribed, and a few frames, the caption and top comments are sent to Groq's AI to write your note. Groq is a separate company with its own privacy policy.</li>
+<li>This happens on the owner's computer or on a GitHub-hosted build machine. Your downloaded video is deleted from that machine once your note is done. Only the note and the small cover image are kept.</li>
+</ul>
+
+<h2>Where it's kept, and who can see it</h2>
+<ul>
+<li>Everything is stored on <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare</a>.</li>
+<li>In the app, only you can see your saves.</li>
+<li><b>The person who runs Stash can read the database</b>, including your saves. Don't save anything you'd hate for them to see.</li>
+<li>If you connect Claude, Claude can read your saves when you ask it to. That's covered by Anthropic's own privacy policy.</li>
+<li>No ads. Nothing is sold. Nothing is shared with anyone else.</li>
+</ul>
+
+<h2>Your controls</h2>
+<ul>
+<li><b>Export:</b> Set up → Your account → Export my notes. You get everything as one file.</li>
+<li><b>Delete:</b> Set up → Your account → Delete my account. This permanently erases your saves, notes, cover images, list ticks and activity history. It can't be undone.</li>
+<li><b>Lost or leaked token:</b> Set up → Your account → Reset my token. The old one stops working straight away.</li>
+</ul>
+
+<h2>Changes</h2>
+<p>If this changes in a way that matters, you'll be told in the app before it applies to you.</p>
+</main></body></html>

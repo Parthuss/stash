@@ -191,6 +191,21 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .cbody .acts button { height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--ink); color: #fff; font-weight: 600; font-size: 13px; }
 .cbody .acts button.soft { background: var(--bg); color: var(--ink); }
 .help p { margin: 0 0 12px; font-size: 15px; } .help p:last-child { margin: 0; }
+.tint img.thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tint .tag { z-index: 1; }
+.hthumb { display: block; width: 100%; max-height: 240px; object-fit: cover; border-radius: 22px; margin-bottom: 14px; }
+.mcard .kind img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.mcard.done { opacity: .55; } .mcard.done h3 { text-decoration: line-through; }
+.tick { flex: none; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font-weight: 600; font-size: 13px; color: var(--ink); }
+.tick[aria-pressed=true] { background: var(--mint); border-color: var(--mint); color: #17603f; }
+.body li.ing { list-style: none; margin-left: -20px; padding: 6px 0; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; }
+.body li.ing::before { content: ""; flex: none; width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--lavender); margin-top: 2px; }
+.body li.ing.got { color: var(--muted); text-decoration: line-through; }
+.body li.ing.got::before { background: var(--mint); border-color: var(--mint); }
+.body ol { padding-left: 22px; } .body ol li { margin-bottom: 8px; }
+.legal { text-align: center; font-size: 13px; color: var(--muted); margin: 28px 0 8px; }
+.legal a { color: inherit; }
+.empty .btn { margin-top: 14px; }
 .mcard { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 18px; padding: 12px 16px; margin: 10px 0; box-shadow: var(--lift-1); text-align: left; width: 100%; border: 0; }
 .mcard .kind { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; }
 .mcard .info { flex: 1; min-width: 0; } .mcard h3 { font-size: 15px; margin: 0 0 2px; font-weight: 600; }
@@ -232,11 +247,12 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
     </ol>
     <p class="fine">Keep your token private. Anyone who has it can see your saves. You can find it again later in <i>Set up → Your account</i>.</p>
   </div>
+  <p class="legal"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
 </section>
 
 <section id="lib" style="display:none">
   <header>
-    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="mentionsBtn">Saved</button><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
+    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="mentionsBtn">Lists</button><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
     <p class="sub" id="sub">Your saves, all in one place.</p>
     <div class="search"><input id="q" type="search" placeholder="Search your saves" aria-label="Search"></div>
     <div class="chips" id="chips" role="group" aria-label="Filters"></div>
@@ -262,7 +278,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
         <ol class="steps">
           <li><b>Copy your token</b><span>iOS will ask for it once.</span><div class="inline-actions"><button class="btn sm" data-copy="token">Copy token</button></div></li>
           <li><b>Add the Stash Shortcut</b><span>Open this on your iPhone. Tap <em>Add Shortcut</em>, then paste the token when asked.</span><div class="inline-actions"><a class="btn sm" href="/Stash.shortcut">Get the Shortcut</a></div></li>
-          <li><b>Share a reel to Stash</b><span>In Instagram, TikTok or YouTube: Share → scroll the app row → <em>Stash</em>. You’ll get a “Queued” alert, then the note appears here in a minute or two.</span></li>
+          <li><b>Share a reel to Stash</b><span>In Instagram, TikTok or YouTube: tap Share. In Instagram, tap <em>Share to…</em> (or <em>More</em>) to open the iPhone share sheet, then pick <em>Stash</em>. Don't see it? Scroll the app row to the end, tap <em>Edit Actions</em> and add Stash as a favourite. You'll get a "Saved" alert, and the note shows up here shortly.</span></li>
         </ol>
         <div class="note-box">Doing this on a computer? Open this same page on your iPhone, or AirDrop the Shortcut.</div>
       </div>
@@ -271,7 +287,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
         <ol class="steps">
           <li><b>Open Stash in Chrome</b><span>You’re already here. Sign in with your token if you haven’t.</span></li>
           <li><b>Install it</b><span>Chrome menu (⋮) → <em>Install app</em> (or <em>Add to Home screen</em>).</span></li>
-          <li><b>Share to Stash</b><span>In Instagram, TikTok or YouTube: Share → <em>Stash</em>. No extra setup.</span></li>
+          <li><b>Share to Stash</b><span>In Instagram, TikTok or YouTube: tap Share, then <em>Share to…</em> or <em>More</em>, and pick <em>Stash</em>. No extra setup. Stash only shows up here after you've installed it in step 2.</span></li>
         </ol>
       </div>
       <div class="note-box">No phone handy? Tap the + on the home screen and paste any link.</div>
@@ -284,8 +300,8 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
       <svg class="art" viewBox="0 0 360 170" role="img" aria-label="Claude add custom connector dialog"><rect x="40" y="8" width="280" height="154" rx="22" fill="#fff" stroke="#e3dffa" stroke-width="3"/><text x="60" y="36" font-size="13" font-weight="600" fill="#1d1b2e">Add custom connector</text><text x="60" y="58" font-size="10" fill="#6a6880">Name</text><rect x="60" y="63" width="240" height="24" rx="12" fill="#f8f7ff"/><text x="72" y="79" font-size="10" fill="#1d1b2e">Stash</text><text x="60" y="104" font-size="10" fill="#6a6880">Remote MCP server URL</text><rect x="60" y="109" width="240" height="24" rx="12" fill="#dcd8ff" stroke="#1d1b2e" stroke-width="2"/><text x="72" y="125" font-size="9" fill="#1d1b2e" font-family="monospace">https://…/mcp/stk_…</text><rect x="236" y="138" width="64" height="18" rx="9" fill="#1d1b2e"/><text x="268" y="150" font-size="9" text-anchor="middle" fill="#fff">Add</text></svg>
       <ol class="steps">
         <li><b>Copy your connector link</b><span>It contains your private token. Treat it like a password.</span><div class="inline-actions"><button class="btn sm" data-copy="mcp">Copy connector link</button></div></li>
-        <li><b>Open Claude’s connector settings</b><span>Claude.ai (or the Claude app) → Settings → Connectors → <em>Add custom connector</em>.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div></li>
-        <li><b>Name it “Stash” and paste the link</b><span>Then ask Claude: <em>“What have I saved about design?”</em></span></li>
+        <li><b>Open Claude’s connector settings</b><span>Easiest on a computer: claude.ai → Settings → Connectors → <em>Add custom connector</em>. Once it's added there, it works in the Claude phone app too.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div></li>
+        <li><b>Name it “Stash” and paste the link</b><span>Then start a new chat and ask: <em>“Search my stash for recipes”</em> or <em>“What books have I saved?”</em>. If Claude asks for permission to use Stash, allow it.</span></li>
       </ol>
       <b style="display:block;margin-top:4px">Using Claude Code?</b>
       <pre class="cmd" id="cmdCode"></pre>
@@ -298,7 +314,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
     <div class="gbody" id="groqBody">
       <p style="margin-top:0;color:var(--muted)">Stash reads reels with Groq’s AI. By default it uses a shared key with a small daily limit. Your own free key means your saves are never queued behind anyone else’s.</p>
       <ol class="steps">
-        <li><b>Get a free key from Groq</b><span>Sign in, tap <em>Create API Key</em>, copy it. It starts with <code>gsk_</code>.</span><div class="inline-actions"><a class="btn sm soft" href="https://console.groq.com/keys" target="_blank" rel="noopener">Open Groq console ↗</a></div></li>
+        <li><b>Get a free key from Groq</b><span>Sign up free (Google or email works, no card needed), tap <em>Create API Key</em>, name it "Stash", and copy the key. It starts with <code>gsk_</code> and Groq only shows it once, so paste it here straight away.</span><div class="inline-actions"><a class="btn sm soft" href="https://console.groq.com/keys" target="_blank" rel="noopener">Open Groq console ↗</a></div></li>
         <li><b>Paste it here</b><span>We check it works before saving, and store it encrypted.</span>
           <form class="field" id="groqForm"><input id="groqKey" type="password" autocomplete="off" placeholder="gsk_…" aria-label="Groq API key"><button class="btn sm" type="submit">Save key</button></form>
           <p class="msg" id="groqMsg" role="status"></p></li>
@@ -310,11 +326,12 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
     <summary><div style="flex:1"><h2>Good to know</h2><small>Limits, timing, privacy</small></div></summary>
     <div class="gbody help">
       <p><b>What can I save?</b> Links from Instagram, TikTok, YouTube, X and Threads.</p>
-      <p><b>How long does it take?</b> A minute or two. Longer when Stash is busy, and you'll see a banner when it is.</p>
+      <p><b>How long does it take?</b> Usually a couple of minutes. When lots of people are saving, or Stash's processing computer is offline, it can take a few hours. Nothing gets lost, it waits in line, and you'll see a banner if it's slow.</p>
       <p><b>Limits.</b> 25 saves waiting at once, 200 a day. The AI that reads reels has a free daily allowance shared by everyone. Add your own Groq key above to get your own.</p>
       <p><b>Why did a save fail?</b> Usually the post is private or deleted, or YouTube blocked the download. Tap Retry once. If it fails again, remove it.</p>
       <p><b>Who can see my saves?</b> Only you, in the app. But whoever runs Stash can read the database. Don't save anything you'd hate for them to see.</p>
       <p><b>Leaving?</b> Export your notes or delete your account under Your account. Deleting is permanent.</p>
+      <p><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms</a></p>
     </div>
   </details>
 
@@ -337,7 +354,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 
 <section id="mentions">
   <div class="row" style="padding-top:18px"><button class="btn soft" id="mentionsBack">← Back</button></div>
-  <div class="setup-head"><h1>Saved</h1><p>Books, movies, shows, and other things you've named across every post.</p></div>
+  <div class="setup-head"><h1>Your lists</h1><p>Every book, movie, show, place and podcast your saves have named, in one place. Tick them off as you get to them.</p></div>
   <div class="chips" id="mentionChips" role="group" aria-label="Filter by kind"></div>
   <div id="mentionList"></div>
 </section>
@@ -345,6 +362,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 <section id="note">
   <div class="row" style="padding-top:18px"><button class="btn soft" id="back">← Back</button></div>
   <div class="hero" id="nHero">
+    <img id="nThumb" class="hthumb" alt="" hidden>
     <div class="tags" id="nMeta"></div>
     <h1 id="nTitle"></h1>
   </div>

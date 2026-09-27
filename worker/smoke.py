@@ -176,10 +176,47 @@ c.post("/note", headers=adm, json={"capture_id": cid, "user_id": mu["id"], "titl
   "markdown": "# Books I loved"})
 all_m = c.get("/v1/mentions", headers=mh).json()["mentions"]
 assert {m["name"] for m in all_m} == {"Atomic Habits", "Arrival"}
+assert all(m["count"] == 1 and m["done"] is False for m in all_m)
 books_only = c.get("/v1/mentions", headers=mh, params={"type": "book"}).json()["mentions"]
 assert [m["name"] for m in books_only] == ["Atomic Habits"]
 assert c.get("/v1/mentions", headers=h(ann)).json()["mentions"] == []          # isolation
 assert c.get("/v1/mentions").status_code == 401
 mcp_text = call(mu["token"], "list_stash_mentions", {"kind": "book"})
 assert "Atomic Habits" in mcp_text and "Arrival" not in mcp_text              # REST and MCP agree
+# ---- thumbnails: stored with the note, served publicly by capability id, removed with the account ----
+import base64 as _b64
+tu = user("thumbuser"); th = h(tu)
+jpeg = b"\xff\xd8\xff\xe0" + b"0" * 2000 + b"\xff\xd9"
+tcid = c.post("/v1/ingest", headers=th, json={"url": "https://www.instagram.com/reel/THUMB1/"}).json()["id"]
+c.post("/note", headers=adm, json={"capture_id": tcid, "user_id": tu["id"], "title": "Pasta", "topic": "food", "tools": [],
+  "mentions": [{"type": "book", "name": "Salt Fat Acid Heat"}], "markdown": "# Pasta", "thumb": _b64.b64encode(jpeg).decode()})
+n = c.get("/v1/notes", headers=th).json()["notes"][0]
+assert n["thumb_id"] and len(n["thumb_id"]) == 32
+img = c.get(f"/t/{n['thumb_id']}")                                  # no auth needed: <img> can't send one
+assert img.status_code == 200 and img.content == jpeg and img.headers["content-type"] == "image/jpeg"
+assert c.get("/t/" + "0" * 32).status_code == 404 and c.get("/t/../v1/notes").status_code == 401 and c.get("/t/not-hex").status_code != 200
+assert c.post("/note", headers=adm, json={"capture_id": "bad", "title": "x", "markdown": "x", "thumb": "<script>"}).status_code == 200
+# ---- lists: dedupe across posts, synced done state, isolation ----
+tcid2 = c.post("/v1/ingest", headers=th, json={"url": "https://www.instagram.com/reel/THUMB2/"}).json()["id"]
+c.post("/note", headers=adm, json={"capture_id": tcid2, "user_id": tu["id"], "title": "More cooking", "topic": "food",
+  "tools": [], "mentions": [{"type": "book", "name": "salt fat acid heat "}], "markdown": "# More"})
+lm = c.get("/v1/mentions", headers=th).json()["mentions"]
+assert len(lm) == 1 and lm[0]["count"] == 2, lm                     # same book from two reels = one item
+assert c.post("/v1/mentions/done", headers=th, json={"type": "book", "name": "Salt Fat Acid Heat", "done": True}).status_code == 200
+assert c.get("/v1/mentions", headers=th).json()["mentions"][0]["done"] is True
+assert "done" in call(tu["token"], "list_stash_mentions", {})
+assert c.post("/v1/mentions/done", headers=th, json={"type": "book", "name": "Salt Fat Acid Heat", "done": False}).status_code == 200
+assert c.get("/v1/mentions", headers=th).json()["mentions"][0]["done"] is False
+assert c.post("/v1/mentions/done", headers=th, json={}).status_code == 400
+c.post("/v1/mentions/done", headers=th, json={"type": "book", "name": "Salt Fat Acid Heat", "done": True})
+# ---- delete account removes thumbs, ticks and activity too ----
+tid = n["thumb_id"]
+assert c.request("DELETE", "/v1/account", headers=th, json={"confirm": "delete"}).status_code == 200
+assert c.get(f"/t/{tid}").status_code == 404
+st = {u["name"]: u for u in c.get("/v1/admin/overview", headers=own).json()["users"]}
+assert "thumbuser" not in st
+assert not any(e["name"] == "thumbuser" for e in c.get("/v1/admin/overview", headers=own).json()["recent"])
+# ---- public pages ----
+for page in ("/privacy", "/terms"):
+    r = c.get(page); assert r.status_code == 200 and "Stash" in r.text, page
 print("ALL OK")

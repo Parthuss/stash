@@ -250,3 +250,34 @@ def test_reindex_twice_in_a_row_does_not_collide_on_chunk_vec_rowids(conn):
     assert conn.execute("SELECT COUNT(*) c FROM note").fetchone()["c"] == 3
     assert conn.execute("SELECT COUNT(*) c FROM chunk").fetchone()["c"] == 3
     assert conn.execute("SELECT COUNT(*) c FROM chunk_vec").fetchone()["c"] == 3
+
+
+def test_reindex_keeps_capture_id_and_used_status(tmp_path, monkeypatch):
+    """Regression: reindex used to rebuild from markdown and drop what only the
+    index knows (capture_id, used status). Losing capture_id made the next
+    cloud sync duplicate every note in D1; losing status reset the core metric."""
+    import argparse
+    import dataclasses
+
+    from stash import cli, db, vault
+    from stash.config import CONFIG
+
+    vdir = tmp_path / "vault"; vdir.mkdir()
+    monkeypatch.setattr(cli, "CONFIG", dataclasses.replace(CONFIG, vault_dir=vdir))
+    content = vault.render({"title": "Pasta", "summary": "s", "topic": "food", "tools": [], "next_step": "n",
+                            "why_saved": "w", "difficulty": "trivial", "relevance": [], "frame_notes": "",
+                            "ingredients": ["2 eggs"], "steps": ["Whisk"], "mentions": [{"type": "book", "name": "Salt"}]},
+                           permalink="https://x/p", permalink_ok=True, source="shortcut", transcript_text="t",
+                           transcript_reason="", transcript_via="groq")
+    (vdir / "2026-09-01-pasta.md").write_text(content)
+    conn = db.connect(tmp_path / "i.sqlite")
+    db.upsert_note(conn, {"path": "2026-09-01-pasta.md", "capture_id": "cap123", "title": "Pasta", "source": "shortcut",
+                          "summary": "s", "topic": "food", "tools": [], "why_saved": "", "next_step": "", "difficulty": "",
+                          "relevance": [], "transcript": "", "frame_notes": "",
+                          "status": "unused", "created_at": "2026-09-01T10:00:00Z"})
+    db.mark_used(conn, "2026-09-01-pasta.md", "dinner")
+    cli._reindex(conn, argparse.Namespace(no_embed=True))
+    row = conn.execute("SELECT * FROM note").fetchone()
+    assert row["capture_id"] == "cap123" and row["status"] == "used" and row["used_where"] == "dinner"
+    assert row["created_at"] == "2026-09-01T10:00:00Z"
+    assert "2 eggs" in row["ingredients"] and "Salt" in row["mentions"]

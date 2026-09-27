@@ -101,7 +101,7 @@ def test_guest_capture_never_touches_the_owners_vault_index_or_alerts(tmp_path, 
     monkeypatch.setattr(pipeline.extract, "extract", lambda **kw: FIELDS)
     monkeypatch.setattr(pipeline.vault, "render", lambda *a, **k: "note")
     pushed = []
-    monkeypatch.setattr(pipeline, "_sync_note", lambda cap, fields, content, permalink, say: pushed.append(cap["id"]))
+    monkeypatch.setattr(pipeline, "_sync_note", lambda cap, fields, content, permalink, say, **kw: pushed.append(cap["id"]))
     monkeypatch.setattr(pipeline.vault, "write", lambda *a, **k: (_ for _ in ()).throw(AssertionError("wrote to vault")))
     monkeypatch.setattr(pipeline.db, "upsert_note", lambda *a, **k: (_ for _ in ()).throw(AssertionError("indexed locally")))
     monkeypatch.setattr(pipeline.notify, "notify", lambda *a, **k: (_ for _ in ()).throw(AssertionError("notified owner")))
@@ -155,3 +155,38 @@ def test_pipeline_passes_comments_to_extract(tmp_path, monkeypatch):
                "media_url": None, "note": None, "caption": "", "source": "shortcut"}
     pipeline.process(sqlite3.connect(":memory:"), capture, verbose=False)
     assert seen["comments"] == ["full recipe in comments!"]
+
+
+def test_thumbnail_is_small_jpeg_from_first_image(tmp_path):
+    import shutil as _sh
+    import subprocess as _sp
+
+    import pytest
+
+    if not _sh.which("ffmpeg"):
+        pytest.skip("ffmpeg not installed")
+    src = tmp_path / "big.jpg"
+    _sp.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=c=pink:s=1080x1350",
+             "-frames:v", "1", str(src)], check=True)
+    thumb = pipeline.thumbnail([MediaItem(1, "image", path=src)])
+    assert thumb and thumb[:2] == b"\xff\xd8" and len(thumb) < 150_000   # a real, small JPEG
+    assert pipeline.thumbnail([]) is None
+    assert pipeline.thumbnail([MediaItem(1, "image", path=tmp_path / "missing.jpg")]) is None
+
+
+def test_forget_media_deletes_only_that_guests_files(tmp_path, monkeypatch):
+    import dataclasses
+
+    from stash import fetch
+    from stash.config import CONFIG
+
+    monkeypatch.setattr(pipeline, "CONFIG", dataclasses.replace(CONFIG, media_dir=tmp_path))
+    url = "https://www.instagram.com/reel/GUEST1/"
+    key = fetch._key(url)
+    (tmp_path / "frames").mkdir()
+    mine = [tmp_path / f"{key}.mp4", tmp_path / f"{key}.wav", tmp_path / "frames" / f"{key}_f00.jpg"]
+    other = tmp_path / "someoneelse.mp4"
+    for p in [*mine, other]:
+        p.write_bytes(b"x")
+    pipeline._forget_media({"permalink": url, "media_url": None}, None)
+    assert not any(p.exists() for p in mine) and other.exists()

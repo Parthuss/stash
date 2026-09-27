@@ -10,7 +10,10 @@ without media there is nothing to say.
 
 from __future__ import annotations
 
+import base64
+import shutil
 import sqlite3
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -155,7 +158,7 @@ def process(
     guest = _is_guest(capture)
     path = Path(f"remote-{capture['id']}.md") if guest else vault.write(content, vault.note_path(fields["title"]))
     say("sent to the Worker" if guest else f"wrote {path.name}")
-    _sync_note(capture, fields, content, permalink, say)
+    _sync_note(capture, fields, content, permalink, say, thumb=thumbnail(media.items))
 
     if not guest:
         db.upsert_note(
@@ -264,6 +267,22 @@ def is_allowed_url(raw: str | None) -> bool:
     return any(host == d or host.endswith("." + d) for d in ALLOWED_HOSTS)
 
 
+def _forget_media(capture, media_url: str | None) -> None:
+    """Delete a friend's downloaded video/audio/frames once their note exists
+    (or the attempt failed). The owner's cache is kept on purpose (reindexing,
+    re-extraction); nobody else's media should sit on this machine."""
+    source = media_url or capture["media_url"] or capture["permalink"]
+    if not source:
+        return
+    key = fetch._key(source)
+    for pattern in (f"{key}*", f"frames/{key}*"):
+        for path in CONFIG.media_dir.glob(pattern):
+            try:
+                path.unlink()
+            except OSError:
+                pass
+
+
 def _is_guest(capture) -> bool:
     """A capture saved by someone other than the owner (the Mac's operator).
 
@@ -274,7 +293,36 @@ def _is_guest(capture) -> bool:
     return "user_id" in capture.keys() and bool(capture["user_id"])
 
 
-def _sync_note(capture, fields, content: str, permalink, say) -> None:
+#: Card cover size. Small on purpose: it is a cover image on a phone card, and
+#: it rides to the Worker as base64 in the same request as the note.
+THUMB_PX = 360
+
+
+def thumbnail(items) -> bytes | None:
+    """A small JPEG cover for the library card: the first image, or a frame one
+    second into the first video. None when ffmpeg is missing or it fails, and
+    the card falls back to its serif initial."""
+    if not items or not shutil.which("ffmpeg"):
+        return None
+    first = items[0]
+    if first.path is None or not Path(first.path).exists():
+        return None
+    seek = ["-ss", "1"] if first.kind == "video" else []
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-v", "error", *seek, "-i", str(first.path),
+             "-vf", f"scale={THUMB_PX}:-2", "-frames:v", "1",
+             "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "6", "-"],
+            capture_output=True, timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0 or not proc.stdout or len(proc.stdout) > 150_000:
+        return None
+    return proc.stdout
+
+
+def _sync_note(capture, fields, content: str, permalink, say, thumb: bytes | None = None) -> None:
     """Mirror the note to the Worker (remote mode only).
 
     Another user's note exists nowhere else, so a failed push fails the capture
@@ -289,7 +337,7 @@ def _sync_note(capture, fields, content: str, permalink, say) -> None:
     from . import remote
 
     try:
-        remote.push_note(capture, fields, content, permalink)
+        remote.push_note(capture, fields, content, permalink, thumb=thumb)
     except Exception as exc:  # noqa: BLE001
         if capture["user_id"]:
             raise
@@ -327,8 +375,12 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             # brought one; local-queue rows have no such column.
             usage: list = []
             own_key = capture["groq_key"] if "groq_key" in capture.keys() else None
-            with using_groq_key(own_key), collect_usage() as usage:
-                result = process(conn, capture, verbose=verbose, media_url=override)
+            try:
+                with using_groq_key(own_key), collect_usage() as usage:
+                    result = process(conn, capture, verbose=verbose, media_url=override)
+            finally:
+                if _is_guest(capture):
+                    _forget_media(capture, override)
         except Exception as exc:  # noqa: BLE001 - one bad capture must not stop the drain
             _finish(conn, capture["id"], ok=False, error=str(exc), remote_mode=remote_mode, usage=usage)
             if verbose:

@@ -234,6 +234,16 @@ export default {
 
     if (path.startsWith("/mcp/")) return handleMcp(request, env, path);
 
+    const thumbMatch = path.match(/^\/t\/([0-9a-f]{32})$/);
+    if (thumbMatch && request.method === "GET") {
+      const row = await env.DB.prepare("SELECT data FROM thumb WHERE id = ?").bind(thumbMatch[1]).first<{ data: string }>();
+      if (!row) return new Response("not found", { status: 404 });
+      const bytes = Uint8Array.from(atob(row.data), (c) => c.charCodeAt(0));
+      return new Response(bytes, {
+        headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=31536000, immutable", "x-content-type-options": "nosniff" },
+      });
+    }
+
     // ---- self-serve join with the shared invite code -------------------
     if (path === "/join" && request.method === "POST") {
       if (!env.JOIN_CODE) return json({ error: "Joining is closed right now." }, 403);
@@ -372,6 +382,8 @@ export default {
       if (!b?.capture_id || !b?.title || !b?.markdown) {
         return json({ error: "need capture_id, title, markdown" }, 400);
       }
+      // Optional cover image: base64 JPEG from the worker, size-capped here too.
+      const thumbData = typeof b.thumb === "string" && b.thumb.length < 210_000 && /^[A-Za-z0-9+/=]+$/.test(b.thumb) ? b.thumb : null;
       const mentions = Array.isArray(b.mentions)
         ? b.mentions.filter((m: any) => m && typeof m.name === "string" && m.name.trim()).slice(0, 100)
         : [];
@@ -395,6 +407,15 @@ export default {
           "INSERT INTO note_fts (title, summary, markdown, note_id, user_id) VALUES (?, ?, ?, ?, ?)",
         ).bind(b.title, b.summary ?? "", b.markdown, noteId, userId ?? ""),
       ]);
+      if (thumbData) {
+        const existingThumb = await env.DB.prepare("SELECT id FROM thumb WHERE note_id = ?").bind(noteId).first<{ id: string }>();
+        const thumbId = existingThumb?.id ?? [...crypto.getRandomValues(new Uint8Array(16))].map((x) => x.toString(16).padStart(2, "0")).join("");
+        await env.DB.batch([
+          env.DB.prepare("INSERT INTO thumb (id, note_id, data) VALUES (?, ?, ?) ON CONFLICT(note_id) DO UPDATE SET data = excluded.data")
+            .bind(thumbId, noteId, thumbData),
+          env.DB.prepare("UPDATE note SET thumb_id = ? WHERE id = ?").bind(thumbId, noteId),
+        ]);
+      }
       return json({ id: noteId });
     }
 

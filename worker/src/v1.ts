@@ -101,31 +101,48 @@ export async function adminOverview(env: Env) {
   return { overview: o, users: users ?? [], recent: recent ?? [] };
 }
 
-export interface Mention { type: string; name: string; note_id: string; note_title: string }
+export interface Mention {
+  type: string; name: string; note_id: string; note_title: string; thumb_id: string | null;
+  count: number; done: boolean;
+}
+
+export const mentionKey = (type: string, name: string) => `${type}:${name.trim().toLowerCase()}`;
 
 /** Every book/movie/place/etc named across a user's notes, flattened out of the
- * per-note `mentions` JSON column. Shared by the REST endpoint and the MCP tool
- * so "what movies have I saved" means the same thing from either surface. */
+ * per-note `mentions` JSON column and deduped by type+name (the same book saved
+ * from three reels is one list item, "in 3 posts"). Newest first. Shared by the
+ * REST endpoint and the MCP tool so both surfaces agree. */
 export async function listMentions(env: Env, userId: string | null, kind: string | null, limit: number): Promise<Mention[]> {
-  const { results } = await env.DB.prepare(
-    "SELECT id, title, mentions FROM note WHERE user_id IS ? AND mentions NOT IN ('', '[]') ORDER BY created_at DESC",
-  ).bind(userId).all<{ id: string; title: string; mentions: string }>();
-  const out: Mention[] = [];
+  const [{ results }, doneRows] = await Promise.all([
+    env.DB.prepare(
+      "SELECT id, title, mentions, thumb_id FROM note WHERE user_id IS ? AND mentions NOT IN ('', '[]') ORDER BY created_at DESC",
+    ).bind(userId).all<{ id: string; title: string; mentions: string; thumb_id: string | null }>(),
+    env.DB.prepare("SELECT mkey FROM mention_done WHERE owner_key = ?").bind(userId ?? "").all<{ mkey: string }>(),
+  ]);
+  const done = new Set((doneRows.results ?? []).map((r) => r.mkey));
+  const byKey = new Map<string, Mention>();
   for (const row of results ?? []) {
     let items: any[];
     try { items = JSON.parse(row.mentions); } catch { continue; }
     for (const m of items) {
-      if (!m?.name || (kind && m.type !== kind)) continue;
-      out.push({ type: m.type ?? "other", name: String(m.name), note_id: row.id, note_title: row.title });
-      if (out.length >= limit) return out;
+      const name = typeof m === "string" ? m : m?.name;
+      const type = (typeof m === "object" && m?.type) || "other";
+      if (!name || !String(name).trim() || (kind && type !== kind)) continue;
+      const key = mentionKey(type, String(name));
+      const seen = byKey.get(key);
+      if (seen) { seen.count += 1; continue; }
+      byKey.set(key, { type, name: String(name).trim(), note_id: row.id, note_title: row.title, thumb_id: row.thumb_id, count: 1, done: done.has(key) });
     }
   }
-  return out;
+  return [...byKey.values()].slice(0, limit);
 }
 
 /** Wipe a user and everything they saved. Used by self-delete and admin revoke. */
 export async function deleteUser(env: Env, userId: string): Promise<void> {
   await env.DB.batch([
+    env.DB.prepare("DELETE FROM mention_done WHERE owner_key = ?").bind(userId),
+    env.DB.prepare("DELETE FROM usage_event WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
     env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM note WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM capture WHERE user_id = ?").bind(userId),
@@ -197,7 +214,7 @@ export function ftsQuery(raw: string): string {
   return words.map((w) => `"${w}"`).join(" OR ");
 }
 
-const NOTE_COLUMNS = "id, title, summary, topic, tools, permalink, status, created_at, used_at";
+const NOTE_COLUMNS = "id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id";
 
 export async function handleV1(
   request: Request,
@@ -301,6 +318,19 @@ export async function handleV1(
     return json({ mentions: await listMentions(env, userId, kind, limit) });
   }
 
+  if (path === "/v1/mentions/done" && request.method === "POST") {
+    const b = (await request.json().catch(() => null)) as { type?: string; name?: string; done?: boolean } | null;
+    if (!b?.type || !b?.name) return json({ error: "need type and name" }, 400);
+    const key = mentionKey(String(b.type).slice(0, 20), String(b.name).slice(0, 200));
+    if (b.done === false) {
+      await env.DB.prepare("DELETE FROM mention_done WHERE owner_key = ? AND mkey = ?").bind(userId ?? "", key).run();
+    } else {
+      await env.DB.prepare("INSERT INTO mention_done (owner_key, mkey, at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING")
+        .bind(userId ?? "", key, new Date().toISOString()).run();
+    }
+    return json({ ok: true });
+  }
+
   if (path === "/v1/setup" && request.method === "GET") {
     const sources = await env.DB.prepare(
       "SELECT source, COUNT(*) n FROM capture WHERE user_id IS ? GROUP BY source",
@@ -362,7 +392,7 @@ export async function handleV1(
     if (!q) return json({ notes: [] });
     await logEvent(env, userId, "api", "search");
     const { results } = await env.DB.prepare(
-      `SELECT n.id, n.title, n.summary, n.topic, n.tools, n.permalink, n.status, n.created_at
+      `SELECT n.id, n.title, n.summary, n.topic, n.tools, n.permalink, n.status, n.created_at, n.thumb_id
        FROM note_fts f JOIN note n ON n.id = f.note_id
        WHERE note_fts MATCH ? AND f.user_id = COALESCE(?, '')
        ORDER BY bm25(note_fts, 8.0, 3.0, 1.0) LIMIT 20`,

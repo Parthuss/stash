@@ -38,21 +38,24 @@ function signOut(msg) { store.del("stash_token"); token = null; show("auth"); $(
 // ---- markdown: escape FIRST, then add structure. Notes contain third-party captions. ----
 function md(src) {
   src = src.replace(/^---\n[\s\S]*?\n---\n/, "").replace(/^\s*# .*\n/, "");
-  const out = []; let list = false;
+  const out = []; let list = false, olist = false;
   const inline = (t) => esc(t)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   for (const line of src.split("\n")) {
-    const li = line.match(/^\s*[-*] (.*)/);
+    const li = line.match(/^\s*[-*] (.*)/), oli = line.match(/^\s*\d+\. (.*)/);
     if (list && !li) { out.push("</ul>"); list = false; }
+    if (olist && !oli) { out.push("</ol>"); olist = false; }
     if (li) { if (!list) { out.push("<ul>"); list = true; } out.push("<li>" + inline(li[1]) + "</li>"); }
+    else if (oli) { if (!olist) { out.push("<ol>"); olist = true; } out.push("<li>" + inline(oli[1]) + "</li>"); }
     else if (/^## /.test(line)) out.push("<h2>" + inline(line.slice(3)) + "</h2>");
     else if (/^> ?/.test(line)) out.push("<blockquote>" + inline(line.replace(/^> ?/, "")) + "</blockquote>");
     else if (line.startsWith("<sub>") || !line.trim()) continue;
     else out.push("<p>" + inline(line) + "</p>");
   }
   if (list) out.push("</ul>");
+  if (olist) out.push("</ol>");
   return out.join("");
 }
 
@@ -63,7 +66,7 @@ function card(n, i) {
   const initial = esc((n.title || "?").trim().charAt(0).toUpperCase());
   const unused = n.status === "unused";
   return `<button class="card" data-id="${esc(n.id)}" style="--i:${Math.min(i, 12)}">
-    <div class="tint" style="background:${tintOf(n.topic)}"><span class="tag ${unused ? "unused" : ""}">${unused ? "Unused" : "Used ✓"}</span><b aria-hidden="true">${initial}</b></div>
+    <div class="tint" style="background:${tintOf(n.topic)}"><span class="tag ${unused ? "unused" : ""}">${unused ? "Unused" : "Used ✓"}</span><b aria-hidden="true">${initial}</b>${n.thumb_id ? `<img class="thumb" src="/t/${esc(n.thumb_id)}" alt="" loading="lazy">` : ""}</div>
     <div class="cbody"><h2>${esc(n.title)}</h2><small>${esc(n.topic || "")}</small></div></button>`;
 }
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "link"; } };
@@ -86,7 +89,7 @@ function render() {
   $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}</button>`).join("");
   const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
   const caps = filter === "all" && !$("q").value.trim() ? captures.map(capCard).join("") : "";
-  $("list").innerHTML = (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to save a link, or share a reel to Stash."}</div>`;
+  $("list").innerHTML = (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
 }
 let captures = [], loaded = false, known = null, pollTimer = null;
 async function load() {
@@ -119,7 +122,10 @@ async function ingest(url) {
   toast(body.created ? "Saved. Takes a minute or two." : "You already saved that one.");
   load().catch(() => {});
 }
-async function open(id) {
+let returnTo = "lib";
+const USED_LABEL = { food: "I made this" };
+async function open(id, from) {
+  returnTo = from || "lib";
   const r = await api("/v1/notes/" + encodeURIComponent(id));
   if (!r.ok) { toast("That note isn't there anymore."); load().catch(() => {}); return; }
   current = await r.json();
@@ -128,6 +134,9 @@ async function open(id) {
   const unused = current.status === "unused";
   $("nMeta").innerHTML = `<span class="tag ${unused ? "unused" : ""}">${unused ? "Unused" : "Used ✓"}</span><span class="tag">${esc(current.topic || "other")}</span>`;
   $("nBody").innerHTML = md(current.markdown);
+  enhanceRecipe(current.id);
+  const th = $("nThumb"); th.hidden = !current.thumb_id; if (current.thumb_id) th.src = "/t/" + current.thumb_id;
+  $("nUsed").textContent = USED_LABEL[current.topic] || "Mark as used";
   const o = $("nOpen"); o.hidden = !current.permalink; if (current.permalink) o.href = current.permalink;
   $("nUsed").hidden = current.status === "used";
   show("note"); scrollTo(0, 0);
@@ -164,8 +173,28 @@ $("list").addEventListener("click", async (e) => {
   if (del) { const r = await api("/v1/captures/" + del.dataset.del, { method: "DELETE" }); toast(r.ok ? "Removed." : "Couldn't remove that one."); return load(); }
   const c = e.target.closest(".card[data-id]"); if (c) open(c.dataset.id);
 });
-$("back").addEventListener("click", () => { show("lib"); load(); });
-$("nUsed").addEventListener("click", async () => { await api("/v1/notes/" + current.id + "/used", { method: "POST" }); toast("Marked as used"); $("nUsed").hidden = true; });
+$("back").addEventListener("click", () => { if (returnTo === "mentions") { show("mentions"); openMentions(); } else { show("lib"); load(); } });
+$("nUsed").addEventListener("click", async () => {
+  const r = await api("/v1/notes/" + current.id + "/used", { method: "POST" }).catch(() => null);
+  if (!r || !r.ok) return toast("Couldn't save that. Try again.");
+  toast(current.topic === "food" ? "Nice. Marked as made." : "Marked as used"); $("nUsed").hidden = true;
+});
+// Recipe notes: ingredients become a tap-to-tick shopping/cooking checklist,
+// remembered per device (it's a cooking aid, not account data).
+function enhanceRecipe(noteId) {
+  const h = [...$("nBody").querySelectorAll("h2")].find((x) => x.textContent.trim().toLowerCase() === "ingredients");
+  const list = h && h.nextElementSibling && h.nextElementSibling.tagName === "UL" ? h.nextElementSibling : null;
+  if (!list) return;
+  const key = "ing:" + noteId; let got = [];
+  try { got = JSON.parse(store.get(key) || "[]"); } catch {}
+  [...list.children].forEach((li, i) => {
+    li.classList.add("ing"); li.setAttribute("role", "checkbox"); li.tabIndex = 0;
+    const set = (on) => { li.classList.toggle("got", on); li.setAttribute("aria-checked", on); };
+    set(got.includes(i));
+    const flip = () => { const on = !li.classList.contains("got"); set(on); got = on ? [...got, i] : got.filter((x) => x !== i); store.set(key, JSON.stringify(got)); };
+    li.addEventListener("click", flip); li.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
+  });
+}
 
 
 // ---------------- setup / onboarding ----------------
@@ -212,7 +241,9 @@ $("groqForm").addEventListener("submit", async (e) => {
   else { m.className = "msg err"; m.textContent = body.error || "Couldn’t save that key."; }
 });
 $("exportBtn").addEventListener("click", async () => {
-  const r = await api("/v1/export"); const url = URL.createObjectURL(await r.blob());
+  const r = await api("/v1/export").catch(() => null);
+  if (!r || !r.ok) return toast("Couldn't export right now. Try again.");
+  const url = URL.createObjectURL(await r.blob());
   const a = document.createElement("a"); a.href = url; a.download = "stash-export.json"; a.click(); URL.revokeObjectURL(url);
 });
 $("signOutBtn").addEventListener("click", signOut);
@@ -229,8 +260,8 @@ async function start() {
   await load();
   refreshSetup();
   if (!store.get("stash_welcomed") && !toSave) { store.set("stash_welcomed", "1"); openSetup(true); }
-  document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && $("lib").style.display !== "none" && load().catch(() => {}));
 }
+document.addEventListener("visibilitychange", () => token && document.visibilityState === "visible" && $("lib").style.display !== "none" && load().catch(() => {}));
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 // A share that arrives before sign-in must survive the sign-in screen.
 { const p = new URLSearchParams(location.search), u = p.get("url") || (p.get("text") || "").match(/https?:\/\/\S+/)?.[0];
@@ -289,30 +320,52 @@ window.addEventListener("unhandledrejection", (e) => {
   toast("Something went wrong. Try again.");
 });
 
-// ---------------- Saved (mentions across every post) ----------------
+// ---------------- Lists (books, movies, places... across every post) ----------------
 const MENTION_ICONS = { book: "📖", movie: "🎬", show: "📺", podcast: "🎙️", place: "📍", product: "🛍️", person: "🙂", other: "✦" };
 const MENTION_TINTS = { book: "--lavender", movie: "--peach", show: "--sky", podcast: "--butter", place: "--mint", product: "--sky", person: "--lavender", other: "--butter" };
+const DONE_VERB = { book: "Read", movie: "Watched", show: "Watched", podcast: "Heard", place: "Been", product: "Got it", person: "Done", other: "Done" };
+const PLURAL = { person: "people" };
 let mentionFilter = "all", allMentions = [];
 
 function renderMentions() {
   const kinds = [...new Set(allMentions.map((m) => m.type))].sort();
   $("mentionChips").innerHTML = ["all", ...kinds].map((k) =>
-    `<button class="chip" aria-pressed="${k === mentionFilter}" data-mk="${esc(k)}">${esc(k === "all" ? "all" : k + "s")}</button>`).join("");
-  const shown = mentionFilter === "all" ? allMentions : allMentions.filter((m) => m.type === mentionFilter);
+    `<button class="chip" aria-pressed="${k === mentionFilter}" data-mk="${esc(k)}">${esc(k === "all" ? "all" : PLURAL[k] || k + "s")}</button>`).join("");
+  const shown = (mentionFilter === "all" ? allMentions : allMentions.filter((m) => m.type === mentionFilter))
+    .slice().sort((a, b) => Number(a.done) - Number(b.done));
   $("mentionList").innerHTML = shown.length
-    ? shown.map((m) => `<button class="mcard" data-open="${esc(m.note_id)}">
-        <span class="kind" style="background:var(${MENTION_TINTS[m.type] || "--butter"})">${MENTION_ICONS[m.type] || "✦"}</span>
-        <span class="info"><h3>${esc(m.name)}</h3><small>${esc(m.type)} · saved in "${esc(m.note_title)}"</small></span></button>`).join("")
-    : `<div class="empty"><b>Nothing saved yet</b>Books, movies, and other things people name in a post show up here.</div>`;
+    ? shown.map((m, i) => {
+        const verb = DONE_VERB[m.type] || "Done";
+        const where = m.count > 1 ? `in ${m.count} posts` : `from "${esc(m.note_title)}"`;
+        return `<div class="mcard ${m.done ? "done" : ""}">
+        <span class="kind" style="background:var(${MENTION_TINTS[m.type] || "--butter"})">${m.thumb_id ? `<img src="/t/${esc(m.thumb_id)}" alt="" loading="lazy">` : MENTION_ICONS[m.type] || "✦"}</span>
+        <button class="info" type="button" data-open="${esc(m.note_id)}" style="border:0;background:none;padding:0;text-align:left;cursor:pointer"><h3>${esc(m.name)}</h3><small>${esc(m.type)} · ${where}</small></button>
+        <button class="tick" type="button" data-done="${i}" aria-pressed="${m.done}">${m.done ? verb + " ✓" : verb + "?"}</button></div>`;
+      }).join("")
+    : `<div class="empty"><b>No lists yet</b>When a reel names a book, movie, show, place or podcast, it lands here automatically. Nothing to set up.</div>`;
+  $("mentionList")._shown = shown;
 }
 async function openMentions() {
   show("mentions"); scrollTo(0, 0);
   $("mentionList").innerHTML = skeleton();
-  const r = await api("/v1/mentions");
-  if (!r.ok) { $("mentionList").innerHTML = `<div class="empty">Couldn't load this. Go back and try again.</div>`; return; }
-  allMentions = (await r.json()).mentions; mentionFilter = "all"; renderMentions();
+  const r = await api("/v1/mentions").catch(() => null);
+  if (!r || !r.ok) { $("mentionList").innerHTML = `<div class="empty">Couldn't load this. Go back and try again.</div>`; return; }
+  allMentions = (await r.json()).mentions; renderMentions();
 }
-$("mentionsBtn").addEventListener("click", openMentions);
+$("mentionsBtn").addEventListener("click", () => { mentionFilter = "all"; openMentions(); });
 $("mentionsBack").addEventListener("click", () => { show("lib"); load(); });
 $("mentionChips").addEventListener("click", (e) => { const k = e.target.dataset.mk; if (k) { mentionFilter = k; renderMentions(); } });
-$("mentionList").addEventListener("click", (e) => { const c = e.target.closest("[data-open]"); if (c) open(c.dataset.open); });
+$("mentionList").addEventListener("click", async (e) => {
+  const d = e.target.closest("[data-done]");
+  if (d) {
+    const m = $("mentionList")._shown[Number(d.dataset.done)]; if (!m) return;
+    m.done = !m.done; renderMentions();
+    const r = await api("/v1/mentions/done", { method: "POST", body: JSON.stringify({ type: m.type, name: m.name, done: m.done }) }).catch(() => null);
+    if (!r || !r.ok) { m.done = !m.done; renderMentions(); toast("Couldn't save that. Try again."); }
+    return;
+  }
+  const c = e.target.closest("[data-open]"); if (c) open(c.dataset.open, "mentions");
+});
+$("list").addEventListener("click", (e) => { if (e.target.closest("[data-howto]")) openSetup(false); });
+// A broken cover image falls back to the card's serif initial underneath it.
+document.addEventListener("error", (e) => { if (e.target && e.target.tagName === "IMG" && (e.target.classList.contains("thumb") || e.target.closest(".kind"))) e.target.remove(); }, true);
