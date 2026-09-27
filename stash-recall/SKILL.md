@@ -44,6 +44,10 @@ needed:
   next step, why it was saved, the permalink. Call this before relying on anything
   specific from a search hit.
 - `list_stash_topics()`
+- `list_stash_mentions(kind?)` — every book, movie, show, podcast, place, product or
+  person named across all saves (kind narrows it, e.g. `"book"`). Use this for "what
+  books/movies have I saved", not search. Recipe saves also carry ingredients and
+  steps inside `get_stash_note`.
 - `recent_stash(limit?, status?)`
 - `mark_stash_used(note_id, where)`
 
