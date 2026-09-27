@@ -342,6 +342,19 @@ def _describe_batch(frames: list[Path], labels: list[str], *, start: int) -> lis
         [{"role": "user", "content": content}], max_tokens=VISION_MAX_TOKENS
     )
     items = payload.get("items") if isinstance(payload, dict) else None
+    # With one image per request (VISION_BATCH_SIZE=1) the model sometimes
+    # skips the wrapper ({"label","description"}) or splits one image into
+    # several items. Neither means the read failed, so accept them rather
+    # than burning a retry. A count mismatch on a real multi-image batch is
+    # still an error: there's no safe way to tell which image a note is for.
+    if len(frames) == 1 and isinstance(payload, dict):
+        if not isinstance(items, list) and payload.get("description"):
+            items = [payload]
+        elif isinstance(items, list) and len(items) > 1:
+            items = [{
+                "label": next((str(i.get("label")) for i in items if isinstance(i, dict) and i.get("label")), ""),
+                "description": " ".join(str(i.get("description") or "") for i in items if isinstance(i, dict)).strip(),
+            }]
     if not isinstance(items, list) or len(items) != len(frames):
         raise ExtractError("groq vision returned the wrong number of visual descriptions")
     notes: list[str] = []

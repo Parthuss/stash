@@ -348,3 +348,20 @@ def test_coerce_mentions_handles_non_list_input():
     assert _coerce_mentions(None) == []
     assert _coerce_mentions("Atomic Habits") == []
     assert _coerce_mentions({"name": "x"}) == []
+
+
+def test_single_image_vision_tolerates_unwrapped_or_split_answers(tmp_path, monkeypatch):
+    from stash import extract
+
+    img = tmp_path / "f.jpg"; img.write_bytes(b"x")
+    monkeypatch.setattr(extract, "_vision_image", lambda p: (b"x", "image/jpeg"))
+    for payload, expect in [
+        ({"label": "Slide", "description": "a recipe card"}, "Slide: a recipe card"),
+        ({"items": [{"label": "Slide", "description": "part one"}, {"description": "part two"}]}, "Slide: part one part two"),
+    ]:
+        monkeypatch.setattr(extract, "_groq_request", lambda *a, _p=payload, **k: _p)
+        assert extract._describe_batch([img], ["Slide"], start=1) == [expect]
+    monkeypatch.setattr(extract, "_groq_request", lambda *a, **k: {"items": []})
+    import pytest
+    with pytest.raises(extract.ExtractError):
+        extract._describe_batch([img], ["Slide"], start=1)
