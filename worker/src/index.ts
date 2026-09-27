@@ -48,7 +48,12 @@ export interface Env {
   IG_APP_SECRET?: string;
   IG_ACCESS_TOKEN?: string;
   JOIN_CODE?: string; // shared invite code for /join; unset = self-serve joining is closed
-  NTFY_TOPIC?: string; // set to get phone alerts when the queue is stuck, captures fail, or someone joins
+  NTFY_TOPIC?: string;
+  // Optional: a fine-grained GitHub token (Actions: read & write, this repo only).
+  // When set, a friend's save starts the cloud runner right away instead of
+  // waiting for GitHub's cron, which fires every 2-5 hours in practice.
+  GH_DISPATCH_TOKEN?: string;
+  GH_REPO?: string; // default "Parthuss/stash" // set to get phone alerts when the queue is stuck, captures fail, or someone joins
   MAX_JOIN?: string; // cap on accounts created via /join (default 50)
 }
 
@@ -174,6 +179,24 @@ async function insertCapture(
   return { id: captureId, created: true };
 }
 
+/** Start the cloud runner now (debounced to once per 3 min). No-op without a token. */
+async function kickRunner(env: Env): Promise<void> {
+  if (!env.GH_DISPATCH_TOKEN) return;
+  const last = await env.DB.prepare("SELECT at FROM alert_state WHERE key = 'kick'").first<{ at: string }>();
+  if (last && Date.now() - Date.parse(last.at) < 3 * 60_000) return;
+  await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('kick', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
+    .bind(new Date().toISOString()).run();
+  const repo = env.GH_REPO || "Parthuss/stash";
+  await fetch(`https://api.github.com/repos/${repo}/actions/workflows/process.yml/dispatches`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.GH_DISPATCH_TOKEN}`, Accept: "application/vnd.github+json",
+      "User-Agent": "stash-worker", "X-GitHub-Api-Version": "2022-11-28",
+    },
+    body: JSON.stringify({ ref: "master" }),
+  }).catch(() => {});
+}
+
 /** Cron (every 30 min): tell the owner when something needs a human. */
 async function checkHealth(env: Env): Promise<void> {
   if (!env.NTFY_TOPIC) return;
@@ -272,7 +295,9 @@ export default {
     if (path.startsWith("/v1/")) {
       const userId = await userFromBearer(request, env);
       if (userId === undefined) return json({ error: "unauthorized" }, 401);
-      return handleV1(request, env, path, userId, insertCapture);
+      const res = await handleV1(request, env, path, userId, insertCapture);
+      if (userId && path === "/v1/ingest" && res.status === 202) ctx.waitUntil(kickRunner(env));
+      return res;
     }
 
     // ---- everything below is for us only -------------------------------

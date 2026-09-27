@@ -287,10 +287,11 @@ in sync.
   and served with the right content type; the Android install/share-target path
   needs Chrome on a real device (the in-app browser pane can't register service
   workers). Test both before inviting anyone.
-- **Friends' saves can wait hours when the Mac is off.** The GitHub cron runner
-  fires every 2-5 h in practice. Fix = have the Worker call `workflow_dispatch`
-  on a guest ingest, which needs a fine-grained GitHub token (actions:write on
-  this repo only) set as a Worker secret. Not done: needs the owner to create it.
+- **Friends' saves can wait hours when the Mac is off, until GH_DISPATCH_TOKEN is set.**
+  The GitHub cron runner fires every 2-5 h in practice. The Worker now calls
+  `workflow_dispatch` on every friend's save (debounced to 3 min), verified end to
+  end on 2026-09-27; it only needs a fine-grained token (Actions read/write, this
+  repo only) as the `GH_DISPATCH_TOKEN` Worker secret. Steps in docs/PILOT.md.
 - **Shared Groq free tier ≈ 25-30 reels/day for everyone combined.** Friends can
   add their own key in Set up; the app nudges them when saves are slow.
 - **App name is undecided.** "Stashr" (stashr.me) is live in the same category;

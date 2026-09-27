@@ -11,6 +11,19 @@ building the store apps. Full reasoning: the plan in `~/.claude/plans/` and `DES
 3. In claude.ai: add the connector from Set up → Connect Claude, then ask "What books have I saved?"
 4. Open Admin (Set up → Open admin) and check the badge says Healthy.
 
+## Make friends' saves fast when your Mac is off (5 minutes, recommended)
+Without this, a friend's save waits for GitHub's timer, which fires every 2-5 hours in practice.
+With it, their save starts processing within about a minute. It's already built and tested; it
+only needs a token:
+1. Go to github.com/settings/personal-access-tokens/new (signed in as Parthuss).
+2. Name it "stash runner". Repository access: *Only select repositories* → `Parthuss/stash`.
+   Permissions → Repository → **Actions: Read and write**. Nothing else. Generate, copy it.
+3. In a terminal:
+   ```bash
+   cd /Users/parthus/Work/Experiment/stash/worker && npx wrangler secret put GH_DISPATCH_TOKEN -c wrangler.local.toml
+   ```
+   Paste the token when asked. That's it.
+
 ## What to send a friend
 > I'm testing an app called Stash. You share a reel to it and it turns it into a note you can
 > actually find later (recipes come out as ingredients + steps, books/movies land in a list).
