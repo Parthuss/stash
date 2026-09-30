@@ -1,6 +1,6 @@
 # Stash — handoff
 
-Written 2026-08-20, last updated 2026-09-27. Everything in this file was checked
+Written 2026-08-20, last updated 2026-09-30. Everything in this file was checked
 live against the running system, not recalled from memory. Commands to
 re-verify each claim are included.
 
@@ -20,24 +20,42 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
-## Current state (verified 2026-09-27)
+## Current state (verified 2026-09-30)
 
 Stash is now a multi-user pilot, not just a personal tool. Friends join with an
 invite code, save from their phone, browse in a web app, and connect Claude.
 
 ```
-tests:     125 python (.venv/bin/python -m pytest tests/ -q)
+tests:     126 python (.venv/bin/python -m pytest tests/ -q)
            + worker/smoke.py against a local worker (tenancy, MCP, covers, lists, deletion)
 web app:   https://stash.parthus.workers.dev  (worker/public/: index.html + app.js)
 worker:    D1 migrations 0001-0011 all applied to prod
-vault:     61 notes (owner), all with cover images in D1, 0 duplicates
+vault:     63 notes (owner), all with cover images in D1, 0 duplicates, 0 marked used
+queue:     empty; 1 dead letter (DbdUqK3Fvh5, Instagram refuses it: private/deleted)
 pilot:     NO friends have joined yet (admin overview: users 0). Invite code is the
-           JOIN_CODE worker secret; see docs/PILOT.md.
+           JOIN_CODE worker secret; see docs/PILOT.md. A full friend run (join ->
+           save 2 reels -> Mac processes -> note with cover -> delete account) passed
+           on prod 2026-09-27 and left nothing behind.
+secrets:   worker has STASH_SECRET, JOIN_CODE, NTFY_TOPIC. GH_DISPATCH_TOKEN is NOT set
+           yet, so the instant cloud trigger is built but off (docs/PILOT.md).
 daemon:    launchd com.stash.daemon, claims everyone's saves while the Mac is on
 cloud:     .github/workflows/process.yml drains friends' saves when the Mac is off.
            GitHub cron is "every 5 min" on paper, every 2-5 HOURS in practice (measured).
 alerts:    worker cron every 30 min -> ntfy (stuck queue, failures, new joins)
+mcp:       remote /mcp/<token> has 6 tools incl. list_stash_mentions; the local
+           stash-recall skill (repo copy == ~/.claude/skills copy) knows about it
 ```
+
+## Friends vs. owner: what differs in processing
+
+Keep these guest rules intact, each was a real bug found by testing on prod:
+- **Prompt:** a guest save runs under `config.guest_run(True)`: neutral persona, no
+  project list, `relevance` forced empty. Before this, friends' notes said "fits your
+  automation work" and listed the owner's local project folders.
+- **Storage:** a guest note never touches `vault/`, `stash.sqlite`, or iMessage alerts;
+  it lives only in D1. Its downloaded media is deleted from the machine afterwards
+  (`pipeline._forget_media`), and its link never goes in the daemon log.
+- **Groq key:** the guest's own key (if set in the app) is used via `using_groq_key`.
 
 Re-verify:
 ```bash
