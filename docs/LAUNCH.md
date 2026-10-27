@@ -5,7 +5,7 @@ using it was the front door. Until tonight a stranger landing on the site saw a 
 and "invite-only", with no word on what Stash is. That's fixed. The rest of this page covers
 who to go after, where, in what order, and what only you can do.
 
-## What changed tonight (live on stash.parthus.workers.dev)
+## What changed tonight (live on stash.parthakholkar.com)
 
 | Before | Now |
 |---|---|
@@ -51,7 +51,7 @@ launch spike into a product nobody comes back to is wasted.
 > I built a thing: you share a reel to it and it turns into a note you can actually search.
 > Recipes come out as ingredients + steps, books and movies land in a list, and Claude can
 > read all of it. Free. Takes 3 minutes to set up:
-> https://stash.parthus.workers.dev
+> https://stash.parthakholkar.com
 > Save 3 reels this week and tell me what's annoying about it.
 
 ### Week 2: Claude communities
@@ -73,7 +73,7 @@ Reddit draft (r/ClaudeAI):
 > The part I actually use: it's an MCP connector. I ask Claude "what was that Remotion
 > tip I saved" or "what books have I saved" and it searches them.
 >
-> Free, no signup beyond a first name: https://stash.parthus.workers.dev
+> Free, no signup beyond a first name: https://stash.parthakholkar.com
 > Would love to hear what breaks.
 
 ### Week 3+: only if week-2 numbers hold

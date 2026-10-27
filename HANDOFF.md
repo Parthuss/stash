@@ -40,7 +40,7 @@ invite code, save from their phone, browse in a web app, and connect Claude.
 ```
 tests:     126 python (.venv/bin/python -m pytest tests/ -q)
            + worker/smoke.py against a local worker (tenancy, MCP, covers, lists, deletion)
-web app:   https://stash.parthus.workers.dev  (worker/public/: index.html + app.js)
+web app:   https://stash.parthakholkar.com (old https://stash.parthus.workers.dev still works)  (worker/public/: index.html + app.js)
 worker:    D1 migrations 0001-0012 all applied to prod
 vault:     63 notes (owner), all with cover images in D1, 0 duplicates, 0 marked used
 queue:     empty; 1 dead letter (DbdUqK3Fvh5, Instagram refuses it: private/deleted)
@@ -74,7 +74,7 @@ Re-verify:
 cd /Users/parthus/Work/Experiment/stash
 .venv/bin/python -m pytest tests/ -q
 .venv/bin/python -m stash doctor && .venv/bin/python -m stash status
-curl -s https://stash.parthus.workers.dev/health
+curl -s https://stash.parthakholkar.com/health
 gh run list -R Parthuss/stash --workflow process --limit 5
 ```
 
