@@ -2,6 +2,8 @@
 
 Turn the Instagram posts you save into notes Claude finds on its own.
 
+Built by [Parth Akholkar](https://parthakholkar.com). The [case study](https://parthakholkar.com/work/stash) explains why it works this way.
+
 You already capture reliably — share, tap your own account, done. What fails is
 everything after: a URL tells you nothing about what was in the post, so you
 never triage it, and nothing surfaces it when it would be useful. This is not a
