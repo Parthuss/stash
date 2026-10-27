@@ -27,14 +27,17 @@ only needs a token:
 ## What to send a friend
 > I'm testing an app called Stash. You share a reel to it and it turns it into a note you can
 > actually find later (recipes come out as ingredients + steps, books/movies land in a list).
-> Open this on your phone, type your first name and tap Join:
-> https://stash.parthus.workers.dev/#code=YOUR_CODE
+> Open this on your phone, type your first name and tap Start:
+> https://stash.parthus.workers.dev
 > It walks you through the rest. Takes about 3 minutes.
 
 ## Run it
 1. Keep the Mac daemon running (`stash status` → daemon ALIVE). Processing happens
    on your home IP, which Instagram doesn't block; captures queue safely when the Mac is off.
-2. **Self-serve joining:** friends open the site, type their name and the shared invite code
+2. **Open joining (since 2026-10-27):** the site is a landing page and anyone can join with
+   just a first name (`OPEN_JOIN = "1"` under `[vars]` in `wrangler.local.toml`; delete it and
+   redeploy to go back to codes). Growth plan: `docs/LAUNCH.md`.
+   **Invite-code joining** (when open joining is off): friends open the site, type their name and the shared invite code
    (or you send `https://<worker>/#code=<CODE>` and it's prefilled) and are signed in.
    Change or close it any time:
    ```bash
@@ -77,6 +80,6 @@ Pass → build the Expo app against this same API. Fail → read the per-user ro
 ## Known limits (deliberate, for the pilot)
 - Search is keyword (FTS5) on the hosted side; the local vault still has hybrid/vector.
 - Connector auth is a secret URL, not OAuth.
-- No quotas or billing. Groq's free tier (~3–4 images/min) is the throughput ceiling —
+- No billing. Daily cap: 30 saves on the shared key, 200 with their own key. Groq's free tier (~3–4 images/min) is the throughput ceiling —
   put the pilot on Groq's paid tier if more than a handful of people save at once.
 - One failed capture pauses the queue until the next poll (head-of-line blocking).

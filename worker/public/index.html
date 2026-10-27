@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Stash</title>
+<title>Stash · the reels you save, finally useful</title>
+<meta name="description" content="Share a reel to Stash and it becomes a searchable note: recipes as ingredients and steps, books and movies in a list. Works with Claude. Free.">
+<meta property="og:title" content="Stash: the reels you save, finally useful">
+<meta property="og:description" content="Share a reel. Get a searchable note. Recipes, books, movies, tips, all in one place, and Claude can read it.">
+<meta property="og:image" content="https://stash.parthus.workers.dev/og.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f8f7ff">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon-192.png">
@@ -116,25 +122,53 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .body code { font-family: var(--mono); font-size: 14px; background: var(--bg); padding: 2px 6px; border-radius: 8px; }
 .body a { color: inherit; text-underline-offset: 3px; word-break: break-all; }
 
-/* sign-in */
-#auth { display: none; padding-top: 16vh; text-align: center; }
-#auth .brand { font-size: 64px; flex: none; }
-#auth p { color: var(--muted); }
-.or { margin: 22px 0 0 !important; font-size: 14px; }
-.joinbox { max-width: 420px; margin: 12px auto 0; background: rgb(255 255 255 / .85); border-radius: 28px; padding: 22px 20px; box-shadow: var(--lift-1); display: flex; flex-direction: column; gap: 10px; backdrop-filter: blur(8px); }
-.joinbox h2 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0; color: var(--ink); }
-.joinbox p { margin: 0 0 4px; font-size: 15px; }
-.joinbox input { height: 52px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); text-align: center; }
-.authhelp { max-width: 420px; margin: 34px auto 0; text-align: left; background: rgb(255 255 255 / .8); border-radius: 24px; padding: 18px 20px; box-shadow: var(--lift-1); backdrop-filter: blur(8px); }
-.authhelp h2 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0 0 6px; color: var(--ink); }
-.authhelp p { margin: 0 0 10px; font-size: 15px; }
-.authhelp ol { margin: 0 0 10px; padding-left: 20px; color: var(--ink); font-size: 15px; }
-.authhelp li { margin-bottom: 6px; } .authhelp li b { font-weight: 600; }
-.authhelp .fine { font-size: 13px; margin: 0; }
-.authhelp code { font-family: var(--mono); font-size: 13px; background: var(--bg); padding: 1px 6px; border-radius: 8px; }
-#auth form { max-width: 420px; margin: 26px auto 0; flex-direction: column; align-items: stretch; }
-#auth input { height: 52px; padding: 0 20px; border-radius: 999px; border: 0; background: rgb(255 255 255 / .9); box-shadow: var(--lift-1); text-align: center; }
-
+/* landing / sign-in */
+#auth { display: none; }
+.lnav { display: flex; align-items: center; padding: 20px 0 0; }
+.lnav .brand { font-size: 30px; }
+.lsign { display: inline-flex; align-items: center; text-decoration: none; color: var(--ink); }
+.lhero { text-align: center; padding: 9vh 0 10px; }
+.lhero h1 { font-family: var(--display); font-weight: 400; font-size: clamp(40px, 9vw, 68px); line-height: 1.02; letter-spacing: -.025em; margin: 0 auto 16px; max-width: 12ch; }
+.lede { color: var(--muted); font-size: 18px; max-width: 34em; margin: 0 auto; }
+.joinbox { max-width: 400px; margin: 26px auto 0; display: flex; flex-direction: column; gap: 10px; }
+.joinbox input { height: 54px; padding: 0 20px; border-radius: 999px; border: 0; background: rgb(255 255 255 / .92); box-shadow: var(--lift-1); text-align: center; }
+.joinbox .btn { height: 54px; }
+.joinbox .msg:empty { display: none; }
+.fine { font-size: 13px; color: var(--muted); margin: 2px 0 0; }
+.demo { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 34px 2px 14px; margin: 0 -18px; padding-left: 18px; padding-right: 18px; scrollbar-width: none; }
+.demo::-webkit-scrollbar { display: none; }
+.dcard { flex: 0 0 min(78%, 260px); scroll-snap-align: center; background: var(--t); border-radius: var(--r-card); padding: 18px 18px 16px; box-shadow: var(--lift-1); text-align: left; }
+.dcard .tag { position: static; display: inline-flex; }
+.dcard h3 { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.15; margin: 10px 0 8px; }
+.dl { margin: 0 0 10px; padding-left: 18px; font-size: 15px; } .dl li { margin-bottom: 2px; }
+.dnext { font-size: 15px; margin: 0 0 10px; }
+.dcard small { color: rgb(29 27 46 / .6); font-size: 12.5px; }
+@media (min-width: 760px) { .demo { margin: 0; padding: 34px 0 14px; overflow: visible; } .dcard { flex: 1; } }
+.lsec { margin: 46px 0 0; }
+.lsec h2 { font-family: var(--display); font-weight: 400; font-size: 32px; line-height: 1.1; letter-spacing: -.015em; margin: 0 0 14px; }
+.lsec > p { color: var(--muted); margin: -4px 0 14px; }
+.lsteps { list-style: none; padding: 0; margin: 0; counter-reset: s; display: grid; gap: 12px; }
+.lsteps li { counter-increment: s; background: rgb(255 255 255 / .85); border-radius: 22px; padding: 16px 18px 16px 62px; position: relative; box-shadow: var(--lift-1); }
+.lsteps li::before { content: counter(s); position: absolute; left: 18px; top: 16px; width: 30px; height: 30px; border-radius: 50%; background: var(--lavender); display: grid; place-items: center; font-weight: 600; font-size: 14px; }
+.lsteps b { display: block; } .lsteps span { color: var(--muted); font-size: 15px; }
+.chat { background: rgb(255 255 255 / .85); border-radius: 28px; padding: 18px; box-shadow: var(--lift-1); display: flex; flex-direction: column; gap: 10px; }
+.chat p { margin: 0; padding: 10px 14px; border-radius: 18px; font-size: 15px; max-width: 88%; }
+.chat .me { align-self: flex-end; background: var(--ink); color: #fff; border-bottom-right-radius: 6px; }
+.chat .ai { background: var(--bg); border-bottom-left-radius: 6px; }
+.faq { background: rgb(255 255 255 / .85); border-radius: 20px; margin: 8px 0; box-shadow: var(--lift-1); }
+.faq summary { cursor: pointer; padding: 15px 18px; font-weight: 600; list-style: none; display: flex; gap: 12px; justify-content: space-between; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--muted); }
+.faq[open] summary::after { content: "–"; }
+.faq p { margin: 0; padding: 0 18px 16px; color: var(--muted); font-size: 15px; }
+.faq a, .signin a { color: inherit; }
+.lend { text-align: center; padding: 20px 0 0; }
+.signin { background: rgb(255 255 255 / .7); border-radius: 22px; padding: 4px 18px; box-shadow: var(--lift-1); }
+.signin summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+.signin p { color: var(--muted); font-size: 15px; margin: 0 0 10px; }
+.signin form { flex-wrap: nowrap; margin-bottom: 8px; }
+.signin input { flex: 1; min-width: 0; height: 48px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); }
+.signin code { font-family: var(--mono); font-size: 13px; background: var(--bg); padding: 1px 6px; border-radius: 8px; }
 
 /* setup / onboarding */
 #setup, #admin, #mentions { display: none; }
@@ -224,33 +258,79 @@ body.on-phone .phone-handoff { display: none; }
 <main>
 
 <section id="auth">
-  <h1 class="brand">Stash</h1>
-  <p>Save it. Find it. Actually use it.</p>
-  <form id="authForm" class="row">
-    <input id="token" type="password" autocomplete="off" placeholder="Paste your access token" aria-label="Access token" required>
-    <button class="btn" type="submit">Open my stash</button>
-  </form>
-  <p id="authErr" role="alert"></p>
-  <p class="or">or</p>
-  <form id="joinForm" class="joinbox">
-    <h2>Have an invite code?</h2>
-    <p>Got a code? Enter it and you're in. No token needed.</p>
-    <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your name" required>
-    <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" required>
-    <button class="btn" type="submit">Join Stash</button>
-    <p id="joinErr" role="alert" class="msg err"></p>
-  </form>
-  <div class="authhelp">
-    <h2>What’s an access token?</h2>
-    <p>Stash is invite-only for now. Your token is a private password that starts with <code>stk_</code>. It’s how Stash knows which saves are yours.</p>
-    <ol>
-      <li><b>Got an invite link?</b> Open it. You're signed in, nothing to paste.</li>
-      <li><b>Got a message with a token?</b> Paste it above.</li>
-      <li><b>Got an invite code?</b> Use the Join box.</li>
-      <li><b>Neither?</b> Ask the person who told you about Stash to send you an invite.</li>
-    </ol>
-    <p class="fine">Keep your token private. Anyone who has it can see your saves. You can find it again later in <i>Set up → Your account</i>.</p>
+  <nav class="lnav"><span class="brand">Stash</span><a href="#signin" class="setup-pill lsign">Sign in</a></nav>
+
+  <div class="lhero">
+    <h1>The reels you save, finally useful.</h1>
+    <p class="lede">Share a reel to Stash. A couple of minutes later it's a note you can search: recipes come back as ingredients and steps, books and movies land in a list, tips come with the next step. And Claude can read all of it.</p>
+    <form id="joinForm" class="joinbox">
+      <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your first name" required>
+      <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
+      <button class="btn" type="submit">Start my stash, free</button>
+      <p id="joinErr" role="alert" class="msg err"></p>
+      <p class="fine" id="joinFine">No email, no password. iPhone, Android or computer.</p>
+    </form>
   </div>
+
+  <div class="demo" aria-label="Examples of what a saved reel turns into">
+    <article class="dcard" style="--t:var(--butter)">
+      <span class="tag">food</span><h3>Garlic butter pasta, 15 minutes</h3>
+      <ul class="dl"><li>200g spaghetti</li><li>4 cloves garlic, sliced</li><li>3 tbsp butter</li><li>Parmesan, chilli flakes</li></ul>
+      <small>Recipe pulled from the voiceover and the comments</small>
+    </article>
+    <article class="dcard" style="--t:var(--mint)">
+      <span class="tag">lists</span><h3>Books you've saved</h3>
+      <ul class="dl"><li>✓ Atomic Habits</li><li>Deep Work</li><li>The Psychology of Money</li></ul>
+      <small>Every book, movie and place, from every post, in one list</small>
+    </article>
+    <article class="dcard" style="--t:var(--lavender)">
+      <span class="tag">tip</span><h3>Plan a 3-day Tokyo trip on a budget</h3>
+      <p class="dnext"><b>Next step:</b> Book the JR pass before you fly, it's cheaper outside Japan.</p>
+      <small>Read from the on-screen text, not just the caption</small>
+    </article>
+  </div>
+
+  <div class="lsec">
+    <h2>How it works</h2>
+    <ol class="lsteps">
+      <li><b>Share</b><span>In Instagram, TikTok, YouTube, X or Threads, tap Share and pick Stash. One-time setup, about two minutes.</span></li>
+      <li><b>Stash reads it</b><span>It listens to the audio, reads the text on screen, the caption and the top comments, then writes a short note.</span></li>
+      <li><b>Find it when you need it</b><span>Search by anything that was said or shown. Tick off recipes you made and books you read.</span></li>
+    </ol>
+  </div>
+
+  <div class="lsec claude">
+    <h2>Ask Claude what you saved</h2>
+    <p>Connect Stash to Claude once. After that Claude can look through your saves on its own.</p>
+    <div class="chat">
+      <p class="me">What was that pasta recipe I saved last week?</p>
+      <p class="ai">The garlic butter one. 200g spaghetti, 4 cloves garlic, 3 tbsp butter. Fry the garlic slowly in the butter, then toss in the pasta with a splash of pasta water…</p>
+    </div>
+  </div>
+
+  <div class="lsec">
+    <h2>Questions</h2>
+    <details class="faq"><summary>Is it free?</summary><p>Yes. Everyone shares a free AI allowance, about 30 saves a day each. Want more? Add your own free Groq key in two minutes and get 200 a day.</p></details>
+    <details class="faq"><summary>Why not just use Instagram's Saved folder?</summary><p>Saved is a grid of thumbnails you can't search. Stash turns each post into text, so "that pasta thing" or "the book the guy in the car mentioned" actually finds it. It also works across apps, not only Instagram.</p></details>
+    <details class="faq"><summary>Which phones does it work on?</summary><p>iPhone (through a Shortcut, Stash walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links.</p></details>
+    <details class="faq"><summary>Who can see my saves?</summary><p>Only you, unless you share a note. Stash never re-posts the video, it keeps a short note and a small cover image. Details in the <a href="/privacy">privacy policy</a>.</p></details>
+    <details class="faq"><summary>There's no password. How do I get back in?</summary><p>You get a private sign-in link. Stash asks you to save it (email it to yourself, or keep it in your notes). Open it on any device and you're in.</p></details>
+  </div>
+
+  <div class="lsec lend">
+    <h2>Stop losing the good ones.</h2>
+    <a class="btn" href="#" id="toTop">Start my stash</a>
+  </div>
+
+  <details class="lsec signin" id="signin">
+    <summary>Already have a stash? Sign in</summary>
+    <p>Open your sign-in link, or paste your token (it starts with <code>stk_</code>). You'll find it in Set up → Your account on a device where you're signed in.</p>
+    <form id="authForm" class="row">
+      <input id="token" type="password" autocomplete="off" placeholder="Paste your token" aria-label="Access token" required>
+      <button class="btn" type="submit">Sign in</button>
+    </form>
+    <p id="authErr" role="alert" class="msg err"></p>
+  </details>
   <p class="legal"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
 </section>
 
@@ -290,7 +370,7 @@ body.on-phone .phone-handoff { display: none; }
         <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code to open Stash there, already signed in.<div class="qr" data-qr aria-label="QR code that opens Stash on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
         <svg class="art" viewBox="0 0 360 200" role="img" aria-label="Chrome menu with Install app highlighted"><rect x="110" y="6" width="140" height="188" rx="26" fill="#fff" stroke="#e3dffa" stroke-width="3"/><rect x="122" y="18" width="116" height="26" rx="13" fill="#f0eefc"/><circle cx="224" cy="31" r="3" fill="#1d1b2e"/><circle cx="224" cy="39" r="0" fill="#1d1b2e"/><rect x="128" y="54" width="104" height="112" rx="14" fill="#f8f7ff" stroke="#e3dffa"/><rect x="136" y="64" width="88" height="14" rx="7" fill="#e9e6fb"/><rect x="136" y="86" width="88" height="20" rx="10" fill="#ffd8cb" stroke="#1d1b2e" stroke-width="2"/><text x="180" y="100" font-size="9" text-anchor="middle" fill="#1d1b2e" font-weight="600">Install app</text><rect x="136" y="114" width="88" height="14" rx="7" fill="#e9e6fb"/><rect x="136" y="136" width="88" height="14" rx="7" fill="#e9e6fb"/></svg>
         <ol class="steps">
-          <li><b>Open Stash in Chrome</b><span>You’re already here. Sign in with your token if you haven’t.</span></li>
+          <li><b>Open Stash in Chrome</b><span>On your Android phone. If you're on a computer, scan the code above first.</span></li>
           <li><b>Install it</b><span>Chrome menu (⋮) → <em>Install app</em> (or <em>Add to Home screen</em>).</span></li>
           <li><b>Share to Stash</b><span>In Instagram, TikTok or YouTube: tap Share, then <em>Share to…</em> or <em>More</em>, and pick <em>Stash</em>. No extra setup. Stash only shows up here after you've installed it in step 2.</span></li>
         </ol>
@@ -332,7 +412,7 @@ body.on-phone .phone-handoff { display: none; }
     <div class="gbody help">
       <p><b>What can I save?</b> Links from Instagram, TikTok, YouTube, X and Threads.</p>
       <p><b>How long does it take?</b> Usually a couple of minutes. When lots of people are saving, or Stash's processing computer is offline, it can take a few hours. Nothing gets lost, it waits in line, and you'll see a banner if it's slow.</p>
-      <p><b>Limits.</b> 25 saves waiting at once, 200 a day. The AI that reads reels has a free daily allowance shared by everyone. Add your own Groq key above to get your own.</p>
+      <p><b>Limits.</b> 25 saves waiting at once, and 30 a day on the shared AI allowance. Add your own free Groq key above and it's 200 a day.</p>
       <p><b>Why did a save fail?</b> Usually the post is private or deleted, or YouTube blocked the download. Tap Retry once. If it fails again, remove it.</p>
       <p><b>Who can see my saves?</b> Only you, in the app. But whoever runs Stash can read the database. Don't save anything you'd hate for them to see.</p>
       <p><b>Leaving?</b> Export your notes or delete your account under Your account. Deleting is permanent.</p>
@@ -343,9 +423,9 @@ body.on-phone .phone-handoff { display: none; }
   <details class="group" id="gData">
     <summary><div style="flex:1"><h2>Your account</h2><small>Token, export, sign out</small></div></summary>
     <div class="gbody">
-      <div class="inline-actions" style="margin-top:0"><button class="btn sm" data-copy="token">Copy token</button><button class="btn sm soft" id="exportBtn">Export my notes</button><button class="btn sm soft" id="signOutBtn">Sign out</button></div>
+      <div class="inline-actions" style="margin-top:0"><button class="btn sm" data-copy="link">Save my sign-in link</button><button class="btn sm soft" data-copy="token">Copy token</button><button class="btn sm soft" id="exportBtn">Export my notes</button><button class="btn sm soft" id="signOutBtn">Sign out</button></div>
       <div class="inline-actions"><button class="btn sm soft" id="rotateBtn">Reset my token</button><button class="btn sm soft" id="deleteBtn" style="color:#a02d1a">Delete my account</button></div>
-      <p style="color:var(--muted);font-size:14px">Export gives you everything as one JSON file. Resetting your token signs out every device and breaks your old connector link. Deleting erases all your saves for good.</p>
+      <p style="color:var(--muted);font-size:14px">Your sign-in link opens your stash on any device. Keep it private. Export gives you everything as one JSON file. Resetting your token signs out every device and breaks your old connector link. Deleting erases all your saves for good.</p>
     </div>
   </details>
 </section>
@@ -374,6 +454,8 @@ body.on-phone .phone-handoff { display: none; }
   <div class="actions">
     <a class="btn soft" id="nOpen" target="_blank" rel="noopener">Open original</a>
     <button class="btn" id="nUsed">Mark as used</button>
+    <button class="btn soft" id="nShare">Share</button>
+    <button class="btn soft" id="nUnshare" hidden>Stop sharing</button>
   </div>
   <div class="body" id="nBody"></div>
 </section>

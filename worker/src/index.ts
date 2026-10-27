@@ -38,6 +38,7 @@
  */
 
 import { handleMcp } from "./mcp";
+import { sharePage } from "./share";
 import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer } from "./v1";
 
 export interface Env {
@@ -47,7 +48,8 @@ export interface Env {
   IG_VERIFY_TOKEN?: string;
   IG_APP_SECRET?: string;
   IG_ACCESS_TOKEN?: string;
-  JOIN_CODE?: string; // shared invite code for /join; unset = self-serve joining is closed
+  JOIN_CODE?: string; // shared invite code for /join; unset = self-serve joining is closed (unless OPEN_JOIN)
+  OPEN_JOIN?: string; // "1" = anyone can join from the landing page, no code (still capped by MAX_JOIN)
   NTFY_TOPIC?: string;
   // Optional: a fine-grained GitHub token (Actions: read & write, this repo only).
   // When set, a friend's save starts the cloud runner right away instead of
@@ -267,24 +269,39 @@ export default {
       });
     }
 
-    // ---- self-serve join with the shared invite code -------------------
+    const shareMatch = path.match(/^\/n\/([0-9a-f]{32})$/);
+    if (shareMatch && request.method === "GET") return sharePage(env, shareMatch[1], url.origin);
+
+    // Tells the landing page whether to ask for an invite code.
+    if (path === "/join" && request.method === "GET") {
+      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE) });
+    }
+
+    // ---- self-serve join: open, or with the shared invite code ---------
     if (path === "/join" && request.method === "POST") {
-      if (!env.JOIN_CODE) return json({ error: "Joining is closed right now." }, 403);
+      const open = env.OPEN_JOIN === "1";
+      if (!open && !env.JOIN_CODE) return json({ error: "Joining is closed right now." }, 403);
       const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
       const recent = await env.DB.prepare(
         "SELECT COUNT(*) n FROM join_attempt WHERE ip = ? AND at > ?",
       ).bind(ip, new Date(Date.now() - 10 * 60_000).toISOString()).first<{ n: number }>();
       if ((recent?.n ?? 0) >= 8) return json({ error: "Too many tries. Wait a few minutes." }, 429);
+      const today = await env.DB.prepare("SELECT COUNT(*) n FROM join_attempt WHERE ip = ? AND at > ?")
+        .bind(ip, new Date(Date.now() - 86_400_000).toISOString()).first<{ n: number }>();
+      if ((today?.n ?? 0) >= 20) return json({ error: "Too many tries from this network today. Try tomorrow." }, 429);
 
       const body = (await request.json().catch(() => null)) as { name?: string; code?: string } | null;
       const name = (body?.name ?? "").trim().slice(0, 40);
       if (!name) return json({ error: "Tell us your name." }, 400);
-      if (!safeEqual((body?.code ?? "").trim(), env.JOIN_CODE)) {
+      if (!open && !safeEqual((body?.code ?? "").trim(), env.JOIN_CODE!)) {
         await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
         return json({ error: "That invite code isn't right." }, 403);
       }
       const joined = await env.DB.prepare("SELECT COUNT(*) n FROM user WHERE joined_via = 'invite'").first<{ n: number }>();
       if ((joined?.n ?? 0) >= (Number(env.MAX_JOIN) || 50)) return json({ error: "We're full for now." }, 403);
+      // Successful joins count toward the same per-IP window, so open joining
+      // can't be scripted into hundreds of accounts.
+      await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
       const user = await createUser(env, name);
       await env.DB.prepare("UPDATE user SET joined_via = 'invite' WHERE id = ?").bind(user.id).run();
       await logEvent(env, user.id, "api", "join");

@@ -8,6 +8,7 @@
  *   GET  /v1/notes         ?status=&topic=&limit=
  *   GET  /v1/notes/:id
  *   POST /v1/notes/:id/used
+ *   POST|DELETE /v1/notes/:id/share     public read-only link at /n/<share_id>
  *   GET  /v1/search        ?q=               FTS5 (hybrid/vector comes later)
  */
 import type { Env } from "./index";
@@ -214,7 +215,8 @@ export function ftsQuery(raw: string): string {
   return words.map((w) => `"${w}"`).join(" OR ");
 }
 
-const NOTE_COLUMNS = "id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id";
+export const DAILY_SHARED = 30, DAILY_OWN_KEY = 200;
+const NOTE_COLUMNS = "id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id, share_id";
 
 export async function handleV1(
   request: Request,
@@ -245,10 +247,17 @@ export async function handleV1(
     if (userId) {  // per-user brakes so one account can't flood the queue
       const q = await env.DB.prepare(
         `SELECT SUM(status IN ('pending','claimed')) AS waiting,
-                SUM(captured_at > ?) AS today FROM capture WHERE user_id = ?`,
-      ).bind(new Date(Date.now() - 86_400_000).toISOString(), userId).first<{ waiting: number | null; today: number | null }>();
+                SUM(captured_at > ?) AS today,
+                (SELECT groq_key_enc IS NOT NULL FROM user WHERE id = ?) AS own_key
+         FROM capture WHERE user_id = ?`,
+      ).bind(new Date(Date.now() - 86_400_000).toISOString(), userId, userId)
+        .first<{ waiting: number | null; today: number | null; own_key: number | null }>();
+      // The shared Groq key is everyone's, so people on it get a smaller daily slice.
+      const daily = q?.own_key ? DAILY_OWN_KEY : DAILY_SHARED;
       if ((q?.waiting ?? 0) >= 25) return json({ error: "You have 25 saves waiting. Let those finish first." }, 429);
-      if ((q?.today ?? 0) >= 200) return json({ error: "That's 200 saves today. Try again tomorrow." }, 429);
+      if ((q?.today ?? 0) >= daily) return json({ error: q?.own_key
+        ? `That's ${daily} saves today. Try again tomorrow.`
+        : `That's ${daily} saves today on the shared AI allowance. Add your own free Groq key in Set up for up to ${DAILY_OWN_KEY} a day.` }, 429);
     }
     // Which front door was used is what the setup checklist reads.
     const source = ["shortcut", "web", "pwa"].includes(body.source ?? "") ? body.source! : "app";
@@ -400,10 +409,20 @@ export async function handleV1(
     return json({ notes: results ?? [] });
   }
 
-  const noteMatch = path.match(/^\/v1\/notes\/([^/]+)(\/used)?$/);
+  const noteMatch = path.match(/^\/v1\/notes\/([^/]+)(\/used|\/share)?$/);
   if (noteMatch) {
     const noteId = decodeURIComponent(noteMatch[1]);
-    if (noteMatch[2] && request.method === "POST") {
+    if (noteMatch[2] === "/share" && (request.method === "POST" || request.method === "DELETE")) {
+      const row = await env.DB.prepare("SELECT share_id FROM note WHERE id = ? AND user_id IS ?")
+        .bind(noteId, userId).first<{ share_id: string | null }>();
+      if (!row) return json({ error: "unknown id" }, 404);
+      const shareId = request.method === "DELETE" ? null
+        : row.share_id ?? [...crypto.getRandomValues(new Uint8Array(16))].map((x) => x.toString(16).padStart(2, "0")).join("");
+      await env.DB.prepare("UPDATE note SET share_id = ? WHERE id = ? AND user_id IS ?").bind(shareId, noteId, userId).run();
+      if (shareId && !row.share_id) await logEvent(env, userId, "api", "share");
+      return json({ share_id: shareId });
+    }
+    if (noteMatch[2] === "/used" && request.method === "POST") {
       const r = await env.DB.prepare(
         "UPDATE note SET status='used', used_at=? WHERE id=? AND user_id IS ?",
       ).bind(new Date().toISOString(), noteId, userId).run();

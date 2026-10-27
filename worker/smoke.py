@@ -216,7 +216,29 @@ assert c.get(f"/t/{tid}").status_code == 404
 st = {u["name"]: u for u in c.get("/v1/admin/overview", headers=own).json()["users"]}
 assert "thumbuser" not in st
 assert not any(e["name"] == "thumbuser" for e in c.get("/v1/admin/overview", headers=own).json()["recent"])
+# ---- public share links: only the post-facing sections, escaped, revocable ----
+sh = user("sharer"); hh = h(sh)
+cap = c.post("/v1/ingest", headers=hh, json={"url": "https://www.instagram.com/reel/SHARE1/"}).json()["id"]
+md = ("# Pasta\n\nA quick <script>alert(1)</script> pasta.\n\n## Next step\n\nBuy garlic.\n\n"
+      "## Why you probably saved this\n\nPRIVATE-WHY\n\n## Ingredients\n\n- 200g spaghetti\n\n## Steps\n\n1. Boil.\n\n"
+      "## Your note at capture\n\n> PRIVATE-NOTE\n\n## Transcript\n\nPRIVATE-TRANSCRIPT")
+sid = c.post("/note", headers=adm, json={"capture_id": cap, "user_id": sh["id"], "title": "Pasta <b>", "summary": "s",
+             "topic": "food", "tools": [], "markdown": md}).json()["id"]
+assert c.post(f"/v1/notes/{sid}/share", headers=h(ann)).status_code == 404          # not yours, can't share it
+share = c.post(f"/v1/notes/{sid}/share", headers=hh).json()["share_id"]
+assert c.post(f"/v1/notes/{sid}/share", headers=hh).json()["share_id"] == share      # same link on re-share
+assert c.get(f"/v1/notes/{sid}", headers=hh).json()["share_id"] == share
+pg = c.get(f"/n/{share}"); assert pg.status_code == 200, pg.status_code
+for gone in ("PRIVATE-WHY", "PRIVATE-NOTE", "PRIVATE-TRANSCRIPT", "<script>", "Pasta <b>"):
+    assert gone not in pg.text, gone
+for kept in ("200g spaghetti", "Buy garlic", "Boil.", "Start your own stash", "&lt;script&gt;"):
+    assert kept in pg.text, kept
+assert "default-src 'none'" in pg.headers["content-security-policy"]
+assert c.request("DELETE", f"/v1/notes/{sid}/share", headers=hh).json()["share_id"] is None
+assert c.get(f"/n/{share}").status_code == 404
+assert c.get("/n/" + "0" * 32).status_code == 404
+assert c.get("/join").json()["invite"] is True
 # ---- public pages ----
-for page in ("/privacy", "/terms"):
-    r = c.get(page); assert r.status_code == 200 and "Stash" in r.text, page
+for page in ("/privacy", "/terms", "/og.png"):
+    r = c.get(page); assert r.status_code == 200 and (page.endswith(".png") or "Stash" in r.text), page
 print("ALL OK")

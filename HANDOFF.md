@@ -1,6 +1,6 @@
 # Stash — handoff
 
-Written 2026-08-20, last updated 2026-09-30. Everything in this file was checked
+Written 2026-08-20, last updated 2026-10-27. Everything in this file was checked
 live against the running system, not recalled from memory. Commands to
 re-verify each claim are included.
 
@@ -20,6 +20,18 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
+## 2026-10-27: opened to the public
+
+The site root is now a landing page, and joining is open (first name only), with these limits:
+`OPEN_JOIN = "1"` in `worker/wrangler.local.toml` `[vars]`, the `MAX_JOIN` cap of 50, and
+8 tries per 10 min / 20 per day per IP. Other changes: a "save your sign-in link" banner
+(there's no password, so the link is the only way back in), public share pages for a note
+at `/n/<share_id>` (migration 0012, `worker/src/share.ts`; only the summary, next step,
+recipe and mentions go public), Open Graph previews (`public/og.png`), and a 30/day cap
+on the shared Groq key (200/day with their own key). Plan for getting users, and what
+only the owner can do: `docs/LAUNCH.md`. smoke.py covers the share page, including that
+private sections and HTML never leak.
+
 ## Current state (verified 2026-09-30)
 
 Stash is now a multi-user pilot, not just a personal tool. Friends join with an
@@ -29,7 +41,7 @@ invite code, save from their phone, browse in a web app, and connect Claude.
 tests:     126 python (.venv/bin/python -m pytest tests/ -q)
            + worker/smoke.py against a local worker (tenancy, MCP, covers, lists, deletion)
 web app:   https://stash.parthus.workers.dev  (worker/public/: index.html + app.js)
-worker:    D1 migrations 0001-0011 all applied to prod
+worker:    D1 migrations 0001-0012 all applied to prod
 vault:     63 notes (owner), all with cover images in D1, 0 duplicates, 0 marked used
 queue:     empty; 1 dead letter (DbdUqK3Fvh5, Instagram refuses it: private/deleted)
 pilot:     NO friends have joined yet (admin overview: users 0). Invite code is the

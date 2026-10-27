@@ -33,7 +33,10 @@ async function api(path, opts = {}) {
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
 function show(which) { for (const id of ["auth", "lib", "note", "setup", "admin", "mentions"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
-function signOut(msg) { store.del("stash_token"); token = null; show("auth"); $("authErr").textContent = typeof msg === "string" ? msg : ""; }
+function signOut(msg) {
+  store.del("stash_token"); token = null; show("auth");
+  const m = typeof msg === "string" ? msg : ""; $("authErr").textContent = m; if (m) $("signin").open = true;
+}
 
 // ---- markdown: escape FIRST, then add structure. Notes contain third-party captions. ----
 function md(src) {
@@ -106,6 +109,8 @@ async function load() {
   const slow = captures.some((c) => c.state === "processing" && Date.now() - Date.parse(c.at) > 15 * 60000);
   if (slow) setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", "Add my own Groq key", () => openSetup(false));
   else clearBanner("busy");
+  if (!bannerKey && !store.get("stash_link_saved") && !(setupState && setupState.owner))
+    setBanner("savelink", "warn", "No password here: your sign-in link is the only way back in. Save it somewhere safe.", "Save my link", saveLink);
   render(); schedulePoll();
 }
 function schedulePoll() {
@@ -139,10 +144,25 @@ async function open(id, from) {
   $("nUsed").textContent = USED_LABEL[current.topic] || "Mark as used";
   const o = $("nOpen"); o.hidden = !current.permalink; if (current.permalink) o.href = current.permalink;
   $("nUsed").hidden = current.status === "used";
+  $("nUnshare").hidden = !current.share_id;
   show("note"); scrollTo(0, 0);
 }
 
-if (joinCodeFromLink) $("joinCode").value = joinCodeFromLink;
+// Landing: ask for an invite code only when joining isn't open (or a #code= link brought one).
+async function joinMode() {
+  const code = $("joinCode");
+  if (joinCodeFromLink) code.value = joinCodeFromLink;
+  let mode = { open: true };
+  try { mode = await (await fetch("/join")).json(); } catch {}
+  const needCode = !mode.open || joinCodeFromLink;
+  code.hidden = !needCode; code.required = !mode.open;
+  if (!mode.open && !mode.invite) {
+    $("joinForm").querySelectorAll("input,button").forEach((el) => (el.disabled = true));
+    $("joinFine").textContent = "Stash is full for now. If someone sent you an invite link, open that instead.";
+  } else if (!mode.open) $("joinFine").textContent = "Invite-only right now. Your invite has the code.";
+}
+$("toTop").addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); });
+document.querySelector(".lsign").addEventListener("click", () => { $("signin").open = true; });
 $("joinForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const err = $("joinErr"); err.textContent = "";
   let r;
@@ -150,7 +170,7 @@ $("joinForm").addEventListener("submit", async (e) => {
   catch { err.textContent = "Can't reach Stash. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({}));
   if (!r.ok) { err.textContent = body.error || "Couldn’t join. Try again."; return; }
-  token = body.token; store.set("stash_token", token); start();
+  token = body.token; store.set("stash_token", token); store.del("stash_link_saved"); start();
 });
 $("authForm").addEventListener("submit", async (e) => {
   e.preventDefault(); token = $("token").value.trim();
@@ -160,6 +180,18 @@ $("authForm").addEventListener("submit", async (e) => {
   if (r.ok) { store.set("stash_token", token); $("authErr").textContent = ""; start(); }
   else { $("authErr").textContent = r.status === 401 ? "That token didn't work. Check you copied all of it (it starts with stk_)." : "Stash had a problem. Try again in a minute."; token = null; }
 });
+// There's no email or password, so losing the link means losing the stash. Push it somewhere safe.
+const signInLink = () => `${location.origin}/#t=${token}`;
+async function saveLink() {
+  const text = "My Stash sign-in link. Keep it private, it opens my saves:";
+  if (navigator.share && onPhone) {
+    try { await navigator.share({ title: "Stash sign-in link", text, url: signInLink() }); } catch { return; }
+  } else {
+    await copy(signInLink(), "Sign-in link");
+    toast("Copied. Paste it into your notes or email it to yourself.");
+  }
+  store.set("stash_link_saved", "1"); clearBanner("savelink");
+}
 const sheet = (open) => { document.body.classList.toggle("sheet-open", open); if (open) setTimeout(() => $("link").focus(), 250); };
 $("fab").addEventListener("click", () => sheet(true));
 $("scrim").addEventListener("click", () => sheet(false));
@@ -174,6 +206,20 @@ $("list").addEventListener("click", async (e) => {
   const c = e.target.closest(".card[data-id]"); if (c) open(c.dataset.id);
 });
 $("back").addEventListener("click", () => { if (returnTo === "mentions") { show("mentions"); openMentions(); } else { show("lib"); load(); } });
+$("nShare").addEventListener("click", async () => {
+  const r = await api("/v1/notes/" + current.id + "/share", { method: "POST" }).catch(() => null);
+  if (!r || !r.ok) return toast("Couldn't make a share link. Try again.");
+  current.share_id = (await r.json()).share_id;
+  const url = `${location.origin}/n/${current.share_id}`;
+  if (navigator.share && onPhone) { try { await navigator.share({ title: current.title, url }); } catch {} }
+  else copy(url, "Share link");
+  $("nUnshare").hidden = false;
+});
+$("nUnshare").addEventListener("click", async () => {
+  const r = await api("/v1/notes/" + current.id + "/share", { method: "DELETE" }).catch(() => null);
+  if (!r || !r.ok) return toast("Couldn't stop sharing. Try again.");
+  current.share_id = null; $("nUnshare").hidden = true; toast("Stopped sharing. The old link no longer works.");
+});
 $("nUsed").addEventListener("click", async () => {
   const r = await api("/v1/notes/" + current.id + "/used", { method: "POST" }).catch(() => null);
   if (!r || !r.ok) return toast("Couldn't save that. Try again.");
@@ -240,7 +286,7 @@ $("tabIos").addEventListener("click", () => setTab("ios")); $("tabAnd").addEvent
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-copy]"); if (!b) return;
   const what = b.dataset.copy;
-  if (what === "token") copy(token, "Token"); else if (what === "mcp") copy(mcpUrl(), "Connector link"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
+  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "mcp") copy(mcpUrl(), "Connector link"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
 });
 $("groqForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const m = $("groqMsg"); m.className = "msg"; m.textContent = "Checking with Groq…";
@@ -275,7 +321,7 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").cat
 // A share that arrives before sign-in must survive the sign-in screen.
 { const p = new URLSearchParams(location.search), u = p.get("url") || (p.get("text") || "").match(/https?:\/\/\S+/)?.[0];
   if (u && !token) { try { sessionStorage.setItem("pending_share", u); } catch {} history.replaceState(null, "", "/"); } }
-token ? start().catch(() => {}) : show("auth");
+token ? start().catch(() => {}) : (show("auth"), joinMode());
 
 // ---- account safety: reset token, delete account ----
 $("rotateBtn").addEventListener("click", async () => {
