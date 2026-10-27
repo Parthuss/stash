@@ -108,7 +108,7 @@ FINAL_MAX_TOKENS = 4000
 TOPICS = [
     "agent-building", "automation", "tooling", "prompting", "rag",
     "infrastructure", "design", "research", "inspiration", "business",
-    "food", "other",
+    "food", "travel", "fitness", "money", "learning", "style", "other",
 ]
 
 #: What `mentions` can be, so "books I saved" / "movies I saved" means the
