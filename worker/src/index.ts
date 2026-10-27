@@ -192,11 +192,12 @@ async function kickRunner(env: Env): Promise<void> {
   await fetch(`https://api.github.com/repos/${repo}/actions/workflows/process.yml/dispatches`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.GH_DISPATCH_TOKEN}`, Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${env.GH_DISPATCH_TOKEN.trim()}`, Accept: "application/vnd.github+json",
       "User-Agent": "stash-worker", "X-GitHub-Api-Version": "2022-11-28",
     },
     body: JSON.stringify({ ref: "master" }),
-  }).catch(() => {});
+  }).then(async (r) => { if (r.status !== 204) console.log("kickRunner failed", r.status, (await r.text()).slice(0, 300)); })
+    .catch((e) => console.log("kickRunner error", String(e)));
 }
 
 /** Cron (every 30 min): tell the owner when something needs a human. */

@@ -32,6 +32,15 @@ on the shared Groq key (200/day with their own key). Plan for getting users, and
 only the owner can do: `docs/LAUNCH.md`. smoke.py covers the share page, including that
 private sections and HTML never leak.
 
+Later the same day: the site moved to **stash.parthakholkar.com** (Worker custom domain; the
+workers.dev URL still works). The landing page was redesigned (animated phone loop, before/after,
+pricing shown as "after the beta"), there's a pastel app icon, and a "home screen" guide
+in Set up. On an iPhone, a home-screen copy starts signed out (iOS keeps its storage separate),
+so it shows "Paste my sign-in link". Forks can run the cloud runner (`STASH_ENABLED` repo
+variable). Docs: `docs/PRODUCT.md` (name, pricing, payments plan), `docs/SELF_HOST.md`.
+**GH_DISPATCH_TOKEN is set but GitHub answers 401 "Bad credentials"**: re-create the token.
+`kickRunner` now logs non-204 responses, so check with `npx wrangler tail`.
+
 ## Current state (verified 2026-09-30)
 
 Stash is now a multi-user pilot, not just a personal tool. Friends join with an

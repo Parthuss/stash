@@ -148,6 +148,14 @@ async function open(id, from) {
   show("note"); scrollTo(0, 0);
 }
 
+// Landing: sections fade up as they scroll in. Skipped entirely under reduced motion.
+if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
+  document.documentElement.classList.add("js-reveal");
+  const io = new IntersectionObserver((es) => es.forEach((e) => {
+    if (!e.isIntersecting) return; e.target.classList.add("in"); io.unobserve(e.target);
+  }), { threshold: 0.15 });
+  document.querySelectorAll("#auth .reveal, #auth .chat").forEach((el) => io.observe(el));
+}
 // Landing: ask for an invite code only when joining isn't open (or a #code= link brought one).
 async function joinMode() {
   const code = $("joinCode");
@@ -172,13 +180,28 @@ $("joinForm").addEventListener("submit", async (e) => {
   if (!r.ok) { err.textContent = body.error || "Couldn’t join. Try again."; return; }
   token = body.token; store.set("stash_token", token); store.del("stash_link_saved"); start();
 });
-$("authForm").addEventListener("submit", async (e) => {
-  e.preventDefault(); token = $("token").value.trim();
+// A pasted sign-in link works as well as a bare token.
+const tokenFrom = (text) => ((text || "").match(/(stk_[0-9a-f]{20,}|[\w-]{24,})/) || [])[1] || (text || "").trim();
+async function signInWith(t) {
+  token = t;
   let r;
   try { r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } }); }
-  catch { $("authErr").textContent = "Can't reach Stash. Check your connection and try again."; token = null; return; }
-  if (r.ok) { store.set("stash_token", token); $("authErr").textContent = ""; start(); }
-  else { $("authErr").textContent = r.status === 401 ? "That token didn't work. Check you copied all of it (it starts with stk_)." : "Stash had a problem. Try again in a minute."; token = null; }
+  catch { token = null; return "Can't reach Stash. Check your connection and try again."; }
+  if (r.ok) { store.set("stash_token", token); start(); return ""; }
+  token = null;
+  return r.status === 401 ? "That didn't work. Copy the whole sign-in link (or the token, starting stk_) and try again." : "Stash had a problem. Try again in a minute.";
+}
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+if (standalone && !token) {
+  $("pwaIn").hidden = false;
+  $("pwaPaste").addEventListener("click", async () => {
+    let text = ""; try { text = await navigator.clipboard.readText(); } catch {}
+    if (!text) { $("signin").open = true; $("token").focus(); $("pwaErr").textContent = "Couldn't read the clipboard. Paste the link in the box at the bottom."; return; }
+    $("pwaErr").textContent = await signInWith(tokenFrom(text));
+  });
+}
+$("authForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); $("authErr").textContent = await signInWith(tokenFrom($("token").value));
 });
 // There's no email or password, so losing the link means losing the stash. Push it somewhere safe.
 const signInLink = () => `${location.origin}/#t=${token}`;
@@ -257,6 +280,9 @@ async function refreshSetup() {
   const st = setupState, phone = ["shortcut", "pwa", "web"].some((k) => (st.saved_from || {})[k]);
   const set = (id, done, todo = "To do") => { const b = $(id); b.textContent = done ? "Done ✓" : todo; b.className = "badge" + (done ? " done" : id === "bGroq" ? " opt" : ""); };
   set("bSave", phone); set("bClaude", st.claude_connected); set("bGroq", st.has_groq_key, "Optional");
+  if (standalone || st.saved_from?.pwa) { $("bHome").textContent = "Done ✓"; $("bHome").className = "badge done"; }
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
+  $("homeIos").hidden = !ios && and; $("homeAnd").hidden = !and; $("homeDesk").hidden = ios || and;
   $("setupDot").hidden = phone;   // Claude is recommended, not required: don't nag forever
   $("cmdCode").textContent = `claude mcp add --transport http stash ${mcpUrl()}`;
   $("adminBtn").hidden = !st.owner;
@@ -286,7 +312,7 @@ $("tabIos").addEventListener("click", () => setTab("ios")); $("tabAnd").addEvent
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-copy]"); if (!b) return;
   const what = b.dataset.copy;
-  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "mcp") copy(mcpUrl(), "Connector link"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
+  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "linkonly") copy(signInLink(), "Sign-in link"); else if (what === "mcp") copy(mcpUrl(), "Connector link"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
 });
 $("groqForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const m = $("groqMsg"); m.className = "msg"; m.textContent = "Checking with Groq…";

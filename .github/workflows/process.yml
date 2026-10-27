@@ -21,7 +21,8 @@ permissions:
 
 jobs:
   drain:
-    if: github.repository == 'Parthuss/stash'   # forks have no secrets; don't run there
+    # Forks stay off until their owner sets the repo variable STASH_ENABLED=true (docs/SELF_HOST.md).
+    if: github.repository == 'Parthuss/stash' || vars.STASH_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
