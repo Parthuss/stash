@@ -54,21 +54,25 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 header { padding: 22px 0 6px; }
+.topbar { position: sticky; top: calc(env(safe-area-inset-top) + 10px); z-index: 4; width: fit-content; margin-top: 18px; }
+.topbar .btn { background: rgb(255 255 255 / .84); -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .brand { font-family: var(--display); font-size: 32px; line-height: 1; letter-spacing: -.02em; margin: 0; flex: 1; }
 .pill, .setup-pill { white-space: nowrap; }
-.pill { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--peach); color: var(--peach-ink); font-size: 14px; font-weight: 500; }
+.pill { display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 999px; background: var(--peach); color: var(--peach-ink); font-size: 14px; font-weight: 500; }
 .sub { color: var(--muted); margin: 6px 0 16px; }
+@media (max-width: 359px) { #count { display: none; } .brand { font-size: 28px; } }
 
 .search { position: relative; }
 .search input {
-  width: 100%; height: 52px; padding: 0 20px; border: 0; border-radius: var(--r-input);
-  background: rgb(255 255 255 / .9); box-shadow: var(--lift-1); backdrop-filter: blur(8px);
+  width: 100%; height: 52px; padding: 0 20px 0 48px; border: 0; border-radius: var(--r-input);
+  background: rgb(255 255 255 / .9) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236a6880' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 18px center / 18px;
+  box-shadow: var(--lift-1); backdrop-filter: blur(8px);
 }
 .search input::placeholder { color: var(--muted); }
-.chips { display: flex; gap: 8px; overflow-x: auto; padding: 14px 2px 6px; scrollbar-width: none; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 14px 28px 6px 2px; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
 .chips::-webkit-scrollbar { display: none; }
-.chip { flex: none; height: 36px; padding: 0 16px; border-radius: 999px; border: 0; background: rgb(255 255 255 / .75); color: var(--muted); font-weight: 500; box-shadow: var(--lift-1); }
+.chip { flex: none; height: 36px; padding: 0 16px; border-radius: 999px; border: 0; background: rgb(255 255 255 / .75); color: var(--muted); font-weight: 500; box-shadow: var(--lift-1); text-transform: capitalize; }
 .chip[aria-pressed=true] { background: var(--ink); color: #fff; }
 
 /* two-up grid of tinted cards — the "recipe box" feel */
@@ -88,7 +92,7 @@ header { padding: 22px 0 6px; }
 .tag.unused { background: var(--peach); color: var(--peach-ink); }
 .cbody { padding: 12px 14px 16px; }
 .card h2 { font-size: 15px; line-height: 1.3; font-weight: 600; margin: 0 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.card small { color: var(--muted); font-size: 12px; }
+.card small { color: var(--muted); font-size: 12px; text-transform: capitalize; }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
 .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 64px 12px; }
 .empty b { display: block; font-family: var(--display); font-weight: 400; font-size: 26px; color: var(--ink); margin-bottom: 6px; }
@@ -115,8 +119,11 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .hero { border-radius: 32px; padding: 26px 22px 24px; margin-top: 14px; box-shadow: var(--lift-1); }
 .hero h1 { font-family: var(--display); font-weight: 400; font-size: clamp(30px, 6vw, 44px); line-height: 1.1; letter-spacing: -.015em; margin: 14px 0 12px; }
 .hero .tags { display: flex; gap: 8px; flex-wrap: wrap; }
-.hero .tag { position: static; }
+.hero .tag { position: static; text-transform: capitalize; }
 .actions { display: flex; gap: 10px; margin: 18px 0 8px; flex-wrap: wrap; }
+.actions .btn { flex: 1 1 0; padding: 0 14px; white-space: nowrap; }
+.actions #nUsed { order: -1; flex-basis: 100%; }
+@media (min-width: 640px) { .actions .btn { flex: none; padding: 0 22px; } .actions #nUsed { order: 0; flex-basis: auto; } }
 .body { background: rgb(255 255 255 / .85); border-radius: 28px; padding: 6px 22px 22px; box-shadow: var(--lift-1); margin-top: 14px; backdrop-filter: blur(8px); }
 .body h2 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 22px 0 6px; }
 .body p, .body li { font-size: 16px; }
@@ -363,6 +370,8 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .group { background: rgb(255 255 255 / .88); border-radius: 28px; box-shadow: var(--lift-1); margin: 14px 0; backdrop-filter: blur(8px); overflow: hidden; }
 .group summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 18px 20px; }
 .group summary::-webkit-details-marker { display: none; }
+.group summary::after { content: ""; flex: none; width: 9px; height: 9px; margin: 0 4px 4px 2px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .2s; }
+.group[open] summary::after { transform: rotate(-135deg); margin-bottom: -4px; }
 .group summary h2 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0; flex: 1; letter-spacing: -.01em; }
 .group summary small { display: block; color: var(--muted); font-family: var(--ui); font-size: 14px; margin-top: 2px; }
 .badge { flex: none; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; background: var(--peach); color: var(--peach-ink); }
@@ -424,7 +433,7 @@ body.on-phone .phone-handoff { display: none; }
 .mcard .kind { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; }
 .mcard .info { flex: 1; min-width: 0; } .mcard h3 { font-size: 15px; margin: 0 0 2px; font-weight: 600; }
 .mcard small { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-.setup-pill { border: 0; height: 30px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .85); box-shadow: var(--lift-1); font-weight: 500; position: relative; }
+.setup-pill { border: 0; height: 36px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .85); box-shadow: var(--lift-1); font-weight: 500; position: relative; }
 .setup-pill i { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #e8590c; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -622,11 +631,11 @@ body.on-phone .phone-handoff { display: none; }
 </section>
 
 <section id="setup">
-  <div class="row" style="padding-top:18px"><button class="btn soft" id="setupBack">← Back</button></div>
+  <div class="topbar"><button class="btn soft" id="setupBack">← Back</button></div>
   <div class="setup-head">
     <h1 id="setupTitle">Set up Stash</h1>
     <button class="btn sm soft" id="adminBtn" hidden style="margin:2px 0 10px">Open admin</button>
-    <p>Three things to set up. Do them now or later.</p>
+    <p>A few minutes, once. Do it now or later.</p>
   </div>
 
   <details class="group" id="gSave" open>
@@ -729,21 +738,21 @@ body.on-phone .phone-handoff { display: none; }
 </section>
 
 <section id="admin">
-  <div class="row" style="padding-top:18px"><button class="btn soft" id="adminBack">← Back</button></div>
+  <div class="topbar"><button class="btn soft" id="adminBack">← Back</button></div>
   <div class="setup-head"><h1>Admin</h1><p id="adminHealth"></p></div>
   <div class="stats" id="adminStats"></div>
   <div id="adminUsers"></div>
 </section>
 
 <section id="mentions">
-  <div class="row" style="padding-top:18px"><button class="btn soft" id="mentionsBack">← Back</button></div>
+  <div class="topbar"><button class="btn soft" id="mentionsBack">← Back</button></div>
   <div class="setup-head"><h1>Your lists</h1><p>Every book, movie, show, place and podcast your saves have named, in one place. Tick them off as you get to them.</p></div>
   <div class="chips" id="mentionChips" role="group" aria-label="Filter by kind"></div>
   <div id="mentionList"></div>
 </section>
 
 <section id="note">
-  <div class="row" style="padding-top:18px"><button class="btn soft" id="back">← Back</button></div>
+  <div class="topbar"><button class="btn soft" id="back">← Back</button></div>
   <div class="hero" id="nHero">
     <img id="nThumb" class="hthumb" alt="" hidden>
     <div class="tags" id="nMeta"></div>

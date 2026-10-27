@@ -220,6 +220,7 @@ const sheet = (open) => { document.body.classList.toggle("sheet-open", open); if
 $("fab").addEventListener("click", () => sheet(true));
 $("scrim").addEventListener("click", () => sheet(false));
 $("cancel").addEventListener("click", () => sheet(false));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("sheet-open")) sheet(false); });
 $("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; sheet(false); await ingest(u); } });
 $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(load, 200); });
 $("chips").addEventListener("click", (e) => { const f = e.target.dataset.f; if (f) { filter = f; render(); } });
@@ -248,6 +249,7 @@ $("nUsed").addEventListener("click", async () => {
   const r = await api("/v1/notes/" + current.id + "/used", { method: "POST" }).catch(() => null);
   if (!r || !r.ok) return toast("Couldn't save that. Try again.");
   toast(current.topic === "food" ? "Nice. Marked as made." : "Marked as used"); $("nUsed").hidden = true;
+  current.status = "used"; const t = $("nMeta").firstElementChild; t.className = "tag"; t.textContent = "Used ✓";
 });
 // Recipe notes: ingredients become a tap-to-tick shopping/cooking checklist,
 // remembered per device (it's a cooking aid, not account data).
@@ -328,7 +330,10 @@ $("exportBtn").addEventListener("click", async () => {
   const url = URL.createObjectURL(await r.blob());
   const a = document.createElement("a"); a.href = url; a.download = "stash-export.json"; a.click(); URL.revokeObjectURL(url);
 });
-$("signOutBtn").addEventListener("click", signOut);
+$("signOutBtn").addEventListener("click", () => {
+  if (!store.get("stash_link_saved") && !confirm("You haven't saved your sign-in link. Without it you can't get back in. Sign out anyway?")) return;
+  signOut();
+});
 
 async function start() {
   show("lib");
@@ -418,10 +423,11 @@ function renderMentions() {
   $("mentionList").innerHTML = shown.length
     ? shown.map((m, i) => {
         const verb = DONE_VERB[m.type] || "Done";
-        const where = m.count > 1 ? `in ${m.count} posts` : `from "${esc(m.note_title)}"`;
+        const where = m.count > 1 ? `in ${m.count} posts` : esc(m.note_title);
+        const kind = m.type.charAt(0).toUpperCase() + m.type.slice(1);
         return `<div class="mcard ${m.done ? "done" : ""}">
         <span class="kind" style="background:var(${MENTION_TINTS[m.type] || "--butter"})">${m.thumb_id ? `<img src="/t/${esc(m.thumb_id)}" alt="" loading="lazy">` : MENTION_ICONS[m.type] || "✦"}</span>
-        <button class="info" type="button" data-open="${esc(m.note_id)}" style="border:0;background:none;padding:0;text-align:left;cursor:pointer"><h3>${esc(m.name)}</h3><small>${esc(m.type)} · ${where}</small></button>
+        <button class="info" type="button" data-open="${esc(m.note_id)}" style="border:0;background:none;padding:0;text-align:left;cursor:pointer"><h3>${esc(m.name)}</h3><small>${esc(kind)} · ${where}</small></button>
         <button class="tick" type="button" data-done="${i}" aria-pressed="${m.done}">${m.done ? verb + " ✓" : verb + "?"}</button></div>`;
       }).join("")
     : `<div class="empty"><b>No lists yet</b>When a reel names a book, movie, show, place or podcast, it lands here automatically. Nothing to set up.</div>`;

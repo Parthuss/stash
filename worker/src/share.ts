@@ -103,7 +103,7 @@ body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.55 "Familje
 main { max-width:640px; margin:0 auto; }
 .top { display:block; font-family:Gloock, Georgia, serif; font-size:26px; color:inherit; text-decoration:none; }
 .cover { display:block; width:100%; max-height:320px; object-fit:cover; border-radius:28px; margin:18px 0 16px; }
-.tag { display:inline-block; margin-top:18px; padding:3px 12px; border-radius:999px; background:var(--lavender); font-size:13px; font-weight:500; }
+.tag { display:inline-block; margin-top:18px; padding:3px 12px; border-radius:999px; background:var(--lavender); font-size:13px; font-weight:500; text-transform:capitalize; }
 h1 { font-family:Gloock, Georgia, serif; font-weight:400; font-size:clamp(30px,7vw,44px); line-height:1.1; margin:12px 0 14px; }
 h2 { font-family:Gloock, Georgia, serif; font-weight:400; font-size:23px; margin:26px 0 6px; }
 .note { background:#fff; border-radius:28px; padding:6px 22px 18px; box-shadow:0 6px 18px rgb(60 50 120 / .07); }
