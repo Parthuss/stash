@@ -3,18 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Stash · the reels you save, finally useful</title>
-<meta name="description" content="Share a reel to Stash and it becomes a searchable note: recipes as ingredients and steps, books and movies in a list. Works with Claude. Free.">
-<meta property="og:title" content="Stash: the reels you save, finally useful">
+<title>Skwirl · the reels you save, finally useful</title>
+<meta name="description" content="Share a reel to Skwirl and it becomes a searchable note: recipes as ingredients and steps, books and movies in a list. Works with Claude. Free.">
+<meta property="og:title" content="Skwirl: the reels you save, finally useful">
 <meta property="og:description" content="Share a reel. Get a searchable note. Recipes, books, movies, tips, all in one place, and Claude can read it.">
-<meta property="og:image" content="https://stash.parthakholkar.com/og.png">
+<meta property="og:image" content="https://skwirl.parthakholkar.com/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f8f7ff">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icon-192.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="Stash">
+<meta name="apple-mobile-web-app-title" content="Skwirl">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,11 +58,12 @@ header { padding: 22px 0 6px; }
 .topbar { position: sticky; top: calc(env(safe-area-inset-top) + 10px); z-index: 4; width: fit-content; margin-top: 18px; }
 .topbar .btn { background: rgb(255 255 255 / .84); -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.brand { font-family: var(--display); font-size: 32px; line-height: 1; letter-spacing: -.02em; margin: 0; flex: 1; }
+.brand { font-family: var(--display); font-weight: 400; font-size: 32px; line-height: 1; letter-spacing: -.02em; margin: 0; flex: 1; display: inline-flex; align-items: center; gap: .26em; }
+.brand img { width: 1.02em; height: 1.02em; flex: none; }
 .pill, .setup-pill { white-space: nowrap; }
 .pill { display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 999px; background: var(--peach); color: var(--peach-ink); font-size: 14px; font-weight: 500; }
 .sub { color: var(--muted); margin: 6px 0 16px; }
-@media (max-width: 359px) { #count { display: none; } .brand { font-size: 28px; } }
+@media (max-width: 439px) { #count { display: none; } #lib .brand { font-size: 29px; } }
 
 .search { position: relative; }
 .search input {
@@ -248,7 +250,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .s-alert div { width: 210px; background: rgb(245 245 247 / .96); backdrop-filter: blur(20px); border-radius: 14px; text-align: center; color: #111; overflow: hidden; }
 .s-alert b { display: block; font-size: 15px; padding: 16px 14px 2px; } .s-alert p { font-size: 12.5px; margin: 0 14px 14px; }
 .s-alert span { display: block; border-top: 1px solid #d1d1d6; padding: 10px; color: #0a84ff; font-weight: 600; font-size: 15px; }
-/* the real app: a screenshot of Stash's note screen, scrolling down to the ingredients */
+/* the real app: a screenshot of Skwirl's note screen, scrolling down to the ingredients */
 .s-note { position: absolute; inset: 0; padding-top: 44px; background: var(--bg); animation: note var(--d) infinite; }
 .s-note img { display: block; width: 100%; height: auto; transform: translateY(-46%); animation: scrollnote var(--d) infinite cubic-bezier(.45,0,.2,1); }
 @keyframes note { 0%, 73% { opacity: 0; } 76%, 97% { opacity: 1; } 100% { opacity: 0; } }
@@ -443,11 +445,11 @@ body.on-phone .phone-handoff { display: none; }
 <main>
 
 <section id="auth">
-  <nav class="lnav"><span class="brand">Stash</span><a href="#pricing" class="lnk">Pricing</a><a href="#signin" class="setup-pill lsign">Sign in</a></nav>
+  <nav class="lnav"><span class="brand"><img src="/mark.svg" alt="">Skwirl</span><a href="#pricing" class="lnk">Pricing</a><a href="#signin" class="setup-pill lsign">Sign in</a></nav>
 
   <div class="pwa-in" id="pwaIn" hidden>
     <h2>Welcome back</h2>
-    <p>This home-screen Stash needs your sign-in link once. Copy it in Safari (Set up → Put Stash on your home screen), then tap below.</p>
+    <p>This home-screen Skwirl needs your sign-in link once. Copy it in Safari (Set up → Put Skwirl on your home screen), then tap below.</p>
     <button class="btn" type="button" id="pwaPaste">Paste my sign-in link</button>
     <p class="msg err" id="pwaErr" role="alert"></p>
   </div>
@@ -456,7 +458,7 @@ body.on-phone .phone-handoff { display: none; }
     <div class="lcopy">
       <p class="eyebrow">Free while in beta · works with Claude</p>
       <h1>The reels you save, finally useful.</h1>
-      <p class="lede">Share a reel to Stash. A couple of minutes later it's a note you can search: recipes come back as ingredients and steps, books and movies land in a list, tips come with the next step. And Claude can read all of it.</p>
+      <p class="lede">Share a reel to Skwirl. A couple of minutes later it's a note you can search: recipes come back as ingredients and steps, books and movies land in a list, tips come with the next step. And Claude can read all of it.</p>
       <form id="joinForm" class="joinbox">
         <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your first name" required>
         <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
@@ -467,9 +469,9 @@ body.on-phone .phone-handoff { display: none; }
     </div>
 
     <!-- The whole product in one 16s loop: a reel → Instagram share → iOS share sheet → Saved → the real
-         Stash note (a screenshot of the app). Pure CSS; reduced motion shows the final note. -->
+         Skwirl note (a screenshot of the app). Pure CSS; reduced motion shows the final note. -->
     <figure class="phone-wrap">
-    <div class="phone" role="img" aria-label="Animation: a cooking reel is shared from Instagram to Stash and becomes a recipe note with ingredients and steps">
+    <div class="phone" role="img" aria-label="Animation: a cooking reel is shared from Instagram to Skwirl and becomes a recipe note with ingredients and steps">
       <div class="screen">
         <div class="s-reel">
           <div class="vid">
@@ -504,15 +506,15 @@ body.on-phone .phone-handoff { display: none; }
         <div class="s-ios">
           <div class="ios-head"><i></i><div><b>Instagram</b><small>instagram.com</small></div><span>✕</span></div>
           <div class="ios-apps"><span><i style="--c:#34c759"></i>Messages</span><span><i style="--c:#0a84ff"></i>Mail</span><span><i style="--c:#ffd60a"></i>Notes</span><span><i style="--c:#ff9f0a"></i>Reminders</span></div>
-          <div class="ios-list"><span>Copy<em>⧉</em></span><span class="pick">Stash<em class="sc"></em><b class="ring r3"></b></span><span>Add to Reading List<em>∞</em></span></div>
+          <div class="ios-list"><span>Copy<em>⧉</em></span><span class="pick">Skwirl<em class="sc"></em><b class="ring r3"></b></span><span>Add to Reading List<em>∞</em></span></div>
         </div>
 
-        <div class="s-alert"><div><b>Saved to Stash</b><p>Your note will be ready in a few minutes.</p><span>OK</span></div></div>
+        <div class="s-alert"><div><b>Saved to Skwirl</b><p>Your note will be ready in a few minutes.</p><span>OK</span></div></div>
 
-        <div class="s-note"><img src="/shots/note.webp" alt="" width="540" height="2063"></div>
+        <div class="s-note"><img src="/shots/note.webp" alt="" width="540" height="2196"></div>
       </div>
     </div>
-    <figcaption class="steps-cap" aria-hidden="true"><span class="c1">Watch</span><span class="c2">Share</span><span class="c3">Pick Stash</span><span class="c4">Get the recipe</span></figcaption>
+    <figcaption class="steps-cap" aria-hidden="true"><span class="c1">Watch</span><span class="c2">Share</span><span class="c3">Pick Skwirl</span><span class="c4">Get the recipe</span></figcaption>
     </figure>
   </div>
 
@@ -520,7 +522,7 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lsec reveal">
     <h2>Your Saved folder is a graveyard.</h2>
-    <p>Hundreds of thumbnails, no search, no idea which one had the recipe. Stash turns each one into text you can find.</p>
+    <p>Hundreds of thumbnails, no search, no idea which one had the recipe. Skwirl turns each one into text you can find.</p>
     <div class="vs">
       <div class="vs-col">
         <small>Instagram Saved</small>
@@ -529,7 +531,7 @@ body.on-phone .phone-handoff { display: none; }
       </div>
       <div class="vs-arrow" aria-hidden="true">→</div>
       <div class="vs-col">
-        <small>Stash</small>
+        <small>Skwirl</small>
         <div class="searchmock"><span>pasta</span></div>
         <div class="hit"><b>Garlic butter pasta</b><span>food · 4 ingredients · 5 steps</span></div>
         <div class="hit"><b>Cacio e pepe, the right way</b><span>food · saved in March</span></div>
@@ -539,12 +541,12 @@ body.on-phone .phone-handoff { display: none; }
   </div>
 
   <div class="lsec reveal">
-    <h2>Inside Stash</h2>
+    <h2>Inside Skwirl</h2>
     <p>Real screens from the app.</p>
     <div class="shots">
-      <figure class="shot"><div class="frame"><div><img src="/shots/library.webp" alt="Stash library: cards for a pasta recipe, books, a Tokyo trip, slow movies, a budget tip and a mobility routine" loading="lazy" width="540" height="1169"></div></div><figcaption><b>Everything in one place</b><span>Covers, topics, and what you haven't used yet</span></figcaption></figure>
-      <figure class="shot"><div class="frame"><div><img src="/shots/note.webp" alt="A Stash recipe note: garlic butter pasta with summary, next step, an ingredient checklist and numbered steps" loading="lazy" width="540" height="2063" style="transform:translateY(-44%)"></div></div><figcaption><b>Recipes you can cook from</b><span>Tick ingredients off as you go</span></figcaption></figure>
-      <figure class="shot"><div class="frame"><div><img src="/shots/lists.webp" alt="Stash lists: books, places and movies named in saved reels, each with a Read, Been or Watched button" loading="lazy" width="540" height="1169"></div></div><figcaption><b>Books, movies, places</b><span>Pulled from every reel into one list</span></figcaption></figure>
+      <figure class="shot"><div class="frame"><div><img src="/shots/library.webp" alt="Skwirl library: cards for a pasta recipe, books, a Tokyo trip, slow movies, a budget tip and a mobility routine" loading="lazy" width="540" height="1169"></div></div><figcaption><b>Everything in one place</b><span>Covers, topics, and what you haven't used yet</span></figcaption></figure>
+      <figure class="shot"><div class="frame"><div><img src="/shots/note.webp" alt="A Skwirl recipe note: garlic butter pasta with summary, next step, an ingredient checklist and numbered steps" loading="lazy" width="540" height="2196" style="transform:translateY(-44%)"></div></div><figcaption><b>Recipes you can cook from</b><span>Tick ingredients off as you go</span></figcaption></figure>
+      <figure class="shot"><div class="frame"><div><img src="/shots/lists.webp" alt="Skwirl lists: books, places and movies named in saved reels, each with a Read, Been or Watched button" loading="lazy" width="540" height="1169"></div></div><figcaption><b>Books, movies, places</b><span>Pulled from every reel into one list</span></figcaption></figure>
     </div>
   </div>
 
@@ -552,9 +554,9 @@ body.on-phone .phone-handoff { display: none; }
     <h2>How it works</h2>
     <ol class="lsteps">
       <li><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="12" fill="#ffd8cb"/><path d="M24 30V15m0 0-6 6m6-6 6 6M16 33h16" stroke="#1d1b2e" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <div><b>Share</b><span>In Instagram, TikTok, YouTube, X or Threads, tap Share and pick Stash. One-time setup, about two minutes.</span></div></li>
+        <div><b>Share</b><span>In Instagram, TikTok, YouTube, X or Threads, tap Share and pick Skwirl. One-time setup, about two minutes.</span></div></li>
       <li><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="12" fill="#dcd8ff"/><path d="M14 24v0m5-5v10m5-14v18m5-13v8m5-4v0" stroke="#1d1b2e" stroke-width="2.6" stroke-linecap="round"/></svg>
-        <div><b>Stash reads it</b><span>It listens to the audio, reads the text on screen, the caption and the top comments, then writes a short note.</span></div></li>
+        <div><b>Skwirl reads it</b><span>It listens to the audio, reads the text on screen, the caption and the top comments, then writes a short note.</span></div></li>
       <li><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="12" fill="#cdf3e1"/><circle cx="22" cy="22" r="7" stroke="#1d1b2e" stroke-width="2.6" fill="none"/><path d="m27 27 6 6" stroke="#1d1b2e" stroke-width="2.6" stroke-linecap="round"/></svg>
         <div><b>Find it when you need it</b><span>Search by anything that was said or shown. Tick off recipes you made and books you read.</span></div></li>
     </ol>
@@ -562,17 +564,17 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lsec claude reveal">
     <h2>Ask Claude what you saved</h2>
-    <p>Connect Stash to Claude once. After that Claude can look through your saves on its own, on your phone or computer.</p>
+    <p>Connect Skwirl to Claude once. After that Claude can look through your saves on its own, on your phone or computer.</p>
     <div class="chat">
       <p class="me">What was that pasta recipe I saved last week?</p>
       <p class="typing" aria-hidden="true"><i></i><i></i><i></i></p>
-      <p class="ai"><span class="tool">Searched your stash</span>The garlic butter one. 200g spaghetti, 4 cloves garlic, 3 tbsp butter. Fry the garlic slowly in the butter, then toss in the pasta with a splash of pasta water.</p>
+      <p class="ai"><span class="tool">Searched Skwirl</span>The garlic butter one. 200g spaghetti, 4 cloves garlic, 3 tbsp butter. Fry the garlic slowly in the butter, then toss in the pasta with a splash of pasta water.</p>
     </div>
   </div>
 
   <div class="lsec reveal" id="pricing">
     <h2>Pricing</h2>
-    <p>Free while Stash is in beta. Here's the plan after that, so there are no surprises.</p>
+    <p>Free while Skwirl is in beta. Here's the plan after that, so there are no surprises.</p>
     <div class="plans">
       <div class="plan">
         <small>Free</small><b class="price">$0</b>
@@ -590,16 +592,16 @@ body.on-phone .phone-handoff { display: none; }
         <span class="note">Or $40 a year.</span>
       </div>
     </div>
-    <p class="selfhost">Rather run it yourself? Stash is open source. <a href="https://github.com/Parthuss/stash/blob/master/docs/SELF_HOST.md" rel="noopener">Host your own copy for free ↗</a></p>
+    <p class="selfhost">Rather run it yourself? Skwirl is open source. <a href="https://github.com/Parthuss/stash/blob/master/docs/SELF_HOST.md" rel="noopener">Host your own copy for free ↗</a></p>
   </div>
 
   <div class="lsec reveal">
     <h2>Questions</h2>
-    <details class="faq"><summary>Which phones does it work on?</summary><p>iPhone (through a Shortcut, Stash walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links.</p></details>
+    <details class="faq"><summary>Which phones does it work on?</summary><p>iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links.</p></details>
     <details class="faq"><summary>How long does a save take?</summary><p>Usually a couple of minutes. You'll see it appear in your library with a "Reading…" card while it works.</p></details>
-    <details class="faq"><summary>Who can see my saves?</summary><p>Only you, unless you share a note. Stash never re-posts the video, it keeps a short note and a small cover image. Details in the <a href="/privacy">privacy policy</a>.</p></details>
-    <details class="faq"><summary>There's no password. How do I get back in?</summary><p>You get a private sign-in link. Stash asks you to save it (email it to yourself, or keep it in your notes). Open it on any device and you're in.</p></details>
-    <details class="faq"><summary>What's a Groq key and do I need one?</summary><p>No. Groq runs the AI that reads reels. Stash covers it for you. If you save a lot, a free key of your own lifts your limit to 200 a day.</p></details>
+    <details class="faq"><summary>Who can see my saves?</summary><p>Only you, unless you share a note. Skwirl never re-posts the video, it keeps a short note and a small cover image. Details in the <a href="/privacy">privacy policy</a>.</p></details>
+    <details class="faq"><summary>There's no password. How do I get back in?</summary><p>You get a private sign-in link. Skwirl asks you to save it (email it to yourself, or keep it in your notes). Open it on any device and you're in.</p></details>
+    <details class="faq"><summary>What's a Groq key and do I need one?</summary><p>No. Groq runs the AI that reads reels. Skwirl covers it for you. If you save a lot, a free key of your own lifts your limit to 200 a day.</p></details>
   </div>
 
   <div class="lsec lend reveal">
@@ -621,7 +623,7 @@ body.on-phone .phone-handoff { display: none; }
 
 <section id="lib" style="display:none">
   <header>
-    <div class="row"><h1 class="brand">Stash</h1><span class="pill" id="count"></span><button class="setup-pill" id="mentionsBtn">Lists</button><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
+    <div class="row"><h1 class="brand"><img src="/mark.svg" alt="">Skwirl</h1><span class="pill" id="count"></span><button class="setup-pill" id="mentionsBtn">Lists</button><button class="setup-pill" id="setupBtn">Set up<i id="setupDot" hidden></i></button></div>
     <p class="sub" id="sub">Your saves, all in one place.</p>
     <div class="search"><input id="q" type="search" placeholder="Search your saves" aria-label="Search"></div>
     <div class="chips" id="chips" role="group" aria-label="Filters"></div>
@@ -633,31 +635,31 @@ body.on-phone .phone-handoff { display: none; }
 <section id="setup">
   <div class="topbar"><button class="btn soft" id="setupBack">← Back</button></div>
   <div class="setup-head">
-    <h1 id="setupTitle">Set up Stash</h1>
+    <h1 id="setupTitle">Set up Skwirl</h1>
     <button class="btn sm soft" id="adminBtn" hidden style="margin:2px 0 10px">Open admin</button>
     <p>A few minutes, once. Do it now or later.</p>
   </div>
 
   <details class="group" id="gSave" open>
-    <summary><div style="flex:1"><h2>Save from your phone</h2><small>Share a reel straight into Stash</small></div><span class="badge" id="bSave">To do</span></summary>
+    <summary><div style="flex:1"><h2>Save from your phone</h2><small>Share a reel straight into Skwirl</small></div><span class="badge" id="bSave">To do</span></summary>
     <div class="gbody">
       <div class="tabs" role="tablist"><button role="tab" id="tabIos" aria-selected="true">iPhone</button><button role="tab" id="tabAnd" aria-selected="false">Android</button></div>
       <div id="paneIos">
-        <svg class="art" viewBox="0 0 360 200" role="img" aria-label="iPhone share sheet with the Stash shortcut highlighted"><rect x="110" y="6" width="140" height="188" rx="26" fill="#fff" stroke="#e3dffa" stroke-width="3"/><rect x="122" y="18" width="116" height="60" rx="12" fill="#dcd8ff"/><rect x="118" y="92" width="124" height="96" rx="16" fill="#f8f7ff"/><g><rect x="128" y="102" width="26" height="26" rx="8" fill="#cdf3e1"/><rect x="167" y="102" width="26" height="26" rx="8" fill="#d6ebff"/><rect x="206" y="102" width="26" height="26" rx="8" fill="#fff0c4"/><rect x="128" y="146" width="26" height="26" rx="8" fill="#ffd8cb" stroke="#1d1b2e" stroke-width="2"/><rect x="167" y="146" width="26" height="26" rx="8" fill="#e9e6fb"/></g><text x="141" y="185" font-size="9" text-anchor="middle" fill="#1d1b2e" font-weight="600">Stash</text><path d="M262 158 C 290 158, 292 120, 262 132" fill="none" stroke="#1d1b2e" stroke-width="2" stroke-linecap="round"/><text x="272" y="110" font-size="11" fill="#6a6880">tap this</text></svg>
+        <svg class="art" viewBox="0 0 360 200" role="img" aria-label="iPhone share sheet with the Skwirl shortcut highlighted"><rect x="110" y="6" width="140" height="188" rx="26" fill="#fff" stroke="#e3dffa" stroke-width="3"/><rect x="122" y="18" width="116" height="60" rx="12" fill="#dcd8ff"/><rect x="118" y="92" width="124" height="96" rx="16" fill="#f8f7ff"/><g><rect x="128" y="102" width="26" height="26" rx="8" fill="#cdf3e1"/><rect x="167" y="102" width="26" height="26" rx="8" fill="#d6ebff"/><rect x="206" y="102" width="26" height="26" rx="8" fill="#fff0c4"/><rect x="128" y="146" width="26" height="26" rx="8" fill="#ffd8cb" stroke="#1d1b2e" stroke-width="2"/><rect x="167" y="146" width="26" height="26" rx="8" fill="#e9e6fb"/></g><text x="141" y="185" font-size="9" text-anchor="middle" fill="#1d1b2e" font-weight="600">Skwirl</text><path d="M262 158 C 290 158, 292 120, 262 132" fill="none" stroke="#1d1b2e" stroke-width="2" stroke-linecap="round"/><text x="272" y="110" font-size="11" fill="#6a6880">tap this</text></svg>
         <ol class="steps">
           <li><b>Copy your token</b><span>iOS will ask for it once.</span><div class="inline-actions"><button class="btn sm" data-copy="token">Copy token</button></div></li>
-          <li><b>Add the Stash Shortcut</b><span>Open this on your iPhone. Tap <em>Add Shortcut</em>, then paste the token when asked.</span><div class="inline-actions"><a class="btn sm" href="/Stash.shortcut">Get the Shortcut</a></div></li>
-          <li><b>Share a reel to Stash</b><span>In Instagram, TikTok or YouTube: tap Share. In Instagram, tap <em>Share to…</em> (or <em>More</em>) to open the iPhone share sheet, then pick <em>Stash</em>. Don't see it? Scroll the app row to the end, tap <em>Edit Actions</em> and add Stash as a favourite. You'll get a "Saved" alert, and the note shows up here shortly.</span></li>
+          <li><b>Add the Skwirl Shortcut</b><span>Open this on your iPhone. Tap <em>Add Shortcut</em>, then paste the token when asked.</span><div class="inline-actions"><a class="btn sm" href="/Skwirl.shortcut">Get the Shortcut</a></div></li>
+          <li><b>Share a reel to Skwirl</b><span>In Instagram, TikTok or YouTube: tap Share. In Instagram, tap <em>Share to…</em> (or <em>More</em>) to open the iPhone share sheet, then pick <em>Skwirl</em>. Don't see it? Scroll the app row to the end, tap <em>Edit Actions</em> and add Skwirl as a favourite. You'll get a "Saved" alert, and the note shows up here shortly.</span></li>
         </ol>
-        <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code. It opens Stash on your phone, already signed in, so you can add the Shortcut there.<div class="qr" data-qr aria-label="QR code that opens Stash on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
+        <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code. It opens Skwirl on your phone, already signed in, so you can add the Shortcut there.<div class="qr" data-qr aria-label="QR code that opens Skwirl on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
       </div>
       <div id="paneAnd" hidden>
-        <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code to open Stash there, already signed in.<div class="qr" data-qr aria-label="QR code that opens Stash on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
+        <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code to open Skwirl there, already signed in.<div class="qr" data-qr aria-label="QR code that opens Skwirl on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
         <svg class="art" viewBox="0 0 360 200" role="img" aria-label="Chrome menu with Install app highlighted"><rect x="110" y="6" width="140" height="188" rx="26" fill="#fff" stroke="#e3dffa" stroke-width="3"/><rect x="122" y="18" width="116" height="26" rx="13" fill="#f0eefc"/><circle cx="224" cy="31" r="3" fill="#1d1b2e"/><circle cx="224" cy="39" r="0" fill="#1d1b2e"/><rect x="128" y="54" width="104" height="112" rx="14" fill="#f8f7ff" stroke="#e3dffa"/><rect x="136" y="64" width="88" height="14" rx="7" fill="#e9e6fb"/><rect x="136" y="86" width="88" height="20" rx="10" fill="#ffd8cb" stroke="#1d1b2e" stroke-width="2"/><text x="180" y="100" font-size="9" text-anchor="middle" fill="#1d1b2e" font-weight="600">Install app</text><rect x="136" y="114" width="88" height="14" rx="7" fill="#e9e6fb"/><rect x="136" y="136" width="88" height="14" rx="7" fill="#e9e6fb"/></svg>
         <ol class="steps">
-          <li><b>Open Stash in Chrome</b><span>On your Android phone. If you're on a computer, scan the code above first.</span></li>
+          <li><b>Open Skwirl in Chrome</b><span>On your Android phone. If you're on a computer, scan the code above first.</span></li>
           <li><b>Install it</b><span>Chrome menu (⋮) → <em>Install app</em> (or <em>Add to Home screen</em>).</span></li>
-          <li><b>Share to Stash</b><span>In Instagram, TikTok or YouTube: tap Share, then <em>Share to…</em> or <em>More</em>, and pick <em>Stash</em>. No extra setup. Stash only shows up here after you've installed it in step 2.</span></li>
+          <li><b>Share to Skwirl</b><span>In Instagram, TikTok or YouTube: tap Share, then <em>Share to…</em> or <em>More</em>, and pick <em>Skwirl</em>. No extra setup. Skwirl only shows up here after you've installed it in step 2.</span></li>
         </ol>
       </div>
       <div class="note-box">No phone handy? Tap the + on the home screen and paste any link.</div>
@@ -665,35 +667,35 @@ body.on-phone .phone-handoff { display: none; }
   </details>
 
   <details class="group" id="gHome">
-    <summary><div style="flex:1"><h2>Put Stash on your home screen</h2><small>Open your saves in one tap, like an app</small></div><span class="badge opt" id="bHome">Optional</span></summary>
+    <summary><div style="flex:1"><h2>Put Skwirl on your home screen</h2><small>Open your saves in one tap, like an app</small></div><span class="badge opt" id="bHome">Optional</span></summary>
     <div class="gbody">
-      <svg class="art" viewBox="0 0 360 170" role="img" aria-label="Phone home screen with the Stash icon among other apps"><rect x="110" y="6" width="140" height="158" rx="24" fill="#fff" stroke="#e3dffa" stroke-width="3"/><g fill="#e9e6fb"><rect x="126" y="26" width="24" height="24" rx="7"/><rect x="168" y="26" width="24" height="24" rx="7"/><rect x="210" y="26" width="24" height="24" rx="7"/><rect x="126" y="68" width="24" height="24" rx="7"/><rect x="210" y="68" width="24" height="24" rx="7"/><rect x="126" y="110" width="24" height="24" rx="7"/><rect x="168" y="110" width="24" height="24" rx="7"/></g><rect x="166" y="66" width="28" height="28" rx="8" fill="#dcd8ff" stroke="#1d1b2e" stroke-width="2"/><text x="180" y="87" font-size="18" text-anchor="middle" fill="#1d1b2e" font-family="Georgia, serif">S</text><circle cx="189" cy="71" r="3.5" fill="#ff8a65"/><text x="180" y="105" font-size="8" text-anchor="middle" fill="#1d1b2e" font-weight="600">Stash</text></svg>
+      <svg class="art" viewBox="0 0 360 170" role="img" aria-label="Phone home screen with the Skwirl icon among other apps"><rect x="110" y="6" width="140" height="158" rx="24" fill="#fff" stroke="#e3dffa" stroke-width="3"/><g fill="#e9e6fb"><rect x="126" y="26" width="24" height="24" rx="7"/><rect x="168" y="26" width="24" height="24" rx="7"/><rect x="210" y="26" width="24" height="24" rx="7"/><rect x="126" y="68" width="24" height="24" rx="7"/><rect x="210" y="68" width="24" height="24" rx="7"/><rect x="126" y="110" width="24" height="24" rx="7"/><rect x="168" y="110" width="24" height="24" rx="7"/></g><rect x="166" y="66" width="28" height="28" rx="8" fill="#dcd8ff" stroke="#1d1b2e" stroke-width="2"/><image href="/mark.svg" x="170" y="70" width="20" height="20"/><text x="180" y="105" font-size="8" text-anchor="middle" fill="#1d1b2e" font-weight="600">Skwirl</text></svg>
       <div id="homeIos">
         <ol class="steps">
           <li><b>Copy your sign-in link</b><span>The home-screen version starts signed out on iPhone, so you'll paste this once.</span><div class="inline-actions"><button class="btn sm" data-copy="linkonly">Copy sign-in link</button></div></li>
           <li><b>Open this page in Safari</b><span>It has to be Safari. In other browsers the option isn't there.</span></li>
           <li><b>Tap Share, then <em>Add to Home Screen</em></b><span>Share is the square with an arrow at the bottom of Safari. Scroll down the list if you don't see it, then tap <em>Add</em>.</span></li>
-          <li><b>Open Stash from your home screen</b><span>Tap <em>Paste my sign-in link</em> and you're in.</span></li>
+          <li><b>Open Skwirl from your home screen</b><span>Tap <em>Paste my sign-in link</em> and you're in.</span></li>
         </ol>
       </div>
       <div id="homeAnd" hidden>
         <ol class="steps">
           <li><b>Open this page in Chrome</b><span>You stay signed in, nothing to copy.</span></li>
-          <li><b>Chrome menu (⋮) → <em>Install app</em></b><span>Or <em>Add to Home screen</em>. This also puts Stash in your share menu.</span></li>
+          <li><b>Chrome menu (⋮) → <em>Install app</em></b><span>Or <em>Add to Home screen</em>. This also puts Skwirl in your share menu.</span></li>
         </ol>
       </div>
-      <p class="note-box" id="homeDesk" hidden>On a computer? In Chrome or Edge, click the install icon at the right end of the address bar to get Stash as its own window.</p>
+      <p class="note-box" id="homeDesk" hidden>On a computer? In Chrome or Edge, click the install icon at the right end of the address bar to get Skwirl as its own window.</p>
     </div>
   </details>
 
   <details class="group" id="gClaude">
     <summary><div style="flex:1"><h2>Connect Claude</h2><small>Let Claude search your saves on its own</small></div><span class="badge" id="bClaude">To do</span></summary>
     <div class="gbody">
-      <svg class="art" viewBox="0 0 360 170" role="img" aria-label="Claude add custom connector dialog"><rect x="40" y="8" width="280" height="154" rx="22" fill="#fff" stroke="#e3dffa" stroke-width="3"/><text x="60" y="36" font-size="13" font-weight="600" fill="#1d1b2e">Add custom connector</text><text x="60" y="58" font-size="10" fill="#6a6880">Name</text><rect x="60" y="63" width="240" height="24" rx="12" fill="#f8f7ff"/><text x="72" y="79" font-size="10" fill="#1d1b2e">Stash</text><text x="60" y="104" font-size="10" fill="#6a6880">Remote MCP server URL</text><rect x="60" y="109" width="240" height="24" rx="12" fill="#dcd8ff" stroke="#1d1b2e" stroke-width="2"/><text x="72" y="125" font-size="9" fill="#1d1b2e" font-family="monospace">https://…/mcp/stk_…</text><rect x="236" y="138" width="64" height="18" rx="9" fill="#1d1b2e"/><text x="268" y="150" font-size="9" text-anchor="middle" fill="#fff">Add</text></svg>
+      <svg class="art" viewBox="0 0 360 170" role="img" aria-label="Claude add custom connector dialog"><rect x="40" y="8" width="280" height="154" rx="22" fill="#fff" stroke="#e3dffa" stroke-width="3"/><text x="60" y="36" font-size="13" font-weight="600" fill="#1d1b2e">Add custom connector</text><text x="60" y="58" font-size="10" fill="#6a6880">Name</text><rect x="60" y="63" width="240" height="24" rx="12" fill="#f8f7ff"/><text x="72" y="79" font-size="10" fill="#1d1b2e">Skwirl</text><text x="60" y="104" font-size="10" fill="#6a6880">Remote MCP server URL</text><rect x="60" y="109" width="240" height="24" rx="12" fill="#dcd8ff" stroke="#1d1b2e" stroke-width="2"/><text x="72" y="125" font-size="9" fill="#1d1b2e" font-family="monospace">https://…/mcp/stk_…</text><rect x="236" y="138" width="64" height="18" rx="9" fill="#1d1b2e"/><text x="268" y="150" font-size="9" text-anchor="middle" fill="#fff">Add</text></svg>
       <ol class="steps">
         <li><b>Copy your connector link</b><span>It contains your private token. Treat it like a password.</span><div class="inline-actions"><button class="btn sm" data-copy="mcp">Copy connector link</button></div></li>
         <li><b>Open Claude’s connector settings</b><span>Easiest on a computer: claude.ai → Settings → Connectors → <em>Add custom connector</em>. Once it's added there, it works in the Claude phone app too.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div></li>
-        <li><b>Name it “Stash” and paste the link</b><span>Then start a new chat and ask: <em>“Search my stash for recipes”</em> or <em>“What books have I saved?”</em>. If Claude asks for permission to use Stash, allow it.</span></li>
+        <li><b>Name it “Skwirl” and paste the link</b><span>Then start a new chat and ask: <em>“Search Skwirl for recipes”</em> or <em>“What books have I saved?”</em>. If Claude asks for permission to use Skwirl, allow it.</span></li>
       </ol>
       <b style="display:block;margin-top:4px">Using Claude Code?</b>
       <pre class="cmd" id="cmdCode"></pre>
@@ -704,9 +706,9 @@ body.on-phone .phone-handoff { display: none; }
   <details class="group" id="gGroq">
     <summary><div style="flex:1"><h2>Use your own Groq key</h2><small>Free, faster, no shared limits</small></div><span class="badge opt" id="bGroq">Optional</span></summary>
     <div class="gbody" id="groqBody">
-      <p style="margin-top:0;color:var(--muted)">Stash reads reels with Groq’s AI. By default it uses a shared key with a small daily limit. Your own free key means your saves are never queued behind anyone else’s.</p>
+      <p style="margin-top:0;color:var(--muted)">Skwirl reads reels with Groq’s AI. By default it uses a shared key with a small daily limit. Your own free key means your saves are never queued behind anyone else’s.</p>
       <ol class="steps">
-        <li><b>Get a free key from Groq</b><span>Sign up free (Google or email works, no card needed), tap <em>Create API Key</em>, name it "Stash", and copy the key. It starts with <code>gsk_</code> and Groq only shows it once, so paste it here straight away.</span><div class="inline-actions"><a class="btn sm soft" href="https://console.groq.com/keys" target="_blank" rel="noopener">Open Groq console ↗</a></div></li>
+        <li><b>Get a free key from Groq</b><span>Sign up free (Google or email works, no card needed), tap <em>Create API Key</em>, name it "Skwirl", and copy the key. It starts with <code>gsk_</code> and Groq only shows it once, so paste it here straight away.</span><div class="inline-actions"><a class="btn sm soft" href="https://console.groq.com/keys" target="_blank" rel="noopener">Open Groq console ↗</a></div></li>
         <li><b>Paste it here</b><span>We check it works before saving, and store it encrypted.</span>
           <form class="field" id="groqForm"><input id="groqKey" type="password" autocomplete="off" placeholder="gsk_…" aria-label="Groq API key"><button class="btn sm" type="submit">Save key</button></form>
           <p class="msg" id="groqMsg" role="status"></p></li>
@@ -718,10 +720,10 @@ body.on-phone .phone-handoff { display: none; }
     <summary><div style="flex:1"><h2>Good to know</h2><small>Limits, timing, privacy</small></div></summary>
     <div class="gbody help">
       <p><b>What can I save?</b> Links from Instagram, TikTok, YouTube, X and Threads.</p>
-      <p><b>How long does it take?</b> Usually a couple of minutes. When lots of people are saving, or Stash's processing computer is offline, it can take a few hours. Nothing gets lost, it waits in line, and you'll see a banner if it's slow.</p>
+      <p><b>How long does it take?</b> Usually a couple of minutes. When lots of people are saving, or Skwirl's processing computer is offline, it can take a few hours. Nothing gets lost, it waits in line, and you'll see a banner if it's slow.</p>
       <p><b>Limits.</b> 25 saves waiting at once, and 30 a day on the shared AI allowance. Add your own free Groq key above and it's 200 a day.</p>
       <p><b>Why did a save fail?</b> Usually the post is private or deleted, or YouTube blocked the download. Tap Retry once. If it fails again, remove it.</p>
-      <p><b>Who can see my saves?</b> Only you, in the app. But whoever runs Stash can read the database. Don't save anything you'd hate for them to see.</p>
+      <p><b>Who can see my saves?</b> Only you, in the app. But whoever runs Skwirl can read the database. Don't save anything you'd hate for them to see.</p>
       <p><b>Leaving?</b> Export your notes or delete your account under Your account. Deleting is permanent.</p>
       <p><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms</a></p>
     </div>

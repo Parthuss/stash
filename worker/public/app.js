@@ -23,11 +23,11 @@ async function api(path, opts = {}) {
   try {
     r = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + token, "content-type": "application/json" } });
   } catch {
-    setBanner("net", "warn", "Can't reach Stash. You're offline, or it's having a moment. What you see may be out of date.", "Try again", () => load());
+    setBanner("net", "warn", "Can't reach Skwirl. You're offline, or it's having a moment. What you see may be out of date.", "Try again", () => load());
     throw new Error("offline");
   }
   if (r.status === 401) { signOut("You were signed out (your token changed or was reset). Paste it again to get back in."); throw new Error("unauthorized"); }
-  if (r.status >= 500) { setBanner("net", "err", "Stash hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
+  if (r.status >= 500) { setBanner("net", "err", "Skwirl hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
   else if (bannerKey === "net") clearBanner("net");
   return r;
 }
@@ -88,7 +88,7 @@ function skeleton() { return Array.from({ length: 4 }, () => '<div class="skel s
 function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
   $("count").textContent = `${unused} unused`; $("count").hidden = !notes.length;
-  $("sub").textContent = notes.length ? `${notes.length} saved. ${unused ? "Pick one and put it to use." : "You've used everything."}` : "Your saves, all in one place.";
+  $("sub").textContent = notes.length ? (unused ? `${notes.length} saved, ${unused} unused. Pick one and put it to use.` : `${notes.length} saved. You've used everything.`) : "Your saves, all in one place.";
   const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
   $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}</button>`).join("");
   const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
@@ -167,7 +167,7 @@ async function joinMode() {
   code.hidden = !needCode; code.required = !mode.open;
   if (!mode.open && !mode.invite) {
     $("joinForm").querySelectorAll("input,button").forEach((el) => (el.disabled = true));
-    $("joinFine").textContent = "Stash is full for now. If someone sent you an invite link, open that instead.";
+    $("joinFine").textContent = "Skwirl is full for now. If someone sent you an invite link, open that instead.";
   } else if (!mode.open) $("joinFine").textContent = "Invite-only right now. Your invite has the code.";
 }
 $("toTop").addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); });
@@ -176,7 +176,7 @@ $("joinForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const err = $("joinErr"); err.textContent = "";
   let r;
   try { r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value }) }); }
-  catch { err.textContent = "Can't reach Stash. Check your connection and try again."; return; }
+  catch { err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({}));
   if (!r.ok) { err.textContent = body.error || "Couldn’t join. Try again."; return; }
   token = body.token; store.set("stash_token", token); store.del("stash_link_saved"); start();
@@ -187,10 +187,10 @@ async function signInWith(t) {
   token = t;
   let r;
   try { r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } }); }
-  catch { token = null; return "Can't reach Stash. Check your connection and try again."; }
+  catch { token = null; return "Can't reach Skwirl. Check your connection and try again."; }
   if (r.ok) { store.set("stash_token", token); start(); return ""; }
   token = null;
-  return r.status === 401 ? "That didn't work. Copy the whole sign-in link (or the token, starting stk_) and try again." : "Stash had a problem. Try again in a minute.";
+  return r.status === 401 ? "That didn't work. Copy the whole sign-in link (or the token, starting stk_) and try again." : "Skwirl had a problem. Try again in a minute.";
 }
 const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 if (standalone && !token) {
@@ -207,9 +207,9 @@ $("authForm").addEventListener("submit", async (e) => {
 // There's no email or password, so losing the link means losing the stash. Push it somewhere safe.
 const signInLink = () => `${location.origin}/#t=${token}`;
 async function saveLink() {
-  const text = "My Stash sign-in link. Keep it private, it opens my saves:";
+  const text = "My Skwirl sign-in link. Keep it private, it opens my saves:";
   if (navigator.share && onPhone) {
-    try { await navigator.share({ title: "Stash sign-in link", text, url: signInLink() }); } catch { return; }
+    try { await navigator.share({ title: "Skwirl sign-in link", text, url: signInLink() }); } catch { return; }
   } else {
     await copy(signInLink(), "Sign-in link");
     toast("Copied. Paste it into your notes or email it to yourself.");
@@ -302,7 +302,7 @@ function drawQr() {
   document.querySelectorAll("[data-qr]").forEach((el) => { el.innerHTML = svg; });
 }
 function openSetup(first) {
-  show("setup"); $("setupTitle").textContent = first ? "Welcome to Stash" : "Set up Stash"; scrollTo(0, 0); refreshSetup(); drawQr();
+  show("setup"); $("setupTitle").textContent = first ? "Welcome to Skwirl" : "Set up Skwirl"; scrollTo(0, 0); refreshSetup(); drawQr();
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent); setTab(ios || !/Android/.test(navigator.userAgent) ? "ios" : "and");
 }
 function setTab(which) {
@@ -328,7 +328,7 @@ $("exportBtn").addEventListener("click", async () => {
   const r = await api("/v1/export").catch(() => null);
   if (!r || !r.ok) return toast("Couldn't export right now. Try again.");
   const url = URL.createObjectURL(await r.blob());
-  const a = document.createElement("a"); a.href = url; a.download = "stash-export.json"; a.click(); URL.revokeObjectURL(url);
+  const a = document.createElement("a"); a.href = url; a.download = "skwirl-export.json"; a.click(); URL.revokeObjectURL(url);
 });
 $("signOutBtn").addEventListener("click", () => {
   if (!store.get("stash_link_saved") && !confirm("You haven't saved your sign-in link. Without it you can't get back in. Sign out anyway?")) return;

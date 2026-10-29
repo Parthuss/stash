@@ -1,11 +1,11 @@
-# What needs you
+# What needs you (Skwirl, formerly Stash)
 
 Updated 2026-10-27. Everything here needs your judgement, your phone, your money or your
 accounts. The rest has been done. Order: top to bottom.
 
 ## 1. Check on your phone (15 min, do this first)
 
-Nothing has been tested on a real phone since the redesign. On https://stash.parthakholkar.com:
+Nothing has been tested on a real phone since the redesign. On https://skwirl.parthakholkar.com:
 
 - [ ] **Landing page on iPhone.** Does the phone animation play smoothly? Is the sticky
       frosted header readable over the pricing cards and the phone?
@@ -19,10 +19,10 @@ Nothing has been tested on a real phone since the redesign. On https://stash.par
 
 ## 2. Decisions only you can make
 
-- [ ] **Name.** Recommendation: **Skwirl** (App Store name free, `skwirl.app` free, `.com`
-      taken). Before buying: trademark search on USPTO and India's IP office for "Skwirl" in
-      class 9/42. Then `skwirl.app` is about $15/yr on Cloudflare. Not urgent before Reddit;
-      needed before Product Hunt or the stores. Details: `docs/PRODUCT.md` §5.
+- [x] **Name: Skwirl** (decided 2026-10-29). Live at `skwirl.parthakholkar.com`; the old
+      `stash.parthakholkar.com` keeps working for existing users. Still to do: trademark search
+      (USPTO and India's IP office, class 9/42), then buy `skwirl.app` (~$15/yr on Cloudflare)
+      when you're ready for Product Hunt or the stores.
 - [ ] **Pricing.** Proposed: Free (30/day in beta, ~30/month after), Free with own Groq key
       (200/day), Pro $5/mo or $40/yr, Self-host $0. Already shown on the landing page as "after
       the beta". Say if you want different numbers. Details: `docs/PRODUCT.md` §2.

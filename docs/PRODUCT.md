@@ -2,7 +2,7 @@
 
 Written 2026-10-27. Straight answers first, reasoning after.
 
-- **Name:** **Skwirl.** Squirrels stash things for later; that is the product. It's free on
+- **Name:** **Skwirl** (decided 2026-10-29, live at skwirl.parthakholkar.com). Squirrels stash things for later; that is the product. It's free on
   the App Store, `skwirl.app` is unregistered, and a web search finds no app by that name.
 - **Pricing:** free during the beta. After that: Free, Free with your own key, and **Pro at
   $5/month or $40/year**. It's already on the landing page as "after the beta", so nobody is

@@ -1,6 +1,6 @@
 {
-  "name": "Stash",
-  "short_name": "Stash",
+  "name": "Skwirl",
+  "short_name": "Skwirl",
   "description": "Share a reel, get a searchable note. Recipes, books, movies, tips. Works with Claude.",
   "start_url": "/",
   "scope": "/",
@@ -21,7 +21,7 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

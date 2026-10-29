@@ -1,4 +1,4 @@
-# Stash — design direction
+# Skwirl (formerly Stash) — design direction
 
 Synthesized from the design reels in the stash itself (ids in brackets; `get_stash_note` for the source).
 Sources are mostly tool roundups and animation checklists, not finished visual identities, so **what's
@@ -42,6 +42,7 @@ visual language of the portfolio's "ethereal" theme (`portfolio-v2/components/et
 - **Peach means "unused"** (the badge and counter). It's the one semantic colour: the unused count is the product's core metric.
 - **Type:** Gloock (display serif) for the wordmark, titles and section heads; Familjen Grotesk for UI and body.
 - **Shape:** generous radii (cards 24px, hero 32px, sheets 28px, everything interactive is a pill), soft low-alpha elevation instead of borders.
+- **Logo (2026-10-29):** a squirrel tail drawn as one tapered swirl, coral acorn tucked in the curl. Sources and rules in `design/logo/`.
 - **Motion:** cards rise + fade with a short stagger, press = scale .97, bottom sheet slides in; all disabled under reduced-motion.
 - **Add flow:** floating + button → bottom sheet, mirroring Simmr's share/add pattern.
 Implemented in `worker/public/index.html`.

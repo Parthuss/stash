@@ -28,7 +28,7 @@ only needs a token:
 > I'm testing an app called Stash. You share a reel to it and it turns it into a note you can
 > actually find later (recipes come out as ingredients + steps, books/movies land in a list).
 > Open this on your phone, type your first name and tap Start:
-> https://stash.parthakholkar.com
+> https://skwirl.parthakholkar.com
 > It walks you through the rest. Takes about 3 minutes.
 
 ## Run it

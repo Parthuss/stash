@@ -37,11 +37,11 @@ export function friendlyReason(error: string | null, failed: boolean): string {
   const e = (error ?? "").toLowerCase();
   if (!e) return failed ? "Something went wrong reading this one." : "Reading this now.";
   if (e.includes("429") || e.includes("rate limit") || e.includes("request too large") || e.includes("tokens per"))
-    return failed ? "Stash was too busy to finish this. Retry it, or add your own Groq key in Set up." : "Stash is busy. It'll retry on its own.";
+    return failed ? "Skwirl was too busy to finish this. Retry it, or add your own Groq key in Set up." : "Skwirl is busy. It'll retry on its own.";
   if (e.includes("empty media") || e.includes("private") || e.includes("not accessible") || e.includes("login required") || e.includes("unavailable"))
     return "Instagram wouldn't let us read this one. It may be private or deleted.";
   if (e.includes("not a bot") || e.includes("sign in to confirm")) return "This site is blocking our downloads right now (YouTube does this a lot). Try again later.";
-  if (e.includes("supported site")) return "That link isn't from a site Stash supports.";
+  if (e.includes("supported site")) return "That link isn't from a site Skwirl supports.";
   if (e.includes("connection") || e.includes("timed out") || e.includes("disconnected") || e.includes("broken pipe"))
     return failed ? "The connection dropped too many times. Retry it." : "The connection dropped. It'll retry on its own.";
   return failed ? "Something went wrong reading this one. Retry, or remove it." : "Working on it. Hit a snag, retrying.";
@@ -243,7 +243,7 @@ export async function handleV1(
     const body = (await request.json().catch(() => null)) as { url?: string; note?: string; source?: string } | null;
     if (!body?.url) return json({ error: "need url" }, 400);
     const safeUrl = allowedUrl(body.url);
-    if (!safeUrl) return json({ error: "That link isn't supported. Stash takes Instagram, TikTok, YouTube, X and Threads links." }, 400);
+    if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, TikTok, YouTube, X and Threads links." }, 400);
     if (userId) {  // per-user brakes so one account can't flood the queue
       const q = await env.DB.prepare(
         `SELECT SUM(status IN ('pending','claimed')) AS waiting,

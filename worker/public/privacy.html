@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy · Stash</title><meta name="theme-color" content="#f8f7ff"><link rel="icon" href="/icon-192.png">
+<title>Privacy · Skwirl</title><meta name="theme-color" content="#f8f7ff"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600&family=Gloock&display=swap" rel="stylesheet">
 <style>
@@ -14,24 +14,24 @@ h2 { font-family:Gloock, Georgia, serif; font-weight:400; font-size:22px; margin
 .back { display:inline-block; margin-bottom:10px; text-decoration:none; background:var(--bg); border-radius:999px; padding:8px 16px; font-weight:600; }
 .note { background:#fff0c4; border-radius:16px; padding:12px 14px; font-size:14px; }
 ul { padding-left:20px; } li { margin-bottom:6px; }
-</style></head><body><main><a class="back" href="/">← Stash</a>
+</style></head><body><main><a class="back" href="/">← Skwirl</a>
 <h1>Privacy</h1>
-<p class="muted">Last updated 27 September 2026. Plain-language version, written for the pilot.</p>
-<p class="note">Stash is a small, invite-only pilot run by one person, not a company. This page says exactly what happens to your data. If anything here isn't true, that's a bug. Tell the person who invited you.</p>
+<p class="muted">Last updated 29 October 2026. Plain-language version, written for the beta.</p>
+<p class="note">Skwirl is a small free beta run by one person, not a company. This page says exactly what happens to your data. If anything here isn't true, that's a bug.</p>
 
-<h2>What Stash stores</h2>
+<h2>What Skwirl stores</h2>
 <ul>
 <li>The name you joined with, and a hashed copy of your access token (never the token itself).</li>
 <li>The links you save, any note you type with them, and when you saved them.</li>
-<li>The note Stash writes for each save: title, summary, next step, transcript, ingredients, and anything named in it (books, films, places).</li>
+<li>The note Skwirl writes for each save: title, summary, next step, transcript, ingredients, and anything named in it (books, films, places).</li>
 <li>A small cover image for each save.</li>
-<li>What you do in the app: saving, searching, opening notes, ticking list items, and when Claude looks something up for you. This is how the owner can see whether the pilot is working.</li>
+<li>What you do in the app: saving, searching, opening notes, ticking list items, and when Claude looks something up for you. This is how the owner can see whether the beta is working.</li>
 <li>Your own Groq key, if you add one. It's encrypted before it's stored.</li>
 </ul>
 
 <h2>How a save gets read</h2>
 <ul>
-<li>Stash downloads the public post you shared from Instagram, TikTok, YouTube, X or Threads.</li>
+<li>Skwirl downloads the public post you shared from Instagram, TikTok, YouTube, X or Threads.</li>
 <li>The audio is sent to <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener">Groq</a> to be transcribed, and a few frames, the caption and top comments are sent to Groq's AI to write your note. Groq is a separate company with its own privacy policy.</li>
 <li>This happens on the owner's computer or on a GitHub-hosted build machine. Your downloaded video is deleted from that machine once your note is done. Only the note and the small cover image are kept.</li>
 </ul>
@@ -40,7 +40,7 @@ ul { padding-left:20px; } li { margin-bottom:6px; }
 <ul>
 <li>Everything is stored on <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare</a>.</li>
 <li>In the app, only you can see your saves.</li>
-<li><b>The person who runs Stash can read the database</b>, including your saves. Don't save anything you'd hate for them to see.</li>
+<li><b>The person who runs Skwirl can read the database</b>, including your saves. Don't save anything you'd hate for them to see.</li>
 <li>If you connect Claude, Claude can read your saves when you ask it to. That's covered by Anthropic's own privacy policy.</li>
 <li>No ads. Nothing is sold. Nothing is shared with anyone else.</li>
 </ul>

@@ -240,5 +240,5 @@ assert c.get("/n/" + "0" * 32).status_code == 404
 assert c.get("/join").json()["invite"] is True
 # ---- public pages ----
 for page in ("/privacy", "/terms", "/og.png"):
-    r = c.get(page); assert r.status_code == 200 and (page.endswith(".png") or "Stash" in r.text), page
+    r = c.get(page); assert r.status_code == 200 and (page.endswith(".png") or "Skwirl" in r.text), page
 print("ALL OK")

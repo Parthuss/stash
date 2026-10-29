@@ -54,7 +54,7 @@ export async function sharePage(env: Env, shareId: string, origin: string): Prom
     "SELECT title, summary, topic, permalink, markdown, thumb_id FROM note WHERE share_id = ?",
   ).bind(shareId).first<{ title: string; summary: string | null; topic: string | null; permalink: string | null; markdown: string; thumb_id: string | null }>();
   if (!note) {
-    return new Response(page("Not found", `<h1>This link doesn't work anymore</h1><p>Whoever shared it may have stopped sharing it.</p><p><a class="btn" href="/">What's Stash?</a></p>`, ""), {
+    return new Response(page("Not found", `<h1>This link doesn't work anymore</h1><p>Whoever shared it may have stopped sharing it.</p><p><a class="btn" href="/">What's Skwirl?</a></p>`, ""), {
       status: 404, headers: headers(),
     });
   }
@@ -74,8 +74,8 @@ ${note.thumb_id ? `<img class="cover" src="/t/${esc(note.thumb_id)}" alt="">` : 
 <div class="note">${renderMarkdown(publicMarkdown(note.markdown))}</div>
 ${note.permalink?.startsWith("https://") ? `<p><a class="btn soft" href="${esc(note.permalink)}" rel="noopener nofollow">Watch the original ↗</a></p>` : ""}
 <aside class="cta">
-  <b>Made with Stash</b>
-  <p>Share a reel to Stash and it comes back as a note like this one: recipes as ingredients and steps, books and movies in a list, all searchable. Free.</p>
+  <b>Made with Skwirl</b>
+  <p>Share a reel to Skwirl and it comes back as a note like this one: recipes as ingredients and steps, books and movies in a list, all searchable. Free.</p>
   <a class="btn" href="/?ref=share">Start your own stash</a>
 </aside>`;
   return new Response(page(note.title, body, meta), { headers: headers() });
@@ -93,7 +93,7 @@ const headers = () => ({
 const page = (title: string, body: string, meta: string) => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(title)} · Stash</title>${meta}
+<title>${esc(title)} · Skwirl</title>${meta}
 <link rel="icon" href="/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600&family=Gloock&display=swap" rel="stylesheet">
 <style>
@@ -101,7 +101,8 @@ const page = (title: string, body: string, meta: string) => `<!doctype html>
 * { box-sizing: border-box; }
 body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.55 "Familjen Grotesk", system-ui, sans-serif; padding:24px 18px 60px; }
 main { max-width:640px; margin:0 auto; }
-.top { display:block; font-family:Gloock, Georgia, serif; font-size:26px; color:inherit; text-decoration:none; }
+.top { display:inline-flex; align-items:center; gap:7px; font-family:Gloock, Georgia, serif; font-size:26px; color:inherit; text-decoration:none; }
+.top img { width:27px; height:27px; }
 .cover { display:block; width:100%; max-height:320px; object-fit:cover; border-radius:28px; margin:18px 0 16px; }
 .tag { display:inline-block; margin-top:18px; padding:3px 12px; border-radius:999px; background:var(--lavender); font-size:13px; font-weight:500; text-transform:capitalize; }
 h1 { font-family:Gloock, Georgia, serif; font-weight:400; font-size:clamp(30px,7vw,44px); line-height:1.1; margin:12px 0 14px; }
@@ -114,4 +115,4 @@ ol, ul { padding-left:22px; } li { margin-bottom:6px; }
 .cta b { font-family:Gloock, Georgia, serif; font-weight:400; font-size:24px; }
 .cta p { margin:6px 0 16px; }
 </style></head>
-<body><main><a class="top" href="/">Stash</a>${body}</main></body></html>`;
+<body><main><a class="top" href="/"><img src="/mark.svg" alt="">Skwirl</a>${body}</main></body></html>`;

@@ -1,11 +1,11 @@
-# Getting Stash its first 100 users
+# Getting Skwirl its first 100 users
 
 Written 2026-10-27. Straight answer first: the product works. What stopped anyone from
 using it was the front door. Until tonight a stranger landing on the site saw a token box
-and "invite-only", with no word on what Stash is. That's fixed. The rest of this page covers
+and "invite-only", with no word on what Skwirl is. That's fixed. The rest of this page covers
 who to go after, where, in what order, and what only you can do.
 
-## What changed tonight (live on stash.parthakholkar.com)
+## What changed tonight (live on skwirl.parthakholkar.com)
 
 | Before | Now |
 |---|---|
@@ -51,7 +51,7 @@ launch spike into a product nobody comes back to is wasted.
 > I built a thing: you share a reel to it and it turns into a note you can actually search.
 > Recipes come out as ingredients + steps, books and movies land in a list, and Claude can
 > read all of it. Free. Takes 3 minutes to set up:
-> https://stash.parthakholkar.com
+> https://skwirl.parthakholkar.com
 > Save 3 reels this week and tell me what's annoying about it.
 
 ### Week 2: Claude communities
@@ -67,13 +67,13 @@ Reddit draft (r/ClaudeAI):
 > **I gave Claude access to every reel I've saved**
 >
 > I save a lot of reels (recipes, tools, book recs) and never look at them again, so I built
-> Stash. You share a reel to it, it transcribes the audio, reads the on-screen text and
+> Skwirl. You share a reel to it, it transcribes the audio, reads the on-screen text and
 > the top comments, and writes a short note. Recipes come out as ingredients + steps.
 >
 > The part I actually use: it's an MCP connector. I ask Claude "what was that Remotion
 > tip I saved" or "what books have I saved" and it searches them.
 >
-> Free, no signup beyond a first name: https://stash.parthakholkar.com
+> Free, no signup beyond a first name: https://skwirl.parthakholkar.com
 > Would love to hear what breaks.
 
 ### Week 3+: only if week-2 numbers hold
@@ -105,8 +105,7 @@ anything new.
    the same through Install app. Nothing has been tested on a real phone since the landing page.
 3. **Add a contact email** to `worker/public/privacy.html` and `terms.html`. Anyone joining
    from Reddit needs a way to reach you, and both stores require one later.
-4. **Pick the name before Product Hunt.** Stashr is live and close. A domain costs about
-   $10 a year and makes the link look less like a side project. Not needed for weeks 1–2.
+4. **Name: done.** It's Skwirl now. Buy `skwirl.app` before Product Hunt (`docs/PRODUCT.md`).
 5. **Post.** Use the drafts above, in your own voice.
 
 Sources for the market and channel notes: [TechCrunch on Pestle](https://techcrunch.com/2024/07/08/pestles-app-can-now-save-recipes-from-reels-using-on-device-ai),

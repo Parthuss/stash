@@ -1,6 +1,10 @@
-# stash
+# Skwirl
 
-Turn the Instagram posts you save into notes Claude finds on its own.
+<img src="worker/public/icon-192.png" width="72" alt="Skwirl logo">
+
+Turn the reels you save into notes Claude finds on its own. Live at https://skwirl.parthakholkar.com.
+
+(The product was called Stash until 2026-10-29. The code, the Python package and the MCP tool names still say `stash`; only the brand changed.)
 
 Built by [Parth Akholkar](https://parthakholkar.com). The [case study](https://parthakholkar.com/work/stash) explains why it works this way.
 
