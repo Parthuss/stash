@@ -1,0 +1,72 @@
+[
+ {
+  "text": "You",
+  "startMs": 240,
+  "endMs": 320,
+  "timestampMs": 420,
+  "confidence": 0.803118
+ },
+ {
+  "text": " save",
+  "startMs": 320,
+  "endMs": 550,
+  "timestampMs": 680,
+  "confidence": 0.996428
+ },
+ {
+  "text": " a",
+  "startMs": 550,
+  "endMs": 630,
+  "timestampMs": 860,
+  "confidence": 0.982628
+ },
+ {
+  "text": " reel,",
+  "startMs": 630,
+  "endMs": 1380,
+  "timestampMs": 1020,
+  "confidence": 0.903401
+ },
+ {
+  "text": " then",
+  "startMs": 1380,
+  "endMs": 1460,
+  "timestampMs": 1480,
+  "confidence": 0.95363
+ },
+ {
+  "text": " you",
+  "startMs": 1460,
+  "endMs": 1710,
+  "timestampMs": 1600,
+  "confidence": 0.995391
+ },
+ {
+  "text": " never",
+  "startMs": 1710,
+  "endMs": 2130,
+  "timestampMs": 1820,
+  "confidence": 0.995097
+ },
+ {
+  "text": " see",
+  "startMs": 2130,
+  "endMs": 2370,
+  "timestampMs": 2060,
+  "confidence": 0.997094
+ },
+ {
+  "text": " it",
+  "startMs": 2370,
+  "endMs": 2510,
+  "timestampMs": 2200,
+  "confidence": 0.9991
+ },
+ {
+  "text": " again.",
+  "startMs": 2510,
+  "endMs": 3200,
+  "timestampMs": 2520,
+  "confidence": 0.998254
+ }
+]

@@ -1,0 +1,16 @@
+[
+ {
+  "text": "Meet",
+  "startMs": 360,
+  "endMs": 660,
+  "timestampMs": 580,
+  "confidence": 0.963569
+ },
+ {
+  "text": " Skwirl.",
+  "startMs": 660,
+  "endMs": 2000,
+  "timestampMs": 960,
+  "confidence": 0.485377
+ }
+]

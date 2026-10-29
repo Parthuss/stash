@@ -1,0 +1,51 @@
+[
+ {
+  "text": "Skwirl,",
+  "startMs": 280,
+  "endMs": 880,
+  "timestampMs": 600,
+  "confidence": 0.557441
+ },
+ {
+  "text": " The",
+  "startMs": 880,
+  "endMs": 1010,
+  "timestampMs": 1000,
+  "confidence": 0.989417
+ },
+ {
+  "text": " reels",
+  "startMs": 1010,
+  "endMs": 1390,
+  "timestampMs": 1080,
+  "confidence": 0.768071
+ },
+ {
+  "text": " you",
+  "startMs": 1390,
+  "endMs": 1800,
+  "timestampMs": 1320,
+  "confidence": 0.998757
+ },
+ {
+  "text": " save,",
+  "startMs": 1800,
+  "endMs": 1930,
+  "timestampMs": 1600,
+  "confidence": 0.991522
+ },
+ {
+  "text": " finally",
+  "startMs": 1930,
+  "endMs": 2470,
+  "timestampMs": 2060,
+  "confidence": 0.733498
+ },
+ {
+  "text": " useful.",
+  "startMs": 2470,
+  "endMs": 3000,
+  "timestampMs": 2480,
+  "confidence": 0.995
+ }
+]

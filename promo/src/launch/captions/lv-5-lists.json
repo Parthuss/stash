@@ -1,0 +1,72 @@
+[
+ {
+  "text": "Recipes",
+  "startMs": 320,
+  "endMs": 600,
+  "timestampMs": 740,
+  "confidence": 0.881616
+ },
+ {
+  "text": " become",
+  "startMs": 600,
+  "endMs": 1110,
+  "timestampMs": 1120,
+  "confidence": 0.991185
+ },
+ {
+  "text": " steps.",
+  "startMs": 1110,
+  "endMs": 1950,
+  "timestampMs": 1560,
+  "confidence": 0.996356
+ },
+ {
+  "text": " Books",
+  "startMs": 1950,
+  "endMs": 2230,
+  "timestampMs": 2120,
+  "confidence": 0.51783
+ },
+ {
+  "text": " and",
+  "startMs": 2230,
+  "endMs": 2490,
+  "timestampMs": 2320,
+  "confidence": 0.996212
+ },
+ {
+  "text": " movies",
+  "startMs": 2490,
+  "endMs": 3010,
+  "timestampMs": 2620,
+  "confidence": 0.983502
+ },
+ {
+  "text": " land",
+  "startMs": 3010,
+  "endMs": 3300,
+  "timestampMs": 2940,
+  "confidence": 0.995166
+ },
+ {
+  "text": " in",
+  "startMs": 3300,
+  "endMs": 3510,
+  "timestampMs": 3120,
+  "confidence": 0.896606
+ },
+ {
+  "text": " a",
+  "startMs": 3510,
+  "endMs": 3940,
+  "timestampMs": 3240,
+  "confidence": 0.996713
+ },
+ {
+  "text": " list.",
+  "startMs": 3940,
+  "endMs": 4200,
+  "timestampMs": 3500,
+  "confidence": 0.998841
+ }
+]

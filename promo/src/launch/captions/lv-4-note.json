@@ -1,0 +1,100 @@
+[
+ {
+  "text": "It",
+  "startMs": 10,
+  "endMs": 300,
+  "timestampMs": 400,
+  "confidence": 0.968986
+ },
+ {
+  "text": " reads",
+  "startMs": 300,
+  "endMs": 500,
+  "timestampMs": 680,
+  "confidence": 0.997181
+ },
+ {
+  "text": " the",
+  "startMs": 500,
+  "endMs": 770,
+  "timestampMs": 880,
+  "confidence": 0.998879
+ },
+ {
+  "text": " whole",
+  "startMs": 770,
+  "endMs": 1160,
+  "timestampMs": 1040,
+  "confidence": 0.99979
+ },
+ {
+  "text": " thing",
+  "startMs": 1160,
+  "endMs": 1710,
+  "timestampMs": 1380,
+  "confidence": 0.999073
+ },
+ {
+  "text": " and",
+  "startMs": 1710,
+  "endMs": 1800,
+  "timestampMs": 1840,
+  "confidence": 0.614092
+ },
+ {
+  "text": " hands",
+  "startMs": 1800,
+  "endMs": 2020,
+  "timestampMs": 2060,
+  "confidence": 0.939268
+ },
+ {
+  "text": " you",
+  "startMs": 2020,
+  "endMs": 2160,
+  "timestampMs": 2200,
+  "confidence": 0.986903
+ },
+ {
+  "text": " a",
+  "startMs": 2160,
+  "endMs": 2220,
+  "timestampMs": 2320,
+  "confidence": 0.911236
+ },
+ {
+  "text": " note",
+  "startMs": 2220,
+  "endMs": 2540,
+  "timestampMs": 2480,
+  "confidence": 0.995228
+ },
+ {
+  "text": " you",
+  "startMs": 2540,
+  "endMs": 2740,
+  "timestampMs": 2640,
+  "confidence": 0.72476
+ },
+ {
+  "text": " can",
+  "startMs": 2740,
+  "endMs": 3000,
+  "timestampMs": 2800,
+  "confidence": 0.988978
+ },
+ {
+  "text": " actually",
+  "startMs": 3000,
+  "endMs": 4000,
+  "timestampMs": 3140,
+  "confidence": 0.990749
+ },
+ {
+  "text": " use.",
+  "startMs": 4000,
+  "endMs": 4000,
+  "timestampMs": 3580,
+  "confidence": 0.999218
+ }
+]
