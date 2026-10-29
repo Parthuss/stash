@@ -7,8 +7,8 @@
 set -eu
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-RENDERED="$REPO/shortcuts/.Stash.rendered.cherri"
-OUT="$REPO/worker/public/Stash.shortcut"
+RENDERED="$REPO/shortcuts/.Skwirl.rendered.cherri"
+OUT="$REPO/worker/public/Skwirl.shortcut"
 
 command -v cherri >/dev/null 2>&1 || { echo "cherri not installed — brew install cherri" >&2; exit 1; }
 
@@ -21,8 +21,8 @@ sed -e "s|{{WORKER_URL}}|$WORKER_URL|g" "$REPO/shortcuts/Stash.cherri.template" 
 # cherri names its output after `#define name` and writes it next to the source
 # (it ignores -o's directory), so build in place, then move it into the Worker's assets.
 cherri "$RENDERED" -s=anyone
-mv "$REPO/shortcuts/Stash.shortcut" "$OUT"
+mv "$REPO/shortcuts/Skwirl.shortcut" "$OUT"
 
 echo
 echo "built $OUT  (points at $WORKER_URL, no secret inside)"
-echo "Deploy the Worker to publish it at $WORKER_URL/Stash.shortcut"
+echo "Deploy the Worker to publish it at $WORKER_URL/Skwirl.shortcut"

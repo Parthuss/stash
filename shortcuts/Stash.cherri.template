@@ -16,16 +16,16 @@
 // for an evening. Final confirmation — with the real note title — arrives
 // separately from stash/notify.py once the note actually exists.
 
-#define name Stash
+#define name Skwirl
 #define color violet
 #define glyph archive
 #define inputs url
 #define from sharesheet
-#define noinput stopwith "Share a link to Stash."
+#define noinput stopwith "Share a link to Skwirl."
 
 #include 'actions/web'
 
-#question tok "Paste your Stash access token (Stash → Set up → Copy token)" "stk_"
+#question tok "Paste your Skwirl access token (Skwirl → Set up → Copy token)" "stk_"
 @token = text(tok)
 
 @note = prompt("Add a note? (optional, tap Done to skip)")
@@ -38,11 +38,11 @@
 // can't act on as-is ("unauthorized") gets translated into what to do.
 @err = text(@res['error'])
 if @err == "unauthorized" {
-	alert("Your Stash token didn't work. Open Stash, go to Set up, and add the Shortcut again with the token from there.", "Stash couldn't save this")
+	alert("Your Skwirl token didn't work. Open Skwirl, go to Set up, and add the Shortcut again with the token from there.", "Skwirl couldn't save this")
 } else {
 	if @err != "" {
-		alert("{@err}", "Stash couldn't save this")
+		alert("{@err}", "Skwirl couldn't save this")
 	} else {
-		showNotification("Saved to Stash. Your note will be ready in a few minutes.")
+		showNotification("Saved to Skwirl. Your note will be ready in a few minutes.")
 	}
 }
