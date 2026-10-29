@@ -253,7 +253,6 @@ const Outro: React.FC = () => {
       <Kinetic captions={cap(outro)} voAt={VO.outro - S.outro} skip={1} style={{ fontSize: 76, textAlign: "center" }} />
       <div style={{ display: "flex", gap: 16, opacity: url, transform: `translateY(${(1 - url) * 24}px)` }}>
         <Pill bg={C.ink} color="#fff" style={{ height: 70, fontSize: 30, padding: "0 32px" }}>skwirl.parthakholkar.com</Pill>
-        <Pill bg={C.mint} color="#17603f" style={{ height: 70, fontSize: 30, padding: "0 32px" }}>Free while in beta</Pill>
       </div>
     </AbsoluteFill>
   );

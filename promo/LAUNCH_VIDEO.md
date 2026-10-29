@@ -13,7 +13,7 @@
 | 12–18s | The note scrolls to the ingredients. "Audio / On-screen text / Caption / Top comments" | Real app screenshot (demo account) |
 | 18–23s | Lists screen, with Deep Work / Senso-ji / Perfect Days cards | Real app screenshot (demo account) |
 | 23–27s | Claude: "What was that pasta recipe I saved?" → "Searched Skwirl" → the answer | Rebuilt chat, answer text from the demo note |
-| 27–31s | Logo, "The reels you save, finally useful.", the URL, "Free while in beta" | |
+| 27–31s | Logo, "The reels you save, finally useful.", the URL | |
 
 Headlines appear word by word on the voice's own word timestamps, so the video reads with the sound off.
 
