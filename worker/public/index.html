@@ -19,10 +19,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@300..1000,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@800,1&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Design language borrowed from the portfolio's "ethereal" theme: cool lavender-white
-   ground, lavender / mint / peach pastels, Recursive (Casual for display, Linear for UI),
+   ground, lavender / mint / peach pastels, Recursive Casual (display) + Rethink Sans (UI),
    generously rounded corners, soft low-alpha elevation. Light mode only, by choice. */
 :root {
   --bg: #f8f7ff; --surface: #ffffff; --ink: #1d1b2e; --muted: #6a6880; --line: #ebe8f7;
@@ -32,7 +32,7 @@
   --lift-1: 0 1px 2px rgb(60 50 120 / .05), 0 6px 18px rgb(60 50 120 / .07);
   --lift-2: 0 4px 10px rgb(60 50 120 / .08), 0 18px 40px rgb(60 50 120 / .12);
   --display: "Recursive", ui-rounded, system-ui, sans-serif;
-  --ui: "Recursive", ui-sans-serif, -apple-system, system-ui, sans-serif;
+  --ui: "Rethink Sans", ui-sans-serif, -apple-system, system-ui, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 * { box-sizing: border-box; }
@@ -56,7 +56,7 @@ button { cursor: pointer; }
 
 header { padding: 22px 0 6px; }
 .topbar { position: sticky; top: calc(env(safe-area-inset-top) + 10px); z-index: 4; width: fit-content; margin-top: 18px; }
-.topbar .btn { background: rgb(255 255 255 / .84); -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%); }
+.topbar .btn, .topbar .btn.soft { background: var(--ink); color: #fff; box-shadow: 0 6px 18px rgb(29 27 46 / .22); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .brand { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 32px; line-height: 1; letter-spacing: -.02em; margin: 0; flex: 1; display: inline-flex; align-items: center; gap: .26em; }
 .brand img { width: 1.02em; height: 1.02em; flex: none; }
@@ -386,6 +386,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .tabs button { border: 0; background: transparent; border-radius: 999px; height: 34px; padding: 0 16px; font-weight: 500; color: var(--muted); }
 .tabs button[aria-selected=true] { background: #fff; color: var(--ink); box-shadow: var(--lift-1); }
 ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+.inline-actions + ol.steps { margin-top: 20px; }
 ol.steps li { counter-increment: s; position: relative; padding: 2px 0 16px 42px; }
 ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--lavender); display: grid; place-items: center; font-weight: 600; font-size: 14px; }
 ol.steps li b { display: block; }

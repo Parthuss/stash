@@ -95,11 +95,11 @@ const page = (title: string, body: string, meta: string) => `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)} · Skwirl</title>${meta}
 <link rel="icon" href="/icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@300..1000,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@800,1&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root { --bg:#f8f7ff; --ink:#1d1b2e; --muted:#6a6880; --lavender:#dcd8ff; --peach:#ffd8cb; }
 * { box-sizing: border-box; }
-body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.55 Recursive, system-ui, sans-serif; padding:24px 18px 60px; }
+body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.55 "Rethink Sans", system-ui, sans-serif; padding:24px 18px 60px; }
 main { max-width:640px; margin:0 auto; }
 .top { display:inline-flex; align-items:center; gap:7px; font-family:Recursive, system-ui, sans-serif; font-weight:800; font-variation-settings:"CASL" 1; font-size:26px; color:inherit; text-decoration:none; }
 .top img { width:27px; height:27px; }

@@ -1,20 +1,21 @@
 import React from "react";
 import { AbsoluteFill, continueRender, delayRender, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import type { Caption } from "@remotion/captions";
+import { loadFont as loadRethink } from "@remotion/google-fonts/RethinkSans";
 import { ACORN, CENTRELINE, CENTRELINE_LENGTH, MAX_WIDTH, TAIL } from "./markGeometry";
 
-// Recursive, as on the site: Casual (CASL 1) for display, Linear (CASL 0, the default) for UI.
-// @remotion/google-fonts can't set the CASL axis, so load Google's variable CSS directly.
+// As on the site: Recursive Casual (CASL 1, 800) for display, Rethink Sans for UI.
+// @remotion/google-fonts can't set Recursive's CASL axis, so load Google's CSS for that instance directly.
 if (typeof document !== "undefined" && !document.getElementById("recursive")) {
   const h = delayRender("Recursive font");
   const l = Object.assign(document.createElement("link"), { id: "recursive", rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@300..1000,0..1&display=block" });
-  l.onload = () => Promise.all(["800 100px Recursive", "500 30px Recursive"].map((x) => document.fonts.load(x))).then(() => continueRender(h));
+    href: "https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@800,1&display=block" });
+  l.onload = () => document.fonts.load("800 100px Recursive").then(() => continueRender(h));
   l.onerror = () => continueRender(h);
   document.head.appendChild(l);
 }
 export const display = "Recursive";
-export const ui = "Recursive";
+export const ui = loadRethink("normal", { weights: ["400", "500", "600"] }).fontFamily;
 export const D: React.CSSProperties = { fontFamily: display, fontWeight: 800, fontVariationSettings: '"CASL" 1' };
 
 // The app's own tokens (worker/public/index.html :root).

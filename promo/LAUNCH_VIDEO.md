@@ -15,7 +15,7 @@
 | 23–27s | Claude: "What was that pasta recipe I saved?" → "Searched Skwirl" → the answer | Rebuilt chat, answer text from the demo note |
 | 27–31s | Logo, "The reels you save, finally useful.", the URL | |
 
-Headlines appear word by word (Recursive Casual, loaded from Google Fonts in `kit.tsx` so the CASL axis works) on the voice's own word timestamps, so the video reads with the sound off.
+Headlines appear word by word (Recursive Casual, loaded from Google Fonts in `kit.tsx` so the CASL axis works; small text is Rethink Sans) on the voice's own word timestamps, so the video reads with the sound off.
 
 ## Free tools used
 

@@ -22,7 +22,7 @@ doesn't wait to be asked.**
 
 ## 2026-11-03: matching Stashr AI, still free
 
-Fonts are Recursive (Casual display, Linear UI). Added: OAuth 2.1 for the connector at `POST /mcp`
+Fonts: Recursive Casual for display, Rethink Sans for UI. Added: OAuth 2.1 for the connector at `POST /mcp`
 (`worker/src/oauth.ts`; consent page `public/authorize.html` reuses the web sign-in token;
 `/mcp/<token>` still works), a `save_link` MCP tool, Instagram export import (`POST /v1/import`;
 the app unzips on-device; imports queue behind live saves at 5/day per person on the shared key,
