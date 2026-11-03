@@ -40,7 +40,7 @@ visual language of the portfolio's "ethereal" theme (`portfolio-v2/components/et
 - **Light mode only.** Ground `#f8f7ff`, soft drifting lavender/peach orbs behind content.
 - **Pastels:** lavender `#dcd8ff`, mint `#cdf3e1`, peach `#ffd8cb`, sky `#d6ebff`, butter `#fff0c4`. Each topic gets a fixed tint; cards lead with a big serif initial until real thumbnails exist.
 - **Peach means "unused"** (the badge and counter). It's the one semantic colour: the unused count is the product's core metric.
-- **Type:** Calistoga (soft, chunky display; its rounded, ink-trapped curves echo the tail mark) for the wordmark, titles and section heads; Rethink Sans for UI and body. Replaced Gloock + Familjen Grotesk on 2026-11-03: the sharp editorial serif read as generic AI-landing-page type.
+- **Type:** Recursive, one variable family: Casual (CASL 1, weight 800) for the wordmark, titles and section heads; Linear (CASL 0) for UI and body. Picked by the owner on 2026-11-03 over Calistoga + Rethink Sans (which had replaced Gloock + Familjen Grotesk the same day): friendlier and less "cookbook serif", and one family means no pairing to get wrong.
 - **Shape:** generous radii (cards 24px, hero 32px, sheets 28px, everything interactive is a pill), soft low-alpha elevation instead of borders.
 - **Logo (2026-10-29):** a squirrel tail drawn as one tapered swirl, coral acorn tucked in the curl. Sources and rules in `design/logo/`.
 - **Motion:** cards rise + fade with a short stagger, press = scale .97, bottom sheet slides in; all disabled under reduced-motion.

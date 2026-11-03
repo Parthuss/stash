@@ -9,13 +9,13 @@
 |---|---|---|
 | 0–4s | A wall of saved reels piles up, then goes grey: "You save a reel, then you never see it again." | Illustration |
 | 4–7s | The tail draws itself along its own centreline, the acorn drops in, "Skwirl" wipes on | The real logo geometry (`design/logo`) |
-| 7–12s | A reel → iPhone share sheet → tap Skwirl → "Saved to Skwirl" | Rebuilt UI; the alert text is the Shortcut's real wording |
-| 12–18s | The note scrolls to the ingredients. "Audio / On-screen text / Caption / Top comments" | Real app screenshot (demo account) |
-| 18–23s | Lists screen, with Deep Work / Senso-ji / Perfect Days cards | Real app screenshot (demo account) |
+| 7–12s | The reel fills the frame, the iPhone share sheet slides up, tap Skwirl; the reel and a swarm of reels from TikTok, YouTube, X and Threads spiral into the mark. "Saved to Skwirl" | Rebuilt UI; the alert text is the Shortcut's real wording |
+| 12–18s | On ink: the reel comes apart into 3D layers (frames, on-screen text, audio, caption + comments), each gets scanned, then they fold into the note, which scrolls to the ingredients | The note is a real app screenshot (demo account) |
+| 18–23s | Recipe steps fan out like a hand of cards; book and movie covers drop onto a shelf on the word "land" | Titles from the demo account |
 | 23–27s | Claude: "What was that pasta recipe I saved?" → "Searched Skwirl" → the answer | Rebuilt chat, answer text from the demo note |
 | 27–31s | Logo, "The reels you save, finally useful.", the URL | |
 
-Headlines appear word by word on the voice's own word timestamps, so the video reads with the sound off.
+Headlines appear word by word (Recursive Casual, loaded from Google Fonts in `kit.tsx` so the CASL axis works) on the voice's own word timestamps, so the video reads with the sound off.
 
 ## Free tools used
 
