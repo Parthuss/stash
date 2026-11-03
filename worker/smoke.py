@@ -2,7 +2,9 @@
 
 Run against a LOCAL worker only (it mints users and writes notes):
 
-    cd worker && wrangler dev --local --port 8799 --var STASH_SECRET:adm
+    cd worker && wrangler dev --local --port 8799 --var STASH_SECRET:adm --var OPEN_JOIN:0 \
+        --var JOIN_CODE:letmein --var TELEGRAM_BOT_TOKEN:1:fake
+    (on a fresh --persist-to dir with every migrations/*.sql applied)
     .venv/bin/python worker/smoke.py
 """
 import httpx, sys
@@ -46,9 +48,9 @@ assert c.get("/v1/search", headers=h(ann), params={"q": "unique-owner-word"}).js
 def mcp(token, method, params=None, id=1):
     r = c.post(f"/mcp/{token}", json={"jsonrpc": "2.0", "id": id, "method": method, "params": params or {}}); return r
 assert c.post("/mcp/wrong", json={}).status_code == 401
-r = mcp(ann["token"], "initialize", {"protocolVersion": "2025-03-26"}); assert r.json()["result"]["serverInfo"]["name"] == "stash"
+r = mcp(ann["token"], "initialize", {"protocolVersion": "2025-03-26"}); assert r.json()["result"]["serverInfo"]["name"] == "skwirl"
 assert c.post(f"/mcp/{ann['token']}", json={"jsonrpc": "2.0", "method": "notifications/initialized"}).status_code == 202
-assert len(mcp(ann["token"], "tools/list").json()["result"]["tools"]) == 6
+assert len(mcp(ann["token"], "tools/list").json()["result"]["tools"]) == 7  # incl. save_link
 def call(token, name, args): return mcp(token, "tools/call", {"name": name, "arguments": args}).json()["result"]["content"][0]["text"]
 assert "Remotion animation tips" in call(ann["token"], "search_stash", {"query": "remotion stagger"})
 assert "No matching" in call(bob["token"], "search_stash", {"query": "remotion"})
@@ -64,7 +66,7 @@ assert st["owner"]["notes"] == 1 and st["owner"]["used"] == 1, st["owner"]
 assert c.get("/admin/stats").status_code == 401
 # ---- setup, BYO key, export ----
 import os
-assert c.get("/v1/setup", headers=h(ann)).json() == {"owner": False, "saved_from": {"app": 1}, "claude_connected": True, "has_groq_key": False}, c.get("/v1/setup", headers=h(ann)).text
+assert c.get("/v1/setup", headers=h(ann)).json() == {"owner": False, "saved_from": {"app": 1}, "claude_connected": True, "has_groq_key": False, "telegram": {"connected": False}}, c.get("/v1/setup", headers=h(ann)).text
 assert c.put("/v1/settings/groq", headers=h(ann), json={"key": "hello"}).status_code == 400           # bad shape
 assert c.put("/v1/settings/groq", headers=h(ann), json={"key": "gsk_" + "a" * 40}).status_code == 400  # Groq rejects it
 assert c.put("/v1/settings/groq", headers=own, json={"key": "gsk_" + "a" * 40}).status_code == 400     # owner has no per-user key
@@ -241,4 +243,51 @@ assert c.get("/join").json()["invite"] is True
 # ---- public pages ----
 for page in ("/privacy", "/terms", "/og.png"):
     r = c.get(page); assert r.status_code == 200 and (page.endswith(".png") or "Skwirl" in r.text), page
+# ---- OAuth connector (ChatGPT, Claude, any MCP client) ----
+import base64, hashlib, secrets, urllib.parse as up
+tess = user("tess")
+r = c.post("/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "initialize"})
+assert r.status_code == 401 and "resource_metadata" in r.headers["www-authenticate"]
+assert c.get("/.well-known/oauth-authorization-server").json()["code_challenge_methods_supported"] == ["S256"]
+assert c.post("/oauth/register", json={"redirect_uris": ["javascript:alert(1)"]}).status_code == 400
+red = "https://chatgpt.com/connector_platform_oauth_redirect"
+cid = c.post("/oauth/register", json={"redirect_uris": [red], "client_name": "ChatGPT"}).json()["client_id"]
+ver = secrets.token_urlsafe(48); chal = base64.urlsafe_b64encode(hashlib.sha256(ver.encode()).digest()).rstrip(b"=").decode()
+q = {"client_id": cid, "redirect_uri": red, "response_type": "code", "code_challenge": chal, "code_challenge_method": "S256", "state": "s1"}
+assert "/authorize.html?" in c.get("/oauth/authorize", params=q).headers["location"]
+assert c.get("/oauth/authorize", params={**q, "redirect_uri": "https://evil.example/cb"}).status_code == 400
+assert c.post("/oauth/approve", json={**q, "allow": True}).status_code == 401
+def code_for():
+    back = c.post("/oauth/approve", headers=h(tess), json={**q, "allow": True}).json()["redirect"]
+    p = up.parse_qs(up.urlparse(back).query); assert p["state"] == ["s1"]; return p["code"][0]
+tk = lambda **f: c.post("/oauth/token", data={"client_id": cid, "redirect_uri": red, **f})
+assert tk(grant_type="authorization_code", code=code_for(), code_verifier="x" * 50).status_code == 400  # PKCE
+code = code_for(); t = tk(grant_type="authorization_code", code=code, code_verifier=ver).json()
+assert tk(grant_type="authorization_code", code=code, code_verifier=ver).status_code == 400            # single use
+oh = {"Authorization": "Bearer " + t["access_token"]}
+init = c.post("/mcp", headers=oh, json={"jsonrpc": "2.0", "id": 1, "method": "initialize"}).json()["result"]
+assert "recipe" in init["instructions"] and "technical" not in init["instructions"]            # guest wording
+saved = c.post("/mcp", headers=oh, json={"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+               "params": {"name": "save_link", "arguments": {"url": "https://www.instagram.com/reel/TESS1/"}}}).json()
+assert "Saved" in saved["result"]["content"][0]["text"], saved
+assert [x["url"] for x in c.get("/v1/captures", headers=h(tess)).json()["captures"]] == ["https://www.instagram.com/reel/TESS1/"]
+t2 = tk(grant_type="refresh_token", refresh_token=t["refresh_token"]).json(); assert "access_token" in t2
+assert tk(grant_type="refresh_token", refresh_token=t["refresh_token"]).status_code == 400             # rotated
+c.post("/v1/token/rotate", headers=h(tess))
+assert c.post("/mcp", headers={"Authorization": "Bearer " + t2["access_token"]}, json={"jsonrpc": "2.0", "id": 1, "method": "ping"}).status_code == 401
+# ---- Instagram export import: capped, behind live saves, drip-fed ----
+ivy = user("ivy")
+urls = [f"https://www.instagram.com/reel/IMP{i:03d}/" for i in range(120)] + ["https://www.instagram.com/someone/", "https://youtube.com/@x"]
+imp = c.post("/v1/import", headers=h(ivy), json={"urls": urls}).json(); assert imp["added"] == 100 and imp["skipped_over_cap"] == 20, imp
+c.post("/v1/ingest", headers=h(ivy), json={"url": "https://www.instagram.com/reel/IVYLIVE/"})
+assert c.get("/v1/captures", headers=h(ivy)).json()["import"]["total"] == 100
+assert len(c.get("/v1/captures", headers=h(ivy)).json()["captures"]) == 1                           # no 100 Reading cards
+for x in claim_ids(60): c.post("/complete", headers=adm, json={"id": x, "ok": True, "title": "t"})     # drain everything claimable
+left = c.get("/v1/captures", headers=h(ivy)).json()
+assert left["captures"] == [] and left["import"]["done"] == 5, left                                   # live done, 5 imports/day
+# ---- Telegram: unsigned calls refused, unlinked chats can't save ----
+assert c.post("/webhook/telegram", json={"message": {"chat": {"id": 1}, "text": "/start"}}).status_code == 403
+sec = hashlib.sha256(b"telegram|adm").hexdigest()[:48]
+r = c.post("/webhook/telegram", headers={"x-telegram-bot-api-secret-token": sec}, json={"message": {"chat": {"id": 9}, "text": "https://www.instagram.com/reel/TG1/"}})
+assert r.status_code == 200 and c.get("/v1/setup", headers=h(ivy)).json()["telegram"] == {"connected": False}
 print("ALL OK")

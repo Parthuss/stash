@@ -384,7 +384,8 @@ export default {
       const staleBefore = new Date(Date.now() - 30 * 60_000).toISOString();
       // Live saves first. Imported old saves only fill leftover capacity: per person a daily slice
       // (bigger with their own Groq key), and on the shared key only while today's shared use is low,
-      // so one big import can't eat everyone's free allowance.
+      // so one big import can't eat everyone's free allowance. Counted at claim time, so parallel
+      // runners can't overshoot.
       const day = new Date(Date.now() - 86_400_000).toISOString();
       const row = await env.DB.prepare(
         `SELECT c.* FROM capture c LEFT JOIN user u ON u.id = c.user_id
@@ -392,11 +393,11 @@ export default {
            AND c.attempts < ?
            ${guestsOnly ? "AND c.user_id IS NOT NULL" : ""}
            AND (c.source != 'import' OR (
-             (SELECT COUNT(*) FROM capture d WHERE d.user_id IS c.user_id AND d.source = 'import' AND d.processed_at > ?)
+             (SELECT COUNT(*) FROM capture d WHERE d.user_id IS c.user_id AND d.source = 'import' AND d.claimed_at > ?)
                < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL THEN ? ELSE ? END
              AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR
                (SELECT COUNT(*) FROM capture e LEFT JOIN user v ON v.id = e.user_id
-                WHERE e.processed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)))
+                WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)))
          ORDER BY (c.source = 'import'), c.captured_at LIMIT 1`,
       )
         .bind(staleBefore, MAX_ATTEMPTS, day, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
