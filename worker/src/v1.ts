@@ -87,9 +87,9 @@ export async function adminOverview(env: Env) {
     `SELECT (SELECT COUNT(*) FROM user) AS users,
             (SELECT COUNT(*) FROM capture WHERE captured_at >= ?) AS saves_24h,
             (SELECT COUNT(*) FROM note WHERE created_at >= ?) AS notes_24h,
-            (SELECT COUNT(*) FROM capture WHERE status IN ('pending','claimed') AND attempts < 3) AS waiting,
-            (SELECT COUNT(*) FROM capture WHERE status = 'pending' AND attempts >= 3) AS failed,
-            (SELECT MIN(captured_at) FROM capture WHERE status IN ('pending','claimed') AND attempts < 3) AS oldest_waiting,
+            (SELECT COUNT(*) FROM capture WHERE status IN ('pending','claimed') AND attempts < 3 AND source != 'import') AS waiting,
+            (SELECT COUNT(*) FROM capture WHERE status = 'pending' AND attempts >= 3 AND source != 'import') AS failed,
+            (SELECT MIN(captured_at) FROM capture WHERE status IN ('pending','claimed') AND attempts < 3 AND source != 'import') AS oldest_waiting,
             (SELECT MAX(created_at) FROM note) AS last_note,
             (SELECT COALESCE(SUM(prompt_tokens + completion_tokens), 0) FROM usage_event WHERE kind = 'groq' AND key_type = 'shared' AND at >= ?) AS shared_tokens_24h,
             (SELECT COALESCE(SUM(seconds), 0) FROM usage_event WHERE kind = 'groq' AND action = 'whisper' AND at >= ?) AS whisper_sec_24h`,
@@ -218,6 +218,9 @@ export function ftsQuery(raw: string): string {
 }
 
 export const DAILY_SHARED = 30, DAILY_OWN_KEY = 200;
+// Old saves from an Instagram export: how many one person can queue, by key type.
+export const IMPORT_SHARED = 100, IMPORT_OWN_KEY = 1000;
+const POST_URL = /^https:\/\/(?:www\.)?instagram\.com\/(?:p|reel|reels|tv)\/[\w-]+\/?$/i;
 const NOTE_COLUMNS = "id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id, share_id";
 
 export async function handleV1(
@@ -248,8 +251,8 @@ export async function handleV1(
     if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, TikTok, YouTube, X and Threads links." }, 400);
     if (userId) {  // per-user brakes so one account can't flood the queue
       const q = await env.DB.prepare(
-        `SELECT SUM(status IN ('pending','claimed')) AS waiting,
-                SUM(captured_at > ?) AS today,
+        `SELECT SUM(status IN ('pending','claimed') AND source != 'import') AS waiting,
+                SUM(captured_at > ? AND source != 'import') AS today,
                 (SELECT groq_key_enc IS NOT NULL FROM user WHERE id = ?) AS own_key
          FROM capture WHERE user_id = ?`,
       ).bind(new Date(Date.now() - 86_400_000).toISOString(), userId, userId)
@@ -298,12 +301,43 @@ export async function handleV1(
     return json({ ok: true });
   }
 
+  // Bulk-queue old Instagram saves (the app reads the export file on the device; only links arrive).
+  // They wait behind everyone's live saves and are drip-processed (see /claim), so no daily cap here.
+  if (path === "/v1/import" && request.method === "POST") {
+    const body = (await request.json().catch(() => null)) as { urls?: unknown } | null;
+    if (!Array.isArray(body?.urls)) return json({ error: "need urls" }, 400);
+    const urls = [...new Set(body!.urls.filter((u): u is string => typeof u === "string").map((u) => u.trim().replace(/^http:/, "https:")).filter((u) => POST_URL.test(u)))];
+    if (!urls.length) return json({ error: "No Instagram posts found in that file." }, 400);
+    const have = await env.DB.prepare(
+      "SELECT COUNT(*) AS n, (SELECT groq_key_enc IS NOT NULL FROM user WHERE id = ?) AS own_key FROM capture WHERE user_id IS ? AND source = 'import'",
+    ).bind(userId, userId).first<{ n: number; own_key: number | null }>();
+    const cap = userId === null ? 100_000 : have?.own_key ? IMPORT_OWN_KEY : IMPORT_SHARED;
+    const room = Math.max(0, cap - (have?.n ?? 0));
+    const take = urls.slice(0, room);  // the export lists newest first
+    const now = new Date().toISOString();
+    let added = 0;
+    for (let i = 0; i < take.length; i += 50) {
+      const res = await env.DB.batch(take.slice(i, i + 50).map((u) => env.DB.prepare(
+        `INSERT OR IGNORE INTO capture (id, source, permalink, permalink_ok, status, attempts, captured_at, user_id)
+         VALUES (?, 'import', ?, 1, 'pending', 0, ?, ?)`,
+      ).bind(crypto.randomUUID().replace(/-/g, "").slice(0, 16), u, now, userId)));
+      added += res.reduce((n, r) => n + (r.meta.changes ?? 0), 0);
+    }
+    await logEvent(env, userId, "api", "import");
+    return json({ found: urls.length, added, skipped_over_cap: urls.length - take.length, cap });
+  }
+
   if (path === "/v1/captures" && request.method === "GET") {
     const { results } = await env.DB.prepare(
       `SELECT id, permalink, captured_at, status, attempts, error FROM capture
-       WHERE user_id IS ? AND status != 'done' ORDER BY captured_at DESC LIMIT 50`,
+       WHERE user_id IS ? AND status != 'done' AND source != 'import' ORDER BY captured_at DESC LIMIT 50`,
     ).bind(userId).all<any>();
+    const imp = await env.DB.prepare(
+      `SELECT COUNT(*) AS total, SUM(status = 'done') AS done, SUM(status != 'done' AND attempts >= 3) AS failed
+       FROM capture WHERE user_id IS ? AND source = 'import'`,
+    ).bind(userId).first<{ total: number; done: number | null; failed: number | null }>();
     return json({
+      import: imp?.total ? { total: imp.total, done: imp.done ?? 0, failed: imp.failed ?? 0 } : null,
       captures: (results ?? []).map((r) => {
         const failed = r.status === "pending" && r.attempts >= 3;
         return { id: r.id, url: r.permalink, at: r.captured_at, state: failed ? "failed" : "processing", reason: friendlyReason(r.error, failed) };

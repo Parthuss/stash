@@ -95,13 +95,14 @@ function render() {
   const caps = filter === "all" && !$("q").value.trim() ? captures.map(capCard).join("") : "";
   $("list").innerHTML = (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
 }
-let captures = [], loaded = false, known = null, pollTimer = null;
+let captures = [], loaded = false, known = null, pollTimer = null, importInfo = null;
 async function load() {
   if (!loaded) $("list").innerHTML = skeleton();
   const q = $("q").value.trim();
   const [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]);
   if (!nr.ok) { toast("Couldn't load your saves. Try again."); return; }
-  notes = (await nr.json()).notes; captures = cr.ok ? (await cr.json()).captures : []; loaded = true;
+  const cj = cr.ok ? await cr.json() : {};
+  notes = (await nr.json()).notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showImport();
   // A note we hadn't seen before means something just finished processing.
   const ids = new Set(notes.map((n) => n.id));
   if (known && !q) { const fresh = notes.find((n) => !known.has(n.id)); if (fresh) toast("Ready: " + fresh.title); }
@@ -459,3 +460,65 @@ $("mentionList").addEventListener("click", async (e) => {
 $("list").addEventListener("click", (e) => { if (e.target.closest("[data-howto]")) openSetup(false); });
 // A broken cover image falls back to the card's serif initial underneath it.
 document.addEventListener("error", (e) => { if (e.target && e.target.tagName === "IMG" && (e.target.classList.contains("thumb") || e.target.closest(".kind"))) e.target.remove(); }, true);
+
+// ---- Import old Instagram saves from Meta's data export --------------------
+// The export is a ZIP (often huge, with media), so read it in place: find saved_* files through the
+// central directory and inflate just those with the browser's own DecompressionStream.
+const POST_RE = /https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|reels|tv)\/[\w-]+/gi;
+async function zipTexts(file, want) {
+  const u32 = (v, o) => v.getUint32(o, true), u16 = (v, o) => v.getUint16(o, true);
+  const u64 = (v, o) => u32(v, o) + u32(v, o + 4) * 2 ** 32;
+  const view = async (start, len) => new DataView(await file.slice(start, start + len).arrayBuffer());
+  const tailLen = Math.min(file.size, 65557), tail = await view(file.size - tailLen, tailLen);
+  let e = -1;
+  for (let i = tailLen - 22; i >= 0; i--) if (u32(tail, i) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error("not a zip");
+  let count = u16(tail, e + 10), cdLen = u32(tail, e + 12), cdOff = u32(tail, e + 16);
+  if (cdOff === 0xffffffff || count === 0xffff) {  // zip64
+    const loc = await view(file.size - tailLen + e - 20, 20);
+    const z = await view(u64(loc, 8), 56);
+    count = u64(z, 32); cdLen = u64(z, 40); cdOff = u64(z, 48);
+  }
+  const cd = await view(cdOff, cdLen), out = [];
+  for (let p = 0, n = 0; n < count && u32(cd, p) === 0x02014b50; n++) {
+    const method = u16(cd, p + 10), nameLen = u16(cd, p + 28), extraLen = u16(cd, p + 30), commentLen = u16(cd, p + 32);
+    let csize = u32(cd, p + 20), usize = u32(cd, p + 24), off = u32(cd, p + 42);
+    const name = new TextDecoder().decode(new Uint8Array(cd.buffer, cd.byteOffset + p + 46, nameLen));
+    for (let x = p + 46 + nameLen; x < p + 46 + nameLen + extraLen; ) {  // zip64 sizes/offset live in extra field 0x0001
+      const id = u16(cd, x), len = u16(cd, x + 2); let y = x + 4;
+      if (id === 1) { if (usize === 0xffffffff) { usize = u64(cd, y); y += 8; } if (csize === 0xffffffff) { csize = u64(cd, y); y += 8; } if (off === 0xffffffff) off = u64(cd, y); }
+      x += 4 + len;
+    }
+    p += 46 + nameLen + extraLen + commentLen;
+    if (!want(name)) continue;
+    const lh = await view(off, 30), start = off + 30 + u16(lh, 26) + u16(lh, 28);
+    const raw = file.slice(start, start + csize);
+    const data = method === 0 ? raw : method === 8 ? await new Response(raw.stream().pipeThrough(new DecompressionStream("deflate-raw"))).blob() : null;
+    if (data) out.push(await data.text());
+  }
+  return out;
+}
+async function importFile(file) {
+  const msg = $("impMsg"); msg.textContent = "Reading the file…";
+  let texts;
+  try {
+    texts = /\.zip$/i.test(file.name) || file.type.includes("zip")
+      ? await zipTexts(file, (n) => /saved[^/]*\.(json|html)$/i.test(n))
+      : [await file.text()];
+  } catch { msg.textContent = "Couldn't read that file. Pick the ZIP Instagram sent you, or the saved_posts file inside it."; return; }
+  const urls = [...new Set(texts.join("\n").replace(/\\\//g, "/").match(POST_RE) || [])];
+  if (!urls.length) { msg.textContent = "No saved posts in that file. When you export, pick Saved under Customize information."; return; }
+  msg.textContent = `Found ${urls.length} saved posts. Adding them…`;
+  const r = await api("/v1/import", { method: "POST", body: JSON.stringify({ urls }) }).catch(() => null);
+  const b = r ? await r.json().catch(() => ({})) : {};
+  if (!r || !r.ok) { msg.textContent = b.error || "Couldn't add them right now. Try again."; return; }
+  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. They'll show up in your library about 5 a day, or much faster with your own Groq key.`;
+  load();
+}
+function showImport() {
+  const i = importInfo;
+  $("bImport").textContent = i ? (i.done >= i.total - i.failed ? "Done" : `${i.done} / ${i.total}`) : "Optional";
+  $("bImport").className = "badge " + (i && i.done >= i.total - i.failed ? "done" : "opt");
+  if (i && !$("impMsg").textContent) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.`;
+}
+$("impFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });

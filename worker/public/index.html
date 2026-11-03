@@ -702,6 +702,19 @@ body.on-phone .phone-handoff { display: none; }
     </div>
   </details>
 
+  <details class="group" id="gImport">
+    <summary><div style="flex:1"><h2>Bring in your old Instagram saves</h2><small>Everything already in your Saved folder</small></div><span class="badge opt" id="bImport">Optional</span></summary>
+    <div class="gbody">
+      <ol class="steps">
+        <li><b>Ask Instagram for your saves</b><span>Instagram → your profile → ☰ → Accounts Center → Your information and permissions → Export your information → Create export → Export to device. Under <em>Customize information</em> pick only <em>Saved</em>, set Format to <em>JSON</em>, then Start export. Instagram emails you when it's ready, usually within a few hours.</span></li>
+        <li><b>Pick the file here</b><span>Choose the downloaded ZIP (or the saved_posts file inside it). It's read on this device. Only the post links are sent to Skwirl.</span>
+          <div class="inline-actions"><label class="btn sm" for="impFile">Choose export file</label><input id="impFile" type="file" accept=".zip,.json,.html,application/zip,application/json,text/html" hidden></div>
+          <p class="msg" id="impMsg" role="status"></p></li>
+      </ol>
+      <p style="color:var(--muted);font-size:14px" id="impNote">Up to 100 old saves, read about 5 a day after your new ones so those stay fast. With your own free Groq key (below) it's up to 1,000 old saves at 150 a day.</p>
+    </div>
+  </details>
+
   <details class="group" id="gGroq">
     <summary><div style="flex:1"><h2>Use your own Groq key</h2><small>Free, faster, no shared limits</small></div><span class="badge opt" id="bGroq">Optional</span></summary>
     <div class="gbody" id="groqBody">
