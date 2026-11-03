@@ -95,24 +95,24 @@ const page = (title: string, body: string, meta: string) => `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)} · Skwirl</title>${meta}
 <link rel="icon" href="/icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600&family=Gloock&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root { --bg:#f8f7ff; --ink:#1d1b2e; --muted:#6a6880; --lavender:#dcd8ff; --peach:#ffd8cb; }
 * { box-sizing: border-box; }
-body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.55 "Familjen Grotesk", system-ui, sans-serif; padding:24px 18px 60px; }
+body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.55 "Rethink Sans", system-ui, sans-serif; padding:24px 18px 60px; }
 main { max-width:640px; margin:0 auto; }
-.top { display:inline-flex; align-items:center; gap:7px; font-family:Gloock, Georgia, serif; font-size:26px; color:inherit; text-decoration:none; }
+.top { display:inline-flex; align-items:center; gap:7px; font-family:Calistoga, Georgia, serif; font-size:26px; color:inherit; text-decoration:none; }
 .top img { width:27px; height:27px; }
 .cover { display:block; width:100%; max-height:320px; object-fit:cover; border-radius:28px; margin:18px 0 16px; }
 .tag { display:inline-block; margin-top:18px; padding:3px 12px; border-radius:999px; background:var(--lavender); font-size:13px; font-weight:500; text-transform:capitalize; }
-h1 { font-family:Gloock, Georgia, serif; font-weight:400; font-size:clamp(30px,7vw,44px); line-height:1.1; margin:12px 0 14px; }
-h2 { font-family:Gloock, Georgia, serif; font-weight:400; font-size:23px; margin:26px 0 6px; }
+h1 { font-family:Calistoga, Georgia, serif; font-weight:400; font-size:clamp(30px,7vw,44px); line-height:1.1; margin:12px 0 14px; }
+h2 { font-family:Calistoga, Georgia, serif; font-weight:400; font-size:23px; margin:26px 0 6px; }
 .note { background:#fff; border-radius:28px; padding:6px 22px 18px; box-shadow:0 6px 18px rgb(60 50 120 / .07); }
 ol, ul { padding-left:22px; } li { margin-bottom:6px; }
 .btn { display:inline-flex; align-items:center; height:48px; padding:0 22px; border-radius:999px; background:var(--ink); color:#fff; font-weight:600; text-decoration:none; }
 .btn.soft { background:#fff; color:var(--ink); box-shadow:0 6px 18px rgb(60 50 120 / .07); }
 .cta { margin-top:34px; background:var(--peach); border-radius:28px; padding:22px; }
-.cta b { font-family:Gloock, Georgia, serif; font-weight:400; font-size:24px; }
+.cta b { font-family:Calistoga, Georgia, serif; font-weight:400; font-size:24px; }
 .cta p { margin:6px 0 16px; }
 </style></head>
 <body><main><a class="top" href="/"><img src="/mark.svg" alt="">Skwirl</a>${body}</main></body></html>`;

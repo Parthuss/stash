@@ -1,12 +1,12 @@
 import React from "react";
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import type { Caption } from "@remotion/captions";
-import { loadFont as loadGloock } from "@remotion/google-fonts/Gloock";
-import { loadFont as loadFamiljen } from "@remotion/google-fonts/FamiljenGrotesk";
+import { loadFont as loadCalistoga } from "@remotion/google-fonts/Calistoga";
+import { loadFont as loadRethink } from "@remotion/google-fonts/RethinkSans";
 import { ACORN, CENTRELINE, CENTRELINE_LENGTH, MAX_WIDTH, TAIL } from "./markGeometry";
 
-export const display = loadGloock().fontFamily;
-export const ui = loadFamiljen("normal", { weights: ["400", "500", "600"] }).fontFamily;
+export const display = loadCalistoga().fontFamily;
+export const ui = loadRethink("normal", { weights: ["400", "500", "600"] }).fontFamily;
 
 // The app's own tokens (worker/public/index.html :root).
 export const C = {
@@ -47,7 +47,7 @@ export const Kinetic: React.FC<{
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
   return (
-    <div style={{ fontFamily: display, color: C.ink, letterSpacing: "-0.03em", lineHeight: 1.04, ...style }}>
+    <div style={{ fontFamily: display, color: C.ink, letterSpacing: "-0.015em", lineHeight: 1.06, ...style }}>
       {captions.slice(skip).map((c, i) => {
         const at = voAt + (c.startMs / 1000) * fps - lead;
         const s = spring({ frame: f - at, fps, config: { damping: 18, stiffness: 160 } });

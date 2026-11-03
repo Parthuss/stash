@@ -68,7 +68,7 @@ const Reveal: React.FC = () => {
     <AbsoluteFill style={{ display: "grid", placeItems: "center", opacity: 1 - out, transform: `scale(${1 - out * 0.06})` }}>
       <div style={{ display: "flex", alignItems: "center", gap: 40, transform: `translateX(${(1 - word) * 150}px)` }}>
         <Mark id="reveal" size={280} draw={draw} acorn={f >= 158 ? acorn : 0} />
-        <div style={{ fontFamily: display, fontSize: 250, letterSpacing: "-0.035em", color: C.ink, lineHeight: 1, clipPath: `inset(-20% ${(1 - word) * 100}% -20% 0)` }}>Skwirl</div>
+        <div style={{ fontFamily: display, fontSize: 250, letterSpacing: "-0.02em", color: C.ink, lineHeight: 1, clipPath: `inset(-20% ${(1 - word) * 100}% -20% 0)` }}>Skwirl</div>
       </div>
     </AbsoluteFill>
   );
@@ -165,7 +165,7 @@ const PhoneStage: React.FC = () => {
 };
 const Left: React.FC<{ children: React.ReactNode; inAt: number; outAt: number }> = ({ children, inAt, outAt }) => {
   const s = useInOut(inAt - S.share, outAt - S.share, 30);
-  return <div style={{ position: "absolute", left: 170, top: 0, bottom: 0, width: 900, display: "flex", flexDirection: "column", justifyContent: "center", gap: 40, ...s }}>{children}</div>;
+  return <div style={{ position: "absolute", left: 170, top: 0, bottom: 0, width: 990, display: "flex", flexDirection: "column", justifyContent: "center", gap: 40, ...s }}>{children}</div>;
 };
 const Stagger: React.FC<{ items: React.ReactNode[]; from: number; every: number }> = ({ items, from, every }) => {
   const f = useCurrentFrame(); // sequence-local, like `from`
@@ -188,11 +188,11 @@ const Story: React.FC = () => (
       <Stagger from={262 - S.share} every={4} items={["Instagram", "TikTok", "YouTube", "X", "Threads"].map((n) => <Pill key={n}>{n}</Pill>)} />
     </Left>
     <Left inAt={362} outAt={534}>
-      <Kinetic captions={cap(noteVo)} voAt={VO.note - S.share} style={{ fontSize: 86 }} breakAfter={[4]} />
+      <Kinetic captions={cap(noteVo)} voAt={VO.note - S.share} style={{ fontSize: 78 }} breakAfter={[4, 9]} />
       <Stagger from={392 - S.share} every={8} items={[["🔊", "Audio"], ["🔤", "On-screen text"], ["✍️", "Caption"], ["💬", "Top comments"]].map(([e, n]) => <Pill key={n} bg={C.butter}>{e} {n}</Pill>)} />
     </Left>
     <Left inAt={542} outAt={678}>
-      <Kinetic captions={cap(lists)} voAt={VO.lists - S.share} style={{ fontSize: 86 }} breakAfter={[2]} />
+      <Kinetic captions={cap(lists)} voAt={VO.lists - S.share} style={{ fontSize: 78 }} breakAfter={[2, 5]} />
       <Stagger from={590 - S.share} every={7} items={MENTIONS.map(([e, n, k, c]) => (
         <div key={n} style={{ display: "flex", alignItems: "center", gap: 16, background: "#fff", borderRadius: 26, padding: "14px 24px 14px 14px", boxShadow: lift, fontFamily: ui }}>
           <span style={{ width: 56, height: 56, borderRadius: "50%", background: c, display: "grid", placeItems: "center", fontSize: 28 }}>{e}</span>
@@ -248,7 +248,7 @@ const Outro: React.FC = () => {
     <AbsoluteFill style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 34 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 26, opacity: lock, transform: `scale(${0.85 + lock * 0.15})` }}>
         <Mark id="outro" size={150} />
-        <span style={{ fontFamily: display, fontSize: 150, letterSpacing: "-0.035em", color: C.ink, lineHeight: 1 }}>Skwirl</span>
+        <span style={{ fontFamily: display, fontSize: 150, letterSpacing: "-0.02em", color: C.ink, lineHeight: 1 }}>Skwirl</span>
       </div>
       <Kinetic captions={cap(outro)} voAt={VO.outro - S.outro} skip={1} style={{ fontSize: 76, textAlign: "center" }} />
       <div style={{ display: "flex", gap: 16, opacity: url, transform: `translateY(${(1 - url) * 24}px)` }}>
