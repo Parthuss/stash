@@ -154,6 +154,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .joinbox input:focus-visible { outline: none; }
 .joinbox:focus-within { box-shadow: var(--lift-1), 0 0 0 2px var(--ink); }
 .joinbox #joinCode:not([hidden]) { border-left: 1px solid var(--line); border-radius: 0; }
+.joinmail { display: block; width: 100%; max-width: 440px; height: 44px; margin: 10px auto 0; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: rgb(255 255 255 / .7); font-size: 15px; }
 .joinbox .btn { height: 48px; flex: none; transition: transform .15s, box-shadow .2s; }
 .joinbox .msg, .joinbox .fine { flex-basis: 100%; }
 .joinwrap .fine { margin-top: 10px; }
@@ -163,7 +164,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .lcopy > .msg:empty { display: none; }
 @media (min-width: 880px) {
   .lhero { grid-template-columns: 1.15fr .85fr; padding-top: 9vh; }
-  .lcopy { text-align: left; } .lhero h1, .lede { margin-left: 0; } .joinbox { margin-left: 0; }
+  .lcopy { text-align: left; } .lhero h1, .lede { margin-left: 0; } .joinbox, .joinmail { margin-left: 0; }
   .joinbox input { text-align: left; }
 }
 
@@ -464,8 +465,9 @@ body.on-phone .phone-handoff { display: none; }
         <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
         <button class="btn" type="submit">Start free</button>
       </form>
+      <input id="joinEmail" form="joinForm" class="joinmail" type="email" autocomplete="email" maxlength="120" placeholder="Email (optional)" aria-label="Email, optional" aria-describedby="joinFine">
       <p id="joinErr" role="alert" class="msg err"></p>
-      <p class="fine" id="joinFine">No email, no password. iPhone, Android or computer.</p>
+      <p class="fine" id="joinFine">No password. Email is optional, only so I can help if you get stuck. iPhone, Android or computer.</p>
     </div>
 
     <!-- The whole product in one 16s loop: a reel → Instagram share → iOS share sheet → Saved → the real

@@ -291,9 +291,11 @@ export default {
         .bind(ip, new Date(Date.now() - 86_400_000).toISOString()).first<{ n: number }>();
       if ((today?.n ?? 0) >= 20) return json({ error: "Too many tries from this network today. Try tomorrow." }, 429);
 
-      const body = (await request.json().catch(() => null)) as { name?: string; code?: string } | null;
+      const body = (await request.json().catch(() => null)) as { name?: string; code?: string; email?: string } | null;
       const name = (body?.name ?? "").trim().slice(0, 40);
       if (!name) return json({ error: "Tell us your name." }, 400);
+      const email = (body?.email ?? "").trim().slice(0, 120) || null;
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right. Fix it or leave it blank." }, 400);
       if (!open && !safeEqual((body?.code ?? "").trim(), env.JOIN_CODE!)) {
         await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
         return json({ error: "That invite code isn't right." }, 403);
@@ -304,7 +306,7 @@ export default {
       // can't be scripted into hundreds of accounts.
       await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
       const user = await createUser(env, name);
-      await env.DB.prepare("UPDATE user SET joined_via = 'invite' WHERE id = ?").bind(user.id).run();
+      await env.DB.prepare("UPDATE user SET joined_via = 'invite', email = ? WHERE id = ?").bind(email, user.id).run();
       await logEvent(env, user.id, "api", "join");
       return json({ token: user.token }, 201);
     }

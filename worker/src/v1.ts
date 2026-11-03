@@ -66,7 +66,7 @@ export async function adminOverview(env: Env) {
   const day = new Date(Date.now() - 86_400_000).toISOString();
   const week = new Date(Date.now() - 7 * 86_400_000).toISOString();
   const { results: users } = await env.DB.prepare(
-    `SELECT COALESCE(u.name, 'owner') AS name, u.id AS id, u.created_at, u.joined_via, u.last_seen,
+    `SELECT COALESCE(u.name, 'owner') AS name, u.id AS id, u.created_at, u.joined_via, u.last_seen, u.email,
        COALESCE(u.mcp_calls, 0) AS mcp_calls, (u.groq_key_enc IS NOT NULL) AS own_key,
        (SELECT COUNT(*) FROM capture c WHERE c.user_id IS u.id) AS saves,
        (SELECT COUNT(*) FROM capture c WHERE c.user_id IS u.id AND c.captured_at >= ?) AS saves_7d,
@@ -79,8 +79,8 @@ export async function adminOverview(env: Env) {
        (SELECT COALESCE(SUM(prompt_tokens + completion_tokens), 0) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'groq' AND e.at >= ?) AS groq_tokens_7d,
        (SELECT COUNT(*) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'api' AND e.at >= ?) AS api_calls_7d,
        (SELECT MAX(at) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'api') AS last_api
-     FROM (SELECT id, name, created_at, joined_via, last_seen, mcp_calls, groq_key_enc FROM user
-           UNION ALL SELECT NULL, NULL, NULL, NULL, NULL, 0, NULL) u
+     FROM (SELECT id, name, created_at, joined_via, last_seen, email, mcp_calls, groq_key_enc FROM user
+           UNION ALL SELECT NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL) u
      ORDER BY u.created_at DESC`,
   ).bind(week, week, week).all();
   const o = await env.DB.prepare(

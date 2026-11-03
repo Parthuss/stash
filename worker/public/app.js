@@ -175,7 +175,7 @@ document.querySelector(".lsign").addEventListener("click", () => { $("signin").o
 $("joinForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const err = $("joinErr"); err.textContent = "";
   let r;
-  try { r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value }) }); }
+  try { r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value, email: $("joinEmail").value }) }); }
   catch { err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({}));
   if (!r.ok) { err.textContent = body.error || "Couldn’t join. Try again."; return; }
@@ -395,7 +395,8 @@ async function openAdmin() {
       <div><dt>Saves (7d)</dt><dd>${u.saves_7d}</dd></div><div><dt>Notes</dt><dd>${u.notes}</dd></div>
       <div><dt>Reopened</dt><dd>${pct}</dd></div><div><dt>Used</dt><dd>${u.used}</dd></div>
       <div><dt>Claude</dt><dd>${u.mcp_calls ? "connected" : "no"}</dd></div><div><dt>Own key</dt><dd>${u.own_key ? "yes" : "no"}</dd></div>
-      <div><dt>Waiting / failed</dt><dd>${u.waiting} / ${u.failed}</dd></div></dl></div>`;
+      <div><dt>Waiting / failed</dt><dd>${u.waiting} / ${u.failed}</dd></div>
+      ${u.email ? `<div><dt>Email</dt><dd><a href="mailto:${esc(u.email)}">${esc(u.email)}</a></dd></div>` : ""}</dl></div>`;
   }).join("");
 }
 $("adminBtn").addEventListener("click", openAdmin);
