@@ -290,6 +290,8 @@ async function refreshSetup() {
   $("setupDot").hidden = phone;   // Claude is recommended, not required: don't nag forever
   $("cmdCode").textContent = `claude mcp add --transport http skwirl ${mcpUrl()}`;
   $("mcpAddr").textContent = mcpUrl();
+  $("gTelegram").hidden = !st.telegram;
+  if (st.telegram) { set("bTelegram", st.telegram.connected, "Optional"); if (!st.telegram.connected) $("bTelegram").className = "badge opt"; $("tgOff").hidden = !st.telegram.connected; }
   $("adminBtn").hidden = !st.owner;
   if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
@@ -522,3 +524,18 @@ function showImport() {
   if (i && !$("impMsg").textContent) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.`;
 }
 $("impFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });
+
+// ---- Telegram: a one-time link opens the bot with a /start code that ties the chat to this account.
+$("tgConnect").addEventListener("click", async () => {
+  const w = window.open("", "_blank");  // open now, inside the tap, so Safari doesn't block it
+  const r = await api("/v1/telegram/link", { method: "POST" }).catch(() => null);
+  const b = r ? await r.json().catch(() => ({})) : {};
+  if (!r || !r.ok) { if (w) w.close(); $("tgMsg").textContent = b.error || "Couldn't make a link. Try again."; return; }
+  if (w) w.location.href = b.url; else location.href = b.url;
+  $("tgMsg").textContent = "Tap Start in Telegram. Then send the bot any reel link.";
+});
+$("tgOff").addEventListener("click", async () => {
+  const r = await api("/v1/telegram", { method: "DELETE" }).catch(() => null);
+  toast(r && r.ok ? "Telegram disconnected." : "Couldn't disconnect. Try again.");
+  refreshSetup();
+});

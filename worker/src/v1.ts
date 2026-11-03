@@ -13,6 +13,7 @@
  */
 import type { Env } from "./index";
 import { fuse, semanticIds } from "./embed";
+import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -151,6 +152,8 @@ export async function deleteUser(env: Env, userId: string): Promise<void> {
     env.DB.prepare("DELETE FROM capture WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM oauth_token WHERE user_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM oauth_code WHERE user_key = ?").bind(userId),
+    env.DB.prepare("DELETE FROM telegram_chat WHERE user_key = ?").bind(userId),
+    env.DB.prepare("DELETE FROM telegram_link WHERE user_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM user WHERE id = ?").bind(userId),
   ]);
 }
@@ -292,7 +295,7 @@ export async function handleV1(
         : `That's ${daily} saves today on the shared AI allowance. Add your own free Groq key in Set up for up to ${DAILY_OWN_KEY} a day.` }, 429);
     }
     // Which front door was used is what the setup checklist reads.
-    const source = ["shortcut", "web", "pwa", "mcp"].includes(body.source ?? "") ? body.source! : "app";
+    const source = ["shortcut", "web", "pwa", "mcp", "telegram"].includes(body.source ?? "") ? body.source! : "app";
     await logEvent(env, userId, "api", "ingest");
     const result = await insertCapture(env, {
       source, permalink: safeUrl, note: (body.note ?? "").slice(0, 500) || null, user_id: userId,
@@ -315,6 +318,7 @@ export async function handleV1(
     await env.DB.batch([
       env.DB.prepare("UPDATE user SET token_hash = ? WHERE id = ?").bind(await sha256(token), userId),
       env.DB.prepare("DELETE FROM oauth_token WHERE user_key = ?").bind(userId),  // connected AI apps too
+      env.DB.prepare("DELETE FROM telegram_chat WHERE user_key = ?").bind(userId),  // and Telegram
     ]);
     await logEvent(env, userId, "api", "token_reset");
     return json({ token });  // shown once; the old token and any connector link stop working now
@@ -419,7 +423,17 @@ export async function handleV1(
       saved_from: counts,
       claude_connected: (u?.mcp_calls ?? 0) > 0,
       has_groq_key: Boolean(u?.groq_key_enc),
+      telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
+  }
+
+  if (path === "/v1/telegram/link" && request.method === "POST") {
+    const link = await telegramLink(env, userId);
+    return link ? json({ url: link }) : json({ error: "Telegram isn't set up on this Skwirl." }, 404);
+  }
+  if (path === "/v1/telegram" && request.method === "DELETE") {
+    await unlinkTelegram(env, userId);
+    return json({ ok: true });
   }
 
   if (path === "/v1/settings/groq") {

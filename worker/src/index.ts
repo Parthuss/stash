@@ -40,6 +40,7 @@
 import { embedMissing } from "./embed";
 import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
+import { handleTelegram, setupTelegram } from "./telegram";
 import { sharePage } from "./share";
 import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
@@ -54,6 +55,7 @@ export interface Env {
   JOIN_CODE?: string; // shared invite code for /join; unset = self-serve joining is closed (unless OPEN_JOIN)
   OPEN_JOIN?: string; // "1" = anyone can join from the landing page, no code (still capped by MAX_JOIN)
   NTFY_TOPIC?: string;
+  TELEGRAM_BOT_TOKEN?: string; // optional: save by messaging the bot (src/telegram.ts)
   // Optional: a fine-grained GitHub token (Actions: read & write, this repo only).
   // When set, a friend's save starts the cloud runner right away instead of
   // waiting for GitHub's cron, which fires every 2-5 hours in practice.
@@ -236,6 +238,12 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";
+    // Saving from somewhere other than the app (an AI app, Telegram): same rules as /v1/ingest.
+    const saveFor = async (userId: string | null, link: string, note: string | undefined, source: string) => {
+      const res = await handleV1(new Request(url.origin + "/v1/ingest", { method: "POST", body: JSON.stringify({ url: link, note, source }) }), env, "/v1/ingest", userId, insertCapture);
+      if (userId && res.status === 202) ctx.waitUntil(kickRunner(env));
+      return res;
+    };
 
     if (path === "/health") {
       return json({ ok: true, ts: new Date().toISOString() });
@@ -272,12 +280,10 @@ export default {
       if (userId === undefined) {
         return new Response('{"error":"unauthorized"}', { status: 401, headers: { "content-type": "application/json", ...(path === "/mcp" ? challengeHeader(url.origin) : {}) } });
       }
-      const save = async (link: string, note?: string) => {
-        const res = await handleV1(new Request(url.origin + "/v1/ingest", { method: "POST", body: JSON.stringify({ url: link, note, source: "mcp" }) }), env, "/v1/ingest", userId, insertCapture);
-        if (userId && res.status === 202) ctx.waitUntil(kickRunner(env));
-        return res;
-      };
-      return handleMcp(request, env, userId, save);
+      return handleMcp(request, env, userId, (link, note) => saveFor(userId, link, note, "mcp"));
+    }
+    if (path === "/webhook/telegram" && request.method === "POST") {
+      return handleTelegram(request, env, (userId, link) => saveFor(userId, link, undefined, "telegram"));
     }
 
     const thumbMatch = path.match(/^\/t\/([0-9a-f]{32})$/);
@@ -443,6 +449,8 @@ export default {
       }
       return json({ ok: true });
     }
+
+    if (path === "/admin/telegram/setup" && request.method === "POST") return setupTelegram(env, url.origin);
 
     if (path === "/admin/users" && request.method === "POST") {
       const body = (await request.json().catch(() => null)) as { name?: string } | null;

@@ -685,6 +685,15 @@ body.on-phone .phone-handoff { display: none; }
     </div>
   </details>
 
+  <details class="group" id="gTelegram" hidden>
+    <summary><div style="flex:1"><h2>Save from Telegram</h2><small>Send or forward a link to the Skwirl bot</small></div><span class="badge opt" id="bTelegram">Optional</span></summary>
+    <div class="gbody">
+      <p style="margin-top:0;color:var(--muted)">Handy for links friends send you, or if the share sheet isn't your thing. Connect once, then send the bot any Instagram, TikTok, YouTube, X or Threads link.</p>
+      <div class="inline-actions"><button class="btn sm" id="tgConnect" type="button">Connect Telegram</button><button class="btn sm soft" id="tgOff" type="button" hidden>Disconnect</button></div>
+      <p class="msg" id="tgMsg" role="status"></p>
+    </div>
+  </details>
+
   <details class="group" id="gClaude">
     <summary><div style="flex:1"><h2>Connect ChatGPT or Claude</h2><small>Let your AI search your saves on its own</small></div><span class="badge" id="bClaude">To do</span></summary>
     <div class="gbody">
