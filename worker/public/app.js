@@ -271,7 +271,7 @@ function enhanceRecipe(noteId) {
 
 // ---------------- setup / onboarding ----------------
 let setupState = null;
-const mcpUrl = () => `${location.origin}/mcp/${token}`;
+const mcpUrl = () => `${location.origin}/mcp`;
 async function copy(text, label) {
   try { await navigator.clipboard.writeText(text); } catch {
     const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch {} t.remove();
@@ -287,7 +287,8 @@ async function refreshSetup() {
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
   $("homeIos").hidden = !ios && and; $("homeAnd").hidden = !and; $("homeDesk").hidden = ios || and;
   $("setupDot").hidden = phone;   // Claude is recommended, not required: don't nag forever
-  $("cmdCode").textContent = `claude mcp add --transport http stash ${mcpUrl()}`;
+  $("cmdCode").textContent = `claude mcp add --transport http skwirl ${mcpUrl()}`;
+  $("mcpAddr").textContent = mcpUrl();
   $("adminBtn").hidden = !st.owner;
   if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
@@ -315,7 +316,7 @@ $("tabIos").addEventListener("click", () => setTab("ios")); $("tabAnd").addEvent
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-copy]"); if (!b) return;
   const what = b.dataset.copy;
-  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "linkonly") copy(signInLink(), "Sign-in link"); else if (what === "mcp") copy(mcpUrl(), "Connector link"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
+  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "linkonly") copy(signInLink(), "Sign-in link"); else if (what === "mcp") copy(mcpUrl(), "Connector address"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
 });
 $("groqForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const m = $("groqMsg"); m.className = "msg"; m.textContent = "Checking with Groq…";
@@ -357,11 +358,11 @@ token ? start().catch(() => {}) : (show("auth"), joinMode());
 
 // ---- account safety: reset token, delete account ----
 $("rotateBtn").addEventListener("click", async () => {
-  if (!confirm("Reset your token? Your old one, and any Claude connector link or Shortcut using it, stops working.")) return;
+  if (!confirm("Reset your token? Your old one stops working, your Shortcut needs the new one, and connected AI apps are disconnected.")) return;
   const r = await api("/v1/token/rotate", { method: "POST" }); const body = await r.json().catch(() => ({}));
   if (!r.ok) return toast(body.error || "Couldn't reset it.");
   token = body.token; store.set("stash_token", token); refreshSetup(); drawQr();
-  toast("New token saved here. Update your connector and Shortcut.");
+  toast("New token saved here. Update your Shortcut and reconnect your AI apps.");
 });
 $("deleteBtn").addEventListener("click", async () => {
   if (prompt("This erases everything you saved, for good. Type DELETE to confirm.") !== "DELETE") return;

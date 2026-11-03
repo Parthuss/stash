@@ -3,18 +3,24 @@
  * stash from anywhere. Plain JSON-RPC over POST — Streamable HTTP without the
  * streaming, which is all a request/response tool server needs.
  *
- * Endpoint: POST /mcp/<token>. The token rides in the path because claude.ai's
- * custom-connector form only takes a URL (or OAuth). That makes the URL a
- * secret: treat it like a password, and rotate by minting a new user.
- * ponytail: secret-URL auth; move to OAuth if connectors go beyond a pilot.
+ * Endpoints (the caller resolves who it is, see index.ts):
+ *   POST /mcp           OAuth bearer token (oauth.ts): ChatGPT, Claude, any MCP client
+ *   POST /mcp/<token>   legacy secret URL, still works; the URL is a password
  */
 import type { Env } from "./index";
-import { ftsQuery, listMentions, logEvent, userFromToken } from "./v1";
+import { ftsQuery, listMentions, logEvent } from "./v1";
 
-const INSTRUCTIONS =
+// The owner runs this inside coding agents; everyone else saves recipes, trips and books.
+const OWNER_INSTRUCTIONS =
   "The user's own saved Instagram/TikTok/YouTube content, transcribed and indexed. " +
   "Search it at the start of technical work rather than waiting to be asked. " +
   "they save things intending to use them and forget they exist.";
+const INSTRUCTIONS =
+  "Skwirl holds the reels and posts this person saved (Instagram, TikTok, YouTube, X, Threads), each turned " +
+  "into a note: summary, next step, transcript, recipe ingredients and steps, and the books, movies, places " +
+  "and products it names. Search it whenever they ask about something they saw or saved, or when planning " +
+  "meals, trips, reading, workouts or purchases, before answering from general knowledge. Cite the note's " +
+  "title and link. If they paste a reel or post link and want to keep it, use save_link.";
 
 const TOOLS = [
   {
@@ -66,6 +72,17 @@ const TOOLS = [
     },
   },
   {
+    name: "save_link",
+    description:
+      "Save a reel or post link to the user's Skwirl (Instagram, TikTok, YouTube, X or Threads). " +
+      "Skwirl turns it into a note in a few minutes. Use when the user shares a link and wants to keep it.",
+    inputSchema: {
+      type: "object",
+      properties: { url: { type: "string", description: "The post's https link." }, note: { type: "string", description: "Optional reminder of why they saved it." } },
+      required: ["url"],
+    },
+  },
+  {
     name: "mark_stash_used",
     description:
       "Mark a save as acted on. Call it when you actually used a note. It is the only signal " +
@@ -98,7 +115,9 @@ function compact(rows: any[]): string {
 
 const COLS = "n.id, n.title, n.summary, n.topic, n.tools, n.status, n.created_at";
 
-async function callTool(env: Env, userId: string | null, name: string, a: any): Promise<string> {
+export type Save = (url: string, note?: string) => Promise<Response>;
+
+async function callTool(env: Env, userId: string | null, name: string, a: any, save: Save): Promise<string> {
   const limit = Math.min(Math.max(Number(a?.limit) || 5, 1), 20);
   switch (name) {
     case "search_stash": {
@@ -138,6 +157,12 @@ async function callTool(env: Env, userId: string | null, name: string, a: any): 
         `- **${m.name}** (${m.type}${m.done ? ", done" : ""}) — saved in "${m.note_title}"${m.count > 1 ? ` and ${m.count - 1} more` : ""} (\`${m.note_id}\`)`,
       ).join("\n");
     }
+    case "save_link": {
+      const res = await save(String(a?.url ?? ""), a?.note ? String(a.note) : undefined);
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return body.error ?? "Couldn't save that link.";
+      return res.status === 202 ? "Saved. The note will be ready in a few minutes." : "Already saved.";
+    }
     case "mark_stash_used": {
       const r = await env.DB.prepare(
         "UPDATE note SET status='used', used_at=? WHERE id=? AND user_id IS ?",
@@ -153,10 +178,8 @@ const rpcError = (id: unknown, code: number, message: string) => ({
   jsonrpc: "2.0", id, error: { code, message },
 });
 
-export async function handleMcp(request: Request, env: Env, path: string): Promise<Response> {
-  const headers = { "content-type": "application/json" };
-  const userId = await userFromToken(decodeURIComponent(path.slice("/mcp/".length)), env);
-  if (userId === undefined) return new Response('{"error":"unauthorized"}', { status: 401, headers });
+export async function handleMcp(request: Request, env: Env, userId: string | null, save: Save): Promise<Response> {
+  const headers = { "content-type": "application/json", "access-control-allow-origin": "*" };
   // No server-initiated stream: tell clients that probe with GET to stop asking.
   if (request.method !== "POST") return new Response(null, { status: 405 });
 
@@ -172,8 +195,8 @@ export async function handleMcp(request: Request, env: Env, path: string): Promi
       body = rpc(msg.id, {
         protocolVersion: msg.params?.protocolVersion ?? "2025-03-26",
         capabilities: { tools: {} },
-        serverInfo: { name: "stash", version: "0.1.0" },
-        instructions: INSTRUCTIONS,
+        serverInfo: { name: "skwirl", title: "Skwirl", version: "0.2.0" },
+        instructions: userId === null ? OWNER_INSTRUCTIONS : INSTRUCTIONS,
       });
       break;
     case "ping":
@@ -186,7 +209,7 @@ export async function handleMcp(request: Request, env: Env, path: string): Promi
       try {
         if (userId) await env.DB.prepare("UPDATE user SET mcp_calls = mcp_calls + 1, last_seen = ? WHERE id = ?").bind(new Date().toISOString(), userId).run();
         await logEvent(env, userId, "api", "mcp:" + String(msg.params?.name ?? "?").slice(0, 40));
-        const text = await callTool(env, userId, msg.params?.name, msg.params?.arguments);
+        const text = await callTool(env, userId, msg.params?.name, msg.params?.arguments, save);
         body = rpc(msg.id, { content: [{ type: "text", text }] });
       } catch (e) {
         // Don't echo internals (SQL, stack text) back to whoever holds the link.

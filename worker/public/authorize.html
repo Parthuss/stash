@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect · Skwirl</title><meta name="theme-color" content="#f8f7ff"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@300..1000,0..1&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#f8f7ff; --ink:#1d1b2e; --muted:#6a6880; --lavender:#dcd8ff; --line:#ebe8f7; }
+* { box-sizing:border-box; } html { color-scheme: light; }
+body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--ink); font:16px/1.55 Recursive, ui-sans-serif, system-ui, sans-serif; padding:24px 16px; }
+main { width:100%; max-width:440px; background:#fff; border-radius:28px; padding:30px 24px; box-shadow:0 4px 10px rgb(60 50 120 / .08), 0 18px 40px rgb(60 50 120 / .10); }
+h1 { font-weight:800; font-variation-settings:"CASL" 1; font-size:30px; line-height:1.1; margin:14px 0 10px; }
+.brand { display:flex; align-items:center; gap:8px; font-weight:800; font-variation-settings:"CASL" 1; font-size:22px; }
+.brand img { width:28px; height:28px; }
+ul { padding-left:20px; margin:14px 0; color:var(--muted); } li { margin-bottom:4px; }
+.row { display:flex; gap:10px; margin-top:22px; }
+button { flex:1; height:50px; border-radius:999px; border:0; font:600 16px Recursive, system-ui, sans-serif; cursor:pointer; }
+.go { background:var(--ink); color:#fff; } .no { background:var(--bg); color:var(--ink); }
+input { width:100%; height:48px; border:1px solid var(--line); border-radius:14px; padding:0 14px; font:15px Recursive, system-ui, sans-serif; margin-top:6px; }
+.err { color:#b3261e; font-size:14px; min-height:1em; margin:12px 0 0; } .muted { color:var(--muted); font-size:14px; }
+[hidden] { display:none !important; }
+</style></head><body><main>
+<div class="brand"><img src="/favicon.svg" alt="">Skwirl</div>
+<h1 id="title">Connect an AI app</h1>
+<p id="lead">This app wants to use your Skwirl.</p>
+<ul><li>Search and read your saved notes</li><li>See your lists of books, movies and places</li><li>Save new links you give it, and mark notes as used</li></ul>
+<p class="muted">It can't delete anything or see your sign-in link. You can disconnect it anytime by resetting your sign-in link in Set up.</p>
+<div id="signin" hidden><p style="margin:16px 0 0"><b>Sign in first.</b> Paste your Skwirl sign-in link (Set up → Your sign-in link).</p><input id="link" autocomplete="off" placeholder="https://… or stk_…"></div>
+<div class="row"><button class="no" id="no" type="button">Cancel</button><button class="go" id="yes" type="button">Allow</button></div>
+<p class="err" id="err" role="alert"></p>
+</main><script src="/authorize.js"></script></body></html>

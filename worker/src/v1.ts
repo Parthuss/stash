@@ -147,6 +147,8 @@ export async function deleteUser(env: Env, userId: string): Promise<void> {
     env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM note WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM capture WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM oauth_token WHERE user_key = ?").bind(userId),
+    env.DB.prepare("DELETE FROM oauth_code WHERE user_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM user WHERE id = ?").bind(userId),
   ]);
 }
@@ -260,7 +262,7 @@ export async function handleV1(
         : `That's ${daily} saves today on the shared AI allowance. Add your own free Groq key in Set up for up to ${DAILY_OWN_KEY} a day.` }, 429);
     }
     // Which front door was used is what the setup checklist reads.
-    const source = ["shortcut", "web", "pwa"].includes(body.source ?? "") ? body.source! : "app";
+    const source = ["shortcut", "web", "pwa", "mcp"].includes(body.source ?? "") ? body.source! : "app";
     await logEvent(env, userId, "api", "ingest");
     const result = await insertCapture(env, {
       source, permalink: safeUrl, note: (body.note ?? "").slice(0, 500) || null, user_id: userId,
@@ -280,7 +282,10 @@ export async function handleV1(
   if (path === "/v1/token/rotate" && request.method === "POST") {
     if (userId === null) return json({ error: "The owner token is the STASH_SECRET. Rotate it with wrangler." }, 400);
     const token = "stk_" + [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
-    await env.DB.prepare("UPDATE user SET token_hash = ? WHERE id = ?").bind(await sha256(token), userId).run();
+    await env.DB.batch([
+      env.DB.prepare("UPDATE user SET token_hash = ? WHERE id = ?").bind(await sha256(token), userId),
+      env.DB.prepare("DELETE FROM oauth_token WHERE user_key = ?").bind(userId),  // connected AI apps too
+    ]);
     await logEvent(env, userId, "api", "token_reset");
     return json({ token });  // shown once; the old token and any connector link stop working now
   }

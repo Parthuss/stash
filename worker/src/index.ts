@@ -38,8 +38,9 @@
  */
 
 import { handleMcp } from "./mcp";
+import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
 import { sharePage } from "./share";
-import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer } from "./v1";
+import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
 export interface Env {
   DB: D1Database;
@@ -224,6 +225,7 @@ async function checkHealth(env: Env): Promise<void> {
 export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(checkHealth(env));
+    ctx.waitUntil(pruneOAuth(env));
   },
 
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -258,7 +260,20 @@ export default {
       return new Response("method not allowed", { status: 405 });
     }
 
-    if (path.startsWith("/mcp/")) return handleMcp(request, env, path);
+    const oauth = await handleOAuth(request, env, path, url);
+    if (oauth) return oauth;
+    if (path === "/mcp" || path.startsWith("/mcp/")) {
+      const userId = path === "/mcp" ? await userFromOAuth(request, env) : await userFromToken(decodeURIComponent(path.slice(5)), env);
+      if (userId === undefined) {
+        return new Response('{"error":"unauthorized"}', { status: 401, headers: { "content-type": "application/json", ...(path === "/mcp" ? challengeHeader(url.origin) : {}) } });
+      }
+      const save = async (link: string, note?: string) => {
+        const res = await handleV1(new Request(url.origin + "/v1/ingest", { method: "POST", body: JSON.stringify({ url: link, note, source: "mcp" }) }), env, "/v1/ingest", userId, insertCapture);
+        if (userId && res.status === 202) ctx.waitUntil(kickRunner(env));
+        return res;
+      };
+      return handleMcp(request, env, userId, save);
+    }
 
     const thumbMatch = path.match(/^\/t\/([0-9a-f]{32})$/);
     if (thumbMatch && request.method === "GET") {

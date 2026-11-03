@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Skwirl · the reels you save, finally useful</title>
-<meta name="description" content="Share a reel to Skwirl and it becomes a searchable note: recipes as ingredients and steps, books and movies in a list. Works with Claude. Free.">
+<meta name="description" content="Share a reel to Skwirl and it becomes a searchable note: recipes as ingredients and steps, books and movies in a list. Works with ChatGPT and Claude. Free.">
 <meta property="og:title" content="Skwirl: the reels you save, finally useful">
-<meta property="og:description" content="Share a reel. Get a searchable note. Recipes, books, movies, tips, all in one place, and Claude can read it.">
+<meta property="og:description" content="Share a reel. Get a searchable note. Recipes, books, movies, tips, all in one place, and ChatGPT or Claude can read it.">
 <meta property="og:image" content="https://skwirl.parthakholkar.com/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
@@ -457,7 +457,7 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lhero">
     <div class="lcopy">
-      <p class="eyebrow">Free while in beta · works with Claude</p>
+      <p class="eyebrow">Free · works with ChatGPT and Claude</p>
       <h1>The reels you save, finally useful.</h1>
       <p class="lede">Share a reel to Skwirl. A couple of minutes later it's a note you can search: recipes come back as ingredients and steps, books and movies land in a list, tips come with the next step. And Claude can read all of it.</p>
       <form id="joinForm" class="joinbox">
@@ -565,8 +565,8 @@ body.on-phone .phone-handoff { display: none; }
   </div>
 
   <div class="lsec claude reveal">
-    <h2>Ask Claude what you saved</h2>
-    <p>Connect Skwirl to Claude once. After that Claude can look through your saves on its own, on your phone or computer.</p>
+    <h2>Ask your AI what you saved</h2>
+    <p>Connect Skwirl to ChatGPT, Claude or any app that takes connectors. Sign in once, tap Allow, and it can look through your saves on its own, on your phone or computer. Paste it a reel link and it saves that too.</p>
     <div class="chat">
       <p class="me">What was that pasta recipe I saved last week?</p>
       <p class="typing" aria-hidden="true"><i></i><i></i><i></i></p>
@@ -576,22 +576,17 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lsec reveal" id="pricing">
     <h2>Pricing</h2>
-    <p>Free while Skwirl is in beta. Here's the plan after that, so there are no surprises.</p>
+    <p>Skwirl is free. No paid plan, no card, no trial that runs out.</p>
     <div class="plans">
       <div class="plan">
         <small>Free</small><b class="price">$0</b>
-        <ul><li>30 saves a day during the beta</li><li>Notes, recipes, lists, search</li><li>Claude connector</li></ul>
+        <ul><li>30 saves a day</li><li>Notes, recipes, lists, search</li><li>ChatGPT and Claude connector</li><li>Import your old Instagram saves</li></ul>
         <span class="note">Runs on a shared AI allowance.</span>
       </div>
       <div class="plan hot">
         <small>Free, your own key</small><b class="price">$0</b>
         <ul><li>200 saves a day</li><li>Never queued behind anyone</li><li>Everything in Free</li></ul>
         <span class="note">Paste a free Groq key in Set up. Two minutes, no card.</span>
-      </div>
-      <div class="plan">
-        <small>Pro, after the beta</small><b class="price">$5<em>/mo</em></b>
-        <ul><li>Unlimited saves, no key needed</li><li>Processed first</li><li>Everything in Free</li></ul>
-        <span class="note">Or $40 a year.</span>
       </div>
     </div>
     <p class="selfhost">Rather run it yourself? Skwirl is open source. <a href="https://github.com/Parthuss/stash/blob/master/docs/SELF_HOST.md" rel="noopener">Host your own copy for free ↗</a></p>
@@ -691,13 +686,15 @@ body.on-phone .phone-handoff { display: none; }
   </details>
 
   <details class="group" id="gClaude">
-    <summary><div style="flex:1"><h2>Connect Claude</h2><small>Let Claude search your saves on its own</small></div><span class="badge" id="bClaude">To do</span></summary>
+    <summary><div style="flex:1"><h2>Connect ChatGPT or Claude</h2><small>Let your AI search your saves on its own</small></div><span class="badge" id="bClaude">To do</span></summary>
     <div class="gbody">
-      <svg class="art" viewBox="0 0 360 170" role="img" aria-label="Claude add custom connector dialog"><rect x="40" y="8" width="280" height="154" rx="22" fill="#fff" stroke="#e3dffa" stroke-width="3"/><text x="60" y="36" font-size="13" font-weight="600" fill="#1d1b2e">Add custom connector</text><text x="60" y="58" font-size="10" fill="#6a6880">Name</text><rect x="60" y="63" width="240" height="24" rx="12" fill="#f8f7ff"/><text x="72" y="79" font-size="10" fill="#1d1b2e">Skwirl</text><text x="60" y="104" font-size="10" fill="#6a6880">Remote MCP server URL</text><rect x="60" y="109" width="240" height="24" rx="12" fill="#dcd8ff" stroke="#1d1b2e" stroke-width="2"/><text x="72" y="125" font-size="9" fill="#1d1b2e" font-family="monospace">https://…/mcp/stk_…</text><rect x="236" y="138" width="64" height="18" rx="9" fill="#1d1b2e"/><text x="268" y="150" font-size="9" text-anchor="middle" fill="#fff">Add</text></svg>
+      <p style="margin-top:0;color:var(--muted)">One address works in every AI app that takes MCP connectors. There's nothing secret in it: the app sends you to a Skwirl page where you tap Allow.</p>
+      <pre class="cmd" id="mcpAddr"></pre>
+      <div class="inline-actions"><button class="btn sm" data-copy="mcp">Copy connector address</button></div>
       <ol class="steps">
-        <li><b>Copy your connector link</b><span>It contains your private token. Treat it like a password.</span><div class="inline-actions"><button class="btn sm" data-copy="mcp">Copy connector link</button></div></li>
-        <li><b>Open Claude’s connector settings</b><span>Easiest on a computer: claude.ai → Settings → Connectors → <em>Add custom connector</em>. Once it's added there, it works in the Claude phone app too.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div></li>
-        <li><b>Name it “Skwirl” and paste the link</b><span>Then start a new chat and ask: <em>“Search Skwirl for recipes”</em> or <em>“What books have I saved?”</em>. If Claude asks for permission to use Skwirl, allow it.</span></li>
+        <li><b>ChatGPT</b><span>On a computer: Settings → Apps &amp; Connectors → Advanced settings → turn on <em>Developer mode</em>. Then <em>Create</em>, name it "Skwirl", paste the address and pick OAuth. Sign in to Skwirl when asked and tap Allow.</span></li>
+        <li><b>Claude</b><span>claude.ai → Settings → Connectors → <em>Add custom connector</em>. Name it "Skwirl", paste the address, then tap Connect and Allow. It then works in the Claude phone app too.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div></li>
+        <li><b>Anything else</b><span>Le Chat, Perplexity, Cursor and other apps with "custom connector" or "MCP server" settings: paste the same address. Then ask <em>"What books have I saved?"</em> or paste a reel and say <em>"save this to Skwirl"</em>.</span></li>
       </ol>
       <b style="display:block;margin-top:4px">Using Claude Code?</b>
       <pre class="cmd" id="cmdCode"></pre>
@@ -736,7 +733,7 @@ body.on-phone .phone-handoff { display: none; }
     <div class="gbody">
       <div class="inline-actions" style="margin-top:0"><button class="btn sm" data-copy="link">Save my sign-in link</button><button class="btn sm soft" data-copy="token">Copy token</button><button class="btn sm soft" id="exportBtn">Export my notes</button><button class="btn sm soft" id="signOutBtn">Sign out</button></div>
       <div class="inline-actions"><button class="btn sm soft" id="rotateBtn">Reset my token</button><button class="btn sm soft" id="deleteBtn" style="color:#a02d1a">Delete my account</button></div>
-      <p style="color:var(--muted);font-size:14px">Your sign-in link opens your stash on any device. Keep it private. Export gives you everything as one JSON file. Resetting your token signs out every device and breaks your old connector link. Deleting erases all your saves for good.</p>
+      <p style="color:var(--muted);font-size:14px">Your sign-in link opens your stash on any device. Keep it private. Export gives you everything as one JSON file. Resetting your token signs out every device and disconnects every AI app. Deleting erases all your saves for good.</p>
     </div>
   </details>
 </section>
