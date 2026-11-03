@@ -12,6 +12,7 @@
  *   GET  /v1/search        ?q=               FTS5 (hybrid/vector comes later)
  */
 import type { Env } from "./index";
+import { fuse, semanticIds } from "./embed";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -145,6 +146,7 @@ export async function deleteUser(env: Env, userId: string): Promise<void> {
     env.DB.prepare("DELETE FROM usage_event WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
     env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM note_vec WHERE user_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM note WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM capture WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM oauth_token WHERE user_key = ?").bind(userId),
@@ -211,10 +213,35 @@ export async function decryptKey(env: Env, enc: string): Promise<string> {
   return new TextDecoder().decode(pt);
 }
 
-/** FTS5 MATCH chokes on punctuation; quote each word so user text is never syntax. */
-export function ftsQuery(raw: string): string {
-  const words = raw.match(/[\p{L}\p{N}_]+/gu) ?? [];
-  return words.map((w) => `"${w}"`).join(" OR ");
+/**
+ * Keyword (FTS5/bm25) and meaning (embeddings) search, fused by rank. Keyword alone misses
+ * "that hotel room under the sea" when the note says "underwater suite"; meaning alone misses
+ * exact names. Status filters after fusion.
+ */
+export async function searchNotes(env: Env, userId: string | null, raw: string, limit: number, status: string | null = null): Promise<any[]> {
+  const keyword = async (q: string) => q ? ((await env.DB.prepare(
+    `SELECT n.id FROM note_fts f JOIN note n ON n.id = f.note_id
+     WHERE note_fts MATCH ? AND f.user_id = COALESCE(?, '') ORDER BY bm25(note_fts, 8.0, 3.0, 1.0) LIMIT 30`,
+  ).bind(q, userId).all<{ id: string }>()).results ?? []).map((r) => r.id) : [];
+  // Every word must match; "any word" is only a last resort when nothing else turned up.
+  const [all, sem] = await Promise.all([keyword(ftsQuery(raw, " AND ")), semanticIds(env, userId, raw).catch(() => [] as string[])]);
+  const fts = all.length || sem.length ? all : await keyword(ftsQuery(raw));
+  const ids = fuse([fts, sem]).slice(0, 40);
+  if (!ids.length) return [];
+  const { results } = await env.DB.prepare(
+    `SELECT n.id, n.title, n.summary, n.topic, n.tools, n.permalink, n.status, n.created_at, n.thumb_id FROM note n
+     WHERE n.id IN (${ids.map(() => "?").join(",")}) AND n.user_id IS ? AND (? IS NULL OR n.status = ?)`,
+  ).bind(...ids, userId, status, status).all<any>();
+  const order = new Map(ids.map((id, i) => [id, i]));
+  return (results ?? []).sort((a, b) => order.get(a.id)! - order.get(b.id)!).slice(0, limit);
+}
+
+/** FTS5 MATCH chokes on punctuation; quote each word so user text is never syntax. Filler words are
+ *  dropped so "how to fix a car" doesn't match every note containing "to". */
+const STOP = new Set("a an and are as at be but by can do for from had has have how i if in into is it its me my of on or our so that the their them then there these they this to up was we were what when where which who why will with you your about any some just like want saved save".split(" "));
+export function ftsQuery(raw: string, joiner = " OR "): string {
+  const words = (raw.match(/[\p{L}\p{N}_]+/gu) ?? []).filter((w) => w.length > 1 && !STOP.has(w.toLowerCase()));
+  return words.map((w) => `"${w}"`).join(joiner);
 }
 
 export const DAILY_SHARED = 30, DAILY_OWN_KEY = 200;
@@ -436,16 +463,10 @@ export async function handleV1(
   }
 
   if (path === "/v1/search" && request.method === "GET") {
-    const q = ftsQuery(url.searchParams.get("q") ?? "");
-    if (!q) return json({ notes: [] });
+    const raw = (url.searchParams.get("q") ?? "").trim().slice(0, 200);
+    if (!raw) return json({ notes: [] });
     await logEvent(env, userId, "api", "search");
-    const { results } = await env.DB.prepare(
-      `SELECT n.id, n.title, n.summary, n.topic, n.tools, n.permalink, n.status, n.created_at, n.thumb_id
-       FROM note_fts f JOIN note n ON n.id = f.note_id
-       WHERE note_fts MATCH ? AND f.user_id = COALESCE(?, '')
-       ORDER BY bm25(note_fts, 8.0, 3.0, 1.0) LIMIT 20`,
-    ).bind(q, userId).all();
-    return json({ notes: results ?? [] });
+    return json({ notes: await searchNotes(env, userId, raw, 20) });
   }
 
   const noteMatch = path.match(/^\/v1\/notes\/([^/]+)(\/used|\/share)?$/);

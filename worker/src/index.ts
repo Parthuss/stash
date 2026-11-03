@@ -37,6 +37,7 @@
  * the Worker still runs correctly with the binding entirely absent.
  */
 
+import { embedMissing } from "./embed";
 import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
 import { sharePage } from "./share";
@@ -44,6 +45,7 @@ import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, 
 
 export interface Env {
   DB: D1Database;
+  AI?: { run(model: string, input: unknown): Promise<unknown> }; // Workers AI, for meaning-based search
   MEDIA?: R2Bucket;
   STASH_SECRET: string;
   IG_VERIFY_TOKEN?: string;
@@ -228,6 +230,7 @@ export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(checkHealth(env));
     ctx.waitUntil(pruneOAuth(env));
+    ctx.waitUntil(embedMissing(env).catch((e) => console.log("embed backfill", String(e))));
   },
 
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -488,6 +491,9 @@ export default {
           env.DB.prepare("UPDATE note SET thumb_id = ? WHERE id = ?").bind(thumbId, noteId),
         ]);
       }
+      // (Re)embed for meaning-based search; a re-processed note gets a fresh vector.
+      await env.DB.prepare("DELETE FROM note_vec WHERE note_id = ?").bind(noteId).run();
+      ctx.waitUntil(embedMissing(env, 5).catch((e) => console.log("embed", String(e))));
       return json({ id: noteId });
     }
 

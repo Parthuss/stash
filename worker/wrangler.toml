@@ -37,3 +37,7 @@ database_id = "REPLACE_ME"
 #   wrangler secret put IG_VERIFY_TOKEN     # Phase 2: any string, echoed to Meta
 #   wrangler secret put IG_APP_SECRET       # Phase 2: from the Meta app dashboard
 #   wrangler secret put IG_ACCESS_TOKEN     # Phase 2: long-lived IG token
+
+# Workers AI (free tier): embeddings for meaning-based search. Optional; without it search is keyword-only.
+[ai]
+binding = "AI"

@@ -8,7 +8,7 @@
  *   POST /mcp/<token>   legacy secret URL, still works; the URL is a password
  */
 import type { Env } from "./index";
-import { ftsQuery, listMentions, logEvent } from "./v1";
+import { listMentions, logEvent, searchNotes } from "./v1";
 
 // The owner runs this inside coding agents; everyone else saves recipes, trips and books.
 const OWNER_INSTRUCTIONS =
@@ -26,7 +26,8 @@ const TOOLS = [
   {
     name: "search_stash",
     description:
-      "Search the user's saved social-media posts. Use at the START of any agent-building, " +
+      "Search the user's saved social-media posts by keyword or by meaning (describe it loosely: " +
+      "'that hotel room under the sea'). Use at the START of any agent-building, " +
       "automation, tooling, design or research task, before proposing an approach. Returns compact " +
       "hits; call get_stash_note(id) for the full note.",
     inputSchema: {
@@ -121,15 +122,9 @@ async function callTool(env: Env, userId: string | null, name: string, a: any, s
   const limit = Math.min(Math.max(Number(a?.limit) || 5, 1), 20);
   switch (name) {
     case "search_stash": {
-      const q = ftsQuery(String(a?.query ?? ""));
-      if (!q) return "No matching saves.";
-      const status = a?.status ? String(a.status) : null;
-      const { results } = await env.DB.prepare(
-        `SELECT ${COLS} FROM note_fts f JOIN note n ON n.id = f.note_id
-         WHERE note_fts MATCH ? AND f.user_id = COALESCE(?, '') AND (? IS NULL OR n.status = ?)
-         ORDER BY bm25(note_fts, 8.0, 3.0, 1.0) LIMIT ?`,
-      ).bind(q, userId, status, status, limit).all();
-      return compact(results ?? []);
+      const raw = String(a?.query ?? "").trim().slice(0, 200);
+      if (!raw) return "No matching saves.";
+      return compact(await searchNotes(env, userId, raw, limit, a?.status ? String(a.status) : null));
     }
     case "get_stash_note": {
       const row = await env.DB.prepare("SELECT markdown FROM note WHERE id = ? AND user_id IS ?")
