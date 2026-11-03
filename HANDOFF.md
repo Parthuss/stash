@@ -20,6 +20,18 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
+## 2026-11-03: matching Stashr AI, still free
+
+Fonts are Recursive (Casual display, Linear UI). Added: OAuth 2.1 for the connector at `POST /mcp`
+(`worker/src/oauth.ts`; consent page `public/authorize.html` reuses the web sign-in token;
+`/mcp/<token>` still works), a `save_link` MCP tool, Instagram export import (`POST /v1/import`;
+the app unzips on-device; imports queue behind live saves at 5/day per person on the shared key,
+150 with their own), meaning-based search (`worker/src/embed.ts`, Workers AI bge-m3 int8 vectors
+in `note_vec`, fused with FTS; the `[ai]` binding is in both wrangler files), and a Telegram bot
+(`worker/src/telegram.ts`, hidden until `TELEGRAM_BOT_TOKEN` is set). Migrations 0013-0016 are
+applied to prod. `worker/smoke.py` covers all of it (start flags in its docstring). What's left
+for the owner: `docs/OWNER_TODO.md` §0.
+
 ## 2026-10-27: opened to the public
 
 The site root is now a landing page, and joining is open (first name only), with these limits:

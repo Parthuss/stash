@@ -1,7 +1,36 @@
 # What needs you (Skwirl, formerly Stash)
 
-Updated 2026-10-27. Everything here needs your judgement, your phone, your money or your
+Updated 2026-11-03. Everything here needs your judgement, your phone, your money or your
 accounts. The rest has been done. Order: top to bottom.
+
+## 0. New on 3 Nov: closing the gap with Stashr AI (do these first, ~30 min)
+
+Built and live: connector for any AI app (sign in + Allow), `save_link` from chat, Instagram
+export import, meaning-based search, Telegram bot (hidden until you do step 2), free-only pricing.
+
+- [ ] **Try the connector in ChatGPT and Claude** with your own account. Address:
+      `https://skwirl.parthakholkar.com/mcp`. ChatGPT: Settings → Apps & Connectors → Advanced →
+      Developer mode → Create → paste, OAuth. Claude: Settings → Connectors → Add custom connector.
+      You should land on Skwirl's Allow page. Then ask "what recipes have I saved?" and paste a
+      reel link with "save this to Skwirl". Tell me what breaks (menu names may differ from these).
+- [ ] **Create the Telegram bot (2 min).** In Telegram, message @BotFather → `/newbot` → name
+      "Skwirl", username e.g. `skwirl_save_bot` → copy the token. Then:
+      ```
+      cd worker && npx wrangler secret put TELEGRAM_BOT_TOKEN -c wrangler.local.toml
+      curl -X POST https://skwirl.parthakholkar.com/admin/telegram/setup -H "X-Stash-Secret: <STASH_SECRET>"
+      ```
+      "Save from Telegram" then appears in everyone's Set up. Optional in @BotFather: `/setuserpic`
+      with `design/logo`, `/setdescription` "Send me a reel link and I'll save it to Skwirl."
+- [ ] **Try the import** with your real Instagram export (it's yours, so no cap).
+- [ ] **Instagram DM and WhatsApp saving: only if you want to go further.** Both need a Meta
+      business app that Meta reviews (business verification, privacy policy URL, a screencast).
+      Instagram: a professional (Creator/Business) account for @skwirl, a Meta app with Instagram
+      messaging, `instagram_manage_messages` approved in App Review, then set `IG_APP_SECRET`,
+      `IG_VERIFY_TOKEN`, `IG_ACCESS_TOKEN`. The webhook in `worker/src/index.ts` already verifies
+      and queues DMs, but only for the owner today; tell me when Meta approves and I'll add the
+      per-person link step (same as Telegram's). WhatsApp Cloud API: Meta Business account plus a
+      phone number not on WhatsApp already; first 1,000 conversations a month are free.
+      Realistically 1-3 weeks of Meta back-and-forth. Telegram covers "send it to a chat" now.
 
 ## 1. Check on your phone (15 min, do this first)
 
@@ -23,9 +52,9 @@ Nothing has been tested on a real phone since the redesign. On https://skwirl.pa
       `stash.parthakholkar.com` keeps working for existing users. Still to do: trademark search
       (USPTO and India's IP office, class 9/42), then buy `skwirl.app` (~$15/yr on Cloudflare)
       when you're ready for Product Hunt or the stores.
-- [ ] **Pricing.** Proposed: Free (30/day in beta, ~30/month after), Free with own Groq key
-      (200/day), Pro $5/mo or $40/yr, Self-host $0. Already shown on the landing page as "after
-      the beta". Say if you want different numbers. Details: `docs/PRODUCT.md` §2.
+- [x] **Pricing: free only** (decided 2026-11-03). The landing page shows Free and Free with
+      your own Groq key, no paid plan. The real limit is the shared Groq key (~25-30 reels a day
+      for everyone); see "Groq paid tier" below if it starts queueing.
 - [ ] **Contact email** for `worker/public/privacy.html` and `terms.html`. Pick one you're
       happy to have public (a new Gmail or `hi@parthakholkar.com`). Needed before Reddit and
       for any app store. Give me the address and I'll add it.
