@@ -13,6 +13,9 @@ import outro from "./captions/lv-7-outro.json";
 const S = { hook: 0, reveal: 120, share: 210, note: 360, lists: 540, claude: 690, outro: 810, end: 930 };
 const VO = { hook: 8, meet: 150, share: 214, note: 364, lists: 546, claude: 706, outro: 820 };
 const cap = (c: unknown) => c as Caption[];
+// One file, two cuts: the 1920x1080 launch video and the 1080x1920 Reel. Only layout differs by `tall`;
+// every timing, voice line and sound is shared, so the two can't drift apart.
+const useTall = () => { const { width, height } = useVideoConfig(); return height > width; };
 const f_ = (n: string) => staticFile(`launch/${n}`);
 
 // ---------- 1. hook: the Saved folder graveyard ----------
@@ -20,11 +23,12 @@ const TILES = ["🍝", "📚", "✈️", "🎬", "💸", "🧘", "☕", "🎧", 
 const TINTS = [C.butter, C.lavender, C.sky, C.peach, C.mint];
 const Wall: React.FC = () => {
   const f = useCurrentFrame();
+  const tall = useTall();
   const dead = prog(f, 52, 80); // "never see it again": the wall goes grey and sinks back
   const exit = prog(f, 108, 124, Easing.in(Easing.cubic));
   return (
     <AbsoluteFill style={{ perspective: 1600, opacity: 1 - exit }}>
-      <div style={{ position: "absolute", left: -260, top: -160, width: 2440, display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 22,
+      <div style={{ position: "absolute", left: tall ? -320 : -260, top: tall ? -220 : -160, width: tall ? 1720 : 2440, display: "grid", gridTemplateColumns: `repeat(${tall ? 7 : 12}, 1fr)`, gap: 22,
         transform: `rotateX(28deg) rotateZ(-9deg) translateY(${-f * 1.6}px) scale(${1 + exit * 0.25})`, transformOrigin: "50% 30%",
         filter: `grayscale(${dead}) blur(${dead * 2.5}px)`, opacity: 1 - dead * 0.45 }}>
         {Array.from({ length: 60 }, (_, i) => {
@@ -46,11 +50,12 @@ const Wall: React.FC = () => {
 };
 const Hook: React.FC = () => {
   const out = useInOut(0, 108, 30);
+  const tall = useTall();
   return (
     <AbsoluteFill>
       <Wall />
       <AbsoluteFill style={{ display: "grid", placeItems: "center", ...out, transform: undefined, opacity: out.opacity }}>
-        <Kinetic captions={cap(hook)} voAt={VO.hook} breakAfter={[3]} style={{ fontSize: 132, textAlign: "center" }} />
+        <Kinetic captions={cap(hook)} voAt={VO.hook} breakAfter={tall ? [1, 3, 6] : [3]} style={{ fontSize: tall ? 112 : 132, textAlign: "center" }} />
       </AbsoluteFill>
     </AbsoluteFill>
   );
@@ -64,11 +69,13 @@ const Reveal: React.FC = () => {
   const acorn = spring({ frame: f - 158, fps, config: { damping: 9, stiffness: 180 } });
   const word = spring({ frame: f - 166, fps, config: { damping: 16 } });
   const out = prog(f, 200, 210, Easing.in(Easing.cubic));
+  const tall = useTall();
   return (
     <AbsoluteFill style={{ display: "grid", placeItems: "center", opacity: 1 - out, transform: `scale(${1 - out * 0.06})` }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 40, transform: `translateX(${(1 - word) * 150}px)` }}>
-        <Mark id="reveal" size={280} draw={draw} acorn={f >= 158 ? acorn : 0} />
-        <div style={{ ...D, fontSize: 250, letterSpacing: "-0.02em", color: C.ink, lineHeight: 1, clipPath: `inset(-20% ${(1 - word) * 100}% -20% 0)` }}>Skwirl</div>
+      <div style={{ display: "flex", flexDirection: tall ? "column" : "row", alignItems: "center", gap: tall ? 30 : 40,
+        transform: tall ? `translateY(${(1 - word) * 120}px)` : `translateX(${(1 - word) * 150}px)` }}>
+        <Mark id="reveal" size={tall ? 340 : 280} draw={draw} acorn={f >= 158 ? acorn : 0} />
+        <div style={{ ...D, fontSize: tall ? 210 : 250, letterSpacing: "-0.02em", color: C.ink, lineHeight: 1, clipPath: `inset(-20% ${(1 - word) * 100}% -20% 0)` }}>Skwirl</div>
       </div>
     </AbsoluteFill>
   );
@@ -120,10 +127,12 @@ const Sheet: React.FC<{ up: number; picked: boolean; tapAt: number }> = ({ up, p
 // Reels from everywhere, spiralling into the mark ("any reel"). [emoji, platform, tint]
 const FLY: [string, string, string][] = [["📚", "TikTok", C.lavender], ["✈️", "YouTube", C.sky], ["🧘", "Threads", C.mint], ["🎬", "X", C.peach], ["☕", "Instagram", C.butter],
   ["💸", "TikTok", C.mint], ["📍", "YouTube", C.lavender], ["🎧", "Instagram", C.peach], ["🧁", "X", C.sky], ["🪴", "Threads", C.butter]];
-const MX = 960, MY = 640; // where the mark sits
 const ShareScene: React.FC = () => {
   const f = useCurrentFrame() + S.share;
   const { fps } = useVideoConfig();
+  const tall = useTall();
+  const [MX, MY] = tall ? [540, 900] : [960, 640]; // where the mark sits
+  const [CW, CH] = tall ? [640, 1138] : [520, 924]; // the hero reel card
   const dark = 1 - prog(f, 262, 284);
   const cardIn = spring({ frame: f - S.share, fps, config: { damping: 18, stiffness: 120 } });
   const up = prog(f, 232, 244) * (1 - prog(f, 258, 266));
@@ -134,7 +143,7 @@ const ShareScene: React.FC = () => {
   const saved = spring({ frame: f - 326, fps, config: { damping: 13 } });
   const iris = prog(f, 342, 362, Easing.in(Easing.cubic));
   const txt = interpolateColors(f, [262, 280], ["#ffffff", C.ink]);
-  const cx = interpolate(fly, [0, 1], [960, MX]), cy = interpolate(fly, [0, 1], [700, MY]) - Math.sin(fly * Math.PI) * 120;
+  const cx = interpolate(fly, [0, 1], [MX, MX]), cy = interpolate(fly, [0, 1], [tall ? 1050 : 700, MY]) - Math.sin(fly * Math.PI) * 120;
   return (
     <AbsoluteFill>
       {/* full-bleed reel world: the reel's own blurred colours fill the frame */}
@@ -159,13 +168,13 @@ const ShareScene: React.FC = () => {
         <div style={{ width: 300, height: 300, borderRadius: 84, background: "#fff", boxShadow: lift, display: "grid", placeItems: "center" }}><Mark id="stash" size={200} /></div>
       </div>
       {/* the hero reel: share sheet, tap Skwirl, then it flies into the mark */}
-      <div style={{ position: "absolute", left: cx - 260, top: cy - 462, width: 520, height: 924, borderRadius: 44, overflow: "hidden", boxShadow: "0 50px 100px rgb(0 0 0 / .35)",
+      <div style={{ position: "absolute", left: cx - CW / 2, top: cy - CH / 2, width: CW, height: CH, borderRadius: 44, overflow: "hidden", boxShadow: "0 50px 100px rgb(0 0 0 / .35)",
         opacity: fly < 0.97 ? 1 : 0, transform: `translateY(${(1 - cardIn) * 700}px) scale(${1 - fly * 0.9}) rotate(${(1 - cardIn) * 6 + fly * -14}deg)` }}>
         <Reel f={f} />
         <Sheet up={up} picked={f >= 250 && f < 258} tapAt={252 - S.share} />
       </div>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 70, textAlign: "center" }}>
-        <Kinetic captions={cap(share)} voAt={VO.share - S.share} style={{ fontSize: 124, color: txt, textShadow: dark > 0.5 ? "0 4px 30px rgb(0 0 0 / .35)" : "none" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: tall ? 220 : 70, textAlign: "center" }}>
+        <Kinetic captions={cap(share)} voAt={VO.share - S.share} breakAfter={tall ? [1] : []} style={{ fontSize: tall ? 104 : 124, color: txt, textShadow: dark > 0.5 ? "0 4px 30px rgb(0 0 0 / .35)" : "none" }} />
       </div>
       <div style={{ position: "absolute", left: 0, right: 0, top: MY + 190, display: "flex", justifyContent: "center", opacity: Math.min(1, saved * 1.4), transform: `translateY(${(1 - saved) * 30}px)` }}>
         <Pill bg={C.mint} style={{ height: 64, fontSize: 30 }}>✓ Saved to Skwirl</Pill>
@@ -199,18 +208,21 @@ const LAYERS: [string, (f: number) => React.ReactNode, string][] = [
 const ReadScene: React.FC = () => {
   const f = useCurrentFrame() + S.note;
   const { fps } = useVideoConfig();
+  const tall = useTall();
+  // Portrait has no room for labels beside the stack, so it fans the other way and labels sit on the left.
+  const [SX, SY, LW, LH, NW, NT] = tall ? [540, 1000, 380, 676, 640, 560] : [960, 640, 340, 604, 560, 268];
   const turn = prog(f, 362, 390), spread = prog(f, 372, 394) * (1 - prog(f, 408, 424, Easing.in(Easing.cubic)));
-  const rot = interpolate(turn, [0, 1], [0, -38]) * (1 - prog(f, 408, 426));
+  const rot = interpolate(turn, [0, 1], [0, tall ? 38 : -38]) * (1 - prog(f, 408, 426));
   const stackOut = prog(f, 420, 430);
   const card = spring({ frame: f - 420, fps, config: { damping: 16, stiffness: 120 } });
   const scroll = prog(f, 452, 506, Easing.inOut(Easing.cubic)) * 0.42;
-  const H = 560 * (2196 / 540);
+  const H = NW * (2196 / 540);
   const part1 = 1 - prog(f, 406, 414);
   const leave = prog(f, 530, 545, Easing.in(Easing.cubic));
   return (
     <AbsoluteFill style={{ background: C.ink, opacity: 1 - leave }}>
       <AbsoluteFill style={{ background: "radial-gradient(50% 60% at 50% 62%, rgb(220 216 255 / .16), transparent 70%)" }} />
-      <div style={{ position: "absolute", left: 960 - 170, top: 640 - 302, width: 340, height: 604, perspective: 1900, opacity: 1 - stackOut }}>
+      <div style={{ position: "absolute", left: SX - LW / 2, top: SY - LH / 2, width: LW, height: LH, perspective: 1900, opacity: 1 - stackOut }}>
         <div style={{ position: "absolute", inset: 0, transformStyle: "preserve-3d", transform: `rotateX(${turn * 12}deg) rotateY(${rot}deg)` }}>
           {LAYERS.map(([label, body, bg], i) => {
             const scanAt = 390 + i * 5, scanned = f >= scanAt + 8;
@@ -221,7 +233,7 @@ const ReadScene: React.FC = () => {
                   {body(f)}
                   {f >= scanAt && f < scanAt + 9 ? <div style={{ position: "absolute", top: 0, bottom: 0, left: `${sx * 100}%`, width: 70, marginLeft: -35, background: "linear-gradient(90deg, transparent, rgb(255 122 89 / .65), transparent)" }} /> : null}
                 </div>
-                <div style={{ position: "absolute", left: 360, top: 24 + i * 6, opacity: spread, whiteSpace: "nowrap" }}>
+                <div style={{ position: "absolute", ...(tall ? { right: LW + 20 } : { left: LW + 20 }), top: 24 + i * 6, opacity: spread, whiteSpace: "nowrap" }}>
                   <Pill bg={scanned ? C.mint : "rgb(255 255 255 / .92)"} style={{ height: 50, fontSize: 24 }}>{label}{scanned ? " ✓" : ""}</Pill>
                 </div>
               </div>
@@ -230,17 +242,17 @@ const ReadScene: React.FC = () => {
         </div>
       </div>
       {/* the note it hands you: the real screenshot, no phone around it */}
-      <div style={{ position: "absolute", left: 960 - 280, top: 268, width: 560, height: 900, perspective: 1600, opacity: Math.min(1, card * 1.5) }}>
+      <div style={{ position: "absolute", left: SX - NW / 2, top: NT, width: NW, height: tall ? 1100 : 900, perspective: 1600, opacity: Math.min(1, card * 1.5) }}>
         <div style={{ position: "absolute", inset: 0, borderRadius: 40, overflow: "hidden", background: C.bg, boxShadow: "0 40px 120px rgb(0 0 0 / .5)",
           transform: `rotateY(${(1 - card) * 70 + interpolate(f, [420, 540], [10, -8])}deg) translateY(${(1 - card) * 60 + leave * -80}px) scale(${0.85 + card * 0.15 + leave * 0.2})` }}>
           <Img src={f_("note.webp")} style={{ position: "absolute", left: 0, top: 0, width: "100%", transform: `translateY(${-scroll * H}px)` }} />
         </div>
       </div>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 70, textAlign: "center", opacity: part1 }}>
-        <Kinetic captions={cap(noteVo).slice(0, 5)} voAt={VO.note - S.note} style={{ fontSize: 112, color: "#fff" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: tall ? 250 : 70, textAlign: "center", opacity: part1 }}>
+        <Kinetic captions={cap(noteVo).slice(0, 5)} voAt={VO.note - S.note} breakAfter={tall ? [1] : []} style={{ fontSize: tall ? 100 : 112, color: "#fff" }} />
       </div>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 44, textAlign: "center" }}>
-        <Kinetic captions={cap(noteVo).slice(5)} voAt={VO.note - S.note} breakAfter={[4]} style={{ fontSize: 88, color: "#fff", lineHeight: 1.04 }} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: tall ? 230 : 44, textAlign: "center" }}>
+        <Kinetic captions={cap(noteVo).slice(5)} voAt={VO.note - S.note} breakAfter={tall ? [2, 5] : [4]} style={{ fontSize: tall ? 84 : 88, color: "#fff", lineHeight: 1.04 }} />
       </div>
     </AbsoluteFill>
   );
@@ -253,6 +265,12 @@ const COVERS: [string, string, string, string][] = [["Deep Work", "Book", "📖"
 const ListScene: React.FC = () => {
   const f = useCurrentFrame() + S.lists;
   const { fps } = useVideoConfig();
+  const tall = useTall();
+  // Portrait: a tighter fan, and the six covers on two shelves of three.
+  const [SW, SH, SP, ST] = tall ? [210, 300, 195, 820] : [300, 400, 250, 420];
+  const [CVW, CVH, GAP] = tall ? [240, 350, 30] : [228, 330, 26];
+  const shelves = tall ? [960, 1340] : [846];
+  const perRow = tall ? 3 : 6;
   const fanOut = prog(f, 594, 608, Easing.in(Easing.cubic));
   const part1 = 1 - prog(f, 596, 604);
   const shelf = prog(f, 616, 632);
@@ -264,19 +282,23 @@ const ListScene: React.FC = () => {
         const s = spring({ frame: f - 556 - i * 3, fps, config: { damping: 13, stiffness: 140 } });
         const k = i - 2;
         return (
-          <div key={i} style={{ position: "absolute", left: 960 - 150, top: 420, width: 300, height: 400, borderRadius: 32, background: "#fff", boxShadow: lift, padding: "30px 28px", boxSizing: "border-box",
-            transform: `translate(${k * 250 * s}px, ${Math.abs(k) * 36 * s + fanOut * 1100}px) rotate(${k * 10 * s + fanOut * k * 12}deg)`, opacity: Math.min(1, s * 2) }}>
-            <div style={{ ...D, fontSize: 120, lineHeight: 1, color: C.coral }}>{i + 1}</div>
-            <div style={{ fontFamily: ui, fontWeight: 600, fontSize: 32, lineHeight: 1.2, color: C.ink, marginTop: 40 }}>{t}</div>
+          <div key={i} style={{ position: "absolute", left: (tall ? 540 : 960) - SW / 2, top: ST, width: SW, height: SH, borderRadius: 32, background: "#fff", boxShadow: lift, padding: tall ? "24px 20px" : "30px 28px", boxSizing: "border-box",
+            transform: `translate(${k * SP * s}px, ${Math.abs(k) * 36 * s + fanOut * 1400}px) rotate(${k * (tall ? 9 : 10) * s + fanOut * k * 12}deg)`, opacity: Math.min(1, s * 2) }}>
+            <div style={{ ...D, fontSize: tall ? 88 : 120, lineHeight: 1, color: C.coral }}>{i + 1}</div>
+            <div style={{ fontFamily: ui, fontWeight: 600, fontSize: tall ? 26 : 32, lineHeight: 1.2, color: C.ink, marginTop: tall ? 26 : 40 }}>{t}</div>
           </div>
         );
       })}
-      <div style={{ position: "absolute", left: 180, right: 180, top: 846, height: 8, borderRadius: 4, background: "rgb(29 27 46 / .12)", transform: `scaleX(${shelf})` }} />
+      {shelves.map((y) => (
+        <div key={y} style={{ position: "absolute", left: tall ? 90 : 180, right: tall ? 90 : 180, top: y, height: 8, borderRadius: 4, background: "rgb(29 27 46 / .12)", transform: `scaleX(${shelf})` }} />
+      ))}
       {COVERS.map(([t, k, e, tint], i) => {
-        const s = spring({ frame: f - 618 - i * 4, fps, config: { damping: 10, stiffness: 150, mass: 0.8 } });
-        if (f < 618 + i * 4) return null;
+        const row = Math.floor(i / perRow), col = i % perRow;
+        const at = 618 + col * 4 + row * 6; // the first shelf lands on "land", the second right after
+        const s = spring({ frame: f - at, fps, config: { damping: 10, stiffness: 150, mass: 0.8 } });
+        if (f < at) return null;
         return (
-          <div key={t} style={{ position: "absolute", left: 960 - (6 * 228 + 5 * 26) / 2 + i * 254, top: 846 - 330, width: 228, height: 330, borderRadius: 16, background: tint, boxShadow: lift, padding: 20, boxSizing: "border-box",
+          <div key={t} style={{ position: "absolute", left: (tall ? 540 : 960) - (perRow * CVW + (perRow - 1) * GAP) / 2 + col * (CVW + GAP), top: shelves[row] - CVH, width: CVW, height: CVH, borderRadius: 16, background: tint, boxShadow: lift, padding: 20, boxSizing: "border-box",
             transform: `translateY(${(1 - s) * -1000}px) rotate(${(1 - s) * (i % 2 ? 14 : -14)}deg)`, transformOrigin: "50% 100%" }}>
             <div style={{ fontFamily: ui, fontWeight: 600, fontSize: 16, letterSpacing: ".12em", textTransform: "uppercase", color: "rgb(29 27 46 / .55)" }}>{k}</div>
             <div style={{ ...D, fontSize: 36, lineHeight: 1.05, color: C.ink, marginTop: 14 }}>{t}</div>
@@ -284,14 +306,14 @@ const ListScene: React.FC = () => {
           </div>
         );
       })}
-      <div style={{ position: "absolute", left: 0, right: 0, top: 890, display: "flex", justifyContent: "center", opacity: Math.min(1, count * 1.4), transform: `translateY(${(1 - count) * 24}px)` }}>
+      <div style={{ position: "absolute", left: 0, right: 0, top: tall ? 1390 : 890, display: "flex", justifyContent: "center", opacity: Math.min(1, count * 1.4), transform: `translateY(${(1 - count) * 24}px)` }}>
         <Pill style={{ height: 60, fontSize: 28 }}>📚 3 books · 🎬 3 movies · saved to Lists</Pill>
       </div>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 80, textAlign: "center", opacity: part1 }}>
-        <Kinetic captions={cap(lists).slice(0, 3)} voAt={VO.lists - S.lists} style={{ fontSize: 132 }} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: tall ? 260 : 80, textAlign: "center", opacity: part1 }}>
+        <Kinetic captions={cap(lists).slice(0, 3)} voAt={VO.lists - S.lists} breakAfter={tall ? [0] : []} style={{ fontSize: tall ? 116 : 132 }} />
       </div>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 64, textAlign: "center" }}>
-        <Kinetic captions={cap(lists).slice(3)} voAt={VO.lists - S.lists} breakAfter={[2]} style={{ fontSize: 112 }} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: tall ? 250 : 64, textAlign: "center" }}>
+        <Kinetic captions={cap(lists).slice(3)} voAt={VO.lists - S.lists} breakAfter={[2]} style={{ fontSize: tall ? 96 : 112 }} />
       </div>
     </AbsoluteFill>
   );
@@ -315,12 +337,13 @@ const Claude: React.FC = () => {
   const typed = Q.slice(0, Math.floor(interpolate(f, [676, 700], [0, Q.length], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })));
   const searching = f >= 704 && f < 718, found = f >= 718;
   const answer = A.slice(0, Math.floor(interpolate(f, [720, 762], [0, A.length], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })));
+  const tall = useTall();
   return (
     <AbsoluteFill style={{ opacity: 1 - out }}>
-      <div style={{ position: "absolute", top: 96, left: 0, right: 0, textAlign: "center" }}>
-        <Kinetic captions={cap(claude)} voAt={VO.claude - S.claude} style={{ fontSize: 96 }} />
+      <div style={{ position: "absolute", top: tall ? 300 : 96, left: 0, right: 0, textAlign: "center" }}>
+        <Kinetic captions={cap(claude)} voAt={VO.claude - S.claude} breakAfter={tall ? [2] : []} style={{ fontSize: tall ? 92 : 96 }} />
       </div>
-      <div style={{ position: "absolute", left: "50%", top: 300, width: 1180, marginLeft: -590, background: "#fff", borderRadius: 36, boxShadow: lift, padding: "34px 44px 40px", fontFamily: ui, opacity: win, transform: `translateY(${(1 - win) * 80}px)` }}>
+      <div style={{ position: "absolute", left: "50%", top: tall ? 620 : 300, width: tall ? 960 : 1180, marginLeft: tall ? -480 : -590, background: "#fff", borderRadius: 36, boxShadow: lift, padding: "34px 44px 40px", fontFamily: ui, opacity: win, transform: `translateY(${(1 - win) * 80}px)` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, color: C.muted, fontSize: 22, fontWeight: 500, marginBottom: 26 }}>
           <span style={{ width: 14, height: 14, borderRadius: "50%", background: "#d97757" }} />Claude
         </div>
@@ -333,7 +356,7 @@ const Claude: React.FC = () => {
             {searching ? "Searching Skwirl…" : "Searched Skwirl · 1 note"}
           </div>
         ) : null}
-        <div style={{ fontSize: 30, lineHeight: 1.45, color: C.ink, minHeight: 130 }}>{answer}</div>
+        <div style={{ fontSize: tall ? 34 : 30, lineHeight: 1.45, color: C.ink, minHeight: tall ? 260 : 130 }}>{answer}</div>
       </div>
     </AbsoluteFill>
   );
@@ -345,13 +368,14 @@ const Outro: React.FC = () => {
   const { fps } = useVideoConfig();
   const lock = spring({ frame: f - 782, fps, config: { damping: 16, stiffness: 110 } });
   const url = spring({ frame: f - 840, fps, config: { damping: 15 } });
+  const tall = useTall();
   return (
-    <AbsoluteFill style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 34 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 26, opacity: lock, transform: `scale(${0.85 + lock * 0.15})` }}>
-        <Mark id="outro" size={150} />
-        <span style={{ ...D, fontSize: 150, letterSpacing: "-0.02em", color: C.ink, lineHeight: 1 }}>Skwirl</span>
+    <AbsoluteFill style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: tall ? 44 : 34 }}>
+      <div style={{ display: "flex", flexDirection: tall ? "column" : "row", alignItems: "center", gap: tall ? 20 : 26, opacity: lock, transform: `scale(${0.85 + lock * 0.15})` }}>
+        <Mark id="outro" size={tall ? 220 : 150} />
+        <span style={{ ...D, fontSize: tall ? 180 : 150, letterSpacing: "-0.02em", color: C.ink, lineHeight: 1 }}>Skwirl</span>
       </div>
-      <Kinetic captions={cap(outro)} voAt={VO.outro - S.outro} skip={1} style={{ fontSize: 76, textAlign: "center" }} />
+      <Kinetic captions={cap(outro)} voAt={VO.outro - S.outro} skip={1} breakAfter={tall ? [4] : []} style={{ fontSize: tall ? 80 : 76, textAlign: "center" }} />
       <div style={{ display: "flex", gap: 16, opacity: url, transform: `translateY(${(1 - url) * 24}px)` }}>
         <Pill bg={C.ink} color="#fff" style={{ height: 70, fontSize: 30, padding: "0 32px" }}>skwirl.parthakholkar.com</Pill>
       </div>

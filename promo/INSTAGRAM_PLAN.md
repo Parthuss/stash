@@ -140,6 +140,11 @@ text, audio, cover, caption, and how to build it.
 
 ### Piece 1: Launch video, portrait cut (Reel, 31s)
 
+**Status: DONE (2026-11-04).** Built as the `SkwirlLaunchVertical` composition (same component as the
+landscape cut; layout branches on `tall` inside `SkwirlLaunch.tsx`). Output:
+`promo/out/instagram/01-launch/skwirl-launch-vertical.mp4` + `cover.jpg` + `caption.txt`. The brief below
+is kept as the record of how; skip to piece 2.
+
 **Goal:** the pinned explainer. Everything else points back to it.
 **Source:** the existing landscape `SkwirlLaunch` (`promo/src/launch/SkwirlLaunch.tsx`, 1920×1080,
 930 frames). Same voiceover clips, same captions JSON, same music and SFX timings, same scene timings

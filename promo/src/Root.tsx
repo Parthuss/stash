@@ -7,6 +7,7 @@ export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition id="SkwirlLaunch" component={SkwirlLaunch} durationInFrames={930} fps={30} width={1920} height={1080} />
+      <Composition id="SkwirlLaunchVertical" component={SkwirlLaunch} durationInFrames={930} fps={30} width={1080} height={1920} />
       <Composition
         id="StashPromo"
         component={StashPromo}
