@@ -13,7 +13,7 @@ export import, meaning-based search, Telegram bot (hidden until you do step 2), 
       Developer mode → Create → paste, OAuth. Claude: Settings → Connectors → Add custom connector.
       You should land on Skwirl's Allow page. Then ask "what recipes have I saved?" and paste a
       reel link with "save this to Skwirl". Tell me what breaks (menu names may differ from these).
-- [ ] **Create the Telegram bot (2 min).** In Telegram, message @BotFather → `/newbot` → name
+- [x] **Telegram bot: done 2026-11-04** (@skwirl_bot, webhook set, description and commands set). Left: optional profile picture via @BotFather `/setuserpic`. Original steps, for a fork: In Telegram, message @BotFather → `/newbot` → name
       "Skwirl", username e.g. `skwirl_save_bot` → copy the token. Then:
       ```
       cd worker && npx wrangler secret put TELEGRAM_BOT_TOKEN -c wrangler.local.toml
