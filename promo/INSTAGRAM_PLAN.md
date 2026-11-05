@@ -18,7 +18,10 @@ Written 2026-11-04. Product facts are as of commit `f52c48c`.
   for recipes an **ingredient checklist and numbered steps**. Books, movies, places and products named
   in the reel go into **Lists**.
 - It reads the audio, the text on screen, the caption and the top comments.
-- Works with Instagram, TikTok, YouTube, X and Threads links.
+- Works with Instagram, YouTube and X links (tested 2026-11-05). TikTok is accepted but only the cloud
+  runner can read it (TikTok is blocked in India) and that path is untested: **don't claim TikTok or
+  Threads anywhere.** The launch video's swarm shows TikTok/YouTube/X/Threads labels as illustration;
+  it's already published, leave it, but new pieces must not show TikTok or Threads.
 - **Search by meaning**: "dinner idea tonight" finds the pasta note even though it never says "dinner".
 - **ChatGPT and Claude** (and other AI apps with connectors) can search your saves and save links you
   paste into the chat. **[CONFIRM] ChatGPT has actually been tested end to end before any piece shows

@@ -380,6 +380,8 @@ export default {
       // ?scope=guests: only other people's captures. The cloud runner uses it so
       // the owner's own saves stay local-first (vault/ on the Mac).
       const guestsOnly = url.searchParams.get("scope") === "guests";
+      // ?skip=tiktok.com,…: hosts this runner can't reach. Plain host names only.
+      const skip = (url.searchParams.get("skip") ?? "").split(",").map((h) => h.trim().toLowerCase()).filter((h) => /^[a-z0-9.-]+$/.test(h)).slice(0, 5);
       // A claim older than 30 min means that worker died; hand the capture out again.
       const staleBefore = new Date(Date.now() - 30 * 60_000).toISOString();
       // Live saves first. Imported old saves only fill leftover capacity: per person a daily slice
@@ -392,6 +394,7 @@ export default {
          WHERE (c.status='pending' OR (c.status='claimed' AND (c.claimed_at IS NULL OR c.claimed_at < ?)))
            AND c.attempts < ?
            ${guestsOnly ? "AND c.user_id IS NOT NULL" : ""}
+           ${skip.map(() => "AND COALESCE(c.permalink, '') NOT LIKE ?").join(" ")}
            AND (c.source != 'import' OR (
              (SELECT COUNT(*) FROM capture d WHERE d.user_id IS c.user_id AND d.source = 'import' AND d.claimed_at > ?)
                < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL THEN ? ELSE ? END
@@ -400,7 +403,7 @@ export default {
                 WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)))
          ORDER BY (c.source = 'import'), c.captured_at LIMIT 1`,
       )
-        .bind(staleBefore, MAX_ATTEMPTS, day, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
+        .bind(staleBefore, MAX_ATTEMPTS, ...skip.map((h) => `%${h}/%`), day, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
         .first();
       if (!row) return json({ capture: null });
       await env.DB.prepare(

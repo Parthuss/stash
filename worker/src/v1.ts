@@ -25,7 +25,7 @@ const json = (body: unknown, status = 200) =>
 // user submits, so an open URL field would let a guest aim it at the owner's
 // home network (http://192.168.x.x, localhost, cloud metadata). Keep this list
 // in sync with ALLOWED_HOSTS in stash/pipeline.py, which re-checks on the runner.
-const ALLOWED_HOSTS = ["instagram.com", "tiktok.com", "youtube.com", "youtu.be", "x.com", "twitter.com", "threads.net", "threads.com"];
+const ALLOWED_HOSTS = ["instagram.com", "tiktok.com", "youtube.com", "youtu.be", "x.com", "twitter.com"];
 export function allowedUrl(raw: string): string | null {
   let u: URL;
   try { u = new URL(raw); } catch { return null; }
@@ -278,7 +278,7 @@ export async function handleV1(
     const body = (await request.json().catch(() => null)) as { url?: string; note?: string; source?: string } | null;
     if (!body?.url) return json({ error: "need url" }, 400);
     const safeUrl = allowedUrl(body.url);
-    if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, TikTok, YouTube, X and Threads links." }, 400);
+    if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, YouTube and X links." }, 400);
     if (userId) {  // per-user brakes so one account can't flood the queue
       const q = await env.DB.prepare(
         `SELECT SUM(status IN ('pending','claimed') AND source != 'import') AS waiting,

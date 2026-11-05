@@ -134,7 +134,14 @@ def _yt_dlp(permalink: str, key: str) -> MediaBundle:
             suffix = ".jpg" if item.kind == "image" else _video_suffix(item.source_url)
             target = CONFIG.media_dir / f"{key}-{item.position:03d}{suffix}"
             if not target.exists() or target.stat().st_size == 0:
-                _download(item.source_url, target, item.headers)
+                try:
+                    _download(item.source_url, target, item.headers)
+                except Exception:  # noqa: BLE001
+                    # Some CDNs (X's video.twimg.com) refuse a bare GET that yt-dlp itself
+                    # gets through, so hand that one item back to yt-dlp.
+                    if item.kind != "video":
+                        raise
+                    target = _yt_dlp_item(permalink, key, item.position)
             item.path = target
 
     return MediaBundle(
@@ -229,6 +236,22 @@ def _yt_dlp_video(permalink: str, key: str) -> Path:
     if downloaded is None:
         raise FetchError("yt-dlp reported success but produced no file")
     return downloaded
+
+
+def _yt_dlp_item(permalink: str, key: str, position: int) -> Path:
+    """Download one entry of a multi-item post with yt-dlp itself."""
+    stem = f"{key}-{position:03d}"
+    argv = [
+        "yt-dlp", "--no-warnings", "--retries", "3", "-I", str(position),
+        "-o", str(CONFIG.media_dir / f"{stem}.%(ext)s"), *_cookie_args(), permalink,
+    ]
+    proc = subprocess.run(argv, capture_output=True, text=True, timeout=300)
+    if proc.returncode != 0:
+        raise FetchError(_tidy(proc.stderr or proc.stdout))
+    for candidate in CONFIG.media_dir.glob(f"{stem}.*"):
+        if candidate.suffix not in {".json", ".part"} and candidate.stat().st_size > 0:
+            return candidate
+    raise FetchError("yt-dlp reported success but produced no file")
 
 
 def _direct(url: str, key: str) -> MediaItem:

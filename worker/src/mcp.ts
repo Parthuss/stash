@@ -12,11 +12,11 @@ import { listMentions, logEvent, searchNotes } from "./v1";
 
 // The owner runs this inside coding agents; everyone else saves recipes, trips and books.
 const OWNER_INSTRUCTIONS =
-  "The user's own saved Instagram/TikTok/YouTube content, transcribed and indexed. " +
+  "The user's own saved Instagram/YouTube/X content, transcribed and indexed. " +
   "Search it at the start of technical work rather than waiting to be asked. " +
   "they save things intending to use them and forget they exist.";
 const INSTRUCTIONS =
-  "Skwirl holds the reels and posts this person saved (Instagram, TikTok, YouTube, X, Threads), each turned " +
+  "Skwirl holds the reels and posts this person saved (Instagram, YouTube, X), each turned " +
   "into a note: summary, next step, transcript, recipe ingredients and steps, and the books, movies, places " +
   "and products it names. Search it whenever they ask about something they saw or saved, or when planning " +
   "meals, trips, reading, workouts or purchases, before answering from general knowledge. Cite the note's " +
@@ -75,7 +75,7 @@ const TOOLS = [
   {
     name: "save_link",
     description:
-      "Save a reel or post link to the user's Skwirl (Instagram, TikTok, YouTube, X or Threads). " +
+      "Save a reel or post link to the user's Skwirl (Instagram, YouTube or X). " +
       "Skwirl turns it into a note in a few minutes. Use when the user shares a link and wants to keep it.",
     inputSchema: {
       type: "object",
