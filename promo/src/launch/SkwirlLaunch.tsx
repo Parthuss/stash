@@ -125,8 +125,9 @@ const Sheet: React.FC<{ up: number; picked: boolean; tapAt: number }> = ({ up, p
   </div>
 );
 // Reels from everywhere, spiralling into the mark ("any reel"). [emoji, platform, tint]
-const FLY: [string, string, string][] = [["📚", "TikTok", C.lavender], ["✈️", "YouTube", C.sky], ["🧘", "Threads", C.mint], ["🎬", "X", C.peach], ["☕", "Instagram", C.butter],
-  ["💸", "TikTok", C.mint], ["📍", "YouTube", C.lavender], ["🎧", "Instagram", C.peach], ["🧁", "X", C.sky], ["🪴", "Threads", C.butter]];
+// Only platforms verified end to end (2026-11-05): Instagram, YouTube, X.
+const FLY: [string, string, string][] = [["📚", "YouTube", C.lavender], ["✈️", "Instagram", C.sky], ["🧘", "X", C.mint], ["🎬", "YouTube", C.peach], ["☕", "Instagram", C.butter],
+  ["💸", "X", C.mint], ["📍", "Instagram", C.lavender], ["🎧", "YouTube", C.peach], ["🧁", "X", C.sky], ["🪴", "Instagram", C.butter]];
 const ShareScene: React.FC = () => {
   const f = useCurrentFrame() + S.share;
   const { fps } = useVideoConfig();
