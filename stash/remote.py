@@ -60,9 +60,12 @@ def add_capture(
 def claim_next() -> Row | None:
     # STASH_CLAIM_SCOPE=guests is how the cloud runner says "not the owner's saves".
     scope = os.environ.get("STASH_CLAIM_SCOPE")
+    # STASH_CLAIM_SKIP=tiktok.com leaves hosts this machine can't reach (TikTok is blocked in
+    # India) to the cloud runner instead of failing them here three times.
+    skip = os.environ.get("STASH_CLAIM_SKIP")
+    params = {k: v for k, v in (("scope", scope), ("skip", skip)) if v}
     response = httpx.post(
-        f"{CONFIG.worker_url}/claim", headers=_headers(),
-        params={"scope": scope} if scope else None, timeout=30,
+        f"{CONFIG.worker_url}/claim", headers=_headers(), params=params or None, timeout=30,
     )
     if response.status_code != 200:
         raise RemoteError(f"claim {response.status_code}: {response.text[:200]}")

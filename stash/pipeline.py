@@ -250,7 +250,7 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
 #: ingest; this re-checks on the machine that actually fetches, so a bug or a
 #: forged row upstream can't turn the owner's Mac into a scanner of its own LAN.
 ALLOWED_HOSTS = ("instagram.com", "tiktok.com", "youtube.com", "youtu.be",
-                 "x.com", "twitter.com", "threads.net", "threads.com")
+                 "x.com", "twitter.com")
 
 
 def is_allowed_url(raw: str | None) -> bool:

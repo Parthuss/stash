@@ -74,3 +74,30 @@ def test_top_comments_handles_missing_or_malformed_input():
     assert _top_comments(None) == []
     assert _top_comments("not a list") == []
     assert _top_comments([]) == []
+
+
+def test_playlist_video_falls_back_to_yt_dlp_when_cdn_refuses(tmp_path, monkeypatch):
+    """X serves tweets as playlists and its CDN 403s a bare GET; yt-dlp itself gets through."""
+    import stash.fetch as f
+
+    meta = {"_type": "playlist", "title": "t", "entries": [
+        {"formats": [{"url": "https://video.twimg.com/v.mp4", "vcodec": "h264", "acodec": "aac", "height": 720}]},
+        {"formats": [{"url": "https://video.twimg.com/w.mp4", "vcodec": "h264", "acodec": "aac", "height": 720}]},
+    ]}
+    monkeypatch.setattr(f.shutil, "which", lambda _: "/bin/yt-dlp")
+    monkeypatch.setattr(f, "_metadata", lambda _: meta)
+    import dataclasses
+    monkeypatch.setattr(f, "CONFIG", dataclasses.replace(f.CONFIG, media_dir=tmp_path))
+
+    def refuse(*_a, **_k):
+        raise RuntimeError("403 Unauthorized")
+
+    def fake_run(argv, **_k):
+        pos = int(argv[argv.index("-I") + 1])
+        (tmp_path / f"k-{pos:03d}.mp4").write_bytes(b"video")
+        return type("P", (), {"returncode": 0, "stderr": "", "stdout": ""})()
+
+    monkeypatch.setattr(f, "_download", refuse)
+    monkeypatch.setattr(f.subprocess, "run", fake_run)
+    bundle = f._yt_dlp("https://x.com/a/status/1", "k")
+    assert [i.path.name for i in bundle.items] == ["k-001.mp4", "k-002.mp4"]
