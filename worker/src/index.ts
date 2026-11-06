@@ -468,13 +468,14 @@ export default {
            LEFT JOIN (SELECT user_id, COUNT(*) n FROM capture WHERE claimed_at > ? AND source = 'import' GROUP BY user_id) r
              ON r.user_id IS c.user_id
            WHERE c.source = 'import' AND ${open}
+             AND NOT EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || COALESCE(c.user_id, 'owner') AND p.at > ?)
              AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL THEN ? ELSE ? END
              AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR
                (SELECT COUNT(*) FROM capture e LEFT JOIN user v ON v.id = e.user_id
                 WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)
            ORDER BY c.captured_at LIMIT 1`,
         )
-          .bind(day, ...openArgs, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
+          .bind(day, ...openArgs, now, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
           .first();
         if (!row) {
           await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('imports_idle', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
@@ -522,11 +523,25 @@ export default {
           .bind(new Date().toISOString(), (body.title ?? "").slice(0, 300) || null, body.id)
           .run();
       } else {
-        // Back to pending, not failed: transient breakage should retry itself.
-        // Once MAX_ATTEMPTS is hit, /status reports it as a dead letter — see below.
-        await env.DB.prepare("UPDATE capture SET status='pending', error=? WHERE id=?")
-          .bind((body.error ?? "").slice(0, 2000), body.id)
-          .run();
+        const error = (body.error ?? "").slice(0, 2000);
+        if (/groq (429|503)/.test(error)) {
+          // Groq out of tokens or over capacity isn't this save's fault: give the try back and park
+          // it for 30 min (a 'claimed' row is handed out again once stale). For imports, pause the
+          // rest of that person's backlog too, so we don't download them all to hit the same wall.
+          // (6 Nov: a free key's daily tokens ran out and burned 3 tries off each import.)
+          const now = new Date().toISOString();
+          await env.DB.prepare("UPDATE capture SET status='claimed', claimed_at=?, error=?, attempts = MAX(attempts - 1, 0) WHERE id=?")
+            .bind(now, error, body.id).run();
+          const c = await env.DB.prepare("SELECT user_id, source FROM capture WHERE id = ?").bind(body.id).first<{ user_id: string | null; source: string }>();
+          if (c?.source === "import") {
+            await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
+              .bind("pause:" + (c.user_id ?? "owner"), new Date(Date.now() + 30 * 60_000).toISOString()).run();
+          }
+        } else {
+          // Back to pending, not failed: transient breakage should retry itself.
+          // Once MAX_ATTEMPTS is hit, /status reports it as a dead letter — see below.
+          await env.DB.prepare("UPDATE capture SET status='pending', error=? WHERE id=?").bind(error, body.id).run();
+        }
       }
       // Last of someone's imported saves just finished (read or given up on): tell them on Telegram.
       const cap = await env.DB.prepare("SELECT user_id, source, status, attempts FROM capture WHERE id = ?").bind(body.id)
