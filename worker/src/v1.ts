@@ -142,7 +142,12 @@ export async function listMentions(env: Env, userId: string | null, kind: string
 }
 
 /** Wipe a user and everything they saved. Used by self-delete and admin revoke. */
-export async function deleteUser(env: Env, userId: string): Promise<void> {
+export async function deleteUser(env: Env, userId: string, origin: string): Promise<void> {
+  // Covers sit in the edge cache (see /t/ in index.ts); drop them there too. Best effort: this
+  // clears this data centre, and the edge copy elsewhere expires within a day.
+  const thumbs = await env.DB.prepare("SELECT id FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId).all<{ id: string }>();
+  const cache = (caches as any).default as Cache;
+  await Promise.all((thumbs.results ?? []).map((t) => cache.delete(`${origin}/t/${t.id}`).catch(() => false)));
   await env.DB.batch([
     env.DB.prepare("DELETE FROM mention_done WHERE owner_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM usage_event WHERE user_id = ?").bind(userId),
@@ -330,7 +335,7 @@ export async function handleV1(
     if (userId === null) return json({ error: "The owner account can't be deleted here." }, 400);
     const body = (await request.json().catch(() => null)) as { confirm?: string } | null;
     if (body?.confirm !== "delete") return json({ error: 'Send {"confirm":"delete"} to delete everything.' }, 400);
-    await deleteUser(env, userId);
+    await deleteUser(env, userId, new URL(request.url).origin);
     return json({ ok: true });
   }
 

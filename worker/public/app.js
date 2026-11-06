@@ -115,10 +115,23 @@ async function load() {
     setBanner("savelink", "warn", "No password here: your sign-in link is the only way back in. Save it somewhere safe.", "Save my link", saveLink);
   render(); schedulePoll();
 }
+// Polling reads only the small captures list; the notes reload only when that list changes.
+// Nothing in flight means no timer at all (coming back to the tab still refreshes).
+const pollSig = () => JSON.stringify([captures.map((c) => c.id + c.state), importInfo && importInfo.done]);
+let lastSig = null;
 function schedulePoll() {
-  clearTimeout(pollTimer);
+  clearTimeout(pollTimer); lastSig = pollSig();
   const waiting = captures.some((c) => c.state === "processing");
-  pollTimer = setTimeout(() => document.visibilityState === "visible" && $("lib").style.display !== "none" ? load().catch(() => schedulePoll()) : schedulePoll(), waiting ? 8000 : 30000);
+  const importing = importInfo && importInfo.done + importInfo.failed < importInfo.total;
+  if (!waiting && !importing) return;
+  pollTimer = setTimeout(async () => {
+    if (document.visibilityState !== "visible" || $("lib").style.display === "none") return schedulePoll();
+    const cr = await api("/v1/captures").catch(() => null);
+    const cj = cr && cr.ok ? await cr.json().catch(() => null) : null;
+    if (!cj) return schedulePoll();
+    captures = cj.captures || []; importInfo = cj.import || null;
+    if (pollSig() !== lastSig) load().catch(() => schedulePoll()); else schedulePoll();
+  }, waiting ? 8000 : 120000);
 }
 async function ingest(url) {
   let r;

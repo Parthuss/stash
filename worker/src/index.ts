@@ -40,7 +40,7 @@
 import { embedMissing } from "./embed";
 import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
-import { handleTelegram, setupTelegram } from "./telegram";
+import { handleTelegram, setupTelegram, telegramOwner } from "./telegram";
 import { sharePage } from "./share";
 import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
@@ -56,6 +56,7 @@ export interface Env {
   OPEN_JOIN?: string; // "1" = anyone can join from the landing page, no code (still capped by MAX_JOIN)
   NTFY_TOPIC?: string;
   TELEGRAM_BOT_TOKEN?: string; // optional: save by messaging the bot (src/telegram.ts)
+  OWNER_TELEGRAM_CHAT?: string; // optional: owner alerts still reach Telegram when D1 is down
   // Optional: a fine-grained GitHub token (Actions: read & write, this repo only).
   // When set, a friend's save starts the cloud runner right away instead of
   // waiting for GitHub's cron, which fires every 2-5 hours in practice.
@@ -208,9 +209,22 @@ async function kickRunner(env: Env): Promise<void> {
 }
 
 /** Cron (every 30 min): tell the owner when something needs a human. */
+async function alertOwner(env: Env, message: string): Promise<void> {
+  if (env.NTFY_TOPIC) await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, { method: "POST", body: message, headers: { Title: "Skwirl" } }).catch(() => {});
+  await telegramOwner(env, "Skwirl: " + message).catch(() => {});
+}
+
 async function checkHealth(env: Env): Promise<void> {
-  if (!env.NTFY_TOPIC) return;
-  const { overview: o } = await adminOverview(env);
+  let o: any;
+  try { ({ overview: o } = await adminOverview(env)); } catch (e) {
+    // D1 itself is failing (e.g. the free daily read limit), so there's no alert_state to dedupe
+    // with: say it once every 3 hours by the clock.
+    const now = new Date();
+    if (now.getUTCHours() % 3 === 0 && now.getUTCMinutes() < 30) {
+      await alertOwner(env, `The database is failing, so the site is down for everyone: ${String(e).slice(0, 200)}`);
+    }
+    return;
+  }
   const problems: [string, string][] = [];
   const oldest = o?.oldest_waiting ? Date.now() - Date.parse(o.oldest_waiting as string) : 0;
   if (oldest > 60 * 60_000) problems.push(["stuck", `Queue stuck: oldest save has waited ${Math.round(oldest / 60_000)} min (${o!.waiting} waiting). Is the runner or the Mac down?`]);
@@ -222,7 +236,7 @@ async function checkHealth(env: Env): Promise<void> {
     // Same problem at most every 6 hours (a join is its own key per hour).
     const last = await env.DB.prepare("SELECT at FROM alert_state WHERE key = ?").bind(key).first<{ at: string }>();
     if (last && Date.now() - Date.parse(last.at) < 6 * 3600_000) continue;
-    await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, { method: "POST", body: message, headers: { Title: "Skwirl" } }).catch(() => {});
+    await alertOwner(env, message);
     await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
       .bind(key, new Date().toISOString()).run();
   }
@@ -288,12 +302,21 @@ export default {
 
     const thumbMatch = path.match(/^\/t\/([0-9a-f]{32})$/);
     if (thumbMatch && request.method === "GET") {
+      // Thumbs never change, so keep them in Cloudflare's edge cache: no D1 read after the
+      // first view, and covers keep showing even when D1 is down.
+      const cache = (caches as any).default as Cache;
+      const hit = await cache.match(request.url);
+      if (hit) return hit;
       const row = await env.DB.prepare("SELECT data FROM thumb WHERE id = ?").bind(thumbMatch[1]).first<{ data: string }>();
       if (!row) return new Response("not found", { status: 404 });
       const bytes = Uint8Array.from(atob(row.data), (c) => c.charCodeAt(0));
-      return new Response(bytes, {
+      const res = new Response(bytes, {
         headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=31536000, immutable", "x-content-type-options": "nosniff" },
       });
+      // The edge keeps it a day (so a deleted account's covers can't linger long); browsers a year.
+      const edge = new Response(bytes, { headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=86400" } });
+      ctx.waitUntil(cache.put(request.url, edge));
+      return res;
     }
 
     const shareMatch = path.match(/^\/n\/([0-9a-f]{32})$/);
@@ -531,7 +554,7 @@ export default {
     // Cut someone off and erase their data (abuse, or a leaked token).
     const revoke = path.match(/^\/admin\/users\/([^/]+)\/revoke$/);
     if (revoke && request.method === "POST") {
-      await deleteUser(env, decodeURIComponent(revoke[1]));
+      await deleteUser(env, decodeURIComponent(revoke[1]), url.origin);
       return json({ ok: true });
     }
 

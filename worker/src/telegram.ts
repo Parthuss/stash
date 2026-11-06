@@ -35,6 +35,15 @@ export async function telegramLink(env: Env, userId: string | null): Promise<str
   return `https://t.me/${bot}?start=${code}`;
 }
 
+/** Message the owner on Telegram (their linked chat, or OWNER_TELEGRAM_CHAT if D1 is down). */
+export async function telegramOwner(env: Env, text: string): Promise<void> {
+  if (!env.TELEGRAM_BOT_TOKEN) return;
+  const rows = await env.DB.prepare("SELECT chat_id FROM telegram_chat WHERE user_key = ?").bind(OWNER).all<{ chat_id: string }>()
+    .then((r) => (r.results ?? []).map((x) => x.chat_id)).catch(() => [] as string[]);
+  const chats = new Set([...rows, ...(env.OWNER_TELEGRAM_CHAT ? [env.OWNER_TELEGRAM_CHAT] : [])]);
+  for (const c of chats) await say(env, c, text);
+}
+
 export const telegramConnected = async (env: Env, userId: string | null) =>
   Boolean(await env.DB.prepare("SELECT 1 FROM telegram_chat WHERE user_key = ?").bind(userId ?? OWNER).first());
 
