@@ -202,16 +202,21 @@ async function kickRunner(env: Env): Promise<void> {
   if (last && Date.now() - Date.parse(last.at) < 3 * 60_000) return;
   await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('kick', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
     .bind(new Date().toISOString()).run();
+  await dispatchRunner(env).then(async (r) => { if (r.status !== 204) console.log("kickRunner failed", r.status, (await r.text()).slice(0, 300)); })
+    .catch((e) => console.log("kickRunner error", String(e)));
+}
+
+/** POST to GitHub's workflow_dispatch for the cloud runner. 204 = started. */
+function dispatchRunner(env: Env): Promise<Response> {
   const repo = env.GH_REPO || "Parthuss/stash";
-  await fetch(`https://api.github.com/repos/${repo}/actions/workflows/process.yml/dispatches`, {
+  return fetch(`https://api.github.com/repos/${repo}/actions/workflows/process.yml/dispatches`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.GH_DISPATCH_TOKEN.trim()}`, Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${(env.GH_DISPATCH_TOKEN ?? "").trim()}`, Accept: "application/vnd.github+json",
       "User-Agent": "stash-worker", "X-GitHub-Api-Version": "2022-11-28",
     },
     body: JSON.stringify({ ref: "master" }),
-  }).then(async (r) => { if (r.status !== 204) console.log("kickRunner failed", r.status, (await r.text()).slice(0, 300)); })
-    .catch((e) => console.log("kickRunner error", String(e)));
+  });
 }
 
 /** Cron (every 30 min): tell the owner when something needs a human. */
@@ -539,6 +544,12 @@ export default {
     }
 
     if (path === "/admin/telegram/setup" && request.method === "POST") return setupTelegram(env, url.origin);
+    // Start the cloud runner now and report GitHub's answer (204 = the token works).
+    if (path === "/admin/runner/kick" && request.method === "POST") {
+      if (!env.GH_DISPATCH_TOKEN) return json({ error: "GH_DISPATCH_TOKEN isn't set" }, 400);
+      const r = await dispatchRunner(env);
+      return json({ github_status: r.status, body: r.status === 204 ? "" : (await r.text()).slice(0, 300) });
+    }
 
     if (path === "/admin/users" && request.method === "POST") {
       const body = (await request.json().catch(() => null)) as { name?: string } | null;
