@@ -5,6 +5,11 @@ const store = { get: (k) => { try { return localStorage.getItem(k); } catch { re
 { const m = location.hash.match(/^#t=([\w-]+)/); if (m) { store.set("stash_token", m[1]); history.replaceState(null, "", location.pathname + location.search); } }
 const joinCodeFromLink = (location.hash.match(/^#code=([\w-]+)/) || [])[1];
 if (joinCodeFromLink) history.replaceState(null, "", location.pathname + location.search);
+// A copy of the library on this device, so an outage shows your saves instead of an error.
+// Tagged with the token's tail so a different account on this device never sees it.
+const cacheGet = (k) => { try { const c = JSON.parse(store.get(k) || "null"); return c && c.tok === (token || "").slice(-8) ? c : null; } catch { return null; } };
+const cacheSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify({ ...v, tok: (token || "").slice(-8), at: Date.now() })); } catch {} };
+const ago2 = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
 let token = store.get("stash_token"), notes = [], filter = "all", current = null, timer;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -34,7 +39,8 @@ async function api(path, opts = {}) {
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
 function show(which) { for (const id of ["auth", "lib", "note", "setup", "admin", "mentions"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
 function signOut(msg) {
-  store.del("stash_token"); token = null; show("auth");
+  for (const k of ["stash_token", "stash_cache", "stash_notes", "stash_outbox"]) store.del(k);
+  token = null; show("auth");
   const m = typeof msg === "string" ? msg : ""; $("authErr").textContent = m; if (m) $("signin").open = true;
 }
 
@@ -99,10 +105,14 @@ let captures = [], loaded = false, known = null, pollTimer = null, importInfo = 
 async function load() {
   if (!loaded) $("list").innerHTML = skeleton();
   const q = $("q").value.trim();
-  const [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]);
+  let nr, cr;
+  try { [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]); } catch (e) { if (e.message !== "offline") throw e; }
+  if (!nr || nr.status >= 500) return showCopy(q);
   if (!nr.ok) { toast("Couldn't load your saves. Try again."); return; }
   const cj = cr.ok ? await cr.json() : {};
   notes = (await nr.json()).notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showFeedback(); showImport();
+  if (!q) cacheSet("stash_cache", { notes });
+  flushOutbox();
   // A note we hadn't seen before means something just finished processing.
   const ids = new Set(notes.map((n) => n.id));
   if (known && !q) { const fresh = notes.find((n) => !known.has(n.id)); if (fresh) toast("Ready: " + fresh.title); }
@@ -112,7 +122,7 @@ async function load() {
   if (slow) setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", "Add my own Groq key", () => openSetup(false));
   else clearBanner("busy");
   if (!bannerKey && !store.get("stash_link_saved") && !(setupState && setupState.owner))
-    setBanner("savelink", "warn", "No password here: your sign-in link is the only way back in. Save it somewhere safe.", "Save my link", saveLink);
+    setBanner("savelink", "warn", "No password here: your sign-in link is how you get back in. Save it somewhere safe.", "Save my link", saveLink);
   render(); schedulePoll();
 }
 // Polling reads only the small captures list; the notes reload only when that list changes.
@@ -133,10 +143,32 @@ function schedulePoll() {
     if (pollSig() !== lastSig) load().catch(() => schedulePoll()); else schedulePoll();
   }, waiting ? 8000 : 120000);
 }
+// Server down: show the copy from this device, search it locally, and check back in a minute.
+let retryTimer = null;
+function showCopy(q) {
+  const c = cacheGet("stash_cache");
+  clearTimeout(retryTimer); retryTimer = setTimeout(() => load().catch(() => {}), 60000);
+  if (!c) { if (!loaded) $("list").innerHTML = ""; setBanner("net", "err", "Skwirl's server is having a moment. Nothing is lost. We'll keep trying.", "Try again", () => load()); return; }
+  const words = (q || "").toLowerCase().split(/\s+/).filter(Boolean);
+  notes = words.length ? c.notes.filter((n) => words.every((w) => `${n.title} ${n.summary} ${n.topic}`.toLowerCase().includes(w))) : c.notes;
+  loaded = true; render();
+  setBanner("net", "warn", `Skwirl's server is having a moment, so this is your copy (saved ${ago2(c.at)}). New saves wait here and go through when it's back.`, "Try again", () => load());
+}
+// Links saved while the server is down wait on this device, then go through on the next good load.
+const outbox = () => { try { return JSON.parse(store.get("stash_outbox") || "[]"); } catch { return []; } };
+async function flushOutbox() {
+  const waiting = outbox(); if (!waiting.length) return;
+  store.del("stash_outbox");
+  for (const u of waiting) await ingest(u);
+}
 async function ingest(url) {
   let r;
   try { r = await api("/v1/ingest", { method: "POST", body: JSON.stringify({ url, source: matchMedia("(display-mode: standalone)").matches ? "pwa" : "web" }) }); }
-  catch (e) { if (e.message === "offline") toast("You're offline. That link wasn't saved."); return; }
+  catch (e) { if (e.message !== "offline") return; }
+  if (!r || r.status >= 500) {
+    const q = outbox(); if (!q.includes(url)) q.push(url); store.set("stash_outbox", JSON.stringify(q.slice(-50)));
+    toast("Skwirl's server is busy. It's kept on this device and saves when it's back."); return;
+  }
   const body = await r.json().catch(() => ({}));
   if (!r.ok) { toast(body.error || "Couldn't save that link. Try again."); return; }
   toast(body.created ? "Saved. Takes a minute or two." : "You already saved that one.");
@@ -146,9 +178,14 @@ let returnTo = "lib";
 const USED_LABEL = { food: "I made this" };
 async function open(id, from) {
   returnTo = from || "lib";
-  const r = await api("/v1/notes/" + encodeURIComponent(id));
-  if (!r.ok) { toast("That note isn't there anymore."); load().catch(() => {}); return; }
-  current = await r.json();
+  const r = await api("/v1/notes/" + encodeURIComponent(id)).catch(() => null);
+  const kept = cacheGet("stash_notes") || { byId: {} };
+  if (r && r.ok) {
+    current = await r.json();
+    kept.byId[id] = current; const ids = Object.keys(kept.byId); for (const k of ids.slice(0, Math.max(0, ids.length - 40))) delete kept.byId[k];
+    cacheSet("stash_notes", { byId: kept.byId });
+  } else if ((!r || r.status >= 500) && kept.byId[id]) current = kept.byId[id];
+  else { toast(r && r.status < 500 ? "That note isn't there anymore." : "Can't open that one while the server is down."); if (r && r.status < 500) load().catch(() => {}); return; }
   $("nTitle").textContent = current.title;
   $("nHero").style.background = tintOf(current.topic);
   const unused = current.status === "unused";
