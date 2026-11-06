@@ -419,7 +419,7 @@ export async function handleV1(
     ).bind(userId).all<{ source: string; n: number }>();
     const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
     const u = userId
-      ? await env.DB.prepare("SELECT mcp_calls, groq_key_enc, email FROM user WHERE id = ?").bind(userId).first<any>()
+      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
     return json({
       owner: userId === null,
@@ -427,6 +427,7 @@ export async function handleV1(
       claude_connected: (u?.mcp_calls ?? 0) > 0,
       has_groq_key: Boolean(u?.groq_key_enc),
       has_email: Boolean(u?.email),
+      name: u?.name ?? null,
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
   }

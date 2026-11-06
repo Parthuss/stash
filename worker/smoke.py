@@ -66,7 +66,7 @@ assert st["owner"]["notes"] == 1 and st["owner"]["used"] == 1, st["owner"]
 assert c.get("/admin/stats").status_code == 401
 # ---- setup, BYO key, export ----
 import os
-assert c.get("/v1/setup", headers=h(ann)).json() == {"owner": False, "saved_from": {"app": 1}, "claude_connected": True, "has_groq_key": False, "has_email": False, "telegram": {"connected": False}}, c.get("/v1/setup", headers=h(ann)).text
+assert c.get("/v1/setup", headers=h(ann)).json() == {"owner": False, "saved_from": {"app": 1}, "claude_connected": True, "has_groq_key": False, "has_email": False, "name": "ann", "telegram": {"connected": False}}, c.get("/v1/setup", headers=h(ann)).text
 assert c.put("/v1/settings/groq", headers=h(ann), json={"key": "hello"}).status_code == 400           # bad shape
 assert c.put("/v1/settings/groq", headers=h(ann), json={"key": "gsk_" + "a" * 40}).status_code == 400  # Groq rejects it
 assert c.put("/v1/settings/groq", headers=own, json={"key": "gsk_" + "a" * 40}).status_code == 400     # owner has no per-user key

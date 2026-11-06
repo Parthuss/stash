@@ -102,7 +102,7 @@ async function load() {
   const [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]);
   if (!nr.ok) { toast("Couldn't load your saves. Try again."); return; }
   const cj = cr.ok ? await cr.json() : {};
-  notes = (await nr.json()).notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showImport(); showFeedback();
+  notes = (await nr.json()).notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showFeedback(); showImport();
   // A note we hadn't seen before means something just finished processing.
   const ids = new Set(notes.map((n) => n.id));
   if (known && !q) { const fresh = notes.find((n) => !known.has(n.id)); if (fresh) toast("Ready: " + fresh.title); }
@@ -526,7 +526,7 @@ function showImport() {
   const left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState?.has_groq_key ? 150 : 5));
   if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` The rest come in a batch a day, about ${days} more day${days > 1 ? "s" : ""}. New saves always go first.` : ""}`;
   // Big import in progress: say so on the library, so a slow trickle doesn't look broken.
-  if (i && left > 0) { if (!bannerKey || bannerKey === "import") setBanner("import", "info", `${i.done} of ${i.total} old Instagram saves read. The rest arrive in daily batches, about ${days} more day${days > 1 ? "s" : ""}.`); }
+  if (i && left > 0 && $("fb").hidden) { if (!bannerKey || bannerKey === "import") setBanner("import", "info", `${i.done} of ${i.total} old Instagram saves read. The rest arrive in daily batches, about ${days} more day${days > 1 ? "s" : ""}.`); }
   else clearBanner("import");
 }
 $("impFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });
@@ -550,8 +550,14 @@ $("tgOff").addEventListener("click", async () => {
 function showFeedback() {
   let dismissed = false; try { dismissed = localStorage.getItem("skwirl_fb") === "1"; } catch {}
   $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3;
+  if ($("fb").hidden) return;
+  const i = importInfo, left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState.has_groq_key ? 150 : 5));
+  $("fbHead").textContent = `Hi${setupState.name ? " " + setupState.name : ""}, I'm Parth. I made Skwirl.`;
+  $("fbBody").textContent = "Thanks for trying it. "
+    + (left > 0 ? `Your ${i.total} old saves are coming in a batch a day, so the rest should be here in about ${days} day${days > 1 ? "s" : ""}. Anything new you save jumps the queue. ` : "")
+    + "If something feels broken, confusing or missing, tell me here. I read every message.";
 }
-const fbDone = () => { try { localStorage.setItem("skwirl_fb", "1"); } catch {} $("fb").hidden = true; };
+const fbDone = () => { try { localStorage.setItem("skwirl_fb", "1"); } catch {} $("fb").hidden = true; showImport(); };
 $("fbNo").addEventListener("click", fbDone);
 $("fb").addEventListener("submit", async (e) => {
   e.preventDefault();
