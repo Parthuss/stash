@@ -341,12 +341,35 @@ export default {
 
     // Tells the landing page whether to ask for an invite code.
     if (path === "/join" && request.method === "GET") {
-      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE), email_login: emailEnabled(env) });
+      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE), email_login: emailEnabled(env), country: request.headers.get("CF-IPCountry") });
     }
 
     // Product analytics beacon (public: visitors aren't signed in). See src/analytics.ts.
     if (path === "/e" && request.method === "POST") {
       return collect(request, env, await userFromBearer(request, env).catch(() => undefined));
+    }
+
+    // "Skwirl Plus, coming soon": record interest (there's no checkout yet). Visitors need an
+    // email to hear back; signed-in people may skip it. One ping to the owner per sign-up.
+    if (path === "/waitlist" && request.method === "POST") {
+      const ip = "wait:" + (request.headers.get("CF-Connecting-IP") ?? "unknown");
+      const recent = await env.DB.prepare("SELECT COUNT(*) n FROM join_attempt WHERE ip = ? AND at > ?")
+        .bind(ip, new Date(Date.now() - 3600_000).toISOString()).first<{ n: number }>();
+      if ((recent?.n ?? 0) >= 5) return json({ error: "Too many tries. Wait an hour." }, 429);
+      await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
+      const b = ((await request.json().catch(() => null)) ?? {}) as any;
+      const userId = await userFromBearer(request, env).catch(() => undefined);
+      const email = String(b.email ?? "").trim().slice(0, 120);
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right." }, 400);
+      if (email && !b.consent) return json({ error: "Tick the box so we're allowed to email you." }, 400);
+      if (!email && typeof userId !== "string") return json({ error: "Add your email so we can tell you when it's ready." }, 400);
+      const country = request.headers.get("CF-IPCountry");
+      await env.DB.prepare("INSERT INTO waitlist (at, user_id, visitor, email, country, price, place) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        .bind(new Date().toISOString(), typeof userId === "string" ? userId : null, String(b.visitor ?? "").slice(0, 40) || null,
+          email || null, country, String(b.price ?? "").slice(0, 20) || null, String(b.place ?? "").slice(0, 20) || null).run();
+      if (email && typeof userId === "string") await env.DB.prepare("UPDATE user SET email = COALESCE(email, ?) WHERE id = ?").bind(email, userId).run();
+      ctx.waitUntil(telegramOwner(env, `Skwirl: someone wants Plus (${country ?? "?"}, shown ${b.price ?? "?"}, from ${b.place ?? "?"})${typeof userId === "string" ? ", a signed-in user" : ""}.`).catch(() => {}));
+      return json({ ok: true });
     }
 
     // ---- lost link: email a one-time sign-in link, then trade it for a device token ----

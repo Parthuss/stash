@@ -140,7 +140,10 @@ export async function analyticsOverview(env: Env, days: number) {
     `SELECT v.id, v.visitor, v.user_id, u.name, v.started_at, v.last_at, v.active_ms, v.events, v.country, v.device, v.os, v.browser,
        v.referrer, v.utm_source, v.landing, v.installed
      FROM visit v LEFT JOIN user u ON u.id = v.user_id WHERE ${W} ORDER BY v.started_at DESC LIMIT 80`, since);
-  return { days, since, totals, durations, daily, signups, saves, dims, events, funnel, users, recent };
+  const waitlist = await all(
+    `SELECT w.at, w.email, w.country, w.price, w.place, u.name FROM waitlist w LEFT JOIN user u ON u.id = w.user_id
+     WHERE w.at >= ? ORDER BY w.at DESC LIMIT 200`, since);
+  return { days, since, totals, durations, daily, signups, saves, dims, events, funnel, users, recent, waitlist };
 }
 
 /** One person's (or one anonymous visitor's) whole story, visit by visit. Owner only. */

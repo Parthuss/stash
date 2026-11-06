@@ -331,6 +331,10 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .price { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 44px; line-height: 1.1; margin: 6px 0 8px; }
 .price em { font-family: var(--ui); font-weight: 400; font-variation-settings: normal; font-style: normal; font-size: 15px; color: var(--muted); }
 .plan ul { padding-left: 18px; margin: 0 0 12px; font-size: 15px; flex: 1; } .plan li { margin-bottom: 4px; }
+.plan.plus { background: var(--butter); }
+.plusform { display: grid; gap: 8px; margin-top: 10px; }
+.plusform input[type=email] { font: inherit; height: 42px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); }
+.plusform label { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--muted); }
 .plan .note { font-size: 13px; color: rgb(29 27 46 / .62); }
 .selfhost { font-size: 15px; margin: 18px 0 0 !important; text-align: center; } .selfhost a { color: var(--ink); font-weight: 600; }
 
@@ -584,17 +588,22 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lsec reveal" id="pricing">
     <h2>Pricing</h2>
-    <p>Skwirl is free. No paid plan, no card, no trial that runs out.</p>
+    <p>Skwirl is free: no card, no trial that runs out. A paid plan for people who'd rather not touch keys is on the way.</p>
     <div class="plans">
       <div class="plan">
         <small>Free</small><b class="price">$0</b>
-        <ul><li>30 saves a day</li><li>Notes, recipes, lists, search</li><li>ChatGPT and Claude connector</li><li>Import your old Instagram saves</li></ul>
-        <span class="note">Runs on a shared AI allowance.</span>
+        <ul><li>Up to 30 links a day</li><li>Notes, recipes, lists, search</li><li>ChatGPT and Claude connector</li><li>Import your old Instagram saves</li></ul>
+        <span class="note">Read in turn on a shared AI allowance, so on busy days it can take hours.</span>
       </div>
       <div class="plan hot">
         <small>Free, your own key</small><b class="price">$0</b>
-        <ul><li>200 saves a day</li><li>Never queued behind anyone</li><li>Everything in Free</li></ul>
+        <ul><li>Never queued behind anyone</li><li>Groq's free limits cover dozens of reels a day</li><li>Everything in Free</li></ul>
         <span class="note">Paste a free Groq key in Set up. Two minutes, no card.</span>
+      </div>
+      <div class="plan plus" data-plus="pricing">
+        <small>Skwirl Plus · coming soon</small><b class="price"><span class="plusPrice">$2.99</span><em> / month</em></b>
+        <ul><li>No keys, nothing to set up</li><li>Your saves read first, in minutes</li><li>Bring in your whole Saved folder</li><li>Everything in Free</li></ul>
+        <span class="note">Early price, in your currency. Nothing to pay now: leave your email and you'll hear first.</span>
       </div>
     </div>
     <p class="selfhost">Rather run it yourself? Skwirl is open source. <a href="https://github.com/Parthuss/stash/blob/master/docs/SELF_HOST.md" rel="noopener">Host your own copy for free ↗</a></p>
@@ -606,7 +615,7 @@ body.on-phone .phone-handoff { display: none; }
     <details class="faq"><summary>How long does a save take?</summary><p>Usually a couple of minutes. You'll see it appear in your library with a "Reading…" card while it works.</p></details>
     <details class="faq"><summary>Who can see my saves?</summary><p>Only you, unless you share a note. Skwirl never re-posts the video, it keeps a short note and a small cover image. Details in the <a href="/privacy">privacy policy</a>.</p></details>
     <details class="faq"><summary>There's no password. How do I get back in?</summary><p>You get a private sign-in link. Skwirl asks you to save it (email it to yourself, or keep it in your notes). Open it on any device and you're in.</p></details>
-    <details class="faq"><summary>What's a Groq key and do I need one?</summary><p>No. Groq runs the AI that reads reels. Skwirl covers it for you. If you save a lot, a free key of your own lifts your limit to 200 a day.</p></details>
+    <details class="faq"><summary>What's a Groq key and do I need one?</summary><p>No. Groq runs the AI that reads reels. Skwirl covers it for you. If you save a lot, a free key of your own means you're never queued behind anyone.</p></details>
   </div>
 
   <div class="lsec lend reveal">
@@ -750,6 +759,7 @@ body.on-phone .phone-handoff { display: none; }
   <details class="group" id="gGroq">
     <summary><div style="flex:1"><h2>Use your own Groq key</h2><small>Free, faster, no shared limits</small></div><span class="badge opt" id="bGroq">Optional</span></summary>
     <div class="gbody" id="groqBody">
+      <div class="note-box plusnote" data-plus="setup" style="margin:0 0 12px"><b>Rather not deal with keys?</b> Skwirl Plus is coming: no keys, your saves read first. <span class="plusPrice">$2.99</span>/month.</div>
       <p style="margin-top:0;color:var(--muted)">Skwirl reads reels with Groq’s AI. By default it uses a shared key with a small daily limit. Your own free key means your saves are never queued behind anyone else’s.</p>
       <ol class="steps">
         <li><b>Get a free key from Groq</b><span>Sign up free (Google or email works, no card needed), tap <em>Create API Key</em>, name it "Skwirl", and copy the key. It starts with <code>gsk_</code> and Groq only shows it once, so paste it here straight away.</span><div class="inline-actions"><a class="btn sm soft" href="https://console.groq.com/keys" target="_blank" rel="noopener">Open Groq console ↗</a></div></li>

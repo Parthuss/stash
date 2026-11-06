@@ -645,3 +645,35 @@ $("fb").addEventListener("submit", async (e) => {
   tr("feedback_sent", $("fbEmail").value ? "with_email" : "no_email");
   fbDone(); toast("Thanks! Parth reads every one.");
 });
+
+// ---- Skwirl Plus (coming soon): local early price, and a "notify me" that records interest.
+// No checkout exists yet. Prices live here; change them in one place.
+const EU = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE".split(" ");
+const plusPrice = (cc) => ({ IN: "₹149", US: "$3.99", CA: "C$4.99", GB: "£2.99", AU: "A$5.99", NZ: "NZ$5.99" }[cc] || (EU.includes(cc) ? "€3.49" : "$2.99"));
+let plusCountry = null;
+fetch("/join").then((r) => r.json()).then((m) => { plusCountry = m.country; document.querySelectorAll(".plusPrice").forEach((el) => (el.textContent = plusPrice(m.country))); }).catch(() => {});
+document.querySelectorAll("[data-plus]").forEach((box) => {
+  const place = box.dataset.plus;
+  box.insertAdjacentHTML("beforeend", `<button class="btn sm plusBtn" type="button" id="plus_${place}" style="margin-top:10px;justify-self:start;align-self:flex-start">Notify me</button>
+    <form class="plusform" hidden><input type="email" maxlength="120" placeholder="Your email" aria-label="Your email" autocomplete="email">
+    <label><input type="checkbox"> Email me when Plus is ready. Nothing else, never shared.</label>
+    <button class="btn sm" type="submit">Notify me</button></form><p class="msg" role="status"></p>`);
+  const btn = box.querySelector(".plusBtn"), form = box.querySelector("form"), msg = box.querySelector(".msg");
+  const send = async (email, consent) => {
+    const price = plusPrice(plusCountry);
+    const r = await fetch("/waitlist", { method: "POST", headers: { "content-type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+      body: JSON.stringify({ email, consent, price, place, visitor: store.get("sk_vid") }) }).catch(() => null);
+    const b = r ? await r.json().catch(() => ({})) : {};
+    if (!r || !r.ok) { msg.textContent = b.error || "Couldn't save that. Try again."; return; }
+    tr("plus_waitlist", `${place} ${price}`);
+    btn.hidden = form.hidden = true; msg.className = "msg ok";
+    msg.textContent = "You're on the list. You'll hear first, at this early price.";
+  };
+  btn.addEventListener("click", () => {
+    tr("plus_interest", place);
+    // Signed in with an email already on file: one tap is enough.
+    if (token && setupState && !setupState.owner && setupState.has_email) return send("", false);
+    btn.hidden = true; form.hidden = false; form.querySelector("input[type=email]").focus();
+  });
+  form.addEventListener("submit", (e) => { e.preventDefault(); send(form.querySelector("input[type=email]").value, form.querySelector("input[type=checkbox]").checked); });
+});
