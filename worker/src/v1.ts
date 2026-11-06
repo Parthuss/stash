@@ -355,6 +355,7 @@ export async function handleV1(
       added += res.reduce((n, r) => n + (r.meta.changes ?? 0), 0);
     }
     await logEvent(env, userId, "api", "import");
+    if (added) await env.DB.prepare("DELETE FROM alert_state WHERE key = 'imports_idle'").run();  // start on it now
     return json({ found: urls.length, added, skipped_over_cap: urls.length - take.length, cap });
   }
 

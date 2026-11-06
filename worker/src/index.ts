@@ -389,22 +389,41 @@ export default {
       // so one big import can't eat everyone's free allowance. Counted at claim time, so parallel
       // runners can't overshoot.
       const day = new Date(Date.now() - 86_400_000).toISOString();
-      const row = await env.DB.prepare(
-        `SELECT c.* FROM capture c LEFT JOIN user u ON u.id = c.user_id
-         WHERE (c.status='pending' OR (c.status='claimed' AND (c.claimed_at IS NULL OR c.claimed_at < ?)))
+      const open = `(c.status='pending' OR (c.status='claimed' AND (c.claimed_at IS NULL OR c.claimed_at < ?)))
            AND c.attempts < ?
            ${guestsOnly ? "AND c.user_id IS NOT NULL" : ""}
-           ${skip.map(() => "AND COALESCE(c.permalink, '') NOT LIKE ?").join(" ")}
-           AND (c.source != 'import' OR (
-             (SELECT COUNT(*) FROM capture d WHERE d.user_id IS c.user_id AND d.source = 'import' AND d.claimed_at > ?)
-               < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL THEN ? ELSE ? END
+           ${skip.map(() => "AND COALESCE(c.permalink, '') NOT LIKE ?").join(" ")}`;
+      const openArgs = [staleBefore, MAX_ATTEMPTS, ...skip.map((h) => `%${h}/%`)];
+      let row = await env.DB.prepare(
+        `SELECT c.* FROM capture c WHERE c.source != 'import' AND ${open} ORDER BY c.captured_at LIMIT 1`,
+      )
+        .bind(...openArgs)
+        .first();
+      // The import query reads the whole backlog, and runners poll every few seconds: once it
+      // comes back empty (everyone at their daily slice), don't ask again for 15 minutes.
+      // Polling every time read 31M rows in a day from a 500-post import (6 Nov 2026).
+      const now = new Date().toISOString();
+      const idle = row ? null : await env.DB.prepare("SELECT at FROM alert_state WHERE key = 'imports_idle'").first<{ at: string }>();
+      if (!row && !(idle && idle.at > now)) {
+        row = await env.DB.prepare(
+          `SELECT c.* FROM capture c LEFT JOIN user u ON u.id = c.user_id
+           LEFT JOIN (SELECT user_id, COUNT(*) n FROM capture WHERE claimed_at > ? AND source = 'import' GROUP BY user_id) r
+             ON r.user_id IS c.user_id
+           WHERE c.source = 'import' AND ${open}
+             AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL THEN ? ELSE ? END
              AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR
                (SELECT COUNT(*) FROM capture e LEFT JOIN user v ON v.id = e.user_id
-                WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)))
-         ORDER BY (c.source = 'import'), c.captured_at LIMIT 1`,
-      )
-        .bind(staleBefore, MAX_ATTEMPTS, ...skip.map((h) => `%${h}/%`), day, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
-        .first();
+                WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)
+           ORDER BY c.captured_at LIMIT 1`,
+        )
+          .bind(day, ...openArgs, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
+          .first();
+        if (!row) {
+          await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('imports_idle', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
+            .bind(new Date(Date.now() + 15 * 60_000).toISOString())
+            .run();
+        }
+      }
       if (!row) return json({ capture: null });
       await env.DB.prepare(
         "UPDATE capture SET status='claimed', claimed_at=?, attempts = attempts + 1 WHERE id = ?",
