@@ -80,7 +80,8 @@ export async function adminOverview(env: Env) {
        (SELECT MAX(captured_at) FROM capture c WHERE c.user_id IS u.id) AS last_save,
        (SELECT COALESCE(SUM(prompt_tokens + completion_tokens), 0) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'groq' AND e.at >= ?) AS groq_tokens_7d,
        (SELECT COUNT(*) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'api' AND e.at >= ?) AS api_calls_7d,
-       (SELECT MAX(at) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'api') AS last_api
+       (SELECT MAX(at) FROM usage_event e WHERE e.user_id IS u.id AND e.kind = 'api') AS last_api,
+       (SELECT group_concat(message, ' | ') FROM feedback f WHERE f.user_id IS u.id) AS feedback
      FROM (SELECT id, name, created_at, joined_via, last_seen, email, mcp_calls, groq_key_enc FROM user
            UNION ALL SELECT NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL) u
      ORDER BY u.created_at DESC`,
@@ -145,6 +146,7 @@ export async function deleteUser(env: Env, userId: string): Promise<void> {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM mention_done WHERE owner_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM usage_event WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM feedback WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
     env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM note_vec WHERE user_key = ?").bind(userId),
@@ -417,15 +419,29 @@ export async function handleV1(
     ).bind(userId).all<{ source: string; n: number }>();
     const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
     const u = userId
-      ? await env.DB.prepare("SELECT mcp_calls, groq_key_enc FROM user WHERE id = ?").bind(userId).first<any>()
+      ? await env.DB.prepare("SELECT mcp_calls, groq_key_enc, email FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
     return json({
       owner: userId === null,
       saved_from: counts,
       claude_connected: (u?.mcp_calls ?? 0) > 0,
       has_groq_key: Boolean(u?.groq_key_enc),
+      has_email: Boolean(u?.email),
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
+  }
+
+  if (path === "/v1/feedback" && request.method === "POST") {
+    if (userId === null) return json({ error: "you're the owner" }, 400);
+    const body = (await request.json().catch(() => null)) as { message?: string; email?: string; consent?: boolean } | null;
+    const message = (body?.message ?? "").trim().slice(0, 4000);
+    const email = (body?.email ?? "").trim().slice(0, 120);
+    if (!message && !email) return json({ error: "Write something or leave an email." }, 400);
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right." }, 400);
+    if (email && !body?.consent) return json({ error: "Tick the box so we're allowed to email you." }, 400);
+    if (email) await env.DB.prepare("UPDATE user SET email = ? WHERE id = ?").bind(email, userId).run();
+    if (message) await env.DB.prepare("INSERT INTO feedback (user_id, at, message) VALUES (?, ?, ?)").bind(userId, new Date().toISOString(), message).run();
+    return json({ ok: true });
   }
 
   if (path === "/v1/telegram/link" && request.method === "POST") {

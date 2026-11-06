@@ -403,6 +403,10 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .banner { margin: 10px 0 4px; padding: 12px 16px; border-radius: 20px; font-size: 14px; display: flex; gap: 12px; align-items: center; box-shadow: var(--lift-1); }
 .banner span { flex: 1; }
 .banner button { flex: none; border: 0; height: 32px; padding: 0 14px; border-radius: 999px; background: #fff; font-weight: 600; box-shadow: var(--lift-1); }
+.fb { margin: 10px 0 4px; padding: 14px 16px; border-radius: 20px; background: var(--butter); box-shadow: var(--lift-1); display: grid; gap: 8px; font-size: 14px; }
+.fb textarea, .fb input[type=email] { font: inherit; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); resize: vertical; }
+.fbok { display: flex; gap: 8px; align-items: flex-start; color: var(--muted); font-size: 13px; }
+.fb .msg:empty { display: none; }
 .banner.info { background: var(--sky); } .banner.warn { background: var(--butter); } .banner.err { background: #ffd5d0; color: #8c2415; }
 .card.wait { cursor: default; } .card.wait:active { transform: none; }
 .shimmer { background: linear-gradient(100deg, #ece9fb 30%, #f8f7ff 50%, #ece9fb 70%) 0 0 / 220% 100%; animation: shim 1.5s linear infinite; }
@@ -627,6 +631,14 @@ body.on-phone .phone-handoff { display: none; }
     <div class="chips" id="chips" role="group" aria-label="Filters"></div>
   </header>
   <div id="banner" class="banner" hidden role="status"></div>
+  <form id="fb" class="fb" hidden>
+    <b>How's Skwirl working for you?</b>
+    <textarea id="fbMsg" rows="2" maxlength="4000" placeholder="What's broken, confusing or missing? (optional)" aria-label="Feedback"></textarea>
+    <input id="fbEmail" type="email" maxlength="120" placeholder="Your email, if you'd like a reply (optional)" aria-label="Email">
+    <label class="fbok"><input type="checkbox" id="fbOk"> Skwirl may email me about my feedback and big updates. Never shared, unsubscribe any time.</label>
+    <p class="msg" id="fbErr" role="status"></p>
+    <div class="inline-actions"><button class="btn sm" type="submit">Send</button><button class="btn sm soft" type="button" id="fbNo">Not now</button></div>
+  </form>
   <div id="list" aria-live="polite"></div>
 </section>
 

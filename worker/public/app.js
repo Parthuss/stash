@@ -102,7 +102,7 @@ async function load() {
   const [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]);
   if (!nr.ok) { toast("Couldn't load your saves. Try again."); return; }
   const cj = cr.ok ? await cr.json() : {};
-  notes = (await nr.json()).notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showImport();
+  notes = (await nr.json()).notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showImport(); showFeedback();
   // A note we hadn't seen before means something just finished processing.
   const ids = new Set(notes.map((n) => n.id));
   if (known && !q) { const fresh = notes.find((n) => !known.has(n.id)); if (fresh) toast("Ready: " + fresh.title); }
@@ -293,6 +293,7 @@ async function refreshSetup() {
   $("gTelegram").hidden = !st.telegram;
   if (st.telegram) { set("bTelegram", st.telegram.connected, "Optional"); if (!st.telegram.connected) $("bTelegram").className = "badge opt"; $("tgOff").hidden = !st.telegram.connected; }
   $("adminBtn").hidden = !st.owner;
+  showFeedback(); showImport();
   if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
 }
@@ -400,6 +401,7 @@ async function openAdmin() {
       <div><dt>Reopened</dt><dd>${pct}</dd></div><div><dt>Used</dt><dd>${u.used}</dd></div>
       <div><dt>Claude</dt><dd>${u.mcp_calls ? "connected" : "no"}</dd></div><div><dt>Own key</dt><dd>${u.own_key ? "yes" : "no"}</dd></div>
       <div><dt>Waiting / failed</dt><dd>${u.waiting} / ${u.failed}</dd></div>
+      ${u.feedback ? `<div style="grid-column:1/-1"><dt>Feedback</dt><dd>${esc(u.feedback)}</dd></div>` : ""}
       ${u.email ? `<div><dt>Email</dt><dd><a href="mailto:${esc(u.email)}">${esc(u.email)}</a></dd></div>` : ""}</dl></div>`;
   }).join("");
 }
@@ -514,14 +516,18 @@ async function importFile(file) {
   const r = await api("/v1/import", { method: "POST", body: JSON.stringify({ urls }) }).catch(() => null);
   const b = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok) { msg.textContent = b.error || "Couldn't add them right now. Try again."; return; }
-  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. They'll show up in your library about 5 a day, or much faster with your own Groq key.`;
+  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. ${b.cap >= 1000 ? "They'll show up in your library about 150 a day, after any new saves." : "They'll show up in your library about 5 a day, or 150 a day with your own Groq key."}`;
   load();
 }
 function showImport() {
   const i = importInfo;
   $("bImport").textContent = i ? (i.done >= i.total - i.failed ? "Done" : `${i.done} / ${i.total}`) : "Optional";
   $("bImport").className = "badge " + (i && i.done >= i.total - i.failed ? "done" : "opt");
-  if (i && !$("impMsg").textContent) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.`;
+  const left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState?.has_groq_key ? 150 : 5));
+  if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` The rest come in a batch a day, about ${days} more day${days > 1 ? "s" : ""}. New saves always go first.` : ""}`;
+  // Big import in progress: say so on the library, so a slow trickle doesn't look broken.
+  if (i && left > 0) { if (!bannerKey || bannerKey === "import") setBanner("import", "info", `${i.done} of ${i.total} old Instagram saves read. The rest arrive in daily batches, about ${days} more day${days > 1 ? "s" : ""}.`); }
+  else clearBanner("import");
 }
 $("impFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });
 
@@ -538,4 +544,20 @@ $("tgOff").addEventListener("click", async () => {
   const r = await api("/v1/telegram", { method: "DELETE" }).catch(() => null);
   toast(r && r.ok ? "Telegram disconnected." : "Couldn't disconnect. Try again.");
   refreshSetup();
+});
+
+// ---- Feedback: one gentle card for people who've used it a bit. Email only with a ticked box.
+function showFeedback() {
+  let dismissed = false; try { dismissed = localStorage.getItem("skwirl_fb") === "1"; } catch {}
+  $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3;
+}
+const fbDone = () => { try { localStorage.setItem("skwirl_fb", "1"); } catch {} $("fb").hidden = true; };
+$("fbNo").addEventListener("click", fbDone);
+$("fb").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await api("/v1/feedback", { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ message: $("fbMsg").value, email: $("fbEmail").value, consent: $("fbOk").checked }) }).catch(() => null);
+  const b = r ? await r.json().catch(() => ({})) : {};
+  if (!r || !r.ok) { $("fbErr").textContent = b.error || "Couldn't send. Try again."; return; }
+  fbDone(); toast("Thanks! Parth reads every one.");
 });
