@@ -448,6 +448,7 @@ body.on-phone .phone-handoff { display: none; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
+<script src="/track.js" defer></script>
 </head>
 <body>
 <main>
@@ -784,7 +785,7 @@ body.on-phone .phone-handoff { display: none; }
 
 <section id="admin">
   <div class="topbar"><button class="btn soft" id="adminBack">← Back</button></div>
-  <div class="setup-head"><h1>Admin</h1><p id="adminHealth"></p></div>
+  <div class="setup-head"><h1>Admin</h1><p id="adminHealth"></p><a class="btn sm" href="/analytics" style="margin-top:8px">Open analytics →</a></div>
   <div class="stats" id="adminStats"></div>
   <div id="adminUsers"></div>
 </section>

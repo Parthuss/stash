@@ -84,7 +84,7 @@ ${note.permalink?.startsWith("https://") ? `<p><a class="btn soft" href="${esc(n
 const headers = () => ({
   "content-type": "text/html; charset=utf-8",
   "cache-control": "public, max-age=300",
-  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  "content-security-policy": "default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   "x-content-type-options": "nosniff",
   "referrer-policy": "no-referrer",
   "x-robots-tag": "noindex",
@@ -95,6 +95,7 @@ const page = (title: string, body: string, meta: string) => `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)} · Skwirl</title>${meta}
 <link rel="icon" href="/icon-192.png">
+<script src="/track.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@800,1&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root { --bg:#f8f7ff; --ink:#1d1b2e; --muted:#6a6880; --lavender:#dcd8ff; --peach:#ffd8cb; }

@@ -1,4 +1,5 @@
 const $ = (id) => document.getElementById(id);
+const tr = (name, detail) => { try { window.track && window.track(name, detail); } catch {} };
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
                 set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
                 del: (k) => { try { localStorage.removeItem(k); } catch {} } };
@@ -37,7 +38,7 @@ async function api(path, opts = {}) {
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
-function show(which) { for (const id of ["auth", "lib", "note", "setup", "admin", "mentions"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
+function show(which) { tr("view", which); for (const id of ["auth", "lib", "note", "setup", "admin", "mentions"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
 function signOut(msg) {
   for (const k of ["stash_token", "stash_cache", "stash_notes", "stash_outbox"]) store.del(k);
   token = null; show("auth");
@@ -146,6 +147,7 @@ function schedulePoll() {
 // Server down: show the copy from this device, search it locally, and check back in a minute.
 let retryTimer = null;
 function showCopy(q) {
+  tr("offline_copy");
   const c = cacheGet("stash_cache");
   clearTimeout(retryTimer); retryTimer = setTimeout(() => load().catch(() => {}), 60000);
   if (!c) { if (!loaded) $("list").innerHTML = ""; setBanner("net", "err", "Skwirl's server is having a moment. Nothing is lost. We'll keep trying.", "Try again", () => load()); return; }
@@ -171,6 +173,7 @@ async function ingest(url) {
   }
   const body = await r.json().catch(() => ({}));
   if (!r.ok) { toast(body.error || "Couldn't save that link. Try again."); return; }
+  tr("save", body.created ? "new" : "duplicate");
   toast(body.created ? "Saved. Takes a minute or two." : "You already saved that one.");
   load().catch(() => {});
 }
@@ -181,7 +184,7 @@ async function open(id, from) {
   const r = await api("/v1/notes/" + encodeURIComponent(id)).catch(() => null);
   const kept = cacheGet("stash_notes") || { byId: {} };
   if (r && r.ok) {
-    current = await r.json();
+    current = await r.json(); tr("open_note", current.topic || "other");
     kept.byId[id] = current; const ids = Object.keys(kept.byId); for (const k of ids.slice(0, Math.max(0, ids.length - 40))) delete kept.byId[k];
     cacheSet("stash_notes", { byId: kept.byId });
   } else if ((!r || r.status >= 500) && kept.byId[id]) current = kept.byId[id];
@@ -231,12 +234,14 @@ $("lostForm").addEventListener("submit", async (e) => {
 $("toTop").addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); });
 document.querySelector(".lsign").addEventListener("click", () => { $("signin").open = true; });
 $("joinForm").addEventListener("submit", async (e) => {
+  tr("join_submit");
   e.preventDefault(); const err = $("joinErr"); err.textContent = "";
   let r;
   try { r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value, email: $("joinEmail").value }) }); }
   catch { err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) { err.textContent = body.error || "Couldn’t join. Try again."; return; }
+  if (!r.ok) { tr("join_err", r.status); err.textContent = body.error || "Couldn’t join. Try again."; return; }
+  tr("join_ok", $("joinEmail").value ? "with_email" : "no_email");
   token = body.token; store.set("stash_token", token); store.del("stash_link_saved"); start();
 });
 // A pasted sign-in link works as well as a bare token.
@@ -246,6 +251,7 @@ async function signInWith(t) {
   let r;
   try { r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } }); }
   catch { token = null; return "Can't reach Skwirl. Check your connection and try again."; }
+  tr("signin", r.ok ? "ok" : r.status);
   if (r.ok) { store.set("stash_token", token); start(); return ""; }
   token = null;
   return r.status === 401 ? "That didn't work. Copy the whole sign-in link (or the token, starting stk_) and try again." : "Skwirl had a problem. Try again in a minute.";
@@ -280,8 +286,13 @@ $("scrim").addEventListener("click", () => sheet(false));
 $("cancel").addEventListener("click", () => sheet(false));
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("sheet-open")) sheet(false); });
 $("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; sheet(false); await ingest(u); } });
-$("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(load, 200); });
-$("chips").addEventListener("click", (e) => { const f = e.target.dataset.f; if (f) { filter = f; render(); } });
+let searchTimer;
+$("q").addEventListener("input", () => {
+  clearTimeout(timer); timer = setTimeout(load, 200);
+  // One "search" per pause in typing, with how many results it found (never the words).
+  clearTimeout(searchTimer); searchTimer = setTimeout(() => $("q").value.trim() && tr("search", notes.length ? (notes.length > 5 ? "6+" : notes.length) : "0 results"), 1500);
+});
+$("chips").addEventListener("click", (e) => { const f = e.target.dataset.f; if (f) { filter = f; tr("filter", f); render(); } });
 $("list").addEventListener("click", async (e) => {
   const retry = e.target.closest("[data-retry]"), del = e.target.closest("[data-del]");
   if (retry) { const r = await api("/v1/captures/" + retry.dataset.retry + "/retry", { method: "POST" }); toast(r.ok ? "Trying again." : "Couldn't retry that one."); return load(); }
@@ -420,7 +431,7 @@ const loginCode = (location.hash.match(/^#login=([0-9a-f]{32})/) || [])[1];
 if (loginCode) {
   history.replaceState(null, "", location.pathname + location.search);
   fetch("/login/redeem", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: loginCode }) })
-    .then(async (r) => { const b = await r.json().catch(() => ({})); if (!r.ok) throw new Error(b.error); token = b.token; store.set("stash_token", token); store.del("stash_link_saved"); start(); })
+    .then(async (r) => { const b = await r.json().catch(() => ({})); tr("login_link", r.ok ? "ok" : "expired"); if (!r.ok) throw new Error(b.error); token = b.token; store.set("stash_token", token); store.del("stash_link_saved"); start(); })
     .catch((e) => { show("auth"); joinMode(); $("signin").open = true; $("authErr").textContent = e.message || "That link didn't work. Ask for a new one."; });
 } else token ? start().catch(() => {}) : (show("auth"), joinMode());
 
@@ -580,6 +591,7 @@ async function importFile(file) {
   const r = await api("/v1/import", { method: "POST", body: JSON.stringify({ urls }) }).catch(() => null);
   const b = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok) { msg.textContent = b.error || "Couldn't add them right now. Try again."; return; }
+  tr("import", `${b.added} added of ${b.found}`);
   msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. ${b.cap >= 1000 ? "They'll show up in your library about 150 a day, after any new saves." : "They'll show up in your library about 5 a day, or 150 a day with your own Groq key."}`;
   load();
 }
@@ -615,6 +627,7 @@ function showFeedback() {
   let dismissed = false; try { dismissed = localStorage.getItem("skwirl_fb") === "1"; } catch {}
   $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3;
   if ($("fb").hidden) return;
+  if (!showFeedback.seen) { showFeedback.seen = true; tr("card_shown", "welcome"); }
   const i = importInfo, left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState.has_groq_key ? 150 : 5));
   $("fbHead").textContent = `Hi${setupState.name ? " " + setupState.name : ""}, I'm Parth. I made Skwirl.`;
   $("fbBody").textContent = "Thanks for trying it. "
@@ -622,12 +635,13 @@ function showFeedback() {
     + "If something feels broken, confusing or missing, tell me here. I read every message.";
 }
 const fbDone = () => { try { localStorage.setItem("skwirl_fb", "1"); } catch {} $("fb").hidden = true; showImport(); };
-$("fbNo").addEventListener("click", fbDone);
+$("fbNo").addEventListener("click", () => { tr("feedback_dismissed"); fbDone(); });
 $("fb").addEventListener("submit", async (e) => {
   e.preventDefault();
   const r = await api("/v1/feedback", { method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({ message: $("fbMsg").value, email: $("fbEmail").value, consent: $("fbOk").checked }) }).catch(() => null);
   const b = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok) { $("fbErr").textContent = b.error || "Couldn't send. Try again."; return; }
+  tr("feedback_sent", $("fbEmail").value ? "with_email" : "no_email");
   fbDone(); toast("Thanks! Parth reads every one.");
 });

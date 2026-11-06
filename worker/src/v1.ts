@@ -11,6 +11,7 @@
  *   POST|DELETE /v1/notes/:id/share     public read-only link at /n/<share_id>
  *   GET  /v1/search        ?q=               FTS5 (hybrid/vector comes later)
  */
+import { analyticsOverview, journey } from "./analytics";
 import type { Env } from "./index";
 import { fuse, semanticIds } from "./embed";
 import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
@@ -279,6 +280,15 @@ export async function handleV1(
       .bind(new Date().toISOString(), userId, new Date(Date.now() - 300_000).toISOString()).run();
   }
 
+  if (path === "/v1/admin/analytics" && request.method === "GET") {
+    if (userId !== null) return json({ error: "not found" }, 404);
+    const days = Math.min(Math.max(Number(url.searchParams.get("days")) || 30, 1), 180);
+    return json(await analyticsOverview(env, days));
+  }
+  if (path === "/v1/admin/journey" && request.method === "GET") {
+    if (userId !== null) return json({ error: "not found" }, 404);
+    return json(await journey(env, url.searchParams.get("user"), url.searchParams.get("visitor")));
+  }
   if (path === "/v1/admin/overview" && request.method === "GET") {
     if (userId !== null) return json({ error: "not found" }, 404);   // owner only, and don't confirm it exists
     return json(await adminOverview(env));

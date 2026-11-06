@@ -40,6 +40,7 @@
 import { embedMissing } from "./embed";
 import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
+import { collect, pruneAnalytics } from "./analytics";
 import { emailEnabled, emailLogin, redeemLogin } from "./login";
 import { handleTelegram, setupTelegram, telegramOwner, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
@@ -261,6 +262,7 @@ export default {
     }
     ctx.waitUntil(checkHealth(env));
     ctx.waitUntil(pruneOAuth(env));
+    ctx.waitUntil(pruneAnalytics(env).catch(() => {}));
     ctx.waitUntil(embedMissing(env).catch((e) => console.log("embed backfill", String(e))));
   },
 
@@ -340,6 +342,11 @@ export default {
     // Tells the landing page whether to ask for an invite code.
     if (path === "/join" && request.method === "GET") {
       return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE), email_login: emailEnabled(env) });
+    }
+
+    // Product analytics beacon (public: visitors aren't signed in). See src/analytics.ts.
+    if (path === "/e" && request.method === "POST") {
+      return collect(request, env, await userFromBearer(request, env).catch(() => undefined));
     }
 
     // ---- lost link: email a one-time sign-in link, then trade it for a device token ----
