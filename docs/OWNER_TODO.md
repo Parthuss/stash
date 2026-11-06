@@ -3,6 +3,15 @@
 Updated 2026-11-03. Everything here needs your judgement, your phone, your money or your
 accounts. The rest has been done. Order: top to bottom.
 
+## 00. New on 6 Nov (after the D1 outage)
+
+- [ ] **Fix the cloud runner's GitHub token.** The last 40 runs were all on the timer and none came from the Worker, so `GH_DISPATCH_TOKEN` isn't working, and friends' saves wait 4 to 7 hours whenever the Mac sleeps. GitHub → Settings → Developer settings → Fine-grained tokens → Generate: repository `Parthuss/stash` only, permission Actions: Read and write. Then, in `worker/`: `npx wrangler secret put GH_DISPATCH_TOKEN -c wrangler.local.toml` and paste it.
+- [ ] **Connect your owner account to @skwirl_bot** (sign in as owner → Set up → Save from Telegram → Connect). Health alerts (DB failing, queue stuck, new user) now go there. Then ask Claude to copy your chat id into the `OWNER_TELEGRAM_CHAT` secret, so alerts still arrive when D1 itself is down.
+- [ ] **Optional, $5/month: Workers Paid.** Raises D1 from 5M reads/day to 25B/month (no repeat of 6 Nov) and turns on email sign-in links. To switch email on after upgrading:
+  1. Cloudflare dashboard → Email Service → onboard `parthakholkar.com` (it adds the DNS records).
+  2. Add to `worker/wrangler.local.toml`: `[[send_email]]` with `name = "EMAIL"`, and under `[vars]` `EMAIL_FROM = "hello@parthakholkar.com"` (any address on that domain).
+  3. `./deploy.sh`. The "Email me a link" form appears under Sign in by itself (`/join` reports `email_login: true`).
+
 ## 0. New on 3 Nov: closing the gap with Stashr AI (do these first, ~30 min)
 
 Built and live: connector for any AI app (sign in + Allow), `save_link` from chat, Instagram

@@ -8,6 +8,7 @@
  * Telegram signs every webhook call with the secret_token we registered (derived from STASH_SECRET).
  */
 import type { Env } from "./index";
+import { loginLink } from "./login";
 import { sha256 } from "./v1";
 
 const OWNER = "__owner__";
@@ -52,6 +53,11 @@ export const unlinkTelegram = (env: Env, userId: string | null) =>
 
 export async function setupTelegram(env: Env, origin: string): Promise<Response> {
   if (!env.TELEGRAM_BOT_TOKEN) return new Response("Set the TELEGRAM_BOT_TOKEN secret first.", { status: 400 });
+  await api(env, "setMyCommands", { commands: [
+    { command: "login", description: "Get a fresh sign-in link" },
+    { command: "digest", description: "Weekly unused saves: /digest on or off" },
+    { command: "stop", description: "Disconnect this chat from Skwirl" },
+  ] });
   const r = await api(env, "setWebhook", { url: `${origin}/webhook/telegram`, secret_token: await hookSecret(env), allowed_updates: ["message"], drop_pending_updates: true });
   return new Response(await r.text(), { status: r.status, headers: { "content-type": "application/json" } });
 }
@@ -81,7 +87,7 @@ export async function handleTelegram(request: Request, env: Env, save: Save): Pr
     if (!link) { await say(env, chat, "That connect link has expired. Tap Connect Telegram in Skwirl's Set up again."); return new Response("ok"); }
     await env.DB.prepare("INSERT INTO telegram_chat (chat_id, user_key) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET user_key = excluded.user_key")
       .bind(chat, link.user_key).run();
-    await say(env, chat, "Connected to Skwirl ✓\nSend or forward me any Instagram, YouTube or X link and I'll save it.");
+    await say(env, chat, "Connected to Skwirl ✓\nSend or forward me any Instagram, YouTube or X link and I'll save it.\n\nEvery Sunday I'll also send 3 saves you haven't used yet (/digest off to stop). Lost your sign-in link? Send /login.");
     return new Response("ok");
   }
   if (/^\/stop\b/.test(text)) {
@@ -92,6 +98,19 @@ export async function handleTelegram(request: Request, env: Env, save: Save): Pr
 
   const row = await env.DB.prepare("SELECT user_key FROM telegram_chat WHERE chat_id = ?").bind(chat).first<{ user_key: string }>();
   if (!row) { await say(env, chat, "This chat isn't connected yet. Open Skwirl → Set up → Save from Telegram."); return new Response("ok"); }
+  if (/^\/login\b/.test(text)) {
+    await say(env, chat, row.user_key === OWNER
+      ? "You're the owner: sign in with your owner link."
+      : `Here's a one-time link to sign in on any device (works for 30 minutes):\n${await loginLink(env, row.user_key, new URL(request.url).origin)}`);
+    return new Response("ok");
+  }
+  const digest = text.match(/^\/digest\s*(on|off)?/i);
+  if (digest) {
+    const on = (digest[1] ?? "").toLowerCase() !== "off";
+    await env.DB.prepare("UPDATE telegram_chat SET digest = ? WHERE chat_id = ?").bind(on ? 1 : 0, chat).run();
+    await say(env, chat, on ? "Weekly picks are on. Every Sunday I'll send you 3 saves you haven't used yet." : "Weekly picks are off. Send /digest on to turn them back on.");
+    return new Response("ok");
+  }
   const urls = [...new Set((text.match(/https?:\/\/[^\s<>"]+/g) ?? []).slice(0, 5))];
   if (!urls.length) { await say(env, chat, "Send me a link to a reel or post and I'll save it."); return new Response("ok"); }
   const userId = row.user_key === OWNER ? null : row.user_key;
@@ -103,4 +122,25 @@ export async function handleTelegram(request: Request, env: Env, save: Save): Pr
   }
   await say(env, chat, [...new Set(replies)].join("\n"));
   return new Response("ok");
+}
+
+/** Tell someone on Telegram (if they connected it). userId null = the owner. */
+export async function telegramUser(env: Env, userId: string | null, text: string): Promise<void> {
+  if (!env.TELEGRAM_BOT_TOKEN) return;
+  const { results } = await env.DB.prepare("SELECT chat_id FROM telegram_chat WHERE user_key = ?").bind(userId ?? OWNER).all<{ chat_id: string }>();
+  for (const r of results ?? []) await say(env, r.chat_id, text);
+}
+
+/** Sunday cron: 3 unused saves to everyone who has Telegram connected and picks on. */
+export async function weeklyDigest(env: Env, origin: string): Promise<void> {
+  if (!env.TELEGRAM_BOT_TOKEN) return;
+  const { results: chats } = await env.DB.prepare("SELECT chat_id, user_key FROM telegram_chat WHERE digest = 1").all<{ chat_id: string; user_key: string }>();
+  for (const c of chats ?? []) {
+    const { results: picks } = await env.DB.prepare(
+      `SELECT title, topic FROM note WHERE user_id IS ? AND status != 'used' AND title IS NOT NULL ORDER BY random() LIMIT 3`,
+    ).bind(c.user_key === OWNER ? null : c.user_key).all<{ title: string; topic: string | null }>();
+    if (!picks?.length) continue;
+    const lines = picks.map((p) => `• ${p.title}${p.topic ? ` (${p.topic})` : ""}`).join("\n");
+    await say(env, c.chat_id, `3 saves you haven't used yet:\n\n${lines}\n\nPick one to try this week: ${origin}\n(/digest off to stop these)`);
+  }
 }

@@ -40,7 +40,8 @@
 import { embedMissing } from "./embed";
 import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
-import { handleTelegram, setupTelegram, telegramOwner } from "./telegram";
+import { emailEnabled, emailLogin, redeemLogin } from "./login";
+import { handleTelegram, setupTelegram, telegramOwner, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
 import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
@@ -56,7 +57,12 @@ export interface Env {
   OPEN_JOIN?: string; // "1" = anyone can join from the landing page, no code (still capped by MAX_JOIN)
   NTFY_TOPIC?: string;
   TELEGRAM_BOT_TOKEN?: string; // optional: save by messaging the bot (src/telegram.ts)
-  OWNER_TELEGRAM_CHAT?: string; // optional: owner alerts still reach Telegram when D1 is down
+  OWNER_TELEGRAM_CHAT?: string;
+  // Optional, Workers Paid: [[send_email]] binding "EMAIL" + a sender on a domain onboarded to
+  // Cloudflare Email Service. Turns on "email me a sign-in link".
+  EMAIL?: { send(m: { to: string; from: { email: string; name: string }; subject: string; text: string; html: string }): Promise<unknown> };
+  EMAIL_FROM?: string;
+  PUBLIC_URL?: string; // where links in Telegram messages point (default: the live site) // optional: owner alerts still reach Telegram when D1 is down
   // Optional: a fine-grained GitHub token (Actions: read & write, this repo only).
   // When set, a friend's save starts the cloud runner right away instead of
   // waiting for GitHub's cron, which fires every 2-5 hours in practice.
@@ -244,6 +250,10 @@ async function checkHealth(env: Env): Promise<void> {
 
 export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    if (_event.cron === "0 4 * * SUN") {  // Sunday 9:30am IST / afternoon in Australia
+      ctx.waitUntil(weeklyDigest(env, env.PUBLIC_URL ?? "https://skwirl.parthakholkar.com").catch((e) => console.log("digest", String(e))));
+      return;
+    }
     ctx.waitUntil(checkHealth(env));
     ctx.waitUntil(pruneOAuth(env));
     ctx.waitUntil(embedMissing(env).catch((e) => console.log("embed backfill", String(e))));
@@ -324,7 +334,27 @@ export default {
 
     // Tells the landing page whether to ask for an invite code.
     if (path === "/join" && request.method === "GET") {
-      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE) });
+      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE), email_login: emailEnabled(env) });
+    }
+
+    // ---- lost link: email a one-time sign-in link, then trade it for a device token ----
+    if (path === "/login/email" && request.method === "POST") {
+      if (!emailEnabled(env)) return json({ error: "Email sign-in isn't on yet." }, 503);
+      const ip = "login:" + (request.headers.get("CF-Connecting-IP") ?? "unknown");
+      const recent = await env.DB.prepare("SELECT COUNT(*) n FROM join_attempt WHERE ip = ? AND at > ?")
+        .bind(ip, new Date(Date.now() - 3600_000).toISOString()).first<{ n: number }>();
+      if ((recent?.n ?? 0) >= 5) return json({ error: "Too many tries. Wait an hour." }, 429);
+      await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
+      const email = String(((await request.json().catch(() => null)) as any)?.email ?? "").trim().slice(0, 120);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right." }, 400);
+      // Same answer whether or not the address has an account, so this can't be used to probe.
+      await emailLogin(env, email, url.origin).catch((e) => console.log("login email failed", String(e)));
+      return json({ ok: true });
+    }
+    if (path === "/login/redeem" && request.method === "POST") {
+      const code = String(((await request.json().catch(() => null)) as any)?.code ?? "");
+      const token = await redeemLogin(env, code);
+      return token ? json({ token }) : json({ error: "That link has expired or was already used. Ask for a new one." }, 400);
     }
 
     // ---- self-serve join: open, or with the shared invite code ---------
@@ -492,6 +522,18 @@ export default {
         await env.DB.prepare("UPDATE capture SET status='pending', error=? WHERE id=?")
           .bind((body.error ?? "").slice(0, 2000), body.id)
           .run();
+      }
+      // Last of someone's imported saves just finished (read or given up on): tell them on Telegram.
+      const cap = await env.DB.prepare("SELECT user_id, source, status, attempts FROM capture WHERE id = ?").bind(body.id)
+        .first<{ user_id: string | null; source: string; status: string; attempts: number }>();
+      if (cap?.source === "import" && (cap.status === "done" || cap.attempts >= MAX_ATTEMPTS)) {
+        const left = await env.DB.prepare(
+          "SELECT COUNT(*) AS open, SUM(status = 'done') AS done FROM capture WHERE user_id IS ? AND source = 'import' AND (status = 'done' OR attempts < ?)",
+        ).bind(cap.user_id, MAX_ATTEMPTS).first<{ open: number; done: number }>();
+        const open = (left?.open ?? 0) - (left?.done ?? 0);
+        if (open === 0) {
+          ctx.waitUntil(telegramUser(env, cap.user_id, `All your old Instagram saves are in: ${left?.done ?? 0} notes ready to search. Ask your AI app about them, or open ${env.PUBLIC_URL ?? url.origin}`).catch(() => {}));
+        }
       }
       return json({ ok: true });
     }

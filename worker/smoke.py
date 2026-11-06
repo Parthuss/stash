@@ -290,4 +290,8 @@ assert c.post("/webhook/telegram", json={"message": {"chat": {"id": 1}, "text": 
 sec = hashlib.sha256(b"telegram|adm").hexdigest()[:48]
 r = c.post("/webhook/telegram", headers={"x-telegram-bot-api-secret-token": sec}, json={"message": {"chat": {"id": 9}, "text": "https://www.instagram.com/reel/TG1/"}})
 assert r.status_code == 200 and c.get("/v1/setup", headers=h(ivy)).json()["telegram"] == {"connected": False}
+# ---- lost link: email sign-in is off without the EMAIL binding; bad codes are refused ----
+assert c.get("/join").json()["email_login"] is False
+assert c.post("/login/email", json={"email": "a@b.co"}).status_code == 503
+assert c.post("/login/redeem", json={"code": "0" * 32}).status_code == 400
 print("ALL OK")

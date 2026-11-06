@@ -183,7 +183,14 @@ async function joinMode() {
     $("joinForm").querySelectorAll("input,button").forEach((el) => (el.disabled = true));
     $("joinFine").textContent = "Skwirl is full for now. If someone sent you an invite link, open that instead.";
   } else if (!mode.open) $("joinFine").textContent = "Invite-only right now. Your invite has the code.";
+  $("lostMail").hidden = $("lostForm").hidden = !mode.email_login;
 }
+$("lostForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await fetch("/login/email", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: $("lostEmail").value }) }).catch(() => null);
+  const b = r ? await r.json().catch(() => ({})) : {};
+  $("lostMsg").textContent = r && r.ok ? "If that email is on a Skwirl account, a sign-in link is on its way. Check spam too." : b.error || "Couldn't send. Try again.";
+});
 $("toTop").addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); });
 document.querySelector(".lsign").addEventListener("click", () => { $("signin").open = true; });
 $("joinForm").addEventListener("submit", async (e) => {
@@ -371,7 +378,14 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").cat
 // A share that arrives before sign-in must survive the sign-in screen.
 { const p = new URLSearchParams(location.search), u = p.get("url") || (p.get("text") || "").match(/https?:\/\/\S+/)?.[0];
   if (u && !token) { try { sessionStorage.setItem("pending_share", u); } catch {} history.replaceState(null, "", "/"); } }
-token ? start().catch(() => {}) : (show("auth"), joinMode());
+// A one-time #login= link (from the email or the Telegram bot): trade it for a token on this device.
+const loginCode = (location.hash.match(/^#login=([0-9a-f]{32})/) || [])[1];
+if (loginCode) {
+  history.replaceState(null, "", location.pathname + location.search);
+  fetch("/login/redeem", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: loginCode }) })
+    .then(async (r) => { const b = await r.json().catch(() => ({})); if (!r.ok) throw new Error(b.error); token = b.token; store.set("stash_token", token); store.del("stash_link_saved"); start(); })
+    .catch((e) => { show("auth"); joinMode(); $("signin").open = true; $("authErr").textContent = e.message || "That link didn't work. Ask for a new one."; });
+} else token ? start().catch(() => {}) : (show("auth"), joinMode());
 
 // ---- account safety: reset token, delete account ----
 $("rotateBtn").addEventListener("click", async () => {

@@ -7,7 +7,7 @@ workers_dev = true
 
 # Health check + phone alerts (needs the NTFY_TOPIC secret; without it this is a no-op).
 [triggers]
-crons = ["*/30 * * * *"]
+crons = ["*/30 * * * *", "0 4 * * SUN"]
 
 # The web library + Android share-target PWA. Files here are served directly;
 # anything else (/v1, /mcp, /ingest, ...) falls through to the Worker.

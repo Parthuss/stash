@@ -152,6 +152,8 @@ export async function deleteUser(env: Env, userId: string, origin: string): Prom
     env.DB.prepare("DELETE FROM mention_done WHERE owner_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM usage_event WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM feedback WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM device_token WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM login_code WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
     env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM note_vec WHERE user_key = ?").bind(userId),
@@ -182,8 +184,9 @@ export async function userFromToken(token: string, env: Env): Promise<string | n
     for (let i = 0; i < token.length; i++) diff |= token.charCodeAt(i) ^ env.STASH_SECRET.charCodeAt(i);
     if (diff === 0) return null;
   }
-  const row = await env.DB.prepare("SELECT id FROM user WHERE token_hash = ?")
-    .bind(await sha256(token))
+  const hash = await sha256(token);
+  const row = await env.DB.prepare("SELECT id FROM user WHERE token_hash = ?1 UNION ALL SELECT user_id FROM device_token WHERE token_hash = ?1 LIMIT 1")
+    .bind(hash)
     .first<{ id: string }>();
   return row?.id;
 }
@@ -326,6 +329,7 @@ export async function handleV1(
       env.DB.prepare("UPDATE user SET token_hash = ? WHERE id = ?").bind(await sha256(token), userId),
       env.DB.prepare("DELETE FROM oauth_token WHERE user_key = ?").bind(userId),  // connected AI apps too
       env.DB.prepare("DELETE FROM telegram_chat WHERE user_key = ?").bind(userId),  // and Telegram
+      env.DB.prepare("DELETE FROM device_token WHERE user_id = ?").bind(userId),  // and recovered devices
     ]);
     await logEvent(env, userId, "api", "token_reset");
     return json({ token });  // shown once; the old token and any connector link stop working now

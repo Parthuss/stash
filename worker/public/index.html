@@ -405,6 +405,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .banner button { flex: none; border: 0; height: 32px; padding: 0 14px; border-radius: 999px; background: #fff; font-weight: 600; box-shadow: var(--lift-1); }
 .fb { margin: 10px 0 4px; padding: 14px 16px; border-radius: 20px; background: var(--butter); box-shadow: var(--lift-1); display: grid; gap: 8px; font-size: 14px; }
 .fb textarea, .fb input[type=email] { font: inherit; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); resize: vertical; }
+.lost { margin-top: 18px; font-size: 14px; }
 .fb b { font-size: 16px; } .fb p { margin: 0; line-height: 1.45; }
 .fbok { display: flex; gap: 8px; align-items: flex-start; color: var(--muted); font-size: 13px; }
 .fb .msg:empty { display: none; }
@@ -620,6 +621,12 @@ body.on-phone .phone-handoff { display: none; }
       <button class="btn" type="submit">Sign in</button>
     </form>
     <p id="authErr" role="alert" class="msg err"></p>
+    <p class="lost"><b>Lost your link?</b> If you connected Telegram, send <code>/login</code> to <a href="https://t.me/skwirl_bot" rel="noopener">@skwirl_bot</a> for a fresh one.<span id="lostMail" hidden> Or get one by email, if you gave us your address:</span></p>
+    <form id="lostForm" class="row" hidden>
+      <input id="lostEmail" type="email" autocomplete="email" maxlength="120" placeholder="Your email" aria-label="Your email" required>
+      <button class="btn soft" type="submit">Email me a link</button>
+    </form>
+    <p id="lostMsg" role="status" class="msg"></p>
   </details>
   <p class="legal"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="https://github.com/Parthuss/stash" rel="noopener">GitHub</a></p>
 </section>
@@ -703,7 +710,7 @@ body.on-phone .phone-handoff { display: none; }
   <details class="group" id="gTelegram" hidden>
     <summary><div style="flex:1"><h2>Save from Telegram</h2><small>Send or forward a link to the Skwirl bot</small></div><span class="badge opt" id="bTelegram">Optional</span></summary>
     <div class="gbody">
-      <p style="margin-top:0;color:var(--muted)">Handy for links friends send you, or if the share sheet isn't your thing. Connect once, then send the bot any Instagram, YouTube or X link.</p>
+      <p style="margin-top:0;color:var(--muted)">Handy for links friends send you, or if the share sheet isn't your thing. Connect once, then send the bot any Instagram, YouTube or X link. It also tells you when a big import finishes, sends 3 saves you haven't used every Sunday (<code>/digest off</code> stops them), and sends a fresh sign-in link if you lose yours (<code>/login</code>).</p>
       <div class="inline-actions"><button class="btn sm" id="tgConnect" type="button">Connect Telegram</button><button class="btn sm soft" id="tgOff" type="button" hidden>Disconnect</button></div>
       <p class="msg" id="tgMsg" role="status"></p>
     </div>
