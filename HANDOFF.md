@@ -1,6 +1,6 @@
 # Stash — handoff
 
-Written 2026-08-20, last updated 2026-10-27. Everything in this file was checked
+Written 2026-08-20, last updated 2026-11-07. Everything in this file was checked
 live against the running system, not recalled from memory. Commands to
 re-verify each claim are included.
 
@@ -19,6 +19,47 @@ when it's relevant instead of waiting to be asked.
 
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
+
+## 2026-11-06 to 07: first real users, outage fix, growth plumbing
+
+**Users (7 Nov eve):** Jacinda (AU, invite, 506 IG imports, ~29 done, own Groq key; visits several
+times a day, saw the push card 7 Nov 16:02 IST, not tapped). Steve (PK, came from the Instagram bio
+link 7 Nov 14:23 IST, no email, 0 saves, signed up inside IG's in-app browser so his account may be
+stranded). Aleisha (30 Oct, never returned). Plus waitlist: 0.
+Query live data: `cd worker && npx wrangler d1 execute stash --remote -c wrangler.local.toml --json --command "..."`
+(the bare wrangler.toml has `REPLACE_ME` as the DB id). Tables: `user`, `capture`, `note`, `visit`, `ui_event`.
+
+**6 Nov outage:** claim query did a correlated COUNT with no index, read 31.5M rows, hit D1's free
+read limit. Fixed: index `capture_claimed` (migration 0017), live and import claims split, an
+`imports_idle` back-off in `alert_state`. Groq 429/503 now refunds the attempt and parks the
+capture 30 min (`pause:<user>`); Python spills to the shared key on TPD.
+
+**Built (migrations 0017 to 0024, all applied):** feedback card with consented email; login recovery
+(`/login`, device tokens, one-time `login_code`; email login needs Workers Paid, Telegram `/login` works);
+import-done ping + Sunday digest (cron `0 4 * * SUN`); first-party analytics (`public/track.js` →
+`POST /e` → `visit`/`ui_event`, dashboard at `/analytics`, owner excluded); Web Push hand-rolled
+(`src/push.ts`, `VAPID_JWK` secret; untested on a real iPhone); "how did you find us" card
+(`found_via`); Plus waitlist with regional prices (`/waitlist`); profile page `#me`; "Your setup" hub;
+read-only offline mode + outbox; cron kicks the GH runner when saves wait (Mac asleep is fine);
+owner alerts by email via `src/notify.ts` (needs Email Routing, `docs/OWNER_TODO.md` §000).
+The owner wants no Telegram pings, only email/WhatsApp.
+
+**7 Nov (commit 8e77cff):** fonts self-hosted (`public/fonts.css`, `public/fonts/`; CSP is font-src 'self'),
+qrcode.js lazy-loaded on desktop only, `paint_ms` tracked; new signups land on a welcome card in the
+library (paste a reel link, 3-step checklist) instead of the setup page; IG/FB in-app browser
+warning on sign-up (Android intent to Chrome) and on the welcome card; cards drop "Unused", show
+only "Tried ✓"; chip "to try"; button "I tried this". "Used" is set only by that button or the
+`mark_stash_used` MCP tool.
+
+**Open / next:**
+- Offered, awaiting yes: iPhone Shortcut that just opens `/?url=` in Safari (no token step).
+- Check tomorrow's `paint_ms` / `load_ms` in `ui_event` to confirm the speedup.
+- Owner todos: Email Routing → OWNER_MAIL binding; test push on a real iPhone; optional Workers Paid.
+- Instagram: carousel + fridge Reel posted 7 Nov; book Reel (`promo/out/instagram/07-books`) for
+  7 Nov evening; launch Reel planned Wed 11 Nov. Content rules: memory `content-max-effort.md`.
+- Never stage the owner's own uncommitted promo files (`promo/src/Root.tsx`, `CaptureScene.tsx`,
+  `MetaPromo.tsx`, `ReceiptsPromo.tsx`, `promo/public/meta-source.mp4`, `vo-*.wav`).
+- Local preview: `.claude/launch.json` ("skwirl-worker", wrangler dev on 8787, untracked).
 
 ## 2026-11-03: matching Stashr AI, still free
 
