@@ -207,6 +207,19 @@ async function kickRunner(env: Env): Promise<void> {
     .catch((e) => console.log("kickRunner error", String(e)));
 }
 
+/** Cron: other people's saves waiting (and claimable)? Start the cloud runner, so they don't sit
+ * until the owner's Mac wakes up. GitHub's own schedule fires only every few hours in practice. */
+async function kickIfWaiting(env: Env): Promise<void> {
+  if (!env.GH_DISPATCH_TOKEN) return;
+  const now = new Date().toISOString();
+  const w = await env.DB.prepare(
+    `SELECT EXISTS (SELECT 1 FROM capture WHERE user_id IS NOT NULL AND status = 'pending' AND attempts < ? AND source != 'import') AS live,
+            EXISTS (SELECT 1 FROM capture WHERE user_id IS NOT NULL AND status = 'pending' AND attempts < ? AND source = 'import') AS imports,
+            EXISTS (SELECT 1 FROM alert_state WHERE key = 'imports_idle' AND at > ?) AS idle`,
+  ).bind(MAX_ATTEMPTS, MAX_ATTEMPTS, now).first<{ live: number; imports: number; idle: number }>();
+  if (w && (w.live || (w.imports && !w.idle))) await kickRunner(env);
+}
+
 /** POST to GitHub's workflow_dispatch for the cloud runner. 204 = started. */
 function dispatchRunner(env: Env): Promise<Response> {
   const repo = env.GH_REPO || "Parthuss/stash";
@@ -261,6 +274,7 @@ export default {
       return;
     }
     ctx.waitUntil(checkHealth(env));
+    ctx.waitUntil(kickIfWaiting(env).catch(() => {}));
     ctx.waitUntil(pruneOAuth(env));
     ctx.waitUntil(pruneAnalytics(env).catch(() => {}));
     ctx.waitUntil(embedMissing(env).catch((e) => console.log("embed backfill", String(e))));

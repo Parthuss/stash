@@ -390,3 +390,43 @@ def test_guest_notes_get_a_neutral_prompt_and_no_owner_projects(monkeypatch):
     assert "owner-secret-project" not in seen["system"] and "AI agents" not in seen["system"]
     out = extract._extract_groq(permalink=None, user_note=None, transcript_text="t")
     assert "owner-secret-project" in seen["system"] and out["relevance"] == ["owner-secret-project"]
+
+
+def test_own_key_out_of_daily_quota_spills_to_the_shared_key(monkeypatch):
+    """6 Nov: a user's free key hit its daily token cap mid-import. The capture finishes on the
+    shared key instead of failing; with no own key there's nowhere to spill and it fails."""
+    from stash.config import using_groq_key
+
+    used = []
+
+    class TPD:
+        status_code = 429
+        text = "Rate limit reached ... tokens per day (TPD) ... Please try again in 16m49.5s"
+        headers = {}
+
+    class OK:
+        status_code = 200
+        text = ""
+        headers = {}
+        @staticmethod
+        def json():
+            return {"choices": [{"message": {"content": '{"title": "ok"}'}}]}
+
+    def fake_post(url, **kwargs):
+        key = kwargs["headers"]["Authorization"].split()[-1]
+        used.append(key)
+        return TPD() if key == "theirs" else OK()
+
+    monkeypatch.setattr(extract.httpx, "post", fake_post)
+    monkeypatch.setattr(extract, "CONFIG", SimpleNamespace(groq_api_key="ours", extract_model="m"))
+    with using_groq_key("theirs"):
+        assert extract._groq_request([{"role": "user", "content": "x"}], max_tokens=10) == {"title": "ok"}
+    assert used == ["theirs", "ours"]
+
+    monkeypatch.setattr(extract, "CONFIG", SimpleNamespace(groq_api_key="theirs", extract_model="m"))
+    used.clear()
+    try:
+        extract._groq_request([{"role": "user", "content": "x"}], max_tokens=10)
+        raise AssertionError("should have failed")
+    except extract.ExtractError as e:
+        assert "429" in str(e)
