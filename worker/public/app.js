@@ -137,7 +137,7 @@ async function load() {
   if (!q) known = ids;
   // Slow queue? Say so, and point at the fix.
   const slow = captures.some((c) => c.state === "processing" && Date.now() - Date.parse(c.at) > 15 * 60000);
-  if (slow && bannerKey !== "owner") setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", "Add my own Groq key", () => openSetup(false));
+  if (slow && bannerKey !== "owner") setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", ...(setupState?.has_groq_key ? [] : ["Add my own Groq key", () => openSetup(false)]));
   else clearBanner("busy");
   if (!bannerKey && !store.get("stash_link_saved") && !(setupState && setupState.owner))
     setBanner("savelink", "warn", "No password here: your sign-in link is how you get back in. Save it somewhere safe.", "Save my link", saveLink);
@@ -644,13 +644,14 @@ function showImport() {
   const hrs = at ? Math.max(1, Math.round((at - Date.now()) / 3600e3)) : 0;
   const paused = at && `${own ? "Your Groq key's free daily limit is used up" : "Skwirl's free daily allowance is used up"}. Reading resumes at ${at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} (in about ${hrs} hour${hrs > 1 ? "s" : ""}).`;
   const faster = own ? "For no daily limit, switch your Groq key to the paid Developer tier (pay as you go)." : "Add your own free Groq key below to read faster.";
-  if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${paused ? ` ${paused} ${faster}` : left > 0 ? ` The rest come in a batch a day, about ${days} more day${days > 1 ? "s" : ""}. New saves always go first.` : ""}`;
-  // Big import in progress: say so on the library, so a slow trickle doesn't look broken.
+  // Not paused: still say why it's slow, so a trickle reads as a limit with a fix, not as broken.
+  const why = `${own ? "Your free Groq key reads about 40 a day" : "Skwirl's free plan reads about 5 a day"}, so about ${days} more day${days > 1 ? "s" : ""}.`;
+  if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` ${paused || why} ${faster} New saves always go first.` : ""}`;
+  // Big import in progress: say so on the library, with the one button that speeds it up.
   if (i && left > 0 && $("fb").hidden) {
-    if (!bannerKey || bannerKey === "import") paused
-      ? setBanner("import", "info", `${i.done} of ${i.total} old saves read. ${paused}`, own ? "Upgrade key" : "Add a key",
-          () => { tr("click", own ? "groq_upgrade" : "groq_add"); own ? window.open("https://console.groq.com/settings/billing", "_blank", "noopener") : (openSetup(false), $("gGroq").open = true, $("gGroq").scrollIntoView({ behavior: "smooth" })); })
-      : setBanner("import", "info", `${i.done} of ${i.total} old Instagram saves read. The rest arrive in daily batches, about ${days} more day${days > 1 ? "s" : ""}.`);
+    if (!bannerKey || bannerKey === "import")
+      setBanner("import", "info", `${i.done} of ${i.total} old saves read. ${paused || why}`, own ? "Go faster" : "Add a key",
+        () => { tr("click", own ? "groq_upgrade" : "groq_add"); own ? window.open("https://console.groq.com/settings/billing", "_blank", "noopener") : (openSetup(false), $("gGroq").open = true, $("gGroq").scrollIntoView({ behavior: "smooth" })); });
   } else clearBanner("import");
 }
 $("impFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });
