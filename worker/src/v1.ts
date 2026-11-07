@@ -437,13 +437,18 @@ export async function handleV1(
     return json({ ok: true });
   }
 
+  if (path === "/v1/owner-msg/seen" && request.method === "POST") {
+    if (userId) await env.DB.prepare("UPDATE user SET owner_msg = NULL WHERE id = ?").bind(userId).run();
+    return json({ ok: true });
+  }
+
   if (path === "/v1/setup" && request.method === "GET") {
     const sources = await env.DB.prepare(
       "SELECT source, COUNT(*) n FROM capture WHERE user_id IS ? GROUP BY source",
     ).bind(userId).all<{ source: string; n: number }>();
     const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
     const u = userId
-      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, found_via FROM user WHERE id = ?").bind(userId).first<any>()
+      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, found_via, owner_msg FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
     return json({
       owner: userId === null,
@@ -454,6 +459,7 @@ export async function handleV1(
       name: u?.name ?? (userId === null ? env.OWNER_NAME ?? "Owner" : null),
       push_key: vapidPublic(env),
       asked_source: Boolean(u?.found_via) || userId === null,
+      owner_msg: u?.owner_msg ?? null,
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
   }

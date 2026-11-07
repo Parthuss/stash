@@ -137,7 +137,7 @@ async function load() {
   if (!q) known = ids;
   // Slow queue? Say so, and point at the fix.
   const slow = captures.some((c) => c.state === "processing" && Date.now() - Date.parse(c.at) > 15 * 60000);
-  if (slow) setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", "Add my own Groq key", () => openSetup(false));
+  if (slow && bannerKey !== "owner") setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", "Add my own Groq key", () => openSetup(false));
   else clearBanner("busy");
   if (!bannerKey && !store.get("stash_link_saved") && !(setupState && setupState.owner))
     setBanner("savelink", "warn", "No password here: your sign-in link is how you get back in. Save it somewhere safe.", "Save my link", saveLink);
@@ -374,6 +374,14 @@ async function copy(text, label) {
 async function refreshSetup() {
   try { setupState = await (await api("/v1/setup")).json(); } catch { return; }
   const st = setupState, phone = ["shortcut", "pwa", "web"].some((k) => (st.saved_from || {})[k]);
+  // A one-off note from the owner (user.owner_msg): shown until tapped, then cleared server-side.
+  if (st.owner_msg && bannerKey !== "net") {  // beats every banner but a connection error
+    if (bannerKey !== "owner") tr("card_shown", "owner_msg");
+    setBanner("owner", "info", st.owner_msg, "Show me how", () => {
+      tr("click", "owner_msg"); clearBanner("owner"); api("/v1/owner-msg/seen", { method: "POST" }).catch(() => {});
+      openSetup(false); $("gSave").open = true; $("gSave").scrollIntoView({ behavior: "smooth" });
+    });
+  }
   const set = (id, done, todo = "To do") => { const b = $(id); b.textContent = done ? "Done ✓" : todo; b.className = "badge" + (done ? " done" : id === "bGroq" ? " opt" : ""); };
   set("bSave", phone); set("bClaude", st.claude_connected); set("bGroq", st.has_groq_key, "Optional");
   if (standalone || st.saved_from?.pwa) { $("bHome").textContent = "Done ✓"; $("bHome").className = "badge done"; }
