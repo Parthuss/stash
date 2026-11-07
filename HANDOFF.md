@@ -52,7 +52,7 @@ only "Tried ✓"; chip "to try"; button "I tried this". "Used" is set only by th
 `mark_stash_used` MCP tool.
 
 **Open / next:**
-- Offered, awaiting yes: iPhone Shortcut that just opens `/?url=` in Safari (no token step).
+- Done 7 Nov (51ea4c4): iPhone Shortcut is token-free. It opens `/?url=…&src=shortcut` in Safari; the signed-in web app saves it (signed-out shares wait through sign-in). Needs one real-iPhone test. Old token Shortcuts still work.
 - Check tomorrow's `paint_ms` / `load_ms` in `ui_event` to confirm the speedup.
 - Owner todos: Email Routing → OWNER_MAIL binding; test push on a real iPhone; optional Workers Paid.
 - Instagram: carousel + fridge Reel posted 7 Nov; book Reel (`promo/out/instagram/07-books`) for
@@ -195,7 +195,7 @@ git HEAD." If you build one, that's a good use of five minutes.
 ## Architecture
 
 ```
- Phone: iOS Shortcut (worker/public/Stash.shortcut, asks for the token on install)
+ Phone: iOS Shortcut (worker/public/Skwirl.shortcut, token-free since 7 Nov: opens Skwirl in Safari)
         or Android installed web app (manifest share_target)
         or the web app's + button
         │  POST /v1/ingest  (bearer token; only instagram/tiktok/youtube/x/threads https links)
