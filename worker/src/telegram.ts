@@ -87,7 +87,7 @@ export async function handleTelegram(request: Request, env: Env, save: Save): Pr
     if (!link) { await say(env, chat, "That connect link has expired. Tap Connect Telegram in Skwirl's Set up again."); return new Response("ok"); }
     await env.DB.prepare("INSERT INTO telegram_chat (chat_id, user_key) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET user_key = excluded.user_key")
       .bind(chat, link.user_key).run();
-    await say(env, chat, "Connected to Skwirl ✓\nSend or forward me any Instagram, YouTube or X link and I'll save it.\n\nEvery Sunday I'll also send 3 saves you haven't used yet (/digest off to stop). Lost your sign-in link? Send /login.");
+    await say(env, chat, "Connected to Skwirl ✓\nSend or forward me any Instagram, Facebook, YouTube or X link and I'll save it.\n\nEvery Sunday I'll also send 3 saves you haven't used yet (/digest off to stop). Lost your sign-in link? Send /login.");
     return new Response("ok");
   }
   if (/^\/stop\b/.test(text)) {

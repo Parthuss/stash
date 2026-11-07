@@ -16,7 +16,7 @@ const OWNER_INSTRUCTIONS =
   "Search it at the start of technical work rather than waiting to be asked. " +
   "they save things intending to use them and forget they exist.";
 const INSTRUCTIONS =
-  "Skwirl holds the reels and posts this person saved (Instagram, YouTube, X), each turned " +
+  "Skwirl holds the reels and posts this person saved (Instagram, Facebook, YouTube, X), each turned " +
   "into a note: summary, next step, transcript, recipe ingredients and steps, and the books, movies, places " +
   "and products it names. Search it whenever they ask about something they saw or saved, or when planning " +
   "meals, trips, reading, workouts or purchases, before answering from general knowledge. Cite the note's " +
@@ -75,7 +75,7 @@ const TOOLS = [
   {
     name: "save_link",
     description:
-      "Save a reel or post link to the user's Skwirl (Instagram, YouTube or X). " +
+      "Save a reel or post link to the user's Skwirl (Instagram, Facebook, YouTube or X). " +
       "Skwirl turns it into a note in a few minutes. Use when the user shares a link and wants to keep it.",
     inputSchema: {
       type: "object",
