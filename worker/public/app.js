@@ -469,7 +469,7 @@ async function openAdmin() {
     const active = u.saves_7d > 0 && u.last_seen && Date.now() - Date.parse(u.last_seen) < 3 * 864e5;
     const chip = u.name === "owner" ? ["you", "opt"] : !u.saves ? ["no saves yet", ""] : active ? ["active", "done"] : ["quiet", "opt"];
     const pct = u.notes ? Math.round((100 * u.opened) / u.notes) + "%" : "n/a";
-    return `<div class="ucard"><header><h3>${esc(u.name)}</h3><span class="badge ${chip[1]}">${chip[0]}</span></header>
+    return `<div class="ucard"><header><h3>${esc(u.name === "owner" ? (setupState && setupState.name) || "You" : u.name)}</h3><span class="badge ${chip[1]}">${chip[0]}</span></header>
       <dl><div><dt>Joined</dt><dd>${esc(ago(u.created_at))}</dd></div><div><dt>Last active</dt><dd>${esc(ago(u.last_seen || u.last_save))}</dd></div>
       <div><dt>Saves (7d)</dt><dd>${u.saves_7d}</dd></div><div><dt>Notes</dt><dd>${u.notes}</dd></div>
       <div><dt>Reopened</dt><dd>${pct}</dd></div><div><dt>Used</dt><dd>${u.used}</dd></div>
@@ -733,13 +733,13 @@ $("srcOther").addEventListener("submit", (e) => { e.preventDefault(); sendSource
 
 // ---- Profile: name, email, notifications, contact, account. The round button in the top bar.
 const initial = (n) => ((n || "").trim()[0] || "·").toUpperCase();
-async function refreshAvatar() { if (setupState) $("meBtn").textContent = initial(setupState.owner ? "Owner" : setupState.name); }
+async function refreshAvatar() { if (setupState) $("meBtn").textContent = initial(setupState.name); }
 async function openMe() {
   show("me"); scrollTo(0, 0);
   const r = await api("/v1/me").catch(() => null); if (!r || !r.ok) return;
   const me = await r.json();
   $("meAvatar").textContent = initial(me.name); $("meName").textContent = me.name;
-  $("meSub").textContent = me.owner ? "Owner account" : me.joined ? `Joined ${new Date(me.joined).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}` : "";
+  $("meSub").textContent = me.owner ? "Admin" : me.joined ? `Joined ${new Date(me.joined).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}` : "";
   const stat = (n, label) => `<div class="stat"><b>${esc(n)}</b><span>${esc(label)}</span></div>`;
   $("meStats").innerHTML = stat(me.saves, "saved") + stat(me.notes, "notes ready") + stat(me.used, "put to use");
   $("gProfile").hidden = me.owner;

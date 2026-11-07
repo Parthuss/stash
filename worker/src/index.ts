@@ -63,6 +63,7 @@ export interface Env {
   OWNER_TELEGRAM_CHAT?: string;
   OWNER_MAIL?: { send(m: unknown): Promise<void> }; // [[send_email]] locked to the owner (src/notify.ts)
   OWNER_MAIL_TO?: string;
+  OWNER_NAME?: string; // how the owner account is shown in the app (default "Owner")
   OWNER_MAIL_FROM?: string;
   // Optional, Workers Paid: [[send_email]] binding "EMAIL" + a sender on a domain onboarded to
   // Cloudflare Email Service. Turns on "email me a sign-in link".

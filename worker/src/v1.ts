@@ -449,7 +449,7 @@ export async function handleV1(
       claude_connected: (u?.mcp_calls ?? 0) > 0,
       has_groq_key: Boolean(u?.groq_key_enc),
       has_email: Boolean(u?.email),
-      name: u?.name ?? null,
+      name: u?.name ?? (userId === null ? env.OWNER_NAME ?? "Owner" : null),
       push_key: vapidPublic(env),
       asked_source: Boolean(u?.found_via) || userId === null,
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
@@ -482,7 +482,7 @@ export async function handleV1(
               (SELECT COUNT(*) FROM note WHERE user_id IS ?1 AND status = 'used') used`,
     ).bind(userId).first<any>();
     const u = userId ? await env.DB.prepare("SELECT name, email, created_at FROM user WHERE id = ?").bind(userId).first<any>() : null;
-    return json({ owner: userId === null, name: u?.name ?? "Owner", email: u?.email ?? null, joined: u?.created_at ?? null, ...counts });
+    return json({ owner: userId === null, name: u?.name ?? env.OWNER_NAME ?? "Owner", email: u?.email ?? null, joined: u?.created_at ?? null, ...counts });
   }
   if (path === "/v1/me" && request.method === "PUT") {
     if (userId === null) return json({ error: "The owner account has no profile to edit." }, 400);
