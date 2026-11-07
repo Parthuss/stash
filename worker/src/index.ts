@@ -636,6 +636,16 @@ export default {
       for (const s of results ?? []) statuses.push(await sendPush(env, s, { title: "Skwirl", body: "Test notification from your admin.", url: "/" }).catch((e) => String(e)));
       return json({ devices: statuses.length, statuses });
     }
+    // A one-off personal notification to one user's devices: {"user": id, "title", "body", "url"}.
+    if (path === "/admin/push/user" && request.method === "POST") {
+      const b = (await request.json().catch(() => null)) as { user?: string; title?: string; body?: string; url?: string } | null;
+      if (!b?.user || !b.body) return json({ error: "need user and body" }, 400);
+      const { results } = await env.DB.prepare("SELECT endpoint, p256dh, auth FROM push_sub WHERE user_id = ?").bind(b.user).all<any>();
+      const msg = { title: (b.title || "Skwirl").slice(0, 60), body: b.body.slice(0, 240), url: b.url || "/", tag: "owner-note" };
+      const statuses = [];
+      for (const s of results ?? []) statuses.push(await sendPush(env, s, msg).catch((e) => String(e)));
+      return json({ devices: statuses.length, statuses });
+    }
     // Start the cloud runner now and report GitHub's answer (204 = the token works).
     if (path === "/admin/runner/kick" && request.method === "POST") {
       if (!env.GH_DISPATCH_TOKEN) return json({ error: "GH_DISPATCH_TOKEN isn't set" }, 400);

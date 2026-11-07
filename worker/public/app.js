@@ -684,7 +684,18 @@ $("tgOff").addEventListener("click", async () => {
 });
 
 // ---- Feedback: one gentle card for people who've used it a bit. Email only with a ticked box.
+// Opened from a personal notification (/?reply=<question>): the feedback form becomes a reply to Parth.
+const replyTo = new URLSearchParams(location.search).get("reply");
+if (replyTo) history.replaceState(null, "", location.pathname);
 function showFeedback() {
+  if (replyTo && !showFeedback.replied) {
+    $("fb").hidden = false;
+    if (!showFeedback.seen) { showFeedback.seen = true; tr("card_shown", "reply"); $("fbMsg").focus(); $("fb").scrollIntoView({ block: "center" }); }
+    $("fbHead").textContent = "Reply to Parth";
+    $("fbBody").textContent = replyTo;
+    $("fbMsg").placeholder = "Type your answer…";
+    return;
+  }
   showPushCard(); showSourceCard();
   let dismissed = false; try { dismissed = localStorage.getItem("skwirl_fb") === "1"; } catch {}
   $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3 || !$("pushCard").hidden || !$("srcCard").hidden || !promptSlot("fb");
@@ -696,8 +707,8 @@ function showFeedback() {
     + (left > 0 ? `Your ${i.total} old saves are coming in a batch a day, so the rest should be here in about ${days} day${days > 1 ? "s" : ""}. Anything new you save jumps the queue. ` : "")
     + "If something feels broken, confusing or missing, tell me here. I read every message.";
 }
-const fbDone = () => { try { localStorage.setItem("skwirl_fb", "1"); } catch {} $("fb").hidden = true; showImport(); };
-$("fbNo").addEventListener("click", () => { tr("feedback_dismissed"); fbDone(); });
+const fbDone = () => { showFeedback.replied = true; try { localStorage.setItem("skwirl_fb", "1"); } catch {} $("fb").hidden = true; showImport(); };
+$("fbNo").addEventListener("click", () => { tr("feedback_dismissed", replyTo ? "reply" : null); showFeedback.replied = true; fbDone(); });
 $("fb").addEventListener("submit", async (e) => {
   e.preventDefault();
   const r = await api("/v1/feedback", { method: "POST", headers: { "content-type": "application/json" },
