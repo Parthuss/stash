@@ -41,9 +41,10 @@ import { embedMissing } from "./embed";
 import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
 import { collect, pruneAnalytics } from "./analytics";
+import { notifyOwner } from "./notify";
 import { pushProgress, pushUser, sendPush } from "./push";
 import { emailEnabled, emailLogin, redeemLogin } from "./login";
-import { handleTelegram, setupTelegram, telegramOwner, telegramUser, weeklyDigest } from "./telegram";
+import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
 import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
@@ -60,6 +61,9 @@ export interface Env {
   NTFY_TOPIC?: string;
   TELEGRAM_BOT_TOKEN?: string; // optional: save by messaging the bot (src/telegram.ts)
   OWNER_TELEGRAM_CHAT?: string;
+  OWNER_MAIL?: { send(m: unknown): Promise<void> }; // [[send_email]] locked to the owner (src/notify.ts)
+  OWNER_MAIL_TO?: string;
+  OWNER_MAIL_FROM?: string;
   // Optional, Workers Paid: [[send_email]] binding "EMAIL" + a sender on a domain onboarded to
   // Cloudflare Email Service. Turns on "email me a sign-in link".
   EMAIL?: { send(m: { to: string; from: { email: string; name: string }; subject: string; text: string; html: string }): Promise<unknown> };
@@ -237,8 +241,7 @@ function dispatchRunner(env: Env): Promise<Response> {
 
 /** Cron (every 30 min): tell the owner when something needs a human. */
 async function alertOwner(env: Env, message: string): Promise<void> {
-  if (env.NTFY_TOPIC) await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, { method: "POST", body: message, headers: { Title: "Skwirl" } }).catch(() => {});
-  await telegramOwner(env, "Skwirl: " + message).catch(() => {});
+  await notifyOwner(env, message.length > 70 ? message.slice(0, 67) + "…" : message, message);
 }
 
 async function checkHealth(env: Env): Promise<void> {
@@ -385,7 +388,7 @@ export default {
         .bind(new Date().toISOString(), typeof userId === "string" ? userId : null, String(b.visitor ?? "").slice(0, 40) || null,
           email || null, country, String(b.price ?? "").slice(0, 20) || null, String(b.place ?? "").slice(0, 20) || null).run();
       if (email && typeof userId === "string") await env.DB.prepare("UPDATE user SET email = COALESCE(email, ?) WHERE id = ?").bind(email, userId).run();
-      ctx.waitUntil(telegramOwner(env, `Skwirl: someone wants Plus (${country ?? "?"}, shown ${b.price ?? "?"}, from ${b.place ?? "?"})${typeof userId === "string" ? ", a signed-in user" : ""}.`).catch(() => {}));
+      ctx.waitUntil(notifyOwner(env, `someone wants Plus (${country ?? "?"}, ${b.price ?? "?"})`, `Someone joined the Skwirl Plus waitlist.\n\nCountry: ${country ?? "?"}\nPrice shown: ${b.price ?? "?"}\nWhere: ${b.place ?? "?"}\n${typeof userId === "string" ? "A signed-in user." : "A visitor."}${email ? `\nEmail: ${email}` : ""}\n\nAll of them: https://skwirl.parthakholkar.com/analytics`));
       return json({ ok: true });
     }
 

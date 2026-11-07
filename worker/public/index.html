@@ -94,7 +94,8 @@ header { padding: 22px 0 6px; }
 .tint b { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 64px; line-height: 1; color: rgb(29 27 46 / .82); }
 .tag { position: absolute; left: 10px; top: 10px; height: 24px; padding: 0 10px; border-radius: 999px; background: rgb(255 255 255 / .7); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; backdrop-filter: blur(6px); }
 .tag.unused { background: var(--peach); color: var(--peach-ink); }
-.cbody { padding: 12px 14px 16px; }
+.cbody { padding: 12px 14px 16px; flex: 1; display: flex; flex-direction: column; }
+.cbody .acts { margin-top: auto; }
 .card h2 { font-size: 15px; line-height: 1.3; font-weight: 600; margin: 0 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .card small { color: var(--muted); font-size: 12px; text-transform: capitalize; }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } }

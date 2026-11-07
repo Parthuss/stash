@@ -6,11 +6,22 @@ accounts. The rest has been done. Order: top to bottom.
 ## 00. New on 6 Nov (after the D1 outage)
 
 - [x] **Fixed the cloud runner's GitHub token (6 Nov, expires in a year; test with POST /admin/runner/kick).** Was: The last 40 runs were all on the timer and none came from the Worker, so `GH_DISPATCH_TOKEN` isn't working, and friends' saves wait 4 to 7 hours whenever the Mac sleeps. GitHub → Settings → Developer settings → Fine-grained tokens → Generate: repository `Parthuss/stash` only, permission Actions: Read and write. Then, in `worker/`: `npx wrangler secret put GH_DISPATCH_TOKEN -c wrangler.local.toml` and paste it.
-- [ ] **Connect your owner account to @skwirl_bot** (sign in as owner → Set up → Save from Telegram → Connect). Health alerts (DB failing, queue stuck, new user) now go there. Then ask Claude to copy your chat id into the `OWNER_TELEGRAM_CHAT` secret, so alerts still arrive when D1 itself is down.
+- [x] ~~Connect owner Telegram for alerts~~: alerts moved to email (section 000).
 - [ ] **Optional, $5/month: Workers Paid.** Raises D1 from 5M reads/day to 25B/month (no repeat of 6 Nov) and turns on email sign-in links. To switch email on after upgrading:
   1. Cloudflare dashboard → Email Service → onboard `parthakholkar.com` (it adds the DNS records).
   2. Add to `worker/wrangler.local.toml`: `[[send_email]]` with `name = "EMAIL"`, and under `[vars]` `EMAIL_FROM = "hello@parthakholkar.com"` (any address on that domain).
   3. `./deploy.sh`. The "Email me a link" form appears under Sign in by itself (`/join` reports `email_login: true`).
+
+## 000. Owner alerts by email (7 Nov, free, ~5 min)
+
+Alerts (new user, Plus waitlist, Contact us messages, site down, queue stuck) now go by email
+to your own inbox, not Telegram. Your domain has no mail set up, so this changes nothing else.
+1. Cloudflare dashboard → parthakholkar.com → **Email** → **Email Routing** → Get started / Enable.
+   Accept the DNS records it adds (MX + SPF).
+2. Email Routing → **Destination addresses** → add your Gmail → click the link Cloudflare emails you.
+3. Tell Claude. It adds to `worker/wrangler.local.toml` (gitignored, so your address stays private):
+   `[[send_email]]` `name = "OWNER_MAIL"` `destination_address = "<your gmail>"`, and under `[vars]`
+   `OWNER_MAIL_TO = "<your gmail>"`, `OWNER_MAIL_FROM = "alerts@parthakholkar.com"`, then deploys.
 
 ## 0. New on 3 Nov: closing the gap with Stashr AI (do these first, ~30 min)
 

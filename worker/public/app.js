@@ -84,7 +84,7 @@ const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
 function capCard(c) {
   if (c.state === "failed") {
     return `<div class="card wait"><div class="tint" style="background:#ffe9e5"><span class="tag err">Couldn't read</span><b aria-hidden="true">!</b></div>
-      <div class="cbody"><h2>${esc(hostOf(c.url))}</h2><p class="why">${esc(c.reason)}</p>
+      <div class="cbody"><h2>${esc(c.url ? hostOf(c.url) : "Saved link")}</h2><p class="why">${esc(c.reason)}</p>
       <div class="acts"><button data-retry="${esc(c.id)}">Retry</button><button class="soft" data-del="${esc(c.id)}">Remove</button></div></div></div>`;
   }
   return `<div class="card wait" aria-busy="true"><div class="tint shimmer"><span class="tag">Reading…</span></div>

@@ -13,7 +13,7 @@
  */
 import { analyticsOverview, journey } from "./analytics";
 import { okEndpoint, sendPush, vapidPublic } from "./push";
-import { telegramOwner } from "./telegram";
+import { notifyOwner } from "./notify";
 import type { Env } from "./index";
 import { fuse, semanticIds } from "./embed";
 import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
@@ -468,7 +468,7 @@ export async function handleV1(
     if (message) await env.DB.prepare("INSERT INTO feedback (user_id, at, message) VALUES (?, ?, ?)").bind(userId, new Date().toISOString(), message).run();
     if (message) {
       const who = await env.DB.prepare("SELECT name, email FROM user WHERE id = ?").bind(userId).first<{ name: string; email: string | null }>();
-      await telegramOwner(env, `Skwirl message from ${who?.name ?? "someone"}${who?.email ? ` (${who.email})` : ""}:\n\n${message.slice(0, 1500)}`).catch(() => {});
+      await notifyOwner(env, `message from ${who?.name ?? "someone"}`, `${who?.name ?? "Someone"}${who?.email ? ` (${who.email}, reply to them there)` : " (no email on file)"} wrote:\n\n${message}`);
     }
     return json({ ok: true });
   }
