@@ -137,6 +137,16 @@ def using_groq_key(key: str | None):
         _groq_override.reset(token)
 
 
+def spill_to_shared_key(cfg) -> bool:
+    """A user's own key ran out of today's quota: finish this capture on the shared key instead
+    of failing it. True if there was somewhere to spill to (scoped like using_groq_key)."""
+    own = _groq_override.get()
+    if not own or not cfg.groq_api_key or own == cfg.groq_api_key:
+        return False
+    _groq_override.set(None)
+    return True
+
+
 # Per-capture record of every paid API call, so usage can be attributed to a
 # person. `collect_usage()` scopes a list; call sites just `record_usage(...)`.
 _usage: ContextVar[list | None] = ContextVar("usage", default=None)

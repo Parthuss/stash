@@ -24,7 +24,7 @@ from typing import Any, TypeVar
 
 import httpx
 
-from .config import CONFIG, groq_key, is_guest_run, record_usage
+from .config import CONFIG, groq_key, is_guest_run, record_usage, spill_to_shared_key
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -503,8 +503,10 @@ def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[st
                 max_tokens = 900
                 continue
             delay = _retry_delay(response)
-            if delay > 120:  # daily quota (TPD): fail now, the queue retries later
-                break
+            if delay > 120:  # daily quota (TPD)
+                if spill_to_shared_key(CONFIG):  # their own key is spent for today: finish on ours
+                    continue
+                break  # nowhere left: fail now, the queue retries later
             time.sleep(delay)
         # Observed live: an occasional 400 "json_validate_failed" with an
         # EMPTY failed_generation — not a malformed request (the identical
