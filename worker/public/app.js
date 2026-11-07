@@ -75,9 +75,9 @@ const TINTS = { design: "--lavender", tooling: "--mint", business: "--sky", prom
 const tintOf = (t) => `var(${TINTS[t] || "--lavender"})`;
 function card(n, i) {
   const initial = esc((n.title || "?").trim().charAt(0).toUpperCase());
-  const unused = n.status === "unused";
+  // Only the positive state gets a tag: an "Unused" badge on every new card read as a scolding.
   return `<button class="card" data-id="${esc(n.id)}" style="--i:${Math.min(i, 12)}">
-    <div class="tint" style="background:${tintOf(n.topic)}"><span class="tag ${unused ? "unused" : ""}">${unused ? "Unused" : "Used ✓"}</span><b aria-hidden="true">${initial}</b>${n.thumb_id ? `<img class="thumb" src="/t/${esc(n.thumb_id)}" alt="" loading="lazy">` : ""}</div>
+    <div class="tint" style="background:${tintOf(n.topic)}">${n.status === "used" ? '<span class="tag">Tried ✓</span>' : ""}<b aria-hidden="true">${initial}</b>${n.thumb_id ? `<img class="thumb" src="/t/${esc(n.thumb_id)}" alt="" loading="lazy">` : ""}</div>
     <div class="cbody"><h2>${esc(n.title)}</h2><small>${esc(n.topic || "")}</small></div></button>`;
 }
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "link"; } };
@@ -96,10 +96,28 @@ function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
   const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
   const num = { all: notes.length, unused };
-  $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}${num[c] ? ` <span class="n">${num[c]}</span>` : ""}</button>`).join("");
+  $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c === "unused" ? "to try" : c)}${num[c] ? ` <span class="n">${num[c]}</span>` : ""}</button>`).join("");
   const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
   const caps = filter === "all" && !$("q").value.trim() ? captures.map(capCard).join("") : "";
-  $("list").innerHTML = (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
+  const first = !notes.length && filter === "all" && !$("q").value.trim();
+  if (first && !welcomeSeen) { welcomeSeen = true; tr("card_shown", "welcome"); }
+  $("list").innerHTML = first ? welcomeCard(captures.length > 0) + caps : (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
+}
+// First run: one card that gets you to a saved reel in 30 seconds, instead of a setup page.
+// Instagram/Facebook in-app browsers keep their own storage, so we steer people out of them.
+const inApp = /Instagram|FBAN|FBAV|FB_IAB/.test(navigator.userAgent);
+let welcomeSeen = false;
+function welcomeCard(saved) {
+  const name = setupState && setupState.name && !setupState.owner ? " " + esc(setupState.name) : "";
+  const step = (done, text) => `<li${done ? ' class="done"' : ""}>${text}</li>`;
+  return `<div class="welcome">
+    <b>${saved ? "Nice, it's reading your reel" : `Hi${name}, let's save your first reel`}</b>
+    <p>${saved ? "Takes a minute or two. Next time, skip the copy-paste: share reels straight from Instagram into Skwirl."
+      : "In Instagram, tap Share on a reel, then <em>Copy link</em>. Paste it here. A minute later it's a note you can search."}</p>
+    ${saved ? "" : `<form class="field" data-wform><input name="u" type="url" inputmode="url" autocomplete="off" placeholder="Paste a reel link" aria-label="Reel link" required><button class="btn sm" type="submit">Save</button></form>`}
+    <ol class="wsteps">${step(true, "Account made")}${step(saved, "Save your first reel")}${step(false, "Share straight from Instagram <button class=\"btn sm soft\" type=\"button\" data-howto>Set it up, 1 min</button>")}</ol>
+    ${inApp ? `<div class="note-box" style="text-align:left"><b>You're inside Instagram's browser.</b> It can forget you. Save your sign-in link now, then open it in ${/Android/.test(navigator.userAgent) ? "Chrome" : "Safari"}. <button class="btn sm" type="button" data-savelink>Save my sign-in link</button></div>` : ""}
+  </div>`;
 }
 let captures = [], loaded = false, known = null, pollTimer = null, importInfo = null;
 async function load() {
@@ -190,12 +208,11 @@ async function open(id, from) {
   else { toast(r && r.status < 500 ? "That note isn't there anymore." : "Can't open that one while the server is down."); if (r && r.status < 500) load().catch(() => {}); return; }
   $("nTitle").textContent = current.title;
   $("nHero").style.background = tintOf(current.topic);
-  const unused = current.status === "unused";
-  $("nMeta").innerHTML = `<span class="tag ${unused ? "unused" : ""}">${unused ? "Unused" : "Used ✓"}</span><span class="tag">${esc(current.topic || "other")}</span>`;
+  $("nMeta").innerHTML = `${current.status === "used" ? '<span class="tag">Tried ✓</span>' : ""}<span class="tag">${esc(current.topic || "other")}</span>`;
   $("nBody").innerHTML = md(current.markdown);
   enhanceRecipe(current.id);
   const th = $("nThumb"); th.hidden = !current.thumb_id; if (current.thumb_id) th.src = "/t/" + current.thumb_id;
-  $("nUsed").textContent = USED_LABEL[current.topic] || "Mark as used";
+  $("nUsed").textContent = USED_LABEL[current.topic] || "I tried this";
   const o = $("nOpen"); o.hidden = !current.permalink; if (current.permalink) o.href = current.permalink;
   $("nUsed").hidden = current.status === "used";
   $("nUnshare").hidden = !current.share_id;
@@ -223,6 +240,14 @@ async function joinMode() {
     $("joinFine").textContent = "Skwirl is full for now. If someone sent you an invite link, open that instead.";
   } else if (!mode.open) $("joinFine").textContent = "Invite-only right now. Your invite has the code.";
   $("lostMail").hidden = $("lostForm").hidden = !mode.email_login;
+}
+// Signing up inside Instagram's browser strands the account there. Offer the real browser first.
+if (inApp) {
+  const and = /Android/.test(navigator.userAgent);
+  $("inAppNote").innerHTML = and
+    ? `You're in Instagram's browser, which can forget you. <a href="intent://${location.host}/#Intent;scheme=https;package=com.android.chrome;end">Open Skwirl in Chrome</a> instead.`
+    : "You're in Instagram's browser, which can forget you. Tap <b>•••</b> at the top, then <b>Open in external browser</b>.";
+  $("inAppNote").hidden = false; tr("card_shown", "inapp");
 }
 $("lostForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -316,8 +341,8 @@ $("nUnshare").addEventListener("click", async () => {
 $("nUsed").addEventListener("click", async () => {
   const r = await api("/v1/notes/" + current.id + "/used", { method: "POST" }).catch(() => null);
   if (!r || !r.ok) return toast("Couldn't save that. Try again.");
-  toast(current.topic === "food" ? "Nice. Marked as made." : "Marked as used"); $("nUsed").hidden = true;
-  current.status = "used"; const t = $("nMeta").firstElementChild; t.className = "tag"; t.textContent = "Used ✓";
+  toast(current.topic === "food" ? "Nice. Marked as made." : "Nice. Marked as tried."); $("nUsed").hidden = true;
+  current.status = "used"; $("nMeta").insertAdjacentHTML("afterbegin", '<span class="tag">Tried ✓</span>');
 });
 // Recipe notes: ingredients become a tap-to-tick shopping/cooking checklist,
 // remembered per device (it's a cooking aid, not account data).
@@ -360,7 +385,7 @@ async function refreshSetup() {
   $("gTelegram").hidden = !st.telegram;
   if (st.telegram) { set("bTelegram", st.telegram.connected, "Optional"); if (!st.telegram.connected) $("bTelegram").className = "badge opt"; $("tgOff").hidden = !st.telegram.connected; }
   $("adminBtn").hidden = !st.owner;
-  showFeedback(); showImport(); refreshAvatar();
+  showFeedback(); showImport(); refreshAvatar(); if (loaded && !notes.length) render();
   if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
 }
@@ -368,7 +393,9 @@ async function refreshSetup() {
 const onPhone = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
 document.body.classList.toggle("on-phone", onPhone);
 function drawQr() {
-  if (onPhone || typeof qrcode !== "function" || !token) return;
+  if (onPhone || !token) return;
+  // Only computers show the QR, so phones never download the 57KB library.
+  if (typeof qrcode !== "function") { const s = document.createElement("script"); s.src = "/qrcode.js"; s.onload = drawQr; document.head.appendChild(s); return; }
   const qr = qrcode(0, "M"); qr.addData(`${location.origin}/#t=${token}`); qr.make();
   const svg = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
   document.querySelectorAll("[data-qr]").forEach((el) => { el.innerHTML = svg; });
@@ -418,7 +445,6 @@ async function start() {
   if (toSave) await ingest(toSave);
   await load();
   refreshSetup();
-  if (!store.get("stash_welcomed") && !toSave) { store.set("stash_welcomed", "1"); openSetup(true); }
 }
 document.addEventListener("visibilitychange", () => token && document.visibilityState === "visible" && $("lib").style.display !== "none" && load().catch(() => {}));
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -535,7 +561,13 @@ $("mentionList").addEventListener("click", async (e) => {
   }
   const c = e.target.closest("[data-open]"); if (c) open(c.dataset.open, "mentions");
 });
-$("list").addEventListener("click", (e) => { if (e.target.closest("[data-howto]")) openSetup(false); });
+$("list").addEventListener("click", (e) => { if (e.target.closest("[data-howto]")) openSetup(false); if (e.target.closest("[data-savelink]")) saveLink(); });
+$("list").addEventListener("submit", async (e) => {
+  const f = e.target.closest("[data-wform]"); if (!f) return;
+  e.preventDefault(); tr("click", "welcome_save");
+  const url = (f.u.value.match(/https?:\/\/\S+/) || [f.u.value])[0].trim(); f.querySelector("button").disabled = true;
+  await ingest(url); f.querySelector("button").disabled = false;
+});
 // A broken cover image falls back to the card's serif initial underneath it.
 document.addEventListener("error", (e) => { if (e.target && e.target.tagName === "IMG" && (e.target.classList.contains("thumb") || e.target.closest(".kind"))) e.target.remove(); }, true);
 

@@ -17,9 +17,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Skwirl">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Recursive:wght,CASL@800,1&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/rethink-sans.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts.css">
 <style>
 /* Design language borrowed from the portfolio's "ethereal" theme: cool lavender-white
    ground, lavender / mint / peach pastels, Recursive Casual (display) + Rethink Sans (UI),
@@ -460,6 +458,15 @@ body.on-phone .phone-handoff { display: none; }
 .legal { text-align: center; font-size: 13px; color: var(--muted); margin: 28px 0 8px; }
 .legal a { color: inherit; }
 .empty .btn { margin-top: 14px; }
+.welcome { grid-column: 1 / -1; background: var(--surface); border-radius: var(--r-card); box-shadow: var(--lift-1); padding: 22px 20px; }
+.welcome > b { display: block; font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 24px; line-height: 1.2; }
+.welcome > p { color: var(--muted); margin: 6px 0 4px; }
+.wsteps { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 10px; }
+.wsteps li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.wsteps li::before { content: ""; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); flex: none; }
+.wsteps li.done { color: var(--muted); text-decoration: line-through; }
+.wsteps li.done::before { border-color: transparent; background: var(--mint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6 10.5l2.5 2.5L14 7.5' fill='none' stroke='%231d1b2e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px; }
+.welcome .note-box .btn { margin-top: 8px; display: inline-flex; }
 .mcard { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 18px; padding: 12px 16px; margin: 10px 0; box-shadow: var(--lift-1); text-align: left; width: 100%; border: 0; }
 .mcard .kind { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; overflow: hidden; }
 .mcard .info { flex: 1; min-width: 0; } .mcard h3 { font-size: 15px; margin: 0 0 2px; font-weight: 600; }
@@ -496,6 +503,7 @@ body.on-phone .phone-handoff { display: none; }
       </form>
       <input id="joinEmail" form="joinForm" class="joinmail" type="email" autocomplete="email" maxlength="120" placeholder="Email (optional)" aria-label="Email, optional" aria-describedby="joinFine">
       <p id="joinErr" role="alert" class="msg err"></p>
+      <p class="note-box" id="inAppNote" hidden></p>
       <p class="fine" id="joinFine">No password. Email is optional, only so I can help if you get stuck. iPhone, Android or computer.</p>
     </div>
 
@@ -542,7 +550,7 @@ body.on-phone .phone-handoff { display: none; }
 
         <div class="s-alert"><div><b>Saved to Skwirl</b><p>Your note will be ready in a few minutes.</p><span>OK</span></div></div>
 
-        <div class="s-note"><img src="/shots/note.webp" alt="" width="540" height="2196"></div>
+        <div class="s-note"><img src="/shots/note.webp" alt="" width="540" height="2196" decoding="async" fetchpriority="low"></div>
       </div>
     </div>
     <figcaption class="steps-cap" aria-hidden="true"><span class="c1">Watch</span><span class="c2">Share</span><span class="c3">Pick Skwirl</span><span class="c4">Get the recipe</span></figcaption>
@@ -885,7 +893,7 @@ body.on-phone .phone-handoff { display: none; }
   </div>
   <div class="actions">
     <a class="btn soft" id="nOpen" target="_blank" rel="noopener">Open original</a>
-    <button class="btn" id="nUsed">Mark as used</button>
+    <button class="btn" id="nUsed">I tried this</button>
     <button class="btn soft" id="nShare">Share</button>
     <button class="btn soft" id="nUnshare" hidden>Stop sharing</button>
   </div>
@@ -904,7 +912,6 @@ body.on-phone .phone-handoff { display: none; }
 </form>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="/qrcode.js" defer></script>
 <script src="/app.js" defer></script>
 </body>
 </html>

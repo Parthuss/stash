@@ -73,6 +73,9 @@
   addEventListener("load", () => {
     const n = performance.getEntriesByType("navigation")[0];
     if (n) track("load_ms", Math.round(n.loadEventStart || n.duration));
+    // First paint is what the person actually waits for; load_ms includes images below the fold.
+    const p = performance.getEntriesByName("first-contentful-paint")[0];
+    if (p) track("paint_ms", Math.round(p.startTime));
   });
   flush();
 })();

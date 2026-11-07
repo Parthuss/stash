@@ -1,0 +1,3 @@
+/* Self-hosted latin subsets (were Google Fonts: two extra origins blocked first paint on slow phones). */
+@font-face{font-family:'Recursive';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/recursive-800-casual.woff2) format('woff2')}
+@font-face{font-family:'Rethink Sans';font-style:normal;font-weight:400 600;font-display:swap;src:url(/fonts/rethink-sans.woff2) format('woff2')}
