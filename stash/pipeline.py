@@ -376,7 +376,7 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             usage: list = []
             own_key = capture["groq_key"] if "groq_key" in capture.keys() else None
             try:
-                with using_groq_key(own_key), guest_run(_is_guest(capture)), collect_usage() as usage:
+                with using_groq_key(own_key, spill=capture["source"] != "import"), guest_run(_is_guest(capture)), collect_usage() as usage:
                     result = process(conn, capture, verbose=verbose, media_url=override)
             finally:
                 if _is_guest(capture):
