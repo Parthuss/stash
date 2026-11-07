@@ -649,6 +649,12 @@ body.on-phone .phone-handoff { display: none; }
     <div class="chips" id="chips" role="group" aria-label="Filters"></div>
   </header>
   <div id="banner" class="banner" hidden role="status"></div>
+  <div id="pushCard" class="fb" hidden>
+    <b>Want a heads-up when more saves are ready?</b>
+    <p>We'll send one notification a day at most, only when new notes are waiting.</p>
+    <p class="msg" id="pushMsg" role="status"></p>
+    <div class="inline-actions"><button class="btn sm" type="button" id="pushOn">Turn on notifications</button><button class="btn sm soft" type="button" id="pushNo">Not now</button></div>
+  </div>
   <form id="fb" class="fb" hidden>
     <b id="fbHead">How's Skwirl working for you?</b>
     <p id="fbBody"></p>

@@ -75,7 +75,7 @@ async function load() {
   const timeRows = buckets.map(([k, hi], i) => ({ k, n: d.durations.filter((ms) => ms < hi && ms >= (i ? buckets[i - 1][1] : 0)).length }));
   const sections = group(evs(d, "section").filter((e) => e.detail.endsWith(":open")), (e) => e.detail.replace(":open", ""));
   const named = (n, label) => group(evs(d, n)).map((r) => ({ k: label ? `${label}: ${r.k}` : r.k, n: r.n }));
-  const actions = ["plus_interest", "plus_waitlist", "join_submit", "join_ok", "join_err", "signin", "login_link", "save", "import", "open_note", "search", "filter", "feedback_sent", "feedback_dismissed", "card_shown", "offline_copy"]
+  const actions = ["push_permission", "push_dismissed", "push_error", "plus_interest", "plus_waitlist", "join_submit", "join_ok", "join_err", "signin", "login_link", "save", "import", "open_note", "search", "filter", "feedback_sent", "feedback_dismissed", "card_shown", "offline_copy"]
     .flatMap((n) => group(evs(d, n)).map((r) => ({ k: r.k === "(none)" ? n : `${n}: ${r.k}`, n: r.n }))).sort((a, b) => b.n - a.n);
   $("actions").innerHTML = bars("Screens seen (people)", named("view"), t.visitors) + bars("Landing scroll depth (of landing viewers)", scroll, landingViews)
     + bars("Time per visit", timeRows, d.durations.length) + bars("Set up sections opened", sections, t.visitors)

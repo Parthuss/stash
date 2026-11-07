@@ -624,8 +624,9 @@ $("tgOff").addEventListener("click", async () => {
 
 // ---- Feedback: one gentle card for people who've used it a bit. Email only with a ticked box.
 function showFeedback() {
+  showPushCard();
   let dismissed = false; try { dismissed = localStorage.getItem("skwirl_fb") === "1"; } catch {}
-  $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3;
+  $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3 || !$("pushCard").hidden;
   if ($("fb").hidden) return;
   if (!showFeedback.seen) { showFeedback.seen = true; tr("card_shown", "welcome"); }
   const i = importInfo, left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState.has_groq_key ? 150 : 5));
@@ -677,3 +678,29 @@ document.querySelectorAll("[data-plus]").forEach((box) => {
   });
   form.addEventListener("submit", (e) => { e.preventDefault(); send(form.querySelector("input[type=email]").value, form.querySelector("input[type=checkbox]").checked); });
 });
+
+// ---- Notifications (Web Push). iPhone only allows them in the home-screen app, and the prompt
+// must come from a tap, so this is a card with a button. Server side: src/push.ts.
+const pushReady = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+function showPushCard() {
+  let no = false; try { no = localStorage.getItem("skwirl_push_no") === "1"; } catch {}
+  const show = pushReady() && setupState && setupState.push_key && Notification.permission === "default" && !no
+    && ((notes || []).length > 0 || (importInfo && importInfo.done < importInfo.total));
+  if (show && $("pushCard").hidden) tr("card_shown", "push");
+  $("pushCard").hidden = !show;
+}
+const b64uBytes = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
+$("pushOn").addEventListener("click", async () => {
+  const msg = $("pushMsg");
+  try {
+    const perm = await Notification.requestPermission();
+    tr("push_permission", perm);
+    if (perm !== "granted") { msg.textContent = "No problem. You can turn them on later in your phone's settings."; $("pushOn").hidden = true; return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uBytes(setupState.push_key) });
+    const r = await api("/v1/push", { method: "POST", body: JSON.stringify(sub.toJSON()) });
+    if (!r.ok) throw new Error("save");
+    $("pushCard").hidden = true; toast("Notifications on. You should get a test one now.");
+  } catch (e) { tr("push_error", String(e && e.message || e).slice(0, 60)); msg.textContent = "Couldn't turn them on. Try again in a minute."; }
+});
+$("pushNo").addEventListener("click", () => { try { localStorage.setItem("skwirl_push_no", "1"); } catch {} tr("push_dismissed"); $("pushCard").hidden = true; showFeedback(); });

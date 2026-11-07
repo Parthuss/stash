@@ -41,6 +41,7 @@ import { embedMissing } from "./embed";
 import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
 import { collect, pruneAnalytics } from "./analytics";
+import { pushProgress, pushUser, sendPush } from "./push";
 import { emailEnabled, emailLogin, redeemLogin } from "./login";
 import { handleTelegram, setupTelegram, telegramOwner, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
@@ -63,6 +64,7 @@ export interface Env {
   // Cloudflare Email Service. Turns on "email me a sign-in link".
   EMAIL?: { send(m: { to: string; from: { email: string; name: string }; subject: string; text: string; html: string }): Promise<unknown> };
   EMAIL_FROM?: string;
+  VAPID_JWK?: string; // P-256 private JWK for Web Push (src/push.ts)
   PUBLIC_URL?: string; // where links in Telegram messages point (default: the live site) // optional: owner alerts still reach Telegram when D1 is down
   // Optional: a fine-grained GitHub token (Actions: read & write, this repo only).
   // When set, a friend's save starts the cloud runner right away instead of
@@ -275,6 +277,7 @@ export default {
     }
     ctx.waitUntil(checkHealth(env));
     ctx.waitUntil(kickIfWaiting(env).catch(() => {}));
+    ctx.waitUntil(pushProgress(env).catch((e) => console.log("push progress", String(e))));
     ctx.waitUntil(pruneOAuth(env));
     ctx.waitUntil(pruneAnalytics(env).catch(() => {}));
     ctx.waitUntil(embedMissing(env).catch((e) => console.log("embed backfill", String(e))));
@@ -597,12 +600,20 @@ export default {
         const open = (left?.open ?? 0) - (left?.done ?? 0);
         if (open === 0) {
           ctx.waitUntil(telegramUser(env, cap.user_id, `All your old Instagram saves are in: ${left?.done ?? 0} notes ready to search. Ask your AI app about them, or open ${env.PUBLIC_URL ?? url.origin}`).catch(() => {}));
+          ctx.waitUntil(pushUser(env, cap.user_id, { title: "Skwirl", body: `All your old Instagram saves are in: ${left?.done ?? 0} notes ready to search.`, url: "/", tag: "import-done" }).catch(() => {}));
         }
       }
       return json({ ok: true });
     }
 
     if (path === "/admin/telegram/setup" && request.method === "POST") return setupTelegram(env, url.origin);
+    // Send the owner's own devices a test notification (proves the whole push path end to end).
+    if (path === "/admin/push/test" && request.method === "POST") {
+      const { results } = await env.DB.prepare("SELECT endpoint, p256dh, auth FROM push_sub WHERE user_id IS NULL").all<any>();
+      const statuses = [];
+      for (const s of results ?? []) statuses.push(await sendPush(env, s, { title: "Skwirl", body: "Test notification from your admin.", url: "/" }).catch((e) => String(e)));
+      return json({ devices: statuses.length, statuses });
+    }
     // Start the cloud runner now and report GitHub's answer (204 = the token works).
     if (path === "/admin/runner/kick" && request.method === "POST") {
       if (!env.GH_DISPATCH_TOKEN) return json({ error: "GH_DISPATCH_TOKEN isn't set" }, 400);

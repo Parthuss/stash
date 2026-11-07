@@ -12,6 +12,7 @@
  *   GET  /v1/search        ?q=               FTS5 (hybrid/vector comes later)
  */
 import { analyticsOverview, journey } from "./analytics";
+import { okEndpoint, sendPush, vapidPublic } from "./push";
 import type { Env } from "./index";
 import { fuse, semanticIds } from "./embed";
 import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
@@ -153,6 +154,7 @@ export async function deleteUser(env: Env, userId: string, origin: string): Prom
     env.DB.prepare("DELETE FROM mention_done WHERE owner_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM usage_event WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM feedback WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM push_sub WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM device_token WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM login_code WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
@@ -447,6 +449,7 @@ export async function handleV1(
       has_groq_key: Boolean(u?.groq_key_enc),
       has_email: Boolean(u?.email),
       name: u?.name ?? null,
+      push_key: vapidPublic(env),
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
   }
@@ -461,6 +464,26 @@ export async function handleV1(
     if (email && !body?.consent) return json({ error: "Tick the box so we're allowed to email you." }, 400);
     if (email) await env.DB.prepare("UPDATE user SET email = ? WHERE id = ?").bind(email, userId).run();
     if (message) await env.DB.prepare("INSERT INTO feedback (user_id, at, message) VALUES (?, ?, ?)").bind(userId, new Date().toISOString(), message).run();
+    return json({ ok: true });
+  }
+
+  // Notifications on this device: store the browser's push subscription, then say hello so the
+  // person sees it worked (and we learn right away if their push service refuses us).
+  if (path === "/v1/push" && request.method === "POST") {
+    const b = (await request.json().catch(() => null)) as { endpoint?: string; keys?: { p256dh?: string; auth?: string } } | null;
+    const endpoint = String(b?.endpoint ?? ""), p256dh = String(b?.keys?.p256dh ?? ""), auth = String(b?.keys?.auth ?? "");
+    if (!okEndpoint(endpoint) || !/^[\w-]{80,100}$/.test(p256dh) || !/^[\w-]{16,30}$/.test(auth)) return json({ error: "That subscription doesn't look right." }, 400);
+    await env.DB.prepare(
+      `INSERT INTO push_sub (endpoint, user_id, p256dh, auth, created_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth`,
+    ).bind(endpoint, userId, p256dh, auth, new Date().toISOString()).run();
+    await logEvent(env, userId, "api", "push_on");
+    const status = await sendPush(env, { endpoint, p256dh, auth }, { title: "Skwirl", body: "You're all set. We'll tell you when more of your saves are ready (once a day at most).", url: "/", tag: "hello" }).catch(() => 0);
+    return json({ ok: true, test: status });
+  }
+  if (path === "/v1/push" && request.method === "DELETE") {
+    const b = (await request.json().catch(() => null)) as { endpoint?: string } | null;
+    await env.DB.prepare("DELETE FROM push_sub WHERE endpoint = ? AND user_id IS ?").bind(String(b?.endpoint ?? ""), userId).run();
     return json({ ok: true });
   }
 
