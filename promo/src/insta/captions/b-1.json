@@ -1,0 +1,65 @@
+[
+ {
+  "text": "I've",
+  "startMs": 0,
+  "endMs": 220,
+  "timestampMs": 80,
+  "confidence": 0.975735
+ },
+ {
+  "text": " saved",
+  "startMs": 220,
+  "endMs": 580,
+  "timestampMs": 440,
+  "confidence": 0.999451
+ },
+ {
+  "text": " 40",
+  "startMs": 580,
+  "endMs": 820,
+  "timestampMs": 780,
+  "confidence": 0.973153
+ },
+ {
+  "text": " \"books",
+  "startMs": 820,
+  "endMs": 1120,
+  "timestampMs": 1020,
+  "confidence": 0.996196
+ },
+ {
+  "text": " that",
+  "startMs": 1120,
+  "endMs": 1430,
+  "timestampMs": 1240,
+  "confidence": 0.973485
+ },
+ {
+  "text": " changed",
+  "startMs": 1430,
+  "endMs": 1890,
+  "timestampMs": 1500,
+  "confidence": 0.404657
+ },
+ {
+  "text": " my",
+  "startMs": 1890,
+  "endMs": 2040,
+  "timestampMs": 1760,
+  "confidence": 0.988689
+ },
+ {
+  "text": " life\"",
+  "startMs": 2040,
+  "endMs": 2350,
+  "timestampMs": 2000,
+  "confidence": 0.900825
+ },
+ {
+  "text": " reels.",
+  "startMs": 2350,
+  "endMs": 3000,
+  "timestampMs": 2180,
+  "confidence": 0.917079
+ }
+]

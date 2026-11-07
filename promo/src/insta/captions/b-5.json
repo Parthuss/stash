@@ -1,0 +1,37 @@
+[
+ {
+  "text": "Finished",
+  "startMs": 70,
+  "endMs": 320,
+  "timestampMs": 70,
+  "confidence": 1
+ },
+ {
+  "text": " one?",
+  "startMs": 1050,
+  "endMs": 1300,
+  "timestampMs": 1050,
+  "confidence": 1
+ },
+ {
+  "text": " Tick",
+  "startMs": 1320,
+  "endMs": 1570,
+  "timestampMs": 1320,
+  "confidence": 1
+ },
+ {
+  "text": " it",
+  "startMs": 1640,
+  "endMs": 1890,
+  "timestampMs": 1640,
+  "confidence": 1
+ },
+ {
+  "text": " off.",
+  "startMs": 1750,
+  "endMs": 2000,
+  "timestampMs": 1750,
+  "confidence": 1
+ }
+]

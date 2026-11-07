@@ -24,29 +24,29 @@ const FLICKS = Array.from({ length: 7 }, (_, i) => 195 + i * 18);
 const KEYS = [622, 628, 634, 640, 646];
 const TICKS = [765, 780, 795, 810];
 const NIGHT = "#0c0b12";
-const SYS = "-apple-system, 'SF Pro Text', system-ui, sans-serif";
+export const SYS = "-apple-system, 'SF Pro Text', system-ui, sans-serif";
 
-const sfx = (src: string, at: number, volume = 0.6) => (
+export const sfx = (src: string, at: number, volume = 0.6) => (
   <Sequence key={`${src}${at}`} from={at} layout="none"><Audio src={staticFile(`insta/${src}`)} volume={volume} /></Sequence>
 );
-const vo = (src: string, at: number) => <Sequence key={src} from={at} layout="none"><Audio src={staticFile(`insta/${src}.wav`)} /></Sequence>;
+export const vo = (src: string, at: number) => <Sequence key={src} from={at} layout="none"><Audio src={staticFile(`insta/${src}.wav`)} /></Sequence>;
 
 // ---------- small line icons (drawn, not anyone's logo) ----------
-const Ico: React.FC<{ d: string; size?: number; fill?: string; stroke?: string; w?: number }> = ({ d, size = 40, fill = "none", stroke = "#111", w = 2.2 }) => (
+export const Ico: React.FC<{ d: string; size?: number; fill?: string; stroke?: string; w?: number }> = ({ d, size = 40, fill = "none", stroke = "#111", w = 2.2 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>
 );
-const I = {
+export const I = {
   home: "M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z", search: "M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15zM16 16l5 5",
   plus: "M4 4h16v16H4zM12 8v8M8 12h8", reels: "M4 4h16v16H4zM4 9h16M9 4l3 5M15 4l3 5M10.5 12.5v5l4-2.5z",
   heart: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z", comment: "M20 12a8 8 0 1 1-3.3-6.5L20 4l-1 4.2A8 8 0 0 1 20 12z",
   send: "M21 3 10 14M21 3l-7 18-4-7-7-4z", save: "M6 3h12v18l-6-5-6 5z", back: "M15 5l-7 7 7 7", dots: "M5 12h.01M12 12h.01M19 12h.01",
 };
-const StatusBar: React.FC<{ dark?: boolean }> = ({ dark }) => (
+export const StatusBar: React.FC<{ dark?: boolean }> = ({ dark }) => (
   <div style={{ position: "absolute", top: 22, left: 40, right: 36, display: "flex", justifyContent: "space-between", fontFamily: SYS, fontWeight: 600, fontSize: 26, color: dark ? "#fff" : "#111", zIndex: 10 }}>
     <span>11:40</span><span style={{ letterSpacing: 2 }}>▮▮▮ ◔ ▭</span>
   </div>
 );
-const BottomNav: React.FC = () => (
+export const BottomNav: React.FC = () => (
   <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 108, background: "#fff", borderTop: "1px solid #e6e6e6", display: "flex", justifyContent: "space-around", alignItems: "center", paddingBottom: 18, zIndex: 5 }}>
     {[I.home, I.search, I.plus, I.reels].map((d) => <Ico key={d} d={d} size={44} />)}
     <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #c9c2ff, #ffc6b5)", border: "2px solid #111" }} />
@@ -99,7 +99,7 @@ const Collections: React.FC = () => (
     </div>
   </AbsoluteFill>
 );
-const Header: React.FC<{ title: string }> = ({ title }) => (
+export const Header: React.FC<{ title: string }> = ({ title }) => (
   <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 140, paddingTop: 76, boxSizing: "border-box", background: "#fff", zIndex: 4, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: SYS, fontWeight: 700, fontSize: 32, color: "#111" }}>
     <span style={{ position: "absolute", left: 18, top: 72 }}><Ico d={I.back} size={44} /></span>{title}<span style={{ position: "absolute", right: 22, top: 72 }}><Ico d="M12 5v14M5 12h14" size={42} /></span>
   </div>

@@ -1,0 +1,72 @@
+[
+ {
+  "text": "Every",
+  "startMs": 0,
+  "endMs": 300,
+  "timestampMs": 260,
+  "confidence": 0.555833
+ },
+ {
+  "text": " book,",
+  "startMs": 300,
+  "endMs": 620,
+  "timestampMs": 520,
+  "confidence": 0.99963
+ },
+ {
+  "text": " movie,",
+  "startMs": 620,
+  "endMs": 1040,
+  "timestampMs": 940,
+  "confidence": 0.996538
+ },
+ {
+  "text": " and",
+  "startMs": 1040,
+  "endMs": 1140,
+  "timestampMs": 1160,
+  "confidence": 0.986905
+ },
+ {
+  "text": " place",
+  "startMs": 1140,
+  "endMs": 1440,
+  "timestampMs": 1340,
+  "confidence": 0.964145
+ },
+ {
+  "text": " they",
+  "startMs": 1440,
+  "endMs": 1720,
+  "timestampMs": 1560,
+  "confidence": 0.980699
+ },
+ {
+  "text": " mentioned.",
+  "startMs": 1720,
+  "endMs": 2410,
+  "timestampMs": 1980,
+  "confidence": 0.995509
+ },
+ {
+  "text": " In",
+  "startMs": 2410,
+  "endMs": 2560,
+  "timestampMs": 2520,
+  "confidence": 0.608896
+ },
+ {
+  "text": " one",
+  "startMs": 2560,
+  "endMs": 2780,
+  "timestampMs": 2720,
+  "confidence": 0.983678
+ },
+ {
+  "text": " list.",
+  "startMs": 2780,
+  "endMs": 3120,
+  "timestampMs": 3060,
+  "confidence": 0.998471
+ }
+]

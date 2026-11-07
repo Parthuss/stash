@@ -1,0 +1,58 @@
+[
+ {
+  "text": "So",
+  "startMs": 70,
+  "endMs": 100,
+  "timestampMs": 120,
+  "confidence": 0.778545
+ },
+ {
+  "text": " I",
+  "startMs": 100,
+  "endMs": 150,
+  "timestampMs": 240,
+  "confidence": 0.996767
+ },
+ {
+  "text": " let",
+  "startMs": 150,
+  "endMs": 300,
+  "timestampMs": 400,
+  "confidence": 0.998708
+ },
+ {
+  "text": " Skwirl",
+  "startMs": 300,
+  "endMs": 700,
+  "timestampMs": 660,
+  "confidence": 0.747828
+ },
+ {
+  "text": " watch",
+  "startMs": 700,
+  "endMs": 950,
+  "timestampMs": 1040,
+  "confidence": 0.99545
+ },
+ {
+  "text": " them",
+  "startMs": 950,
+  "endMs": 1150,
+  "timestampMs": 1220,
+  "confidence": 0.999611
+ },
+ {
+  "text": " for",
+  "startMs": 1150,
+  "endMs": 1310,
+  "timestampMs": 1400,
+  "confidence": 0.994359
+ },
+ {
+  "text": " me.",
+  "startMs": 1310,
+  "endMs": 1560,
+  "timestampMs": 1540,
+  "confidence": 0.999863
+ }
+]

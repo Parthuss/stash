@@ -416,6 +416,8 @@ Save this, then send it to the friend with 800 saved recipes.
 
 ### Piece 7: "Every book from every reel, one list" (Reel, 12-15s, product demo)
 
+**Status: DONE (2026-11-07), as "40 book reels. 0 books read." (31.8s).** Script + evaluation: `scripts/07-booklist.md`. Build: `src/insta/BookList.tsx` (composition `BookList`), VO `tts/generate_books_vo.py`, captions `src/insta/captions/b-*.json`. Output `out/instagram/07-books/book-list.mp4` + `cover.jpg` + `caption.txt`.
+
 **Goal:** show Lists, the feature people don't expect. Book and film audiences share lists a lot.
 **Hook pattern:** list promise / satisfying reveal.
 
