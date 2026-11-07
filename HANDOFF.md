@@ -54,6 +54,8 @@ only "Tried ✓"; chip "to try"; button "I tried this". "Used" is set only by th
 **Open / next:**
 - Done 7 Nov (a0d2097): Facebook reels/videos accepted (facebook.com, fb.watch). Verified fetch + transcribe on the runner.
 - Fixed 7 Nov (950de3e and the apt follow-up): GitHub's ubuntu-latest dropped ffmpeg; the runner's check passed silently through `| head`. Now apt-installs ffmpeg+ffprobe and fails loudly.
+- 7 Nov: owner_msg = a one-off banner to one user (`UPDATE user SET owner_msg='...' WHERE name='...'`), cleared when tapped. Steve has one waiting. GOTCHA: `wrangler d1 migrations apply --remote` silently waits for a y/n when piped, so run the migration file with `d1 execute --remote --file` BEFORE `./deploy.sh`, or new code queries a missing column.
+- Jacinda (7 Nov): turned push on, answered found_via=search, dismissed the feedback card, opened Help twice, saves via the + paste box (no Share-sheet setup yet). She's reachable by push only. Nobody has given an email (the optional join field has existed since 3 Nov).
 - Fixed 7 Nov (b8ce5f9): imports no longer spill onto the shared Groq key when the user's own key hits its daily cap (Jacinda's drip took 122k of our 200k that day). Imports now wait for her key's reset (her key alone did ~65 Groq calls/day; only 29 imports finished in 2 days, so 469 pending could take weeks); live saves still spill.
 - Done 7 Nov (51ea4c4): iPhone Shortcut is token-free. It opens `/?url=…&src=shortcut` in Safari; the signed-in web app saves it (signed-out shares wait through sign-in). Needs one real-iPhone test. Old token Shortcuts still work.
 - Check tomorrow's `paint_ms` / `load_ms` in `ui_event` to confirm the speedup.
