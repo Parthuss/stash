@@ -180,9 +180,9 @@ async function flushOutbox() {
   store.del("stash_outbox");
   for (const u of waiting) await ingest(u);
 }
-async function ingest(url) {
+async function ingest(url, source) {
   let r;
-  try { r = await api("/v1/ingest", { method: "POST", body: JSON.stringify({ url, source: matchMedia("(display-mode: standalone)").matches ? "pwa" : "web" }) }); }
+  try { r = await api("/v1/ingest", { method: "POST", body: JSON.stringify({ url, source: source || (matchMedia("(display-mode: standalone)").matches ? "pwa" : "web") }) }); }
   catch (e) { if (e.message !== "offline") return; }
   if (!r || r.status >= 500) {
     const q = outbox(); if (!q.includes(url)) q.push(url); store.set("stash_outbox", JSON.stringify(q.slice(-50)));
@@ -439,10 +439,10 @@ async function start() {
   // Android share sheet lands here as /?url=…&text=… (manifest share_target).
   const p = new URLSearchParams(location.search);
   const shared = p.get("url") || (p.get("text") || "").match(/https?:\/\/\S+/)?.[0];
-  let pending = null; try { pending = sessionStorage.getItem("pending_share"); sessionStorage.removeItem("pending_share"); } catch {}
-  const toSave = shared || pending;
+  let pending = null; try { pending = JSON.parse(sessionStorage.getItem("pending_share")); sessionStorage.removeItem("pending_share"); } catch {}
+  const toSave = shared || pending?.url, src = shared ? p.get("src") : pending?.src;
   if (shared) history.replaceState(null, "", "/");
-  if (toSave) await ingest(toSave);
+  if (toSave) await ingest(toSave, src === "shortcut" ? "shortcut" : null);
   await load();
   refreshSetup();
 }
@@ -450,7 +450,7 @@ document.addEventListener("visibilitychange", () => token && document.visibility
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 // A share that arrives before sign-in must survive the sign-in screen.
 { const p = new URLSearchParams(location.search), u = p.get("url") || (p.get("text") || "").match(/https?:\/\/\S+/)?.[0];
-  if (u && !token) { try { sessionStorage.setItem("pending_share", u); } catch {} history.replaceState(null, "", "/"); } }
+  if (u && !token) { try { sessionStorage.setItem("pending_share", JSON.stringify({ url: u, src: p.get("src") })); } catch {} history.replaceState(null, "", "/"); } }
 // A one-time #login= link (from the email or the Telegram bot): trade it for a token on this device.
 const loginCode = (location.hash.match(/^#login=([0-9a-f]{32})/) || [])[1];
 if (loginCode) {
@@ -462,11 +462,11 @@ if (loginCode) {
 
 // ---- account safety: reset token, delete account ----
 $("rotateBtn").addEventListener("click", async () => {
-  if (!confirm("Reset your token? Your old one stops working, your Shortcut needs the new one, and connected AI apps are disconnected.")) return;
+  if (!confirm("Reset your token? Your old one stops working, connected AI apps are disconnected.")) return;
   const r = await api("/v1/token/rotate", { method: "POST" }); const body = await r.json().catch(() => ({}));
   if (!r.ok) return toast(body.error || "Couldn't reset it.");
   token = body.token; store.set("stash_token", token); refreshSetup(); drawQr();
-  toast("New token saved here. Update your Shortcut and reconnect your AI apps.");
+  toast("New token saved here. Sign in again on your other devices and reconnect your AI apps.");
 });
 $("deleteBtn").addEventListener("click", async () => {
   if (prompt("This erases everything you saved, for good. Type DELETE to confirm.") !== "DELETE") return;

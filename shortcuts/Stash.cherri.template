@@ -1,20 +1,11 @@
-// Stash — share sheet capture, via the Cloudflare Worker.
+// Skwirl — share sheet capture, token-free.
 //
 // Template, not buildable as-is: {{WORKER_URL}} is substituted by shortcuts/build.sh
-// from .env. It contains NO secret — iOS asks for the user's Stash token once, when
-// they add the Shortcut (an "import question"), so one signed file serves everyone
-// and is safe to host publicly at /Stash.shortcut.
-//
-// Why this posts to Cloudflare rather than the Mac: a LAN receiver needs the
-// Mac awake, running, and on the same Wi-Fi at the exact moment you share.
-// This works from cellular, from a café, with the lid shut. The save lands in
-// D1 and `stash daemon` drains it whenever the Mac is next up.
-//
-// The notification deliberately says "queued", not "saved". Those are
-// different facts, and an earlier version of this Shortcut claiming "stashed"
-// for a request that reached a dead receiver is precisely why nothing arrived
-// for an evening. Final confirmation — with the real note title — arrives
-// separately from stash/notify.py once the note actually exists.
+// from .env. It holds NO secret and asks NO questions on install: it hands the
+// shared link to the web app in Safari (/?url=…), which is already signed in and
+// saves it (app.js start()). If Safari isn't signed in, the link waits in
+// sessionStorage through sign-in. Older installed copies that POST with a token
+// keep working; /v1/ingest is unchanged.
 
 #define name Skwirl
 #define color violet
@@ -25,24 +16,5 @@
 
 #include 'actions/web'
 
-#question tok "Paste your Skwirl access token (Skwirl → Set up → Copy token)" "stk_"
-@token = text(tok)
-
-@note = prompt("Add a note? (optional, tap Done to skip)")
-
-@res = jsonRequest("{{WORKER_URL}}/v1/ingest", "POST", {"url": "{ShortcutInput}", "note": "{@note}", "source": "shortcut"}, {"Authorization": "Bearer {@token}"})
-
-// Surface the Worker's actual reply. A wrong token, an unsupported link or a
-// bad deploy all come back as {"error": ...}; showing that beats a hardcoded
-// success string that cannot tell the difference. The one error a beginner
-// can't act on as-is ("unauthorized") gets translated into what to do.
-@err = text(@res['error'])
-if @err == "unauthorized" {
-	alert("Your Skwirl token didn't work. Open Skwirl, go to Set up, and add the Shortcut again with the token from there.", "Skwirl couldn't save this")
-} else {
-	if @err != "" {
-		alert("{@err}", "Skwirl couldn't save this")
-	} else {
-		showNotification("Saved to Skwirl. Your note will be ready in a few minutes.")
-	}
-}
+@link = urlEncode("{ShortcutInput}")
+openURL("{{WORKER_URL}}/?url={@link}&src=shortcut")
