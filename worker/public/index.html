@@ -410,7 +410,8 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .fb { margin: 10px 0 4px; padding: 14px 16px; border-radius: 20px; background: var(--butter); box-shadow: var(--lift-1); display: grid; gap: 8px; font-size: 14px; }
 .fb textarea, .fb input[type=email] { font: inherit; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); resize: vertical; }
 .lost { margin-top: 18px; font-size: 14px; }
-.fb b { font-size: 16px; } .fb p { margin: 0; line-height: 1.45; }
+.fb b { font-size: 16px; }
+.srcchips { display: flex; flex-wrap: wrap; gap: 8px; } .srcchips button { border: 0; border-radius: 999px; padding: 8px 14px; background: #fff; font: inherit; font-size: 14px; box-shadow: var(--lift-1); cursor: pointer; } .fb p { margin: 0; line-height: 1.45; }
 .fbok { display: flex; gap: 8px; align-items: flex-start; color: var(--muted); font-size: 13px; }
 .fb .msg:empty { display: none; }
 .banner.info { background: var(--sky); } .banner.warn { background: var(--butter); } .banner.err { background: #ffd5d0; color: #8c2415; }
@@ -654,6 +655,16 @@ body.on-phone .phone-handoff { display: none; }
     <p>We'll send one notification a day at most, only when new notes are waiting.</p>
     <p class="msg" id="pushMsg" role="status"></p>
     <div class="inline-actions"><button class="btn sm" type="button" id="pushOn">Turn on notifications</button><button class="btn sm soft" type="button" id="pushNo">Not now</button></div>
+  </div>
+  <div id="srcCard" class="fb" hidden>
+    <b>Quick one: how did you find Skwirl?</b>
+    <div class="chips srcchips" id="srcChips" role="group" aria-label="How you found Skwirl">
+      <button type="button" data-s="instagram">Instagram</button><button type="button" data-s="tiktok">TikTok</button><button type="button" data-s="x">X / Twitter</button>
+      <button type="button" data-s="reddit">Reddit</button><button type="button" data-s="friend">A friend</button><button type="button" data-s="search">Google search</button>
+      <button type="button" data-s="ai">ChatGPT or another AI</button><button type="button" data-s="github">GitHub</button><button type="button" data-s="know_parth">I know Parth</button>
+      <button type="button" data-s="other">Other</button><button type="button" data-s="skip">Rather not say</button>
+    </div>
+    <form id="srcOther" class="field" hidden><input id="srcOtherText" maxlength="80" placeholder="Where? (optional)" aria-label="Where you found Skwirl"><button class="btn sm" type="submit">Send</button></form>
   </div>
   <form id="fb" class="fb" hidden>
     <b id="fbHead">How's Skwirl working for you?</b>

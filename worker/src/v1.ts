@@ -440,7 +440,7 @@ export async function handleV1(
     ).bind(userId).all<{ source: string; n: number }>();
     const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
     const u = userId
-      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email FROM user WHERE id = ?").bind(userId).first<any>()
+      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, found_via FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
     return json({
       owner: userId === null,
@@ -450,6 +450,7 @@ export async function handleV1(
       has_email: Boolean(u?.email),
       name: u?.name ?? null,
       push_key: vapidPublic(env),
+      asked_source: Boolean(u?.found_via) || userId === null,
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
   }
@@ -469,6 +470,14 @@ export async function handleV1(
 
   // Notifications on this device: store the browser's push subscription, then say hello so the
   // person sees it worked (and we learn right away if their push service refuses us).
+  if (path === "/v1/source" && request.method === "POST") {
+    if (userId === null) return json({ ok: true });
+    const b = (await request.json().catch(() => null)) as { source?: string; other?: string } | null;
+    const source = String(b?.source ?? "").slice(0, 30), other = String(b?.other ?? "").trim().slice(0, 80);
+    if (!/^[a-z_]{2,30}$/.test(source)) return json({ error: "Pick one." }, 400);
+    await env.DB.prepare("UPDATE user SET found_via = ? WHERE id = ?").bind(other ? `${source}: ${other}` : source, userId).run();
+    return json({ ok: true });
+  }
   if (path === "/v1/push" && request.method === "POST") {
     const b = (await request.json().catch(() => null)) as { endpoint?: string; keys?: { p256dh?: string; auth?: string } } | null;
     const endpoint = String(b?.endpoint ?? ""), p256dh = String(b?.keys?.p256dh ?? ""), auth = String(b?.keys?.auth ?? "");

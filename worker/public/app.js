@@ -624,9 +624,9 @@ $("tgOff").addEventListener("click", async () => {
 
 // ---- Feedback: one gentle card for people who've used it a bit. Email only with a ticked box.
 function showFeedback() {
-  showPushCard();
+  showPushCard(); showSourceCard();
   let dismissed = false; try { dismissed = localStorage.getItem("skwirl_fb") === "1"; } catch {}
-  $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3 || !$("pushCard").hidden;
+  $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3 || !$("pushCard").hidden || !$("srcCard").hidden || !promptSlot("fb");
   if ($("fb").hidden) return;
   if (!showFeedback.seen) { showFeedback.seen = true; tr("card_shown", "welcome"); }
   const i = importInfo, left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState.has_groq_key ? 150 : 5));
@@ -686,8 +686,9 @@ function showPushCard() {
   let no = false; try { no = localStorage.getItem("skwirl_push_no") === "1"; } catch {}
   const show = pushReady() && setupState && setupState.push_key && Notification.permission === "default" && !no
     && ((notes || []).length > 0 || (importInfo && importInfo.done < importInfo.total));
-  if (show && $("pushCard").hidden) tr("card_shown", "push");
-  $("pushCard").hidden = !show;
+  const on = show && promptSlot("push");
+  if (on && $("pushCard").hidden) tr("card_shown", "push");
+  $("pushCard").hidden = !on;
 }
 const b64uBytes = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
 $("pushOn").addEventListener("click", async () => {
@@ -704,3 +705,28 @@ $("pushOn").addEventListener("click", async () => {
   } catch (e) { tr("push_error", String(e && e.message || e).slice(0, 60)); msg.textContent = "Couldn't turn them on. Try again in a minute."; }
 });
 $("pushNo").addEventListener("click", () => { try { localStorage.setItem("skwirl_push_no", "1"); } catch {} tr("push_dismissed"); $("pushCard").hidden = true; showFeedback(); });
+
+// One prompt card per visit (a fresh app open), so nobody gets a stack of asks at once.
+function promptSlot(name) {
+  try { const cur = sessionStorage.getItem("sk_prompt"); if (cur && cur !== name) return false; sessionStorage.setItem("sk_prompt", name); } catch {}
+  return true;
+}
+// ---- "How did you find Skwirl?": asked once, one tap.
+function showSourceCard() {
+  let done = false; try { done = localStorage.getItem("skwirl_src") === "1"; } catch {}
+  const on = !!setupState && !setupState.asked_source && !done && (notes || []).length > 0 && $("pushCard").hidden && promptSlot("src");
+  if (on && $("srcCard").hidden) tr("card_shown", "source");
+  $("srcCard").hidden = !on;
+}
+async function sendSource(source, other) {
+  try { localStorage.setItem("skwirl_src", "1"); } catch {}
+  $("srcCard").hidden = true; tr("found_via", source);
+  await api("/v1/source", { method: "POST", body: JSON.stringify({ source, other }) }).catch(() => null);
+  if (source !== "skip") toast("Thanks, that really helps.");
+}
+$("srcChips").addEventListener("click", (e) => {
+  const s = e.target.dataset && e.target.dataset.s; if (!s) return;
+  if (s === "other") { $("srcChips").hidden = true; $("srcOther").hidden = false; $("srcOtherText").focus(); return; }
+  sendSource(s);
+});
+$("srcOther").addEventListener("submit", (e) => { e.preventDefault(); sendSource("other", $("srcOtherText").value.trim()); });

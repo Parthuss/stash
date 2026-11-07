@@ -118,7 +118,7 @@ export async function analyticsOverview(env: Env, days: number) {
     ["Came back another day", cohort.returned ?? 0],
   ];
   const users = await all(
-    `SELECT u.id, u.name, u.created_at, u.last_seen, u.email IS NOT NULL has_email, COALESCE(u.mcp_calls, 0) > 0 ai,
+    `SELECT u.id, u.name, u.created_at, u.last_seen, u.found_via, u.email IS NOT NULL has_email, COALESCE(u.mcp_calls, 0) > 0 ai,
        u.groq_key_enc IS NOT NULL own_key,
        (SELECT COUNT(*) FROM telegram_chat t WHERE t.user_key = u.id) > 0 telegram,
        (SELECT COUNT(*) FROM visit WHERE user_id = u.id) visits,

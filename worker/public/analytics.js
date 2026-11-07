@@ -63,7 +63,8 @@ async function load() {
   }).join("");
 
   const dim = (k) => d.dims[k].map((r) => ({ k: r.k, n: r.n }));
-  $("sources").innerHTML = bars("Referrer (site they came from)", dim("referrer"), t.visitors) + bars("utm_source", dim("utm_source"), t.visitors)
+  const asked = group(d.users.filter((u) => u.found_via).map((u) => ({ detail: u.found_via.split(":")[0], visitors: 1 })));
+  $("sources").innerHTML = bars("How people say they found Skwirl (asked in the app)", asked, d.users.length) + bars("Referrer (site they came from)", dim("referrer"), t.visitors) + bars("utm_source", dim("utm_source"), t.visitors)
     + bars("Country", dim("country"), t.visitors) + bars("First page", dim("landing"), t.visitors);
   $("devices").innerHTML = bars("Device", dim("device"), t.visitors) + bars("OS", dim("os"), t.visitors) + bars("Browser / app", dim("browser"), t.visitors)
     + bars("Language", dim("lang"), t.visitors) + bars("Timezone", dim("tz"), t.visitors);
@@ -75,7 +76,7 @@ async function load() {
   const timeRows = buckets.map(([k, hi], i) => ({ k, n: d.durations.filter((ms) => ms < hi && ms >= (i ? buckets[i - 1][1] : 0)).length }));
   const sections = group(evs(d, "section").filter((e) => e.detail.endsWith(":open")), (e) => e.detail.replace(":open", ""));
   const named = (n, label) => group(evs(d, n)).map((r) => ({ k: label ? `${label}: ${r.k}` : r.k, n: r.n }));
-  const actions = ["push_permission", "push_dismissed", "push_error", "plus_interest", "plus_waitlist", "join_submit", "join_ok", "join_err", "signin", "login_link", "save", "import", "open_note", "search", "filter", "feedback_sent", "feedback_dismissed", "card_shown", "offline_copy"]
+  const actions = ["found_via", "push_permission", "push_dismissed", "push_error", "plus_interest", "plus_waitlist", "join_submit", "join_ok", "join_err", "signin", "login_link", "save", "import", "open_note", "search", "filter", "feedback_sent", "feedback_dismissed", "card_shown", "offline_copy"]
     .flatMap((n) => group(evs(d, n)).map((r) => ({ k: r.k === "(none)" ? n : `${n}: ${r.k}`, n: r.n }))).sort((a, b) => b.n - a.n);
   $("actions").innerHTML = bars("Screens seen (people)", named("view"), t.visitors) + bars("Landing scroll depth (of landing viewers)", scroll, landingViews)
     + bars("Time per visit", timeRows, d.durations.length) + bars("Set up sections opened", sections, t.visitors)
@@ -87,10 +88,10 @@ async function load() {
   $("plus").innerHTML = `<div class="kpis" style="margin-top:0">${kpi(taps, "tapped Notify me")}${kpi(w.length, "joined the waitlist")}${kpi(pct(w.length, taps), "tap → joined")}${kpi(pct(new Set(w.filter((x) => x.name).map((x) => x.name)).size, d.users.length), "of all users want it")}</div>
     <div class="grid" style="margin-top:12px">${bars("By country", group(w.map((x) => ({ detail: x.country, visitors: 1 }))), w.length)}${bars("Price they saw", group(w.map((x) => ({ detail: x.price, visitors: 1 }))), w.length)}${bars("Where they tapped", group(w.map((x) => ({ detail: x.place, visitors: 1 }))), w.length)}</div>
     ${w.length ? `<div class="card scroll" style="margin-top:12px"><table><thead><tr><th>When</th><th>Who</th><th>Email</th><th>Country</th><th>Price</th><th>Where</th></tr></thead><tbody>${w.map((x) => `<tr><td>${when(x.at)}</td><td>${esc(x.name || "visitor")}</td><td>${esc(x.email || "")}</td><td>${esc(x.country || "")}</td><td>${esc(x.price || "")}</td><td>${esc(x.place || "")}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
-  $("people").innerHTML = `<thead><tr><th>Name</th><th>Joined</th><th>From</th><th>Country</th><th>Device</th><th>Visits</th><th>Days</th><th>Time</th><th>Saves</th><th>Imports</th><th>Notes</th><th>Opens</th><th>Searches</th><th>AI</th><th>Telegram</th><th>Own key</th><th>Email</th><th>Last seen</th><th>Last thing they did</th></tr></thead><tbody>`
+  $("people").innerHTML = `<thead><tr><th>Name</th><th>Joined</th><th>From</th><th>Country</th><th>Device</th><th>Visits</th><th>Days</th><th>Time</th><th>Saves</th><th>Imports</th><th>Notes</th><th>Opens</th><th>Searches</th><th>AI</th><th>Telegram</th><th>Own key</th><th>Email</th><th>Found us via</th><th>Last seen</th><th>Last thing they did</th></tr></thead><tbody>`
     + d.users.map((u) => `<tr data-user="${esc(u.id)}"><td><b>${esc(u.name)}</b></td><td>${when(u.created_at)}</td><td>${esc(u.first_referrer || "")}</td><td>${esc(u.country || "")}</td><td>${esc(u.device || "")}</td>
       <td>${u.visits}</td><td>${u.days}</td><td>${dur(u.active_ms)}</td><td>${u.saves}</td><td>${u.imports}</td><td>${u.notes}</td><td>${u.opens}</td><td>${u.searches}</td>
-      <td>${u.ai ? "yes" : ""}</td><td>${u.telegram ? "yes" : ""}</td><td>${u.own_key ? "yes" : ""}</td><td>${u.has_email ? "yes" : ""}</td><td>${when(u.last_seen || u.last_action_at)}</td><td>${esc(u.last_event || "")}</td></tr>`).join("") + "</tbody>";
+      <td>${u.ai ? "yes" : ""}</td><td>${u.telegram ? "yes" : ""}</td><td>${u.own_key ? "yes" : ""}</td><td>${u.has_email ? "yes" : ""}</td><td>${esc(u.found_via || "")}</td><td>${when(u.last_seen || u.last_action_at)}</td><td>${esc(u.last_event || "")}</td></tr>`).join("") + "</tbody>";
   $("visits").innerHTML = `<thead><tr><th>Started</th><th>Who</th><th>Country</th><th>Device</th><th>Browser / app</th><th>From</th><th>First page</th><th>Active</th><th>Events</th><th>Installed</th></tr></thead><tbody>`
     + d.recent.map((v) => `<tr ${v.user_id ? `data-user="${esc(v.user_id)}"` : `data-visitor="${esc(v.visitor)}"`}><td>${when(v.started_at)}</td><td>${v.name ? `<b>${esc(v.name)}</b>` : `visitor ${esc(v.visitor.slice(0, 6))}`}</td>
       <td>${esc(v.country || "")}</td><td>${esc(v.device || "")} · ${esc(v.os || "")}</td><td>${esc(v.browser || "")}</td><td>${esc(v.referrer || v.utm_source || "direct")}</td><td>${esc(v.landing || "")}</td>
