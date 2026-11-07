@@ -630,11 +630,20 @@ function showImport() {
   const i = importInfo;
   $("bImport").textContent = i ? (i.done >= i.total - i.failed ? "Done" : `${i.done} / ${i.total}`) : "Optional";
   $("bImport").className = "badge " + (i && i.done >= i.total - i.failed ? "done" : "opt");
-  const left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState?.has_groq_key ? 150 : 5));
-  if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` The rest come in a batch a day, about ${days} more day${days > 1 ? "s" : ""}. New saves always go first.` : ""}`;
+  const left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState?.has_groq_key ? 40 : 5));
+  // Out of today's Groq tokens: say whose, when reading resumes, and how to go faster.
+  const own = setupState?.has_groq_key, at = i?.resumes_at && left > 0 ? new Date(i.resumes_at) : null;
+  const hrs = at ? Math.max(1, Math.round((at - Date.now()) / 3600e3)) : 0;
+  const paused = at && `${own ? "Your Groq key's free daily limit is used up" : "Skwirl's free daily allowance is used up"}. Reading resumes at ${at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} (in about ${hrs} hour${hrs > 1 ? "s" : ""}).`;
+  const faster = own ? "For no daily limit, switch your Groq key to the paid Developer tier (pay as you go)." : "Add your own free Groq key below to read faster.";
+  if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${paused ? ` ${paused} ${faster}` : left > 0 ? ` The rest come in a batch a day, about ${days} more day${days > 1 ? "s" : ""}. New saves always go first.` : ""}`;
   // Big import in progress: say so on the library, so a slow trickle doesn't look broken.
-  if (i && left > 0 && $("fb").hidden) { if (!bannerKey || bannerKey === "import") setBanner("import", "info", `${i.done} of ${i.total} old Instagram saves read. The rest arrive in daily batches, about ${days} more day${days > 1 ? "s" : ""}.`); }
-  else clearBanner("import");
+  if (i && left > 0 && $("fb").hidden) {
+    if (!bannerKey || bannerKey === "import") paused
+      ? setBanner("import", "info", `${i.done} of ${i.total} old saves read. ${paused}`, own ? "Upgrade key" : "Add a key",
+          () => { tr("click", own ? "groq_upgrade" : "groq_add"); own ? window.open("https://console.groq.com/settings/billing", "_blank", "noopener") : (openSetup(false), $("gGroq").open = true, $("gGroq").scrollIntoView({ behavior: "smooth" })); })
+      : setBanner("import", "info", `${i.done} of ${i.total} old Instagram saves read. The rest arrive in daily batches, about ${days} more day${days > 1 ? "s" : ""}.`);
+  } else clearBanner("import");
 }
 $("impFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });
 
@@ -660,7 +669,7 @@ function showFeedback() {
   $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3 || !$("pushCard").hidden || !$("srcCard").hidden || !promptSlot("fb");
   if ($("fb").hidden) return;
   if (!showFeedback.seen) { showFeedback.seen = true; tr("card_shown", "welcome"); }
-  const i = importInfo, left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState.has_groq_key ? 150 : 5));
+  const i = importInfo, left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState.has_groq_key ? 40 : 5));
   $("fbHead").textContent = `Hi${setupState.name ? " " + setupState.name : ""}, I'm Parth. I made Skwirl.`;
   $("fbBody").textContent = "Thanks for trying it. "
     + (left > 0 ? `Your ${i.total} old saves are coming in a batch a day, so the rest should be here in about ${days} day${days > 1 ? "s" : ""}. Anything new you save jumps the queue. ` : "")

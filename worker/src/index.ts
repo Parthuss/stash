@@ -585,8 +585,15 @@ export default {
             .bind(now, error, body.id).run();
           const c = await env.DB.prepare("SELECT user_id, source FROM capture WHERE id = ?").bind(body.id).first<{ user_id: string | null; source: string }>();
           if (c?.source === "import") {
-            await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
-              .bind("pause:" + (c.user_id ?? "owner"), new Date(Date.now() + 30 * 60_000).toISOString()).run();
+            // Out of today's tokens: Groq says when it resets ("try again in 3h2m7.5s"). Park the backlog
+            // until then and remember it as quota:<user>, so the app can say when reading resumes.
+            const daily = /tokens per day/i.test(error), resetMs = daily ? groqWaitMs(error) : 0;
+            const until = new Date(Date.now() + (resetMs ? resetMs + 60_000 : 30 * 60_000)).toISOString();
+            const who = c.user_id ?? "owner", put = "INSERT INTO alert_state (key, at) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at";
+            await env.DB.batch([
+              env.DB.prepare(put).bind("pause:" + who, until),
+              ...(daily ? [env.DB.prepare(put).bind("quota:" + who, until)] : []),
+            ]);
           }
         } else {
           // Back to pending, not failed: transient breakage should retry itself.
@@ -843,4 +850,13 @@ async function stashMedia(env: Env, cdnUrl: string, key: string): Promise<void> 
   await env.MEDIA.put(key, response.body, {
     httpMetadata: { contentType: response.headers.get("content-type") ?? "video/mp4" },
   });
+}
+
+/** Groq's "Please try again in 1h2m3.4s" as milliseconds (0 if absent). */
+export function groqWaitMs(error: string): number {
+  const m = error.match(/try again in ((?:\d+h)?(?:\d+m(?!s))?(?:[\d.]+m?s)?)/i);
+  if (!m || !m[1]) return 0;
+  const part = (u: string) => Number((m[1].match(new RegExp("([\\d.]+)" + u)) || [])[1] || 0);
+  if (/\dms$/.test(m[1])) return part("ms");
+  return Math.round((part("h") * 3600 + part("m") * 60 + part("s")) * 1000);
 }

@@ -392,8 +392,10 @@ export async function handleV1(
       `SELECT COUNT(*) AS total, SUM(status = 'done') AS done, SUM(status != 'done' AND attempts >= 3) AS failed
        FROM capture WHERE user_id IS ? AND source = 'import'`,
     ).bind(userId).first<{ total: number; done: number | null; failed: number | null }>();
+    const quota = imp?.total ? await env.DB.prepare("SELECT at FROM alert_state WHERE key = ? AND at > ?")
+      .bind("quota:" + (userId ?? "owner"), new Date().toISOString()).first<{ at: string }>() : null;
     return json({
-      import: imp?.total ? { total: imp.total, done: imp.done ?? 0, failed: imp.failed ?? 0 } : null,
+      import: imp?.total ? { total: imp.total, done: imp.done ?? 0, failed: imp.failed ?? 0, resumes_at: quota?.at ?? null } : null,
       captures: (results ?? []).map((r) => {
         const failed = r.status === "pending" && r.attempts >= 3;
         return { id: r.id, url: r.permalink, at: r.captured_at, state: failed ? "failed" : "processing", reason: friendlyReason(r.error, failed) };
