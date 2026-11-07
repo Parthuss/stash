@@ -755,6 +755,7 @@ async function openMe() {
     : "This browser can't show notifications.";
   $("meNotifySmall").textContent = perm === "granted" ? "On for this device" : "A heads-up when new notes are ready";
   $("mePushOn").hidden = perm !== "default"; $("mePushMsg").textContent = "";
+  renderHub(me, perm);
   $("contactNote").textContent = me.email ? `We'll reply to ${me.email}.` : "Add your email under Profile if you'd like a reply.";
   $("contactNote").className = "msg";
 }
@@ -775,4 +776,30 @@ $("contactForm").addEventListener("submit", async (e) => {
   const r = await api("/v1/feedback", { method: "POST", body: JSON.stringify({ message: $("contactMsg").value }) }).catch(() => null);
   if (!r || !r.ok) { $("contactNote").className = "msg err"; $("contactNote").textContent = "Couldn't send. Try again."; return; }
   tr("contact_sent"); $("contactMsg").value = ""; $("contactNote").className = "msg ok"; $("contactNote").textContent = "Sent. Thank you!";
+});
+
+// "Your setup": every optional thing with its state and one button, so nothing depends on
+// having said yes the first time it was offered.
+function renderHub(me, perm) {
+  const st = setupState || {}, i = importInfo;
+  const go = (group) => `data-hub="${group}"`;
+  const rows = [
+    ["Save from your phone", "Share a reel straight to Skwirl", (st.saved_from || {}).shortcut || (st.saved_from || {}).pwa ? "On" : null, `<button class="btn sm soft" ${go("gSave")}>Set up</button>`],
+    ["Notifications", "A heads-up when new notes are ready", perm === "granted" ? "On" : null,
+      perm === "default" ? `<button class="btn sm soft" data-hub="push">Turn on</button>` : `<small>${perm === "denied" ? "Blocked in settings" : "Home-screen app only"}</small>`],
+    ["ChatGPT or Claude", "Let your AI search your saves", st.claude_connected ? "Connected" : null, `<button class="btn sm soft" ${go("gClaude")}>Connect</button>`],
+    ["Old Instagram saves", i ? `${i.done} of ${i.total} read${i.failed ? `, ${i.failed} couldn't be` : ""}` : "Bring in your whole Saved folder", i && i.done + i.failed >= i.total ? "Done" : null, `<button class="btn sm soft" ${go("gImport")}>${i ? "Details" : "Import"}</button>`],
+    ["Your own Groq key", "Faster, never queued behind anyone", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`],
+    ...(st.telegram ? [["Telegram", "Save by sending links to a bot", st.telegram.connected ? "Connected" : null, `<button class="btn sm soft" ${go("gTelegram")}>Connect</button>`]] : []),
+    ["Skwirl Plus", "No keys, saves read first (coming soon)", null, `<button class="btn sm soft" ${go("gGroq")}>Notify me</button>`],
+  ];
+  $("hub").innerHTML = rows.filter((r) => !(me.owner && r[0] === "Skwirl Plus")).map(([t, sub, done, act]) =>
+    `<div class="hubrow"><div class="t"><b>${esc(t)}</b><small>${esc(sub)}</small></div>${done ? `<span class="ok">${esc(done)} ✓</span>` : act}</div>`).join("");
+}
+$("hub").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-hub]"); if (!b) return;
+  const g = b.dataset.hub; tr("hub", g);
+  if (g === "push") return enablePush($("mePushMsg"), openMe);
+  openSetup(false);
+  const el = $(g); if (el) { el.hidden = false; el.open = true; setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }
 });

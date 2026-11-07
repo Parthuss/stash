@@ -369,6 +369,11 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .avatar.big { width: 64px; height: 64px; font-size: 28px; cursor: default; }
 #meStats { grid-template-columns: repeat(3, 1fr); }
 .meform .msg:empty, #gNotify .msg:empty { display: none; }
+.hub { padding: 16px 18px; } .hub h2 { margin: 0; }
+.hubrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.hubrow .t { flex: 1; min-width: 0; } .hubrow b { display: block; font-size: 15px; } .hubrow small { color: var(--muted); }
+.hubrow > small { max-width: 38%; text-align: right; font-size: 13px; }
+.hubrow .ok { color: #1f8a5b; font-weight: 600; font-size: 14px; white-space: nowrap; }
 .mehead { display: flex; gap: 14px; align-items: center; }
 .mehead h1 { margin: 0; }
 .meform { display: grid; gap: 12px; } .meform label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
@@ -816,6 +821,8 @@ body.on-phone .phone-handoff { display: none; }
   <div class="topbar"><button class="btn soft" id="meBack">← Back</button></div>
   <div class="setup-head mehead"><span class="avatar big" id="meAvatar">·</span><div><h1 id="meName">You</h1><p id="meSub"></p></div></div>
   <div class="stats" id="meStats"></div>
+
+  <div class="group hub"><h2>Your setup</h2><p class="muted" style="margin:2px 0 10px">Everything you can turn on, in one place. Skipped something earlier? Do it here.</p><div id="hub"></div></div>
 
   <details class="group" open id="gProfile">
     <summary><div style="flex:1"><h2>Profile</h2><small>Your name and email</small></div></summary>
