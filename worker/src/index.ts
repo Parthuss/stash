@@ -42,7 +42,7 @@ import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
 import { collect, pruneAnalytics } from "./analytics";
 import { notifyOwner } from "./notify";
-import { pushProgress, pushUser, sendPush } from "./push";
+import { pushProgress, pushUser, sendPush, sendScheduled } from "./push";
 import { emailEnabled, emailLogin, redeemLogin } from "./login";
 import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
@@ -282,6 +282,7 @@ export default {
     ctx.waitUntil(checkHealth(env));
     ctx.waitUntil(kickIfWaiting(env).catch(() => {}));
     ctx.waitUntil(pushProgress(env).catch((e) => console.log("push progress", String(e))));
+    ctx.waitUntil(sendScheduled(env).catch((e) => console.log("scheduled push", String(e))));
     ctx.waitUntil(pruneOAuth(env));
     ctx.waitUntil(pruneAnalytics(env).catch(() => {}));
     ctx.waitUntil(embedMissing(env).catch((e) => console.log("embed backfill", String(e))));
@@ -638,8 +639,14 @@ export default {
     }
     // A one-off personal notification to one user's devices: {"user": id, "title", "body", "url"}.
     if (path === "/admin/push/user" && request.method === "POST") {
-      const b = (await request.json().catch(() => null)) as { user?: string; title?: string; body?: string; url?: string } | null;
+      const b = (await request.json().catch(() => null)) as { user?: string; title?: string; body?: string; url?: string; at?: string } | null;
       if (!b?.user || !b.body) return json({ error: "need user and body" }, 400);
+      if (b.at) {  // ISO time: queue it for the cron instead of sending now
+        if (isNaN(Date.parse(b.at))) return json({ error: "bad at" }, 400);
+        await env.DB.prepare("INSERT INTO scheduled_push (user_id, send_at, title, body, url) VALUES (?, ?, ?, ?, ?)")
+          .bind(b.user, new Date(b.at).toISOString(), (b.title || "Skwirl").slice(0, 60), b.body.slice(0, 240), b.url || "/").run();
+        return json({ scheduled: new Date(b.at).toISOString() });
+      }
       const { results } = await env.DB.prepare("SELECT endpoint, p256dh, auth FROM push_sub WHERE user_id = ?").bind(b.user).all<any>();
       const msg = { title: (b.title || "Skwirl").slice(0, 60), body: b.body.slice(0, 240), url: b.url || "/", tag: "owner-note" };
       const statuses = [];

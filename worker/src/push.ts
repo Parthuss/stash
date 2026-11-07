@@ -114,3 +114,14 @@ export async function pushProgress(env: Env): Promise<void> {
     if (status >= 200 && status < 300) await env.DB.prepare("UPDATE push_sub SET last_sent_at = ? WHERE endpoint = ?").bind(now.toISOString(), s.endpoint).run();
   }
 }
+
+/** Cron: send queued one-off notifications whose time has come (see /admin/push/user with "at"). */
+export async function sendScheduled(env: Env): Promise<void> {
+  const now = new Date().toISOString();
+  const { results } = await env.DB.prepare("SELECT id, user_id, title, body, url FROM scheduled_push WHERE sent_at IS NULL AND send_at <= ?")
+    .bind(now).all<{ id: number; user_id: string; title: string | null; body: string; url: string | null }>();
+  for (const r of results ?? []) {
+    await env.DB.prepare("UPDATE scheduled_push SET sent_at = ? WHERE id = ?").bind(now, r.id).run();  // mark first: never twice
+    await pushUser(env, r.user_id, { title: r.title || "Skwirl", body: r.body, url: r.url || "/", tag: "owner-note" }).catch(() => {});
+  }
+}
