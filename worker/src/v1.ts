@@ -13,6 +13,7 @@
  */
 import { analyticsOverview, journey } from "./analytics";
 import { okEndpoint, sendPush, vapidPublic } from "./push";
+import { telegramOwner } from "./telegram";
 import type { Env } from "./index";
 import { fuse, semanticIds } from "./embed";
 import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
@@ -465,11 +466,37 @@ export async function handleV1(
     if (email && !body?.consent) return json({ error: "Tick the box so we're allowed to email you." }, 400);
     if (email) await env.DB.prepare("UPDATE user SET email = ? WHERE id = ?").bind(email, userId).run();
     if (message) await env.DB.prepare("INSERT INTO feedback (user_id, at, message) VALUES (?, ?, ?)").bind(userId, new Date().toISOString(), message).run();
+    if (message) {
+      const who = await env.DB.prepare("SELECT name, email FROM user WHERE id = ?").bind(userId).first<{ name: string; email: string | null }>();
+      await telegramOwner(env, `Skwirl message from ${who?.name ?? "someone"}${who?.email ? ` (${who.email})` : ""}:\n\n${message.slice(0, 1500)}`).catch(() => {});
+    }
     return json({ ok: true });
   }
 
   // Notifications on this device: store the browser's push subscription, then say hello so the
   // person sees it worked (and we learn right away if their push service refuses us).
+  // Profile: who you are here, a few numbers, and editing your name and email.
+  if (path === "/v1/me" && request.method === "GET") {
+    const counts = await env.DB.prepare(
+      `SELECT (SELECT COUNT(*) FROM capture WHERE user_id IS ?1) saves, (SELECT COUNT(*) FROM note WHERE user_id IS ?1) notes,
+              (SELECT COUNT(*) FROM note WHERE user_id IS ?1 AND status = 'used') used`,
+    ).bind(userId).first<any>();
+    const u = userId ? await env.DB.prepare("SELECT name, email, created_at FROM user WHERE id = ?").bind(userId).first<any>() : null;
+    return json({ owner: userId === null, name: u?.name ?? "Owner", email: u?.email ?? null, joined: u?.created_at ?? null, ...counts });
+  }
+  if (path === "/v1/me" && request.method === "PUT") {
+    if (userId === null) return json({ error: "The owner account has no profile to edit." }, 400);
+    const b = (await request.json().catch(() => null)) as { name?: string; email?: string; consent?: boolean } | null;
+    const name = String(b?.name ?? "").trim().slice(0, 40);
+    const email = String(b?.email ?? "").trim().slice(0, 120);
+    if (!name) return json({ error: "Your name can't be empty." }, 400);
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right." }, 400);
+    const had = await env.DB.prepare("SELECT email FROM user WHERE id = ?").bind(userId).first<{ email: string | null }>();
+    if (email && email !== had?.email && !b?.consent) return json({ error: "Tick the box so we're allowed to email you." }, 400);
+    await env.DB.prepare("UPDATE user SET name = ?, email = ? WHERE id = ?").bind(name, email || null, userId).run();
+    await logEvent(env, userId, "api", "profile_saved");
+    return json({ ok: true });
+  }
   if (path === "/v1/source" && request.method === "POST") {
     if (userId === null) return json({ ok: true });
     const b = (await request.json().catch(() => null)) as { source?: string; other?: string } | null;

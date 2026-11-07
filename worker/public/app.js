@@ -38,7 +38,7 @@ async function api(path, opts = {}) {
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
-function show(which) { tr("view", which); for (const id of ["auth", "lib", "note", "setup", "admin", "mentions"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
+function show(which) { tr("view", which); for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
 function signOut(msg) {
   for (const k of ["stash_token", "stash_cache", "stash_notes", "stash_outbox"]) store.del(k);
   token = null; show("auth");
@@ -94,10 +94,9 @@ function skeleton() { return Array.from({ length: 4 }, () => '<div class="skel s
 
 function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
-  $("count").textContent = `${unused} unused`; $("count").hidden = !notes.length;
-  $("sub").textContent = notes.length ? (unused ? `${notes.length} saved, ${unused} unused. Pick one and put it to use.` : `${notes.length} saved. You've used everything.`) : "Your saves, all in one place.";
   const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
-  $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}</button>`).join("");
+  const num = { all: notes.length, unused };
+  $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c)}${num[c] ? ` <span class="n">${num[c]}</span>` : ""}</button>`).join("");
   const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
   const caps = filter === "all" && !$("q").value.trim() ? captures.map(capCard).join("") : "";
   $("list").innerHTML = (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
@@ -361,7 +360,7 @@ async function refreshSetup() {
   $("gTelegram").hidden = !st.telegram;
   if (st.telegram) { set("bTelegram", st.telegram.connected, "Optional"); if (!st.telegram.connected) $("bTelegram").className = "badge opt"; $("tgOff").hidden = !st.telegram.connected; }
   $("adminBtn").hidden = !st.owner;
-  showFeedback(); showImport();
+  showFeedback(); showImport(); refreshAvatar();
   if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
 }
@@ -691,19 +690,20 @@ function showPushCard() {
   $("pushCard").hidden = !on;
 }
 const b64uBytes = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
-$("pushOn").addEventListener("click", async () => {
-  const msg = $("pushMsg");
+async function enablePush(msg, after) {
   try {
     const perm = await Notification.requestPermission();
     tr("push_permission", perm);
-    if (perm !== "granted") { msg.textContent = "No problem. You can turn them on later in your phone's settings."; $("pushOn").hidden = true; return; }
+    if (perm !== "granted") { msg.textContent = "No problem. You can turn them on later in your phone's settings."; return false; }
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uBytes(setupState.push_key) });
     const r = await api("/v1/push", { method: "POST", body: JSON.stringify(sub.toJSON()) });
     if (!r.ok) throw new Error("save");
-    $("pushCard").hidden = true; toast("Notifications on. You should get a test one now.");
-  } catch (e) { tr("push_error", String(e && e.message || e).slice(0, 60)); msg.textContent = "Couldn't turn them on. Try again in a minute."; }
-});
+    toast("Notifications on. You should get a test one now."); if (after) after();
+    return true;
+  } catch (e) { tr("push_error", String(e && e.message || e).slice(0, 60)); msg.textContent = "Couldn't turn them on. Try again in a minute."; return false; }
+}
+$("pushOn").addEventListener("click", async () => { if (!(await enablePush($("pushMsg")))) $("pushOn").hidden = true; else $("pushCard").hidden = true; });
 $("pushNo").addEventListener("click", () => { try { localStorage.setItem("skwirl_push_no", "1"); } catch {} tr("push_dismissed"); $("pushCard").hidden = true; showFeedback(); });
 
 // One prompt card per visit (a fresh app open), so nobody gets a stack of asks at once.
@@ -730,3 +730,49 @@ $("srcChips").addEventListener("click", (e) => {
   sendSource(s);
 });
 $("srcOther").addEventListener("submit", (e) => { e.preventDefault(); sendSource("other", $("srcOtherText").value.trim()); });
+
+// ---- Profile: name, email, notifications, contact, account. The round button in the top bar.
+const initial = (n) => ((n || "").trim()[0] || "·").toUpperCase();
+async function refreshAvatar() { if (setupState) $("meBtn").textContent = initial(setupState.owner ? "Owner" : setupState.name); }
+async function openMe() {
+  show("me"); scrollTo(0, 0);
+  const r = await api("/v1/me").catch(() => null); if (!r || !r.ok) return;
+  const me = await r.json();
+  $("meAvatar").textContent = initial(me.name); $("meName").textContent = me.name;
+  $("meSub").textContent = me.owner ? "Owner account" : me.joined ? `Joined ${new Date(me.joined).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}` : "";
+  const stat = (n, label) => `<div class="stat"><b>${esc(n)}</b><span>${esc(label)}</span></div>`;
+  $("meStats").innerHTML = stat(me.saves, "saved") + stat(me.notes, "notes ready") + stat(me.used, "put to use");
+  $("gProfile").hidden = me.owner;
+  $("meNameIn").value = me.name; $("meEmailIn").value = me.email || ""; $("meEmailIn").dataset.was = me.email || "";
+  $("meConsentRow").hidden = true; $("meMsg").textContent = "";
+  // Notifications on this device
+  const can = pushReady() && setupState && setupState.push_key;
+  const perm = can ? Notification.permission : "unsupported";
+  $("meNotifyText").textContent = perm === "granted" ? "On for this device. At most one a day, only when new notes are waiting."
+    : perm === "denied" ? "Blocked on this device. Turn them on in your phone's or browser's settings for Skwirl."
+    : perm === "default" ? "Get a heads-up when new notes are ready. At most one a day."
+    : /iPhone|iPad/.test(navigator.userAgent) ? "On iPhone, add Skwirl to your Home Screen first (Share → Add to Home Screen), then open it from there."
+    : "This browser can't show notifications.";
+  $("meNotifySmall").textContent = perm === "granted" ? "On for this device" : "A heads-up when new notes are ready";
+  $("mePushOn").hidden = perm !== "default"; $("mePushMsg").textContent = "";
+  $("contactNote").textContent = me.email ? `We'll reply to ${me.email}.` : "Add your email under Profile if you'd like a reply.";
+  $("contactNote").className = "msg";
+}
+$("meBtn").addEventListener("click", openMe);
+$("meBack").addEventListener("click", () => { show("lib"); });
+$("meEmailIn").addEventListener("input", () => { const e = $("meEmailIn"); $("meConsentRow").hidden = !e.value.trim() || e.value.trim() === e.dataset.was; });
+$("meForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await api("/v1/me", { method: "PUT", body: JSON.stringify({ name: $("meNameIn").value, email: $("meEmailIn").value, consent: $("meConsent").checked }) }).catch(() => null);
+  const b = r ? await r.json().catch(() => ({})) : {};
+  if (!r || !r.ok) { $("meMsg").className = "msg err"; $("meMsg").textContent = b.error || "Couldn't save. Try again."; return; }
+  tr("profile_saved"); $("meMsg").className = "msg ok"; $("meMsg").textContent = "Saved.";
+  await refreshSetup(); openMe();
+});
+$("mePushOn").addEventListener("click", () => enablePush($("mePushMsg"), openMe));
+$("contactForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await api("/v1/feedback", { method: "POST", body: JSON.stringify({ message: $("contactMsg").value }) }).catch(() => null);
+  if (!r || !r.ok) { $("contactNote").className = "msg err"; $("contactNote").textContent = "Couldn't send. Try again."; return; }
+  tr("contact_sent"); $("contactMsg").value = ""; $("contactNote").className = "msg ok"; $("contactNote").textContent = "Sent. Thank you!";
+});
