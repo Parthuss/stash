@@ -1,44 +1,44 @@
 [
  {
   "text": "Read?",
-  "startMs": 0,
-  "endMs": 440,
-  "timestampMs": 320,
-  "confidence": 0.851277
+  "startMs": 30,
+  "endMs": 1000,
+  "timestampMs": 440,
+  "confidence": 0.659311
  },
  {
   "text": " Zero.",
-  "startMs": 440,
-  "endMs": 640,
-  "timestampMs": 680,
-  "confidence": 0.267232
+  "startMs": 1000,
+  "endMs": 2000,
+  "timestampMs": 1400,
+  "confidence": 0.802808
  },
  {
   "text": " Name",
-  "startMs": 640,
-  "endMs": 960,
-  "timestampMs": 920,
-  "confidence": 0.691864
+  "startMs": 2000,
+  "endMs": 2400,
+  "timestampMs": 2460,
+  "confidence": 0.982931
  },
  {
   "text": " one?",
-  "startMs": 960,
-  "endMs": 1370,
-  "timestampMs": 1200,
-  "confidence": 0.96967
+  "startMs": 2400,
+  "endMs": 3000,
+  "timestampMs": 2760,
+  "confidence": 0.918927
  },
  {
   "text": " I",
-  "startMs": 1370,
-  "endMs": 1500,
-  "timestampMs": 1560,
-  "confidence": 0.965515
+  "startMs": 3000,
+  "endMs": 3250,
+  "timestampMs": 3520,
+  "confidence": 0.953592
  },
  {
   "text": " can't.",
-  "startMs": 1500,
-  "endMs": 2400,
-  "timestampMs": 1720,
-  "confidence": 0.915224
+  "startMs": 3250,
+  "endMs": 4000,
+  "timestampMs": 3720,
+  "confidence": 0.968943
  }
 ]

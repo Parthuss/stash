@@ -1,9 +1,9 @@
 [
  {
   "text": "Skwirl.",
-  "startMs": 0,
-  "endMs": 250,
-  "timestampMs": 0,
-  "confidence": 1
+  "startMs": 30,
+  "endMs": 500,
+  "timestampMs": 420,
+  "confidence": 0.809196
  }
 ]

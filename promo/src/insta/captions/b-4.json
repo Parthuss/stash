@@ -1,72 +1,72 @@
 [
  {
   "text": "Every",
-  "startMs": 0,
-  "endMs": 300,
-  "timestampMs": 260,
-  "confidence": 0.555833
+  "startMs": 30,
+  "endMs": 400,
+  "timestampMs": 320,
+  "confidence": 0.563703
  },
  {
   "text": " book,",
-  "startMs": 300,
-  "endMs": 620,
-  "timestampMs": 520,
-  "confidence": 0.99963
+  "startMs": 400,
+  "endMs": 900,
+  "timestampMs": 660,
+  "confidence": 0.999016
  },
  {
   "text": " movie,",
-  "startMs": 620,
-  "endMs": 1040,
-  "timestampMs": 940,
-  "confidence": 0.996538
+  "startMs": 900,
+  "endMs": 1550,
+  "timestampMs": 1240,
+  "confidence": 0.927466
  },
  {
   "text": " and",
-  "startMs": 1040,
-  "endMs": 1140,
-  "timestampMs": 1160,
-  "confidence": 0.986905
+  "startMs": 1550,
+  "endMs": 1750,
+  "timestampMs": 1700,
+  "confidence": 0.964232
  },
  {
   "text": " place",
-  "startMs": 1140,
-  "endMs": 1440,
-  "timestampMs": 1340,
-  "confidence": 0.964145
+  "startMs": 1750,
+  "endMs": 2000,
+  "timestampMs": 1920,
+  "confidence": 0.996846
  },
  {
   "text": " they",
-  "startMs": 1440,
-  "endMs": 1720,
-  "timestampMs": 1560,
-  "confidence": 0.980699
+  "startMs": 2000,
+  "endMs": 2320,
+  "timestampMs": 2140,
+  "confidence": 0.978144
  },
  {
   "text": " mentioned.",
-  "startMs": 1720,
-  "endMs": 2410,
-  "timestampMs": 1980,
-  "confidence": 0.995509
+  "startMs": 2320,
+  "endMs": 3190,
+  "timestampMs": 2620,
+  "confidence": 0.992146
  },
  {
   "text": " In",
-  "startMs": 2410,
-  "endMs": 2560,
-  "timestampMs": 2520,
-  "confidence": 0.608896
+  "startMs": 3190,
+  "endMs": 3340,
+  "timestampMs": 3360,
+  "confidence": 0.382195
  },
  {
   "text": " one",
-  "startMs": 2560,
-  "endMs": 2780,
-  "timestampMs": 2720,
-  "confidence": 0.983678
+  "startMs": 3340,
+  "endMs": 3610,
+  "timestampMs": 3620,
+  "confidence": 0.970958
  },
  {
   "text": " list.",
-  "startMs": 2780,
-  "endMs": 3120,
-  "timestampMs": 3060,
-  "confidence": 0.998471
+  "startMs": 3610,
+  "endMs": 4180,
+  "timestampMs": 3980,
+  "confidence": 0.996383
  }
 ]

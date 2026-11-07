@@ -1,65 +1,65 @@
 [
  {
   "text": "I've",
-  "startMs": 0,
-  "endMs": 220,
-  "timestampMs": 80,
-  "confidence": 0.975735
+  "startMs": 30,
+  "endMs": 310,
+  "timestampMs": 140,
+  "confidence": 0.883625
  },
  {
   "text": " saved",
-  "startMs": 220,
-  "endMs": 580,
-  "timestampMs": 440,
-  "confidence": 0.999451
+  "startMs": 310,
+  "endMs": 710,
+  "timestampMs": 520,
+  "confidence": 0.827533
  },
  {
   "text": " 40",
-  "startMs": 580,
-  "endMs": 820,
-  "timestampMs": 780,
-  "confidence": 0.973153
+  "startMs": 710,
+  "endMs": 1230,
+  "timestampMs": 900,
+  "confidence": 0.840522
  },
  {
   "text": " \"books",
-  "startMs": 820,
-  "endMs": 1120,
-  "timestampMs": 1020,
-  "confidence": 0.996196
+  "startMs": 1230,
+  "endMs": 1560,
+  "timestampMs": 1440,
+  "confidence": 0.245106
  },
  {
   "text": " that",
-  "startMs": 1120,
-  "endMs": 1430,
-  "timestampMs": 1240,
-  "confidence": 0.973485
+  "startMs": 1560,
+  "endMs": 1830,
+  "timestampMs": 1700,
+  "confidence": 0.988693
  },
  {
   "text": " changed",
-  "startMs": 1430,
-  "endMs": 1890,
-  "timestampMs": 1500,
-  "confidence": 0.404657
+  "startMs": 1830,
+  "endMs": 2320,
+  "timestampMs": 2020,
+  "confidence": 0.988898
  },
  {
   "text": " my",
-  "startMs": 1890,
-  "endMs": 2040,
-  "timestampMs": 1760,
-  "confidence": 0.988689
+  "startMs": 2320,
+  "endMs": 2460,
+  "timestampMs": 2240,
+  "confidence": 0.991616
  },
  {
   "text": " life\"",
-  "startMs": 2040,
-  "endMs": 2350,
-  "timestampMs": 2000,
-  "confidence": 0.900825
+  "startMs": 2460,
+  "endMs": 2760,
+  "timestampMs": 2680,
+  "confidence": 0.999083
  },
  {
   "text": " reels.",
-  "startMs": 2350,
-  "endMs": 3000,
-  "timestampMs": 2180,
-  "confidence": 0.917079
+  "startMs": 2760,
+  "endMs": 3600,
+  "timestampMs": 3040,
+  "confidence": 0.76802
  }
 ]

@@ -1,93 +1,93 @@
 [
-  {
-    "text": "Every",
-    "startMs": 0,
-    "endMs": 250,
-    "timestampMs": 240,
-    "confidence": 0.786373
-  },
-  {
-    "text": " book",
-    "startMs": 250,
-    "endMs": 460,
-    "timestampMs": 440,
-    "confidence": 0.99693
-  },
-  {
-    "text": " your",
-    "startMs": 460,
-    "endMs": 680,
-    "timestampMs": 620,
-    "confidence": 0.935426
-  },
-  {
-    "text": " feed",
-    "startMs": 680,
-    "endMs": 890,
-    "timestampMs": 820,
-    "confidence": 0.994975
-  },
-  {
-    "text": " ever",
-    "startMs": 890,
-    "endMs": 1100,
-    "timestampMs": 1080,
-    "confidence": 0.992371
-  },
-  {
-    "text": " recommended,",
-    "startMs": 1100,
-    "endMs": 1960,
-    "timestampMs": 1620,
-    "confidence": 0.973172
-  },
-  {
-    "text": " finally",
-    "startMs": 1960,
-    "endMs": 2360,
-    "timestampMs": 2260,
-    "confidence": 0.767608
-  },
-  {
-    "text": " in",
-    "startMs": 2360,
-    "endMs": 2490,
-    "timestampMs": 2460,
-    "confidence": 0.967281
-  },
-  {
-    "text": " one",
-    "startMs": 2490,
-    "endMs": 2710,
-    "timestampMs": 2680,
-    "confidence": 0.992318
-  },
-  {
-    "text": " place.",
-    "startMs": 2710,
-    "endMs": 3580,
-    "timestampMs": 3120,
-    "confidence": 0.89441
-  },
-  {
-    "text": " Link",
-    "startMs": 3580,
-    "endMs": 3890,
-    "timestampMs": 3800,
-    "confidence": 0.990123
-  },
-  {
-    "text": " in",
-    "startMs": 3890,
-    "endMs": 4010,
-    "timestampMs": 4080,
-    "confidence": 0.995718
-  },
-  {
-    "text": " bio.",
-    "startMs": 4010,
-    "endMs": 4460,
-    "timestampMs": 4340,
-    "confidence": 0.963383
-  }
+ {
+  "text": "Every",
+  "startMs": 30,
+  "endMs": 370,
+  "timestampMs": 300,
+  "confidence": 0.592354
+ },
+ {
+  "text": " book",
+  "startMs": 370,
+  "endMs": 600,
+  "timestampMs": 500,
+  "confidence": 0.998612
+ },
+ {
+  "text": " your",
+  "startMs": 600,
+  "endMs": 870,
+  "timestampMs": 680,
+  "confidence": 0.956218
+ },
+ {
+  "text": " feed",
+  "startMs": 870,
+  "endMs": 1150,
+  "timestampMs": 980,
+  "confidence": 0.997409
+ },
+ {
+  "text": " ever",
+  "startMs": 1150,
+  "endMs": 1410,
+  "timestampMs": 1360,
+  "confidence": 0.989081
+ },
+ {
+  "text": " recommended,",
+  "startMs": 1410,
+  "endMs": 2180,
+  "timestampMs": 1900,
+  "confidence": 0.987232
+ },
+ {
+  "text": " finally",
+  "startMs": 2180,
+  "endMs": 2840,
+  "timestampMs": 2580,
+  "confidence": 0.997348
+ },
+ {
+  "text": " in",
+  "startMs": 2840,
+  "endMs": 3030,
+  "timestampMs": 2800,
+  "confidence": 0.939162
+ },
+ {
+  "text": " one",
+  "startMs": 3030,
+  "endMs": 3310,
+  "timestampMs": 3060,
+  "confidence": 0.99918
+ },
+ {
+  "text": " place.",
+  "startMs": 3310,
+  "endMs": 4080,
+  "timestampMs": 3500,
+  "confidence": 0.999741
+ },
+ {
+  "text": " Link",
+  "startMs": 4080,
+  "endMs": 4440,
+  "timestampMs": 4340,
+  "confidence": 0.991696
+ },
+ {
+  "text": " in",
+  "startMs": 4440,
+  "endMs": 4620,
+  "timestampMs": 4600,
+  "confidence": 0.982411
+ },
+ {
+  "text": " bio.",
+  "startMs": 4620,
+  "endMs": 5160,
+  "timestampMs": 4840,
+  "confidence": 0.964017
+ }
 ]

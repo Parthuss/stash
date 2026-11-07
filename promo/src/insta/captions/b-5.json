@@ -1,37 +1,37 @@
 [
  {
   "text": "Finished",
-  "startMs": 70,
-  "endMs": 320,
-  "timestampMs": 70,
+  "startMs": 60,
+  "endMs": 450,
+  "timestampMs": 255,
   "confidence": 1
  },
  {
   "text": " one?",
-  "startMs": 1050,
-  "endMs": 1300,
-  "timestampMs": 1050,
+  "startMs": 450,
+  "endMs": 780,
+  "timestampMs": 615,
   "confidence": 1
  },
  {
   "text": " Tick",
-  "startMs": 1320,
-  "endMs": 1570,
-  "timestampMs": 1320,
+  "startMs": 1160,
+  "endMs": 1330,
+  "timestampMs": 1245,
   "confidence": 1
  },
  {
   "text": " it",
-  "startMs": 1640,
-  "endMs": 1890,
-  "timestampMs": 1640,
+  "startMs": 1330,
+  "endMs": 1450,
+  "timestampMs": 1390,
   "confidence": 1
  },
  {
   "text": " off.",
-  "startMs": 1750,
-  "endMs": 2000,
-  "timestampMs": 1750,
+  "startMs": 1450,
+  "endMs": 1800,
+  "timestampMs": 1625,
   "confidence": 1
  }
 ]

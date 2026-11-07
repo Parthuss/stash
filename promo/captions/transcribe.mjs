@@ -17,7 +17,8 @@ const WHISPER_PATH = path.join(process.cwd(), "whisper.cpp");
 const WHISPER_VERSION = "1.6.0";
 const WHISPER_MODEL = "medium.en";
 
-const CLIPS = [
+// Pass clip names (relative to public/, no .wav) to transcribe others, e.g. insta/b-1 insta/b-2.
+const CLIPS = process.argv.length > 2 ? process.argv.slice(2) : [
   "vo-1-capture",
   "vo-2-confirmation",
   "vo-3-timeskip",
@@ -36,10 +37,10 @@ await downloadWhisperModel({ folder: WHISPER_PATH, model: WHISPER_MODEL });
 
 for (const name of CLIPS) {
   const wavIn = path.join(publicDir, `${name}.wav`);
-  const wav16k = path.join(outDir, `${name}-16k.wav`);
-  // whisper.cpp requires 16kHz mono input.
+  const wav16k = path.join(outDir, `${path.basename(name)}-16k.wav`);
+  // whisper.cpp requires 16kHz mono input. The 1s pad stops it dropping a clip's last words.
   execSync(
-    `ffmpeg -y -i "${wavIn}" -ar 16000 -ac 1 -c:a pcm_s16le "${wav16k}"`,
+    `ffmpeg -y -i "${wavIn}" -af apad=pad_dur=1 -ar 16000 -ac 1 -c:a pcm_s16le "${wav16k}"`,
     { stdio: "inherit" },
   );
 
@@ -55,7 +56,7 @@ for (const name of CLIPS) {
   });
 
   const { captions } = toCaptions({ whisperCppOutput });
-  const outPath = path.join(outDir, `${name}.json`);
+  const outPath = path.join(outDir, `${path.basename(name)}.json`);
   fs.writeFileSync(outPath, JSON.stringify(captions, null, 2));
   console.log(`  -> ${outPath} (${captions.length} words)`);
 }
