@@ -54,7 +54,7 @@ only "Tried ✓"; chip "to try"; button "I tried this". "Used" is set only by th
 **Open / next:**
 - Done 7 Nov (a0d2097): Facebook reels/videos accepted (facebook.com, fb.watch). Verified fetch + transcribe on the runner.
 - Fixed 7 Nov (950de3e and the apt follow-up): GitHub's ubuntu-latest dropped ffmpeg; the runner's check passed silently through `| head`. Now apt-installs ffmpeg+ffprobe and fails loudly.
-- Groq free tier (200k tokens/day) runs out daily: Jacinda's import drip (469 of 506 still pending on 7 Nov) eats it, then live saves hit 429 until reset. Fix = Groq Dev tier (pay as you go) or a smaller extract model for imports.
+- Fixed 7 Nov (b8ce5f9): imports no longer spill onto the shared Groq key when the user's own key hits its daily cap (Jacinda's drip took 122k of our 200k that day). Imports now wait for her key's reset (~65 notes/day, 469 pending = about a week); live saves still spill.
 - Done 7 Nov (51ea4c4): iPhone Shortcut is token-free. It opens `/?url=…&src=shortcut` in Safari; the signed-in web app saves it (signed-out shares wait through sign-in). Needs one real-iPhone test. Old token Shortcuts still work.
 - Check tomorrow's `paint_ms` / `load_ms` in `ui_event` to confirm the speedup.
 - Owner todos: Email Routing → OWNER_MAIL binding; test push on a real iPhone; optional Workers Paid.
