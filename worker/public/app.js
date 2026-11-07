@@ -376,14 +376,17 @@ async function refreshSetup() {
   const st = setupState, phone = ["shortcut", "pwa", "web"].some((k) => (st.saved_from || {})[k]);
   // A one-off note from the owner (user.owner_msg): shown until tapped, then cleared server-side.
   if (st.owner_msg && bannerKey !== "net") {  // beats every banner but a connection error
+    // An optional leading "#gGroq " names the Set up section the button opens (default: Save from your phone).
+    const [, target = "gSave", text] = st.owner_msg.match(/^(?:#(\w+) )?([\s\S]*)$/);
     if (bannerKey !== "owner") tr("card_shown", "owner_msg");
-    setBanner("owner", "info", st.owner_msg, "Show me how", () => {
+    setBanner("owner", "info", text, target === "gSave" ? "Show me how" : "Fix it", () => {
       tr("click", "owner_msg"); clearBanner("owner"); api("/v1/owner-msg/seen", { method: "POST" }).catch(() => {});
-      openSetup(false); $("gSave").open = true; $("gSave").scrollIntoView({ behavior: "smooth" });
+      openSetup(false); const g = $(target) || $("gSave"); g.open = true; g.scrollIntoView({ behavior: "smooth" });
     });
   }
   const set = (id, done, todo = "To do") => { const b = $(id); b.textContent = done ? "Done ✓" : todo; b.className = "badge" + (done ? " done" : id === "bGroq" ? " opt" : ""); };
   set("bSave", phone); set("bClaude", st.claude_connected); set("bGroq", st.has_groq_key, "Optional");
+  $("groqPaid").hidden = !st.has_groq_key;
   if (standalone || st.saved_from?.pwa) { $("bHome").textContent = "Done ✓"; $("bHome").className = "badge done"; }
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
   $("homeIos").hidden = !ios && and; $("homeAnd").hidden = !and; $("homeDesk").hidden = ios || and;
@@ -396,6 +399,7 @@ async function refreshSetup() {
   showFeedback(); showImport(); refreshAvatar(); if (loaded && !notes.length) render();
   if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
+  $("groqOff").hidden = !st.has_groq_key || st.owner;
 }
 // Desktop → phone handoff: a QR of the sign-in link (#t=), drawn locally, never sent anywhere.
 const onPhone = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
@@ -423,6 +427,13 @@ document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-copy]"); if (!b) return;
   const what = b.dataset.copy;
   if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "linkonly") copy(signInLink(), "Sign-in link"); else if (what === "mcp") copy(mcpUrl(), "Connector address"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
+});
+$("groqOff").addEventListener("click", async () => {
+  if (!confirm("Remove your Groq key? Your saves go back to Skwirl's shared key, with its small daily limit.")) return;
+  const r = await api("/v1/settings/groq", { method: "DELETE" }).catch(() => null);
+  tr("click", "groq_remove");
+  $("groqMsg").className = "msg"; $("groqMsg").textContent = r && r.ok ? "Removed. Your saves use Skwirl's shared key now." : "Couldn't remove it. Try again.";
+  refreshSetup();
 });
 $("groqForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const m = $("groqMsg"); m.className = "msg"; m.textContent = "Checking with Groq…";
@@ -643,7 +654,7 @@ function showImport() {
   const own = setupState?.has_groq_key, at = i?.resumes_at && left > 0 ? new Date(i.resumes_at) : null;
   const hrs = at ? Math.max(1, Math.round((at - Date.now()) / 3600e3)) : 0;
   const paused = at && `${own ? "Your Groq key's free daily limit is used up" : "Skwirl's free daily allowance is used up"}. Reading resumes at ${at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} (in about ${hrs} hour${hrs > 1 ? "s" : ""}).`;
-  const faster = own ? "For no daily limit, switch your Groq key to the paid Developer tier (pay as you go)." : "Add your own free Groq key below to read faster.";
+  const faster = own ? "To read them all now, join Skwirl Plus or switch your Groq key to its paid tier (both under Use your own Groq key)." : "Add your own free Groq key, or join Skwirl Plus, to read faster.";
   // Not paused: still say why it's slow, so a trickle reads as a limit with a fix, not as broken.
   const why = `${own ? "Your free Groq key reads about 40 a day" : "Skwirl's free plan reads about 5 a day"}, so about ${days} more day${days > 1 ? "s" : ""}.`;
   if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` ${paused || why} ${faster} New saves always go first.` : ""}`;
@@ -651,7 +662,8 @@ function showImport() {
   if (i && left > 0 && $("fb").hidden) {
     if (!bannerKey || bannerKey === "import")
       setBanner("import", "info", `${i.done} of ${i.total} old saves read. ${paused || why}`, own ? "Go faster" : "Add a key",
-        () => { tr("click", own ? "groq_upgrade" : "groq_add"); own ? window.open("https://console.groq.com/settings/billing", "_blank", "noopener") : (openSetup(false), $("gGroq").open = true, $("gGroq").scrollIntoView({ behavior: "smooth" })); });
+        // Both lead to the Groq section, where Skwirl Plus is the first option (Groq's paid tier sits under it).
+        () => { tr("click", own ? "groq_upgrade" : "groq_add"); openSetup(false); $("gGroq").open = true; $("gGroq").scrollIntoView({ behavior: "smooth" }); });
   } else clearBanner("import");
 }
 $("impFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });

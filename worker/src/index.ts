@@ -575,7 +575,18 @@ export default {
           .run();
       } else {
         const error = (body.error ?? "").slice(0, 2000);
-        if (/groq (429|503)/.test(error)) {
+        const owner401 = /groq 401/.test(error)
+          ? await env.DB.prepare("SELECT u.id FROM capture c JOIN user u ON u.id = c.user_id WHERE c.id = ? AND u.groq_key_enc IS NOT NULL").bind(body.id).first<{ id: string }>()
+          : null;
+        if (owner401) {
+          // Their own key was deleted or revoked in Groq: drop it (back to the shared key), tell them on
+          // their next visit, and give this save its try back so it goes through on the shared key.
+          await env.DB.batch([
+            env.DB.prepare("UPDATE user SET groq_key_enc = NULL, owner_msg = ? WHERE id = ?")
+              .bind("#gGroq Your Groq key stopped working (it may have been deleted in Groq), so Skwirl switched you back to the shared key. Paste a new key to get your own limit back.", owner401.id),
+            env.DB.prepare("UPDATE capture SET status='pending', error=?, attempts = MAX(attempts - 1, 0) WHERE id=?").bind(error, body.id),
+          ]);
+        } else if (/groq (429|503)/.test(error)) {
           // Groq out of tokens or over capacity isn't this save's fault: give the try back and park
           // it for 30 min (a 'claimed' row is handed out again once stale). For imports, pause the
           // rest of that person's backlog too, so we don't download them all to hit the same wall.
