@@ -30,8 +30,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -q httpx PyYAML yt-dlp sqlite-vec
-      - run: ffmpeg -version | head -1
+      - run: pip install -q httpx PyYAML yt-dlp sqlite-vec imageio-ffmpeg
+      # ubuntu-latest no longer ships ffmpeg; imageio-ffmpeg's static build is a fast pip wheel.
+      - run: sudo ln -sf "$(python -c 'import imageio_ffmpeg as f; print(f.get_ffmpeg_exe())')" /usr/local/bin/ffmpeg && ffmpeg -version >/dev/null
       - run: python -m stash daemon --once --guests-only --quiet
         env:
           STASH_WORKER_URL: ${{ secrets.STASH_WORKER_URL }}
