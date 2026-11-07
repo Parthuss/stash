@@ -17,6 +17,12 @@ import b6b from "./captions/b-6b.json";
 
 export const BT = { pain: 105, drop: 240, lists: 360, books: 585, tick: 630, cta: 720, end: 950 };
 const VO = { b1: 8, b2: 125, b3: 255, b4: 380, b5: 600, b6a: 735, b6b: 780 };
+// Music ducks under the voice (v1 had it level with the VO after the drop, ~-24 LUFS each).
+// Spans come from the caption files, so they follow any VO regeneration; b-6a is one short word.
+const DUCK_TO = 0.11, RAMP = 6;
+const SPANS: [number, number][] = ([[VO.b1, b1], [VO.b2, b2], [VO.b3, b3], [VO.b4, b4], [VO.b5, b5], [VO.b6a, [{ endMs: 600 }]], [VO.b6b, b6b]] as [number, { endMs: number }[]][])
+  .map(([at, cap]) => [at, at + Math.ceil((cap[cap.length - 1].endMs / 1000) * 30)]);
+const duck = (fr: number) => Math.max(...SPANS.map(([a, b]) => interpolate(fr, [a - RAMP, a, b, b + RAMP], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })));
 const ROW_AT = [375, 390, 405, 420, 435, 450, 465];
 const NIGHT = "#15131f";
 const TINTS = [C.lavender, C.peach, C.mint, C.sky, C.butter];
@@ -229,7 +235,10 @@ export const BookList: React.FC = () => {
       {sfx("sfx-select_008.ogg", BT.tick + 2, 0.6)}
       {sfx("sfx-bong_001.ogg", BT.tick + 4, 0.3)}
       <Audio src={staticFile("launch/music-vol1.mp3")} trimBefore={1201}
-        volume={(fr) => interpolate(fr, [0, 20, BT.drop - 2, BT.drop, BT.end - 30, BT.end], [0, 0.1, 0.1, 0.33, 0.33, 0], { extrapolateRight: "clamp" })} />
+        volume={(fr) => {
+          const base = interpolate(fr, [0, 20, BT.drop - 2, BT.drop, BT.end - 30, BT.end], [0, 0.1, 0.1, 0.33, 0.33, 0], { extrapolateRight: "clamp" });
+          return base - duck(fr) * Math.max(0, base - DUCK_TO);
+        }} />
     </AbsoluteFill>
   );
 };
