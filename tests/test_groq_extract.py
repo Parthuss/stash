@@ -423,6 +423,18 @@ def test_own_key_out_of_daily_quota_spills_to_the_shared_key(monkeypatch):
         assert extract._groq_request([{"role": "user", "content": "x"}], max_tokens=10) == {"title": "ok"}
     assert used == ["theirs", "ours"]
 
+    # Bulk imports wait for tomorrow on their own key instead of draining the shared one.
+    used.clear()
+    with using_groq_key("theirs", spill=False):
+        try:
+            extract._groq_request([{"role": "user", "content": "x"}], max_tokens=10)
+            raise AssertionError("import should not spill")
+        except AssertionError:
+            raise
+        except Exception:
+            pass
+    assert used == ["theirs"]
+
     monkeypatch.setattr(extract, "CONFIG", SimpleNamespace(groq_api_key="theirs", extract_model="m"))
     used.clear()
     try:

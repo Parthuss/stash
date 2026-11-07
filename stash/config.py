@@ -128,20 +128,25 @@ def groq_key(cfg) -> str:
     return _groq_override.get() or cfg.groq_api_key
 
 
+_may_spill: ContextVar[bool] = ContextVar("may_spill", default=True)
+
+
 @contextmanager
-def using_groq_key(key: str | None):
-    token = _groq_override.set(key or None)
+def using_groq_key(key: str | None, *, spill: bool = True):
+    token, spill_token = _groq_override.set(key or None), _may_spill.set(spill)
     try:
         yield
     finally:
         _groq_override.reset(token)
+        _may_spill.reset(spill_token)
 
 
 def spill_to_shared_key(cfg) -> bool:
     """A user's own key ran out of today's quota: finish this capture on the shared key instead
-    of failing it. True if there was somewhere to spill to (scoped like using_groq_key)."""
+    of failing it. True if there was somewhere to spill to (scoped like using_groq_key).
+    Never for bulk imports (spill=False): 7 Nov, one import drip ate the whole shared day."""
     own = _groq_override.get()
-    if not own or not cfg.groq_api_key or own == cfg.groq_api_key:
+    if not _may_spill.get() or not own or not cfg.groq_api_key or own == cfg.groq_api_key:
         return False
     _groq_override.set(None)
     return True
