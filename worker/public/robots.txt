@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /v1/
+Disallow: /admin/
+Disallow: /analytics.html
+
+Sitemap: https://skwirl.parthakholkar.com/sitemap.xml
