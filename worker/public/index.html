@@ -3,13 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Skwirl · the reels you save, finally useful</title>
-<meta name="description" content="Share a reel to Skwirl and it becomes a searchable note: recipes as ingredients and steps, books and movies in a list. Works with ChatGPT and Claude. Free.">
+<title>Skwirl: search your saved Instagram reels as notes</title>
+<link rel="canonical" href="https://skwirl.parthakholkar.com/">
+<script src="/boot.js"></script>
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "Skwirl", "url": "https://skwirl.parthakholkar.com/", "description": "Turns the Instagram reels and videos you save into searchable notes: recipes as ingredients and steps, books and films in one list, readable by ChatGPT and Claude.", "applicationCategory": "LifestyleApplication", "operatingSystem": "iOS, Android, Web", "browserRequirements": "Requires JavaScript", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://skwirl.parthakholkar.com/og.png", "author": {"@type": "Person", "name": "Parth Akholkar", "url": "https://parthakholkar.com"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Skwirl?", "acceptedAnswer": {"@type": "Answer", "text": "Skwirl turns the Instagram reels and videos you save into notes you can search. Share a reel to Skwirl and a couple of minutes later it's a note: recipes come back as ingredients and steps, books, films and places land in one list, and tips come with the next step. ChatGPT and Claude can read your notes too. It's free."}}, {"@type": "Question", "name": "Can I search my saved Instagram reels?", "acceptedAnswer": {"@type": "Answer", "text": "Instagram's Saved tab has no search box for most people. Skwirl reads each reel you share to it (the speech, the on-screen text and the caption) and turns it into a note, so you can search everything you saved by what was said in it."}}, {"@type": "Question", "name": "Which phones does it work on?", "acceptedAnswer": {"@type": "Answer", "text": "iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links. You can also send links to the Skwirl bot on Telegram."}}, {"@type": "Question", "name": "How long does a save take?", "acceptedAnswer": {"@type": "Answer", "text": "Usually a couple of minutes. You'll see it appear in your library with a \"Reading…\" card while it works."}}, {"@type": "Question", "name": "Who can see my saves?", "acceptedAnswer": {"@type": "Answer", "text": "Only you, unless you share a note. Skwirl never re-posts the video, it keeps a short note and a small cover image."}}, {"@type": "Question", "name": "Can I bring in reels I saved before?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Download your Saved posts from Instagram (Accounts Center, Export your information, JSON format) and pick the file in Skwirl. It's read on your device and only the post links are sent."}}]}]</script>
+<meta name="description" content="Instagram's Saved tab has no search. Share a reel to Skwirl and it becomes a searchable note: recipes as ingredients and steps, books and films in one list. Works with ChatGPT and Claude. Free.">
 <meta property="og:title" content="Skwirl: the reels you save, finally useful">
 <meta property="og:description" content="Share a reel. Get a searchable note. Recipes, books, movies, tips, all in one place, and ChatGPT or Claude can read it.">
 <meta property="og:image" content="https://skwirl.parthakholkar.com/og.png">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://skwirl.parthakholkar.com/">
+<meta property="og:site_name" content="Skwirl">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Skwirl: the reels you save, finally useful">
+<meta name="twitter:description" content="Share a reel. Get a searchable note. Recipes, books, movies, tips, all in one place, and ChatGPT or Claude can read it.">
+<meta name="twitter:image" content="https://skwirl.parthakholkar.com/og.png">
 <meta name="theme-color" content="#f8f7ff">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -136,7 +144,8 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .body a { color: inherit; text-underline-offset: 3px; word-break: break-all; }
 
 /* landing / sign-in */
-#auth { display: none; width: min(1080px, calc(100vw - 36px)); margin-left: calc(50% - min(540px, 50vw - 18px)); }
+.authed #auth { display: none; }
+#auth { width: min(1080px, calc(100vw - 36px)); margin-left: calc(50% - min(540px, 50vw - 18px)); }
 .lnav { position: sticky; top: calc(env(safe-area-inset-top) + 10px); z-index: 10; display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 8px 8px 18px; border-radius: 999px;
   background: linear-gradient(135deg, rgb(255 255 255 / .62), rgb(255 255 255 / .32)); border: 1px solid rgb(255 255 255 / .7);
   -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%);
@@ -637,9 +646,12 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lsec reveal">
     <h2>Questions</h2>
+    <details class="faq"><summary>What is Skwirl?</summary><p>Skwirl turns the Instagram reels and videos you save into notes you can search. Share a reel to Skwirl and a couple of minutes later it's a note: recipes come back as ingredients and steps, books, films and places land in one list, and tips come with the next step. ChatGPT and Claude can read your notes too. It's free.</p></details>
+    <details class="faq"><summary>Can I search my saved Instagram reels?</summary><p>Instagram's Saved tab has no search box for most people. Skwirl reads each reel you share to it (the speech, the on-screen text and the caption) and turns it into a note, so you can search everything you saved by what was said in it.</p></details>
     <details class="faq"><summary>Which phones does it work on?</summary><p>iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links. You can also send links to the Skwirl bot on Telegram.</p></details>
     <details class="faq"><summary>How long does a save take?</summary><p>Usually a couple of minutes. You'll see it appear in your library with a "Reading…" card while it works.</p></details>
     <details class="faq"><summary>Who can see my saves?</summary><p>Only you, unless you share a note. Skwirl never re-posts the video, it keeps a short note and a small cover image. Details in the <a href="/privacy">privacy policy</a>.</p></details>
+    <details class="faq"><summary>Can I bring in reels I saved before?</summary><p>Yes. Download your Saved posts from Instagram (Accounts Center, Export your information, JSON format) and pick the file in Skwirl. It's read on your device and only the post links are sent. <a href="/guides/export-instagram-saved-posts">Step-by-step guide</a>.</p></details>
     <details class="faq"><summary>There's no password. How do I get back in?</summary><p>You get a private sign-in link. Skwirl asks you to save it (email it to yourself, or keep it in your notes). Open it on any device and you're in.</p></details>
     <details class="faq"><summary>What's a Groq key and do I need one?</summary><p>No. Groq runs the AI that reads reels. Skwirl covers it for you. If you save a lot, a free key of your own means you're never queued behind anyone.</p></details>
   </div>
@@ -664,7 +676,7 @@ body.on-phone .phone-handoff { display: none; }
     </form>
     <p id="lostMsg" role="status" class="msg"></p>
   </details>
-  <p class="legal"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="https://github.com/Parthuss/stash" rel="noopener">GitHub</a></p>
+  <p class="legal"><a href="/guides/search-saved-instagram-reels">Search saved reels</a> · <a href="/guides/save-recipes-from-instagram-reels">Save recipes from reels</a> · <a href="/guides/export-instagram-saved-posts">Export your saves</a><br><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="https://github.com/Parthuss/stash" rel="noopener">GitHub</a></p>
 </section>
 
 <section id="lib" style="display:none">
@@ -792,7 +804,7 @@ body.on-phone .phone-handoff { display: none; }
           <div class="inline-actions"><label class="btn sm" for="impFile">Choose export file</label><input id="impFile" type="file" accept=".zip,.json,.html,application/zip,application/json,text/html" hidden></div>
           <p class="msg" id="impMsg" role="status"></p></li>
       </ol>
-      <p style="color:var(--muted);font-size:14px" id="impNote">Up to 100 old saves, read about 5 a day after your new ones so those stay fast. With your own free Groq key (below) it's up to 1,000 old saves at 150 a day.</p>
+      <p style="color:var(--muted);font-size:14px" id="impNote">Up to 100 old saves, read about 5 a day after your new ones so those stay fast. With your own free Groq key (below) it's up to 1,000 old saves, about 40 a day.</p>
     </div>
   </details>
 

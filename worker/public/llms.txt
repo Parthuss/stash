@@ -1,0 +1,24 @@
+# Skwirl
+
+> Skwirl turns the Instagram reels and videos people save into searchable notes. Share a reel to Skwirl and a couple of minutes later it is a note: recipes come back as ingredients and steps, books, films and places land in one list you can tick off, and tips come with the next step. Notes can be read by ChatGPT and Claude through Skwirl's connector. Free. Made by Parth Akholkar (https://parthakholkar.com).
+
+Instagram's Saved tab has no search box for most people (November 2026); Skwirl makes saved reels searchable by what was said in them.
+
+## What it does
+- Reads each saved reel: speech, on-screen text, caption and top comments, then writes a short note.
+- Recipes become an ingredient checklist plus steps.
+- Books, films and places named in reels collect into one list (Read? / Watched? / Been?).
+- Works with Instagram, Facebook, YouTube Shorts and X links.
+- Imports an Instagram "Saved" data export, so old saves become notes too.
+- Connects to ChatGPT and Claude, so you can ask "what was that recipe I saved?".
+
+## How to save
+- iPhone: a Shortcut in the share menu. Android: install from Chrome, then Skwirl is in the share menu. Any browser: paste a link. Also a Telegram bot.
+
+## Pages
+- [Home](https://skwirl.parthakholkar.com/)
+- [How to search your saved Instagram reels](https://skwirl.parthakholkar.com/guides/search-saved-instagram-reels)
+- [How to save recipes from Instagram reels](https://skwirl.parthakholkar.com/guides/save-recipes-from-instagram-reels)
+- [How to export your saved Instagram posts](https://skwirl.parthakholkar.com/guides/export-instagram-saved-posts)
+- [Privacy](https://skwirl.parthakholkar.com/privacy)
+- [Terms](https://skwirl.parthakholkar.com/terms)
