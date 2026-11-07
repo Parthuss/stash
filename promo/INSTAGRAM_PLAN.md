@@ -270,6 +270,8 @@ every comment in the first hour.
 
 ### Piece 3: "Your Saved folder is a graveyard" (Carousel, 8 slides)
 
+**Status: DONE (2026-11-07).** `src/insta/Carousels.tsx` (own entry `src/insta/index.ts`, so `src/Root.tsx` is untouched); output `out/instagram/03-graveyard/01-08.png` + `caption.txt`. Render: `npx remotion still src/insta/index.ts C3-1 out/instagram/03-graveyard/01.png`. Posted first (7 Nov) as the low-stakes test; the launch Reel moved to Wed 11 Nov.
+
 **Goal:** relatable + saves. The carousel people send to friends.
 **Format:** 8 PNGs, 1080×1350. Build as Remotion `<Still>` compositions in a new file
 `promo/src/insta/Carousels.tsx` (one composition per slide, ids `C3-1` ... `C3-8`), render with
