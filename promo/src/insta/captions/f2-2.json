@@ -1,0 +1,72 @@
+[
+ {
+  "text": "It's",
+  "startMs": 0,
+  "endMs": 200,
+  "timestampMs": 100,
+  "confidence": 0.912868
+ },
+ {
+  "text": " somewhere",
+  "startMs": 200,
+  "endMs": 660,
+  "timestampMs": 380,
+  "confidence": 0.99931
+ },
+ {
+  "text": " in",
+  "startMs": 660,
+  "endMs": 760,
+  "timestampMs": 600,
+  "confidence": 0.999131
+ },
+ {
+  "text": " here.",
+  "startMs": 760,
+  "endMs": 1090,
+  "timestampMs": 900,
+  "confidence": 0.998837
+ },
+ {
+  "text": " Between",
+  "startMs": 1090,
+  "endMs": 1590,
+  "timestampMs": 1340,
+  "confidence": 0.954973
+ },
+ {
+  "text": " 400",
+  "startMs": 1590,
+  "endMs": 2250,
+  "timestampMs": 1860,
+  "confidence": 0.983035
+ },
+ {
+  "text": " gym",
+  "startMs": 2250,
+  "endMs": 2460,
+  "timestampMs": 2160,
+  "confidence": 0.904109
+ },
+ {
+  "text": " reels",
+  "startMs": 2460,
+  "endMs": 2930,
+  "timestampMs": 2400,
+  "confidence": 0.980593
+ },
+ {
+  "text": " and\u2026",
+  "startMs": 2930,
+  "endMs": 3050,
+  "timestampMs": 3060,
+  "confidence": 0.977376
+ },
+ {
+  "text": " memes.",
+  "startMs": 3050,
+  "endMs": 3660,
+  "timestampMs": 3380,
+  "confidence": 0.98984
+ }
+]

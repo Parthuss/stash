@@ -354,7 +354,7 @@ Send this to someone who screenshots recipes and never finds them.
 
 ### Piece 5: "11:40pm. Fridge open." (Reel, POV skit, 9-12s, loop)
 
-**Status: DONE (2026-11-07), faceless animated cut, full sound.** `src/insta/FridgePOV.tsx` (composition `FridgePOV` in `src/insta/index.ts`), 19.3s: Kokoro VO (`tts/generate_fridge_vo.py`), fridge/whoosh/riser SFX made with ffmpeg, Kenney clicks, music drop pinned to the "Oh." frame. Output `out/instagram/05-fridge/fridge-pov.mp4` (-14 LUFS) + `cover.jpg` + `caption.txt` (music credit required).
+**Status: DONE (2026-11-07), v2 (34.6s).** Script + evaluation: `scripts/05-fridge-v2.md`. Build: `src/insta/FridgePOV.tsx` (composition `FridgePOV` in `src/insta/index.ts`), VO `tts/generate_fridge_vo.py` (name is its own clip, for the pause), captions `src/insta/captions/f2-*.json` (hand-fixed). Output `out/instagram/05-fridge/fridge-pov.mp4` (-14 LUFS) + `cover.jpg` + `caption.txt` (music credit required).
 
 **Goal:** pure relatable reach. Trend-friendly, sends.
 **Hook pattern:** specific-scene cold open / POV.

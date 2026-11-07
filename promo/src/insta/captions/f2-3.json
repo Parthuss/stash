@@ -1,0 +1,58 @@
+[
+ {
+  "text": "Saving",
+  "startMs": 110,
+  "endMs": 360,
+  "timestampMs": 320,
+  "confidence": 0.678463
+ },
+ {
+  "text": " it",
+  "startMs": 360,
+  "endMs": 540,
+  "timestampMs": 500,
+  "confidence": 0.993028
+ },
+ {
+  "text": " felt",
+  "startMs": 540,
+  "endMs": 720,
+  "timestampMs": 660,
+  "confidence": 0.996288
+ },
+ {
+  "text": " like",
+  "startMs": 720,
+  "endMs": 960,
+  "timestampMs": 860,
+  "confidence": 0.999519
+ },
+ {
+  "text": " doing",
+  "startMs": 960,
+  "endMs": 1260,
+  "timestampMs": 1120,
+  "confidence": 0.995408
+ },
+ {
+  "text": " something.",
+  "startMs": 1260,
+  "endMs": 2020,
+  "timestampMs": 1640,
+  "confidence": 0.987451
+ },
+ {
+  "text": " It",
+  "startMs": 2010,
+  "endMs": 2260,
+  "timestampMs": 2010,
+  "confidence": 1
+ },
+ {
+  "text": " wasn't.",
+  "startMs": 2200,
+  "endMs": 2450,
+  "timestampMs": 2200,
+  "confidence": 1
+ }
+]

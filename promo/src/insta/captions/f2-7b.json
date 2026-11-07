@@ -1,0 +1,100 @@
+[
+  {
+    "text": "Every",
+    "startMs": 0,
+    "endMs": 310,
+    "timestampMs": 300,
+    "confidence": 0.809097
+  },
+  {
+    "text": " reel",
+    "startMs": 310,
+    "endMs": 560,
+    "timestampMs": 460,
+    "confidence": 0.907565
+  },
+  {
+    "text": " you",
+    "startMs": 560,
+    "endMs": 750,
+    "timestampMs": 680,
+    "confidence": 0.998114
+  },
+  {
+    "text": " save,",
+    "startMs": 750,
+    "endMs": 1160,
+    "timestampMs": 1000,
+    "confidence": 0.996599
+  },
+  {
+    "text": " back",
+    "startMs": 1160,
+    "endMs": 1400,
+    "timestampMs": 1340,
+    "confidence": 0.926193
+  },
+  {
+    "text": " as",
+    "startMs": 1400,
+    "endMs": 1530,
+    "timestampMs": 1460,
+    "confidence": 0.772668
+  },
+  {
+    "text": " a",
+    "startMs": 1530,
+    "endMs": 1590,
+    "timestampMs": 1560,
+    "confidence": 0.991136
+  },
+  {
+    "text": " note",
+    "startMs": 1590,
+    "endMs": 1870,
+    "timestampMs": 1700,
+    "confidence": 0.986297
+  },
+  {
+    "text": " you",
+    "startMs": 1870,
+    "endMs": 2040,
+    "timestampMs": 1800,
+    "confidence": 0.979157
+  },
+  {
+    "text": " can",
+    "startMs": 2040,
+    "endMs": 2230,
+    "timestampMs": 1980,
+    "confidence": 0.997872
+  },
+  {
+    "text": " use.",
+    "startMs": 2230,
+    "endMs": 2660,
+    "timestampMs": 2340,
+    "confidence": 0.999447
+  },
+  {
+    "text": " Link",
+    "startMs": 2660,
+    "endMs": 3030,
+    "timestampMs": 2940,
+    "confidence": 0.993523
+  },
+  {
+    "text": " in",
+    "startMs": 3030,
+    "endMs": 3210,
+    "timestampMs": 3180,
+    "confidence": 0.994727
+  },
+  {
+    "text": " bio.",
+    "startMs": 3210,
+    "endMs": 3780,
+    "timestampMs": 3400,
+    "confidence": 0.950663
+  }
+]

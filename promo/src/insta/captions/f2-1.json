@@ -1,0 +1,79 @@
+[
+ {
+  "text": "11:40.",
+  "startMs": 0,
+  "endMs": 1210,
+  "timestampMs": 340,
+  "confidence": 0.529432
+ },
+ {
+  "text": " I'm",
+  "startMs": 1210,
+  "endMs": 1420,
+  "timestampMs": 1200,
+  "confidence": 0.960594
+ },
+ {
+  "text": " starving.",
+  "startMs": 1420,
+  "endMs": 2150,
+  "timestampMs": 1620,
+  "confidence": 0.996132
+ },
+ {
+  "text": " And",
+  "startMs": 2150,
+  "endMs": 2340,
+  "timestampMs": 2260,
+  "confidence": 0.985502
+ },
+ {
+  "text": " I",
+  "startMs": 2340,
+  "endMs": 2410,
+  "timestampMs": 2400,
+  "confidence": 0.998136
+ },
+ {
+  "text": " know",
+  "startMs": 2410,
+  "endMs": 2690,
+  "timestampMs": 2560,
+  "confidence": 0.999032
+ },
+ {
+  "text": " I",
+  "startMs": 2690,
+  "endMs": 2830,
+  "timestampMs": 2740,
+  "confidence": 0.999115
+ },
+ {
+  "text": " saved",
+  "startMs": 2830,
+  "endMs": 3120,
+  "timestampMs": 3020,
+  "confidence": 0.999504
+ },
+ {
+  "text": " a",
+  "startMs": 3120,
+  "endMs": 3190,
+  "timestampMs": 3200,
+  "confidence": 0.999512
+ },
+ {
+  "text": " pasta",
+  "startMs": 3190,
+  "endMs": 3550,
+  "timestampMs": 3480,
+  "confidence": 0.997396
+ },
+ {
+  "text": " recipe.",
+  "startMs": 3550,
+  "endMs": 4060,
+  "timestampMs": 3940,
+  "confidence": 0.999344
+ }
+]

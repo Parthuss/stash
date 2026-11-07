@@ -1,0 +1,23 @@
+[
+  {
+    "text": "There",
+    "startMs": 0,
+    "endMs": 400,
+    "timestampMs": 220,
+    "confidence": 0.821916
+  },
+  {
+    "text": " it",
+    "startMs": 400,
+    "endMs": 480,
+    "timestampMs": 400,
+    "confidence": 0.994025
+  },
+  {
+    "text": " is.",
+    "startMs": 480,
+    "endMs": 840,
+    "timestampMs": 740,
+    "confidence": 0.999397
+  }
+]

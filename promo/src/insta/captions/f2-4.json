@@ -1,0 +1,51 @@
+[
+ {
+  "text": "Good",
+  "startMs": 0,
+  "endMs": 250,
+  "timestampMs": 0,
+  "confidence": 1
+ },
+ {
+  "text": " thing",
+  "startMs": 300,
+  "endMs": 550,
+  "timestampMs": 300,
+  "confidence": 1
+ },
+ {
+  "text": " I'd",
+  "startMs": 560,
+  "endMs": 810,
+  "timestampMs": 560,
+  "confidence": 1
+ },
+ {
+  "text": " sent",
+  "startMs": 720,
+  "endMs": 970,
+  "timestampMs": 720,
+  "confidence": 1
+ },
+ {
+  "text": " it",
+  "startMs": 900,
+  "endMs": 1150,
+  "timestampMs": 900,
+  "confidence": 1
+ },
+ {
+  "text": " to",
+  "startMs": 1000,
+  "endMs": 1250,
+  "timestampMs": 1000,
+  "confidence": 1
+ },
+ {
+  "text": " Skwirl.",
+  "startMs": 1100,
+  "endMs": 1350,
+  "timestampMs": 1100,
+  "confidence": 1
+ }
+]

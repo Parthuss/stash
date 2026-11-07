@@ -1,0 +1,51 @@
+[
+ {
+  "text": "Ingredients,",
+  "startMs": 0,
+  "endMs": 700,
+  "timestampMs": 260,
+  "confidence": 0.14286
+ },
+ {
+  "text": " steps,",
+  "startMs": 700,
+  "endMs": 1220,
+  "timestampMs": 880,
+  "confidence": 0.737525
+ },
+ {
+  "text": " even",
+  "startMs": 1220,
+  "endMs": 1460,
+  "timestampMs": 1400,
+  "confidence": 0.969466
+ },
+ {
+  "text": " what",
+  "startMs": 1460,
+  "endMs": 1700,
+  "timestampMs": 1560,
+  "confidence": 0.995934
+ },
+ {
+  "text": " to",
+  "startMs": 1700,
+  "endMs": 1820,
+  "timestampMs": 1660,
+  "confidence": 0.998235
+ },
+ {
+  "text": " do",
+  "startMs": 1820,
+  "endMs": 1940,
+  "timestampMs": 1820,
+  "confidence": 0.99934
+ },
+ {
+  "text": " next.",
+  "startMs": 1940,
+  "endMs": 2400,
+  "timestampMs": 2240,
+  "confidence": 0.999443
+ }
+]
