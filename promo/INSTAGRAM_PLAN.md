@@ -354,6 +354,8 @@ Send this to someone who screenshots recipes and never finds them.
 
 ### Piece 5: "11:40pm. Fridge open." (Reel, POV skit, 9-12s, loop)
 
+**Status: DONE (2026-11-07), faceless cut.** `src/insta/FridgePOV.tsx` (composition `FridgePOV` in `src/insta/index.ts`); output `out/instagram/05-fridge/fridge-pov.mp4` (10.5s, silent: add a trending sound in-app) + `cover.jpg` + `caption.txt`. Posted before the launch Reel as the first test.
+
 **Goal:** pure relatable reach. Trend-friendly, sends.
 **Hook pattern:** specific-scene cold open / POV.
 **Format:** lo-fi. Either Parth films it on his phone (preferred), or faceless with text over a
