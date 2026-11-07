@@ -2,36 +2,36 @@
  {
   "text": "Finished",
   "startMs": 60,
-  "endMs": 450,
-  "timestampMs": 255,
+  "endMs": 340,
+  "timestampMs": 200,
   "confidence": 1
  },
  {
   "text": " one?",
-  "startMs": 450,
-  "endMs": 780,
-  "timestampMs": 615,
+  "startMs": 360,
+  "endMs": 740,
+  "timestampMs": 550,
   "confidence": 1
  },
  {
   "text": " Tick",
-  "startMs": 1160,
-  "endMs": 1330,
-  "timestampMs": 1245,
+  "startMs": 1120,
+  "endMs": 1240,
+  "timestampMs": 1180,
   "confidence": 1
  },
  {
   "text": " it",
-  "startMs": 1330,
-  "endMs": 1450,
-  "timestampMs": 1390,
+  "startMs": 1260,
+  "endMs": 1420,
+  "timestampMs": 1340,
   "confidence": 1
  },
  {
   "text": " off.",
-  "startMs": 1450,
-  "endMs": 1800,
-  "timestampMs": 1625,
+  "startMs": 1420,
+  "endMs": 1720,
+  "timestampMs": 1570,
   "confidence": 1
  }
 ]

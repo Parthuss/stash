@@ -1,58 +1,58 @@
 [
  {
-  "text": "So,",
-  "startMs": 40,
-  "endMs": 280,
-  "timestampMs": 320,
-  "confidence": 0.912976
+  "text": "So",
+  "startMs": 110,
+  "endMs": 130,
+  "timestampMs": 160,
+  "confidence": 0.632247
  },
  {
   "text": " I",
-  "startMs": 280,
-  "endMs": 350,
-  "timestampMs": 840,
-  "confidence": 0.990269
+  "startMs": 130,
+  "endMs": 190,
+  "timestampMs": 260,
+  "confidence": 0.994408
  },
  {
   "text": " let",
-  "startMs": 350,
-  "endMs": 710,
-  "timestampMs": 1020,
-  "confidence": 0.998906
+  "startMs": 190,
+  "endMs": 440,
+  "timestampMs": 420,
+  "confidence": 0.99886
  },
  {
   "text": " Skwirl",
-  "startMs": 710,
-  "endMs": 1160,
-  "timestampMs": 1280,
-  "confidence": 0.795186
+  "startMs": 440,
+  "endMs": 900,
+  "timestampMs": 700,
+  "confidence": 0.728806
  },
  {
   "text": " watch",
-  "startMs": 1160,
-  "endMs": 1530,
-  "timestampMs": 1680,
-  "confidence": 0.997314
+  "startMs": 900,
+  "endMs": 1220,
+  "timestampMs": 1060,
+  "confidence": 0.996472
  },
  {
   "text": " them",
-  "startMs": 1530,
-  "endMs": 1820,
-  "timestampMs": 1840,
-  "confidence": 0.999405
+  "startMs": 1220,
+  "endMs": 1480,
+  "timestampMs": 1260,
+  "confidence": 0.999497
  },
  {
   "text": " for",
-  "startMs": 1820,
-  "endMs": 2040,
-  "timestampMs": 2020,
-  "confidence": 0.997801
+  "startMs": 1480,
+  "endMs": 1800,
+  "timestampMs": 1440,
+  "confidence": 0.994382
  },
  {
   "text": " me.",
-  "startMs": 2040,
-  "endMs": 2320,
-  "timestampMs": 2260,
-  "confidence": 0.999939
+  "startMs": 1800,
+  "endMs": 2040,
+  "timestampMs": 1640,
+  "confidence": 0.999916
  }
 ]

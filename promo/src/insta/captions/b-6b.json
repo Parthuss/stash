@@ -2,92 +2,92 @@
  {
   "text": "Every",
   "startMs": 30,
-  "endMs": 370,
+  "endMs": 290,
   "timestampMs": 300,
-  "confidence": 0.592354
+  "confidence": 0.493831
  },
  {
   "text": " book",
-  "startMs": 370,
-  "endMs": 600,
+  "startMs": 290,
+  "endMs": 530,
   "timestampMs": 500,
-  "confidence": 0.998612
+  "confidence": 0.998437
  },
  {
   "text": " your",
-  "startMs": 600,
-  "endMs": 870,
+  "startMs": 530,
+  "endMs": 770,
   "timestampMs": 680,
-  "confidence": 0.956218
+  "confidence": 0.984572
  },
  {
   "text": " feed",
-  "startMs": 870,
-  "endMs": 1150,
-  "timestampMs": 980,
-  "confidence": 0.997409
+  "startMs": 770,
+  "endMs": 1020,
+  "timestampMs": 940,
+  "confidence": 0.996993
  },
  {
   "text": " ever",
-  "startMs": 1150,
-  "endMs": 1410,
-  "timestampMs": 1360,
-  "confidence": 0.989081
+  "startMs": 1020,
+  "endMs": 1260,
+  "timestampMs": 1220,
+  "confidence": 0.993165
  },
  {
   "text": " recommended,",
-  "startMs": 1410,
-  "endMs": 2180,
-  "timestampMs": 1900,
-  "confidence": 0.987232
+  "startMs": 1260,
+  "endMs": 2120,
+  "timestampMs": 1780,
+  "confidence": 0.973614
  },
  {
   "text": " finally",
-  "startMs": 2180,
-  "endMs": 2840,
-  "timestampMs": 2580,
-  "confidence": 0.997348
+  "startMs": 2120,
+  "endMs": 2760,
+  "timestampMs": 2560,
+  "confidence": 0.996827
  },
  {
   "text": " in",
-  "startMs": 2840,
-  "endMs": 3030,
-  "timestampMs": 2800,
-  "confidence": 0.939162
+  "startMs": 2760,
+  "endMs": 2940,
+  "timestampMs": 2780,
+  "confidence": 0.937437
  },
  {
   "text": " one",
-  "startMs": 3030,
-  "endMs": 3310,
-  "timestampMs": 3060,
-  "confidence": 0.99918
+  "startMs": 2940,
+  "endMs": 3200,
+  "timestampMs": 3020,
+  "confidence": 0.999161
  },
  {
   "text": " place.",
-  "startMs": 3310,
-  "endMs": 4080,
-  "timestampMs": 3500,
-  "confidence": 0.999741
+  "startMs": 3200,
+  "endMs": 3960,
+  "timestampMs": 3440,
+  "confidence": 0.999752
  },
  {
   "text": " Link",
-  "startMs": 4080,
-  "endMs": 4440,
-  "timestampMs": 4340,
-  "confidence": 0.991696
+  "startMs": 3960,
+  "endMs": 4320,
+  "timestampMs": 4220,
+  "confidence": 0.991743
  },
  {
   "text": " in",
-  "startMs": 4440,
-  "endMs": 4620,
-  "timestampMs": 4600,
-  "confidence": 0.982411
+  "startMs": 4320,
+  "endMs": 4500,
+  "timestampMs": 4480,
+  "confidence": 0.992752
  },
  {
   "text": " bio.",
-  "startMs": 4620,
-  "endMs": 5160,
-  "timestampMs": 4840,
-  "confidence": 0.964017
+  "startMs": 4500,
+  "endMs": 5040,
+  "timestampMs": 4720,
+  "confidence": 0.965561
  }
 ]

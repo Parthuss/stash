@@ -8,8 +8,8 @@
 
 | # | Time | Picture | Voice (Kokoro af_heart) | On screen |
 |---|---|---|---|---|
-| 1 HOOK | 0–3.5s | A Saved collection "Books 📚" laid out like Instagram's, reel tiles stacking in fast, counter to 40. | "I've saved forty 'books that changed my life' reels." | I've saved 40 "books that changed my life" reels. |
-| 2 PAIN | 3.5–8s | The tiles grey out. Out of the phone rises a shelf of blank book spines with "?" on them. | "Read? Zero. Name one? I can't." | Read? **0** / Name one? Can't. |
+| 1 HOOK | 0–3.5s | A Saved collection "Books 📚" laid out like Instagram's, reel tiles stacking in fast, counter to 40. | "I've saved forty reels about life-changing books." | I've saved 40 "books that changed my life" reels. |
+| 2 PAIN | 3.5–8s | The tiles grey out. Out of the phone rises a shelf of blank book spines with "?" on them. | "How many have I read? Zero. Name one? I can't." | Read? **0** / Name one? Can't. |
 | 3 TURN | 8–12s | **Music drops.** The reels fly off the grid into the Skwirl mark; it pulses and shoots out title cards. | "So I let Skwirl watch them for me." | So I let Skwirl watch them. |
 | 4 PAYOFF | 12–19s | The app's real **Your lists** screen: rows drop in one per beat (Deep Work, The Psychology of Money, Four Thousand Weeks, Atomic Habits, Perfect Days, Past Lives, Senso-ji). | "Every book, movie and place they mentioned. In one list." | Every book, movie and place. One list. |
 | 5 VALUE | 19–24s | Tap the **Books** chip; tap **Read?** on Atomic Habits → it flips to **Read ✓** with a little burst. Each row shows the reel it came from. | "Finished one? Tick it off." | Finished one? Tick it off. |
