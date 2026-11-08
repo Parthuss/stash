@@ -3,7 +3,11 @@ const tr = (name, detail) => { try { window.track && window.track(name, detail);
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
                 set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
                 del: (k) => { try { localStorage.removeItem(k); } catch {} } };
-{ const m = location.hash.match(/^#t=([\w-]+)/); if (m) { store.set("stash_token", m[1]); history.replaceState(null, "", location.pathname + location.search); } }
+// A #t= sign-in link. If this device is already signed in with a different token, don't replace a
+// working session with an unchecked one: linkToken is verified below and only then switched to.
+let linkToken = null;
+{ const m = location.hash.match(/^#t=([\w-]+)/); if (m) { history.replaceState(null, "", location.pathname + location.search);
+  const cur = store.get("stash_token"); if (!cur || cur === m[1]) store.set("stash_token", m[1]); else linkToken = m[1]; } }
 const joinCodeFromLink = (location.hash.match(/^#code=([\w-]+)/) || [])[1];
 if (joinCodeFromLink) history.replaceState(null, "", location.pathname + location.search);
 // A copy of the library on this device, so an outage shows your saves instead of an error.
@@ -25,13 +29,16 @@ function setBanner(key, kind, text, label, fn) {
 function clearBanner(key) { if (!key || bannerKey === key) { $("banner").hidden = true; bannerKey = null; } }
 
 async function api(path, opts = {}) {
-  let r;
+  let r; const sentWith = token;
   try {
     r = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + token, "content-type": "application/json" } });
   } catch {
     setBanner("net", "warn", "Can't reach Skwirl. You're offline, or it's having a moment. What you see may be out of date.", "Try again", () => load());
     throw new Error("offline");
   }
+  // The account changed while this was in flight: drop it, so it can't show the old account's
+  // notes or sign the new one out.
+  if (token !== sentWith) throw new Error("stale");
   if (r.status === 401) { signOut("You were signed out (your token changed or was reset). Paste it again to get back in."); throw new Error("unauthorized"); }
   if (r.status >= 500) { setBanner("net", "err", "Skwirl hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
   else if (bannerKey === "net") clearBanner("net");
@@ -40,7 +47,10 @@ async function api(path, opts = {}) {
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
 function show(which) { tr("view", which); for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
 function signOut(msg) {
-  for (const k of ["stash_token", "stash_cache", "stash_notes", "stash_outbox"]) store.del(k);
+  // A forced sign-out (expired or reset token) keeps saves still waiting to send, so they go
+  // through once you're back in. Only signing out on purpose clears them (after a warning).
+  const forced = typeof msg === "string";
+  for (const k of ["stash_token", "stash_cache", "stash_notes", ...(forced ? [] : ["stash_outbox"])]) store.del(k);
   token = null; show("auth");
   const m = typeof msg === "string" ? msg : ""; $("authErr").textContent = m; if (m) $("signin").open = true;
 }
@@ -124,7 +134,7 @@ async function load() {
   if (!loaded) $("list").innerHTML = skeleton();
   const q = $("q").value.trim();
   let nr, cr;
-  try { [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]); } catch (e) { if (e.message !== "offline") throw e; }
+  try { [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]); } catch (e) { if (e.message === "stale") return; if (e.message !== "offline") throw e; }
   if (!nr || nr.status >= 500) return showCopy(q);
   if (!nr.ok) { toast("Couldn't load your saves. Try again."); return; }
   const cj = cr.ok ? await cr.json() : {};
@@ -450,6 +460,8 @@ $("exportBtn").addEventListener("click", async () => {
 });
 $("signOutBtn").addEventListener("click", () => {
   if (!store.get("stash_link_saved") && !confirm("You haven't saved your sign-in link. Without it you can't get back in. Sign out anyway?")) return;
+  const waiting = outbox().length;
+  if (waiting && !confirm(`${waiting} save${waiting > 1 ? "s haven't" : " hasn't"} reached Skwirl yet (it was offline). Signing out deletes ${waiting > 1 ? "them" : "it"}. Sign out anyway?`)) return;
   signOut();
 });
 
@@ -478,6 +490,11 @@ if (loginCode) {
     .then(async (r) => { const b = await r.json().catch(() => ({})); tr("login_link", r.ok ? "ok" : "expired"); if (!r.ok) throw new Error(b.error); token = b.token; store.set("stash_token", token); store.del("stash_link_saved"); start(); })
     .catch((e) => { show("auth"); joinMode(); $("signin").open = true; $("authErr").textContent = e.message || "That link didn't work. Ask for a new one."; });
 } else token ? start().catch(() => {}) : (show("auth"), joinMode());
+// A different account's sign-in link opened on a signed-in device: switch only if it works.
+if (linkToken) fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + linkToken } })
+  .then((r) => { if (r.ok) { store.set("stash_token", linkToken); store.del("stash_link_saved"); location.reload(); }
+    else if (r.status === 401) toast("That sign-in link has expired or was reset, so you're still signed in as before."); })
+  .catch(() => toast("Couldn't check that sign-in link. You're still signed in as before."));
 
 // ---- account safety: reset token, delete account ----
 $("rotateBtn").addEventListener("click", async () => {
