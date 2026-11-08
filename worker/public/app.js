@@ -135,6 +135,9 @@ function render() {
   const first = !notes.length && filter === "all" && !$("q").value.trim();
   if (first && !welcomeSeen) { welcomeSeen = true; tr("card_shown", "welcome"); }
   $("list").innerHTML = first ? welcomeCard(captures.length > 0) + caps : (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
+  const query = $("q").value.trim();
+  if ((!query && notes.length >= 200) || (query && notes.length >= 20))
+    $("list").insertAdjacentHTML("beforeend", `<p class="result-limit" role="status">${query ? "Showing the top 20 matches. Add another word to narrow your search." : "Browsing shows up to 200 newest saves. Search to find older saves."}</p>`);
 }
 // First run: one card that gets you to a saved reel in 30 seconds, instead of a setup page.
 // Instagram/Facebook in-app browsers keep their own storage, so we steer people out of them.

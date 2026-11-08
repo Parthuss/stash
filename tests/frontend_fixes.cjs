@@ -69,4 +69,9 @@ async function scenario(browser, name, handler, run, signedIn=true) {
     await p.evaluate(()=>openSetup(false));await p.locator('#setupBack').click();await p.waitForTimeout(100);
     assert.equal(await p.locator('#lib').isVisible(),true);assert.equal(await p.evaluate(()=>history.state.position),0);
   });
+  await scenario(browser,'14 capped results show an explicit cue',async()=>false,async p=>{
+    await p.evaluate(()=>{notes=Array.from({length:200},(_,i)=>({id:String(i),title:'Note',topic:'food',status:'unused'}));render()});
+    assert.match(await p.locator('.result-limit').innerText(),/200 newest/);
+    await p.evaluate(()=>{document.getElementById('q').value='pasta';notes=notes.slice(0,20);render()});assert.match(await p.locator('.result-limit').innerText(),/top 20/);
+  });
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
