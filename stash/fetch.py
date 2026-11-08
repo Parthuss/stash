@@ -12,6 +12,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -57,9 +58,13 @@ def _key(url: str) -> str:
     return hashlib.sha256(url.encode()).hexdigest()[:20]
 
 
+VIDEO_SUFFIXES = {".mp4", ".mov", ".webm", ".m4v", ".mkv", ".avi", ".flv", ".ts", ".mpeg", ".mpg", ".3gp", ".ogv"}
+
+
 def _cached(key: str) -> Path | None:
     for candidate in CONFIG.media_dir.glob(f"{key}.*"):
-        if candidate.suffix != ".json" and candidate.stat().st_size > 0:
+        if (candidate.stem == key and candidate.suffix.lower() in VIDEO_SUFFIXES
+                and candidate.is_file() and candidate.stat().st_size > 0):
             return candidate
     return None
 
@@ -248,9 +253,8 @@ def _yt_dlp_item(permalink: str, key: str, position: int) -> Path:
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=300)
     if proc.returncode != 0:
         raise FetchError(_tidy(proc.stderr or proc.stdout))
-    for candidate in CONFIG.media_dir.glob(f"{stem}.*"):
-        if candidate.suffix not in {".json", ".part"} and candidate.stat().st_size > 0:
-            return candidate
+    if (downloaded := _cached(stem)) is not None:
+        return downloaded
     raise FetchError("yt-dlp reported success but produced no file")
 
 
@@ -263,16 +267,23 @@ def _direct(url: str, key: str) -> MediaItem:
 
 def _download(url: str, target: Path, headers: dict[str, str] | None = None) -> None:
     request_headers = {"Referer": "https://www.instagram.com/", **(headers or {})}
-    with httpx.stream(
-        "GET", url, headers=request_headers, follow_redirects=True, timeout=120
-    ) as response:
-        response.raise_for_status()
-        with target.open("wb") as handle:
-            for chunk in response.iter_bytes(64 * 1024):
-                handle.write(chunk)
-    if target.stat().st_size == 0:
-        target.unlink(missing_ok=True)
-        raise FetchError("media server returned an empty body")
+    # Unique partials let concurrent attempts publish independently without
+    # exposing truncated media or replacing a previously complete file on error.
+    with tempfile.NamedTemporaryFile(dir=target.parent, prefix=target.name + ".", suffix=".part", delete=False) as handle:
+        partial = Path(handle.name)
+    try:
+        with httpx.stream(
+            "GET", url, headers=request_headers, follow_redirects=True, timeout=120
+        ) as response:
+            response.raise_for_status()
+            with partial.open("wb") as handle:
+                for chunk in response.iter_bytes(64 * 1024):
+                    handle.write(chunk)
+        if partial.stat().st_size == 0:
+            raise FetchError("media server returned an empty body")
+        partial.replace(target)
+    finally:
+        partial.unlink(missing_ok=True)
 
 
 def _video_suffix(url: str) -> str:
