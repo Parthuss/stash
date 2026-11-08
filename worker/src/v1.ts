@@ -299,6 +299,8 @@ export async function handleV1(
 
   if (path === "/v1/ingest" && request.method === "POST") {
     const body = (await request.json().catch(() => null)) as { url?: string; note?: string; source?: string } | null;
+    if (typeof body?.url !== "string" || [body.note, body.source].some((v) => v != null && typeof v !== "string"))
+      return json({ error: "URL, note and source must be text." }, 400);
     if (!body?.url) return json({ error: "need url" }, 400);
     const safeUrl = allowedUrl(body.url);
     if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, Facebook, YouTube and X links." }, 400);
@@ -478,6 +480,8 @@ export async function handleV1(
   if (path === "/v1/feedback" && request.method === "POST") {
     if (userId === null) return json({ error: "you're the owner" }, 400);
     const body = (await request.json().catch(() => null)) as { message?: string; email?: string; consent?: boolean } | null;
+    if ([body?.message, body?.email].some((v) => v != null && typeof v !== "string") || (body?.consent != null && typeof body.consent !== "boolean"))
+      return json({ error: "Message and email must be text, and consent must be true or false." }, 400);
     const message = (body?.message ?? "").trim().slice(0, 4000);
     const email = (body?.email ?? "").trim().slice(0, 120);
     if (!message && !email) return json({ error: "Write something or leave an email." }, 400);
@@ -582,7 +586,7 @@ export async function handleV1(
   if (path === "/v1/notes" && request.method === "GET") {
     const status = url.searchParams.get("status");
     const topic = url.searchParams.get("topic");
-    const limit = Math.min(Number(url.searchParams.get("limit") ?? 50) || 50, 200);
+    const limit = Math.max(1, Math.min(Math.floor(Number(url.searchParams.get("limit")) || 50), 200));
     const { results } = await env.DB.prepare(
       `SELECT ${NOTE_COLUMNS} FROM note
        WHERE user_id IS ? AND (? IS NULL OR status = ?) AND (? IS NULL OR topic = ?)
