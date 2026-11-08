@@ -73,7 +73,8 @@ def process(
         # dead-letter pile. Without a caption there is genuinely nothing to say.
         if not caption:
             raise
-        say(f"fetch failed ({str(exc)[:80]}) — falling back to caption only")
+        detail = "" if _is_guest(capture) else f" ({str(exc)[:80]})"
+        say(f"fetch failed{detail} - falling back to caption only")
         return _caption_only(conn, capture, permalink, caption, user_note, say)
 
     # The capture file often contains only the URL. yt-dlp's description is the
@@ -384,7 +385,8 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
         except Exception as exc:  # noqa: BLE001 - one bad capture must not stop the drain
             _finish(conn, capture["id"], ok=False, error=str(exc), remote_mode=remote_mode, usage=usage)
             if verbose:
-                print(f"  failed: {exc}", flush=True)
+                print("  failed: a friend's save (details in queue)" if _is_guest(capture)
+                      else f"  failed: {exc}", flush=True)
             # Notify on failure too. A save that silently goes nowhere is the
             # exact thing this project keeps getting bitten by.
             if not _is_guest(capture):  # never iMessage the owner about someone else's saves
