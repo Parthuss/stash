@@ -108,7 +108,7 @@ def test_run_without_worker_configured_raises_immediately(monkeypatch):
 
 def test_run_once_empty_poll_updates_heartbeat_without_sleeping(monkeypatch):
     _configure_remote(monkeypatch)
-    monkeypatch.setattr("stash.pipeline.drain", lambda conn, verbose=True: [])
+    monkeypatch.setattr("stash.pipeline.drain", lambda conn, verbose=True, **kwargs: [])
 
     daemon.run(conn=None, once=True)
 
@@ -122,7 +122,7 @@ def test_run_once_with_results_resets_backoff(monkeypatch):
         title = "a saved reel"
 
     _configure_remote(monkeypatch)
-    monkeypatch.setattr("stash.pipeline.drain", lambda conn, verbose=True: [FakeResult()])
+    monkeypatch.setattr("stash.pipeline.drain", lambda conn, verbose=True, **kwargs: [FakeResult()])
 
     daemon.run(conn=None, once=True, min_interval=30)
 
@@ -135,7 +135,7 @@ def test_run_once_with_results_resets_backoff(monkeypatch):
 def test_run_once_network_error_backs_off_and_does_not_raise(monkeypatch):
     """The whole point of the daemon: a Cloudflare blip degrades the poll
     interval, it does not take the process down."""
-    def boom(conn, verbose=True):
+    def boom(conn, verbose=True, **kwargs):
         raise RuntimeError("Worker unreachable: connection refused")
 
     _configure_remote(monkeypatch)
@@ -157,7 +157,7 @@ def test_backoff_only_kicks_in_after_a_few_empty_polls(monkeypatch):
 
     calls = {"n": 0}
 
-    def counting_drain(conn, verbose=True):
+    def counting_drain(conn, verbose=True, **kwargs):
         calls["n"] += 1
         if calls["n"] >= 4:
             raise SystemExit(0)  # stop the otherwise-infinite loop
@@ -204,4 +204,40 @@ def test_drain_does_not_burn_all_retries_in_one_pass(monkeypatch, tmp_path):
     row = conn.execute("SELECT status, attempts FROM capture").fetchone()
     assert row["status"] == "pending"   # still retryable
     assert row["attempts"] == 1         # not exhausted
+    conn.close()
+
+
+def test_long_drain_refreshes_heartbeat_after_each_capture(monkeypatch):
+    from types import SimpleNamespace
+
+    _configure_remote(monkeypatch)
+    clock = [1000.0]
+    monkeypatch.setattr(daemon.time, "time", lambda: clock[0])
+
+    def busy(conn, verbose=True, on_progress=None):
+        for _ in range(3):
+            clock[0] += 600
+            on_progress()
+            state = daemon.read_state()
+            assert state["last_poll_at"] == clock[0]
+            assert state["last_result"] == "processing"
+            assert daemon.is_alive()[0]
+        return [SimpleNamespace(title="done")]
+
+    monkeypatch.setattr("stash.pipeline.drain", busy)
+    daemon.run(conn=None, once=True)
+    assert daemon.read_state()["last_result"] == "ok"
+
+
+def test_drain_emits_progress_at_capture_boundaries(monkeypatch, tmp_path):
+    from stash import db, pipeline
+    monkeypatch.setattr(pipeline, "CONFIG", dataclasses.replace(pipeline.CONFIG, worker_url="", worker_secret=""))
+    conn = db.connect(tmp_path / "queue.sqlite")
+    db.add_capture(conn, source="cli", permalink="https://instagram.com/reel/progress/")
+    monkeypatch.setattr(pipeline, "process", lambda conn, capture, **kw: pipeline.Result(
+        capture["id"], tmp_path / "note.md", "Note", "other", 0, 0, "fixture"))
+    monkeypatch.setattr(pipeline.notify, "notify", lambda *a, **k: False)
+    states = []
+    pipeline.drain(conn, verbose=False, on_progress=lambda: states.append(conn.execute("SELECT status FROM capture").fetchone()[0]))
+    assert states == ["claimed", "done"]
     conn.close()
