@@ -29,11 +29,12 @@ async function api(path, opts = {}) {
   try {
     r = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + token, "content-type": "application/json" } });
   } catch {
+    if ($("lib").style.display === "none") toast("Can't reach Skwirl. Check your connection and try again.");
     setBanner("net", "warn", "Can't reach Skwirl. You're offline, or it's having a moment. What you see may be out of date.", "Try again", () => load());
     throw new Error("offline");
   }
   if (r.status === 401) { signOut("You were signed out (your token changed or was reset). Paste it again to get back in."); throw new Error("unauthorized"); }
-  if (r.status >= 500) { setBanner("net", "err", "Skwirl hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
+  if (r.status >= 500) { if ($("lib").style.display === "none") toast("Skwirl hit a problem. Try again in a minute."); setBanner("net", "err", "Skwirl hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
   else if (bannerKey === "net") clearBanner("net");
   return r;
 }
@@ -449,7 +450,8 @@ $("groqOff").addEventListener("click", async () => {
 });
 $("groqForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const m = $("groqMsg"); m.className = "msg"; m.textContent = "Checking with Groq…";
-  const r = await api("/v1/settings/groq", { method: "PUT", body: JSON.stringify({ key: $("groqKey").value }) });
+  const r = await api("/v1/settings/groq", { method: "PUT", body: JSON.stringify({ key: $("groqKey").value }) }).catch(() => null);
+  if (!r) { m.className = "msg err"; m.textContent = "Couldn't check that key. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({}));
   if (r.ok) { $("groqKey").value = ""; m.className = "msg ok"; m.textContent = "Saved. Your saves now use your own key."; refreshSetup(); }
   else { m.className = "msg err"; m.textContent = body.error || "Couldn’t save that key."; }
@@ -557,7 +559,7 @@ function renderMentions() {
   $("mentionChips").innerHTML = ["all", ...kinds].map((k) =>
     `<button class="chip" aria-pressed="${k === mentionFilter}" data-mk="${esc(k)}">${esc(k === "all" ? "all" : PLURAL[k] || k + "s")}</button>`).join("");
   const shown = (mentionFilter === "all" ? allMentions : allMentions.filter((m) => m.type === mentionFilter))
-    .slice().sort((a, b) => Number(a.done) - Number(b.done));
+    .slice();
   $("mentionList").innerHTML = shown.length
     ? shown.map((m, i) => {
         const verb = DONE_VERB[m.type] || "Done";
@@ -566,7 +568,7 @@ function renderMentions() {
         return `<div class="mcard ${m.done ? "done" : ""}">
         <span class="kind" style="background:var(${MENTION_TINTS[m.type] || "--butter"})">${m.thumb_id ? `<img src="/t/${esc(m.thumb_id)}" alt="" loading="lazy">` : MENTION_ICONS[m.type] || "✦"}</span>
         <button class="info" type="button" data-open="${esc(m.note_id)}" style="border:0;background:none;padding:0;text-align:left;cursor:pointer"><h3>${esc(m.name)}</h3><small>${esc(kind)} · ${where}</small></button>
-        <button class="tick" type="button" data-done="${i}" aria-pressed="${m.done}">${m.done ? verb + " ✓" : verb + "?"}</button></div>`;
+        <button class="tick" type="button" data-done="${i}" aria-pressed="${m.done}" ${m.pending ? "disabled" : ""}>${m.done ? verb + " ✓" : verb + "?"}</button></div>`;
       }).join("")
     : `<div class="empty"><b>No lists yet</b>When a reel names a book, movie, show, place or podcast, it lands here automatically. Nothing to set up.</div>`;
   $("mentionList")._shown = shown;
@@ -576,7 +578,7 @@ async function openMentions() {
   $("mentionList").innerHTML = skeleton();
   const r = await api("/v1/mentions").catch(() => null);
   if (!r || !r.ok) { $("mentionList").innerHTML = `<div class="empty">Couldn't load this. Go back and try again.</div>`; return; }
-  allMentions = (await r.json()).mentions; renderMentions();
+  allMentions = (await r.json()).mentions.sort((a, b) => Number(a.done) - Number(b.done)); renderMentions();
 }
 $("mentionsBtn").addEventListener("click", () => { mentionFilter = "all"; openMentions(); });
 $("mentionsBack").addEventListener("click", () => { show("lib"); load(); });
@@ -584,10 +586,12 @@ $("mentionChips").addEventListener("click", (e) => { const k = e.target.dataset.
 $("mentionList").addEventListener("click", async (e) => {
   const d = e.target.closest("[data-done]");
   if (d) {
-    const m = $("mentionList")._shown[Number(d.dataset.done)]; if (!m) return;
-    m.done = !m.done; renderMentions();
+    const m = $("mentionList")._shown[Number(d.dataset.done)]; if (!m || m.pending) return;
+    const wasDone = m.done; m.pending = true; m.done = !m.done; renderMentions();
     const r = await api("/v1/mentions/done", { method: "POST", body: JSON.stringify({ type: m.type, name: m.name, done: m.done }) }).catch(() => null);
-    if (!r || !r.ok) { m.done = !m.done; renderMentions(); toast("Couldn't save that. Try again."); }
+    m.pending = false;
+    if (!r || !r.ok) { m.done = wasDone; toast("Couldn't save that. Try again."); }
+    renderMentions();
     return;
   }
   const c = e.target.closest("[data-open]"); if (c) open(c.dataset.open, "mentions");

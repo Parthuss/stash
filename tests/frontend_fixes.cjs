@@ -48,4 +48,15 @@ async function scenario(browser, name, handler, run, signedIn=true) {
     await p.waitForTimeout(300);assert.equal(joins,1);assert.equal(await p.locator('#joinForm button').isDisabled(),false);
     await p.locator('#joinForm').evaluate(f=>f.requestSubmit());await p.waitForTimeout(300);assert.equal(joins,2);
   },false);
+  let failSetup=false;
+  await scenario(browser,'11 offline setup error is visible',async(r,u)=>{
+    if(failSetup&&u.pathname==='/v1/setup'){await r.abort();return true}return false;
+  },async p=>{failSetup=true;await p.locator('#setupBtn').click();await p.waitForTimeout(150);assert.match(await p.locator('#toast').innerText(),/Can't reach/)});
+  let ticks=0;
+  await scenario(browser,'11 rapid Lists ticks remain on the same item',async(r,u)=>{
+    if(u.pathname==='/v1/mentions'){await r.fulfill({json:{mentions:['First','Second'].map((name,i)=>({name,type:'book',note_id:'one',note_title:'Note',count:1,done:false}))}});return true}
+    if(u.pathname==='/v1/mentions/done'){ticks++;await sleep(200);await r.fulfill({status:503,json:{}});return true}return false;
+  },async p=>{await p.locator('#mentionsBtn').click();await p.waitForTimeout(100);await p.evaluate(()=>{document.querySelector('.tick').click();document.querySelector('.tick').click()});
+    assert.equal(await p.locator('.mcard h3').first().innerText(),'First');await p.waitForTimeout(300);assert.equal(ticks,1);assert.equal(await p.locator('.tick').first().getAttribute('aria-pressed'),'false');
+  });
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
