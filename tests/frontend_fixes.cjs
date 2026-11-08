@@ -83,4 +83,20 @@ async function scenario(browser, name, handler, run, signedIn=true) {
     await p.evaluate(()=>{show('lib');notes=[];captures=[{id:'failed',state:'failed',url:'https://instagram.com/reel/a/',reason:'Failed',at:new Date().toISOString()}];render()});
     assert.equal(await p.locator('.acts').evaluate(e=>[...e.children].every(b=>b.getBoundingClientRect().right<=e.closest('.card').getBoundingClientRect().right)),true);
   });
+  await scenario(browser,'16 sheet keyboard, checklist semantics, pause and contrast',async()=>false,async p=>{
+    await p.locator('.card[data-id]').click();await p.waitForTimeout(100);
+    assert.equal(await p.locator('#nBody li[role=checkbox]').count(),0);
+    const checkbox=p.locator('#nBody input[type=checkbox]').first();await checkbox.focus();await p.keyboard.press('Space');assert.equal(await checkbox.isChecked(),true);
+    async function axeCheck(){if(!process.env.AXE_PATH)return;await p.addScriptTag({content:fs.readFileSync(process.env.AXE_PATH,'utf8')});const v=await p.evaluate(async()=>(await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}})).violations);assert.deepEqual(v.map(x=>({id:x.id,targets:x.nodes.map(n=>n.target)})),[])}
+    await axeCheck();
+    await p.evaluate(()=>{show('lib');document.getElementById('fab').focus();sheet(true)});await p.waitForTimeout(300);
+    await p.locator('#saveForm button[type=submit]').focus();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.id),'link');
+    await p.keyboard.press('Shift+Tab');assert.equal(await p.evaluate(()=>document.activeElement.type),'submit');
+    await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>document.activeElement.id),'fab');assert.equal(await p.locator('main').evaluate(e=>e.inert),false);
+    await p.evaluate(()=>{show('mentions');allMentions=[{name:'Book',type:'book',note_id:'one',note_title:'Note',count:1,done:true}];renderMentions()});await axeCheck();
+    await p.evaluate(()=>openSetup(false));await p.waitForTimeout(100);await axeCheck();
+    await p.evaluate(()=>show('auth'));assert.equal(await p.locator('.shots').getAttribute('tabindex'),'0');await axeCheck();
+    await p.emulateMedia({reducedMotion:'no-preference'});await p.locator('#demoToggle').click();assert.equal(await p.locator('#demoToggle').getAttribute('aria-pressed'),'true');
+    assert.equal(await p.locator('.s-reel').evaluate(e=>getComputedStyle(e).animationPlayState),'paused');
+  });
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

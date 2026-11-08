@@ -272,6 +272,11 @@ if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObse
   }), { threshold: 0.15 });
   document.querySelectorAll("#auth .reveal, #auth .chat").forEach((el) => io.observe(el));
 }
+$("demoToggle").addEventListener("click", () => {
+  const paused = $("productDemo").classList.toggle("demo-paused");
+  $("demoToggle").setAttribute("aria-pressed", String(paused));
+  $("demoToggle").textContent = paused ? "Play demo" : "Pause demo";
+});
 // Landing: ask for an invite code only when joining isn't open (or a #code= link brought one).
 async function joinMode() {
   const code = $("joinCode");
@@ -351,11 +356,28 @@ async function saveLink() {
   }
   store.set("stash_link_saved", "1"); clearBanner("savelink");
 }
-const sheet = (open) => { document.body.classList.toggle("sheet-open", open); if (open) setTimeout(() => $("link").focus(), 250); };
+let sheetFocus = null, sheetTimer;
+const sheet = (open) => {
+  clearTimeout(sheetTimer);
+  if (open && !document.body.classList.contains("sheet-open")) sheetFocus = document.activeElement;
+  document.body.classList.toggle("sheet-open", open);
+  document.querySelector("main").inert = open; $("fab").inert = open;
+  if (open) sheetTimer = setTimeout(() => $("link").focus(), 250);
+  else if (sheetFocus?.isConnected && sheetFocus.getClientRects().length) sheetFocus.focus();
+};
 $("fab").addEventListener("click", () => sheet(true));
 $("scrim").addEventListener("click", () => sheet(false));
 $("cancel").addEventListener("click", () => sheet(false));
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("sheet-open")) sheet(false); });
+document.addEventListener("keydown", (e) => {
+  if (!document.body.classList.contains("sheet-open")) return;
+  if (e.key === "Escape") { e.preventDefault(); sheet(false); }
+  if (e.key === "Tab") {
+    const controls = [...$("saveForm").querySelectorAll("input:not([disabled]), button:not([disabled]), a[href]")].filter(el => el.getClientRects().length);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
 $("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; sheet(false); await ingest(u); } });
 let searchTimer;
 $("q").addEventListener("input", () => {
@@ -400,11 +422,16 @@ function enhanceRecipe(noteId) {
   const key = "ing:" + noteId; let got = [];
   try { got = JSON.parse(store.get(key) || "[]"); } catch {}
   [...list.children].forEach((li, i) => {
-    li.classList.add("ing"); li.setAttribute("role", "checkbox"); li.tabIndex = 0;
-    const set = (on) => { li.classList.toggle("got", on); li.setAttribute("aria-checked", on); };
+    li.classList.add("ing");
+    const label = document.createElement("label"), check = document.createElement("input"), text = document.createElement("span");
+    label.className = "ing-check"; check.type = "checkbox";
+    while (li.firstChild) text.appendChild(li.firstChild);
+    label.append(check, text); li.appendChild(label);
+    const set = (on) => { li.classList.toggle("got", on); check.checked = on; };
     set(got.includes(i));
-    const flip = () => { const on = !li.classList.contains("got"); set(on); got = on ? [...got, i] : got.filter((x) => x !== i); store.set(key, JSON.stringify(got)); };
-    li.addEventListener("click", flip); li.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
+    check.addEventListener("change", () => {
+      const on = check.checked; set(on); got = on ? [...got, i] : got.filter((x) => x !== i); store.set(key, JSON.stringify(got));
+    });
   });
 }
 
