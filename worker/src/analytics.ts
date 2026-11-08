@@ -31,11 +31,20 @@ function throttled(ip: string): boolean {
 }
 
 /** POST /e. userId: a user id, null for the owner, undefined for a visitor who isn't signed in. */
+/** Rows analytics may write per day: a third of D1's free daily writes, far above real traffic
+ *  (a few hundred a day in Nov 2026). Old days' counters are pruned with old analytics. */
+const ANALYTICS_DAILY_ROWS = 30_000;
+
 export async function collect(request: Request, env: Env, userId: string | null | undefined): Promise<Response> {
   const ua = request.headers.get("user-agent") ?? "";
   if (BOT.test(ua) || throttled(request.headers.get("CF-Connecting-IP") ?? "?")) return new Response(null, { status: 204 });
   const b = (await request.json().catch(() => null)) as any;
   if (!b || !ID.test(b.v ?? "") || !ID.test(b.s ?? "")) return json({ error: "bad" }, 400);
+  // Durable daily ceiling on rows analytics may write (D1's free plan allows ~100k writes a day for the
+  // whole app). Past it, analytics quietly stops storing until tomorrow; saving and sign-in are untouched.
+  const budgetKey = "analytics:" + new Date().toISOString().slice(0, 10);
+  const spent = await env.DB.prepare("SELECT n FROM daily_counter WHERE key = ?").bind(budgetKey).first<{ n: number }>();
+  if ((spent?.n ?? 0) >= ANALYTICS_DAILY_ROWS) return new Response(null, { status: 204 });
   const now = Date.now(), iso = new Date(now).toISOString();
   const events = (Array.isArray(b.e) ? b.e : []).slice(0, 50)
     .filter((x: any) => Array.isArray(x) && typeof x[1] === "string" && NAME.test(x[1]))
@@ -56,6 +65,9 @@ export async function collect(request: Request, env: Env, userId: string | null 
     request.headers.get("CF-IPCountry"), device, os, browser, s(c.ref, 80), s(c.us, 60), s(c.um, 60), s(c.uc, 60),
     s(c.path), s(c.scr, 20), s(c.lang, 20), s(c.tz, 60), c.inst ? 1 : 0).run();
   if (!up.meta.changes) return new Response(null, { status: 204 });  // that visit id belongs to another visitor
+  const rows = 2 + (events.length ? events.length : 0);  // the visit upsert, this counter, and the events
+  await env.DB.prepare("INSERT INTO daily_counter (key, n) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET n = n + excluded.n")
+    .bind(budgetKey, rows).run();
   // A visit that has already logged thousands of events is a loop or a script: stop storing more.
   const capped = await env.DB.prepare("SELECT events > 3000 AS full FROM visit WHERE id = ?").bind(b.s).first<{ full: number }>();
   if (events.length && !capped?.full) {
@@ -173,5 +185,6 @@ export async function pruneAnalytics(env: Env): Promise<void> {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM ui_event WHERE at < ?").bind(cut),
     env.DB.prepare("DELETE FROM visit WHERE last_at < ?").bind(cut),
+    env.DB.prepare("DELETE FROM daily_counter WHERE key < ?").bind("analytics:" + new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10)),
   ]);
 }

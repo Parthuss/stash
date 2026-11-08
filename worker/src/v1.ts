@@ -484,9 +484,16 @@ export async function handleV1(
     if (!message && !email) return json({ error: "Write something or leave an email." }, 400);
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right." }, 400);
     if (email && !body?.consent) return json({ error: "Tick the box so we're allowed to email you." }, 400);
+    // Sign-up is open, so one account (or many) could flood the owner's inbox: 5 messages per
+    // account per day, and at most 20 owner emails a day across everyone (the rest still saved). S07
+    const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
+    const sent = await env.DB.prepare(
+      "SELECT (SELECT COUNT(*) FROM feedback WHERE user_id = ? AND at > ?) AS mine, (SELECT COUNT(*) FROM feedback WHERE at > ?) AS everyone",
+    ).bind(userId, dayAgo, dayAgo).first<{ mine: number; everyone: number }>();
+    if (message && (sent?.mine ?? 0) >= 5) return json({ error: "That's a lot of messages for one day. Try again tomorrow." }, 429);
     if (email) await env.DB.prepare("UPDATE user SET email = ? WHERE id = ?").bind(email, userId).run();
     if (message) await env.DB.prepare("INSERT INTO feedback (user_id, at, message) VALUES (?, ?, ?)").bind(userId, new Date().toISOString(), message).run();
-    if (message) {
+    if (message && (sent?.everyone ?? 0) < 20) {
       const who = await env.DB.prepare("SELECT name, email FROM user WHERE id = ?").bind(userId).first<{ name: string; email: string | null }>();
       await notifyOwner(env, `message from ${who?.name ?? "someone"}`, `${who?.name ?? "Someone"}${who?.email ? ` (${who.email}, reply to them there)` : " (no email on file)"} wrote:\n\n${message}`);
     }
