@@ -52,10 +52,11 @@ def test_pipeline_preserves_mixed_carousel_order(tmp_path, monkeypatch):
     monkeypatch.setattr(
         pipeline.frames,
         "plan_frames",
-        lambda transcript, duration: [FrameRequest(timestamp=2, reason="title card")],
+        lambda transcript, duration: [FrameRequest(timestamp=1, reason="failed title card"),
+                                      FrameRequest(timestamp=2, reason="visible command")],
     )
     monkeypatch.setattr(
-        pipeline.frames, "extract", lambda path, plan, out_dir: [video_frame]
+        pipeline.frames, "extract_with_requests", lambda path, plan, out_dir: [(video_frame, plan[1])]
     )
 
     def fake_extract(**kwargs):
@@ -82,7 +83,7 @@ def test_pipeline_preserves_mixed_carousel_order(tmp_path, monkeypatch):
     assert seen["frames"] == [first, video_frame, third]
     assert seen["frame_reasons"] == [
         "Slide 1 — static image",
-        "Slide 2 at 2s — title card",
+        "Slide 2 at 2s — visible command",
         "Slide 3 — static image",
     ]
     assert seen["caption"] == "metadata caption"
@@ -138,7 +139,7 @@ def test_pipeline_passes_comments_to_extract(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline.fetch, "fetch", lambda **kw: bundle)
     monkeypatch.setattr(pipeline.transcribe, "transcribe", lambda path: Transcript(skipped=True, reason="no audio"))
     monkeypatch.setattr(pipeline.frames, "plan_frames", lambda transcript, duration: [])
-    monkeypatch.setattr(pipeline.frames, "extract", lambda path, plan, out_dir: [])
+    monkeypatch.setattr(pipeline.frames, "extract_with_requests", lambda path, plan, out_dir: [])
     seen = {}
 
     def fake_extract(**kwargs):
