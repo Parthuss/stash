@@ -719,21 +719,21 @@ async function importFile(file) {
   const b = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok) { msg.textContent = b.error || "Couldn't add them right now. Try again."; return; }
   tr("import", `${b.added} added of ${b.found}`);
-  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. ${b.cap >= 1000 ? "They'll show up in your library about 150 a day, after any new saves." : "They'll show up in your library about 5 a day, or 150 a day with your own Groq key."}`;
+  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. They'll arrive in daily batches after new saves, within the available AI allowance.`;
   load();
 }
 function showImport() {
   const i = importInfo;
   $("bImport").textContent = i ? (i.done >= i.total - i.failed ? "Done" : `${i.done} / ${i.total}`) : "Optional";
   $("bImport").className = "badge " + (i && i.done >= i.total - i.failed ? "done" : "opt");
-  const left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState?.has_groq_key ? 40 : 5));
+  const left = i ? i.total - i.done - i.failed : 0;
   // Out of today's Groq tokens: say whose, when reading resumes, and how to go faster.
   const own = setupState?.has_groq_key, at = i?.resumes_at && left > 0 ? new Date(i.resumes_at) : null;
   const hrs = at ? Math.max(1, Math.round((at - Date.now()) / 3600e3)) : 0;
   const paused = at && `${own ? "Your Groq key's free daily limit is used up" : "Skwirl's free daily allowance is used up"}. Reading resumes at ${at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} (in about ${hrs} hour${hrs > 1 ? "s" : ""}).`;
-  const faster = own ? "To read them all now, join Skwirl Plus or switch your Groq key to its paid tier (both under Use your own Groq key)." : "Add your own free Groq key, or join Skwirl Plus, to read faster.";
+  const faster = own ? "A paid Groq key can raise your allowance. Skwirl Plus is coming soon; Notify me joins its waitlist." : "Your own Groq key provides a separate allowance. Skwirl Plus is coming soon; Notify me joins its waitlist.";
   // Not paused: still say why it's slow, so a trickle reads as a limit with a fix, not as broken.
-  const why = `${own ? "Your free Groq key reads about 40 a day" : "Skwirl's free plan reads about 5 a day"}, so about ${days} more day${days > 1 ? "s" : ""}.`;
+  const why = own ? "Old saves arrive in daily batches within your Groq key's allowance." : "The shared key reads up to 5 old saves a day, depending on its remaining allowance.";
   if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` ${paused || why} ${faster} New saves always go first.` : ""}`;
   // Big import in progress: say so on the library, with the one button that speeds it up.
   if (i && left > 0 && $("fb").hidden) {
@@ -778,10 +778,10 @@ function showFeedback() {
   $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3 || !$("pushCard").hidden || !$("srcCard").hidden || !promptSlot("fb");
   if ($("fb").hidden) return;
   if (!showFeedback.seen) { showFeedback.seen = true; tr("card_shown", "welcome"); }
-  const i = importInfo, left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState.has_groq_key ? 40 : 5));
+  const i = importInfo, left = i ? i.total - i.done - i.failed : 0;
   $("fbHead").textContent = `Hi${setupState.name ? " " + setupState.name : ""}, I'm Parth. I made Skwirl.`;
   $("fbBody").textContent = "Thanks for trying it. "
-    + (left > 0 ? `Your ${i.total} old saves are coming in a batch a day, so the rest should be here in about ${days} day${days > 1 ? "s" : ""}. Anything new you save jumps the queue. ` : "")
+    + (left > 0 ? `Your ${i.total} old saves are coming in daily batches within the available allowance. Anything new you save jumps the queue. ` : "")
     + "If something feels broken, confusing or missing, tell me here. I read every message.";
 }
 const fbDone = () => { showFeedback.replied = true; try { localStorage.setItem("skwirl_fb", "1"); } catch {} $("fb").hidden = true; showImport(); };
@@ -939,7 +939,7 @@ function renderHub(me, perm) {
       perm === "default" ? `<button class="btn sm soft" data-hub="push">Turn on</button>` : `<small>${perm === "denied" ? "Blocked in settings" : "Home-screen app only"}</small>`],
     ["ChatGPT or Claude", "Let your AI search your saves", st.claude_connected ? "Connected" : null, `<button class="btn sm soft" ${go("gClaude")}>Connect</button>`],
     ["Old Instagram saves", i ? `${i.done} of ${i.total} read${i.failed ? `, ${i.failed} couldn't be` : ""}` : "Bring in your whole Saved folder", i && i.done + i.failed >= i.total ? "Done" : null, `<button class="btn sm soft" ${go("gImport")}>${i ? "Details" : "Import"}</button>`],
-    ["Your own Groq key", "Faster, never queued behind anyone", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`],
+    ["Your own Groq key", "Uses your own AI allowance", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`],
     ...(st.telegram ? [["Telegram", "Save by sending links to a bot", st.telegram.connected ? "Connected" : null, `<button class="btn sm soft" ${go("gTelegram")}>Connect</button>`]] : []),
     ["Skwirl Plus", "No keys, saves read first (coming soon)", null, `<button class="btn sm soft" ${go("gGroq")}>Notify me</button>`],
   ];

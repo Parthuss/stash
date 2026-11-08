@@ -99,4 +99,10 @@ async function scenario(browser, name, handler, run, signedIn=true) {
     await p.emulateMedia({reducedMotion:'no-preference'});await p.locator('#demoToggle').click();assert.equal(await p.locator('#demoToggle').getAttribute('aria-pressed'),'true');
     assert.equal(await p.locator('.s-reel').evaluate(e=>getComputedStyle(e).animationPlayState),'paused');
   });
+  await scenario(browser,'17 copy matches queue and waitlist behavior',async()=>false,async p=>{
+    assert.ok(!fs.readFileSync(path.join(root,'app.js'),'utf8').includes('40 a day'));
+    const html=fs.readFileSync(path.join(root,'index.html'),'utf8');assert.ok(!html.includes('never queued behind'));assert.ok(html.includes('person running Skwirl can read the database'));assert.ok(html.includes('Add custom MCP server'));
+    await p.evaluate(()=>{importInfo={total:200,done:5,failed:0};setupState.has_groq_key=true;document.getElementById('impMsg').textContent='';showImport()});
+    assert.match(await p.locator('#impMsg').textContent(),/waitlist/);assert.ok(!(await p.locator('#impMsg').textContent()).includes('read them all now'));
+  });
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
