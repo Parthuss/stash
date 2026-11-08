@@ -70,7 +70,14 @@ def claim_next() -> Row | None:
     if response.status_code != 200:
         raise RemoteError(f"claim {response.status_code}: {response.text[:200]}")
     capture = response.json().get("capture")
+    if capture and capture.get("lease"):
+        _leases[capture["id"]] = capture["lease"]
     return Row(capture) if capture else None
+
+
+#: capture id -> lease from /claim, sent back with /note and /complete so the Worker can ignore a
+#: report from a processor whose claim went stale and was handed to another runner.
+_leases: dict[str, str] = {}
 
 
 def finish_capture(
@@ -83,7 +90,8 @@ def finish_capture(
     response = httpx.post(
         f"{CONFIG.worker_url}/complete",
         headers=_headers(),
-        json={"id": capture_id, "ok": ok, "error": error, "title": title, "usage": usage or []},
+        json={"id": capture_id, "ok": ok, "error": error, "title": title, "usage": usage or [],
+              "lease": _leases.pop(capture_id, None)},
         timeout=30,
     )
     if response.status_code != 200:
@@ -149,6 +157,7 @@ def push_note(
             "thumb": base64.b64encode(thumb).decode("ascii") if thumb else None,
             "permalink": permalink,
             "markdown": markdown,
+            "lease": _leases.get(capture["id"]),
         },
         timeout=30,
     )

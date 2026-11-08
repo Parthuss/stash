@@ -504,7 +504,11 @@ export default {
            ${guestsOnly ? "AND c.user_id IS NOT NULL" : ""}
            ${skip.map(() => "AND COALESCE(c.permalink, '') NOT LIKE ?").join(" ")}`;
       const openArgs = [staleBefore, MAX_ATTEMPTS, ...skip.map((h) => `%${h}/%`)];
-      let row = await env.DB.prepare(
+      // Another runner can pick the same row between our SELECT and UPDATE, so the claim below is a
+      // compare-and-set; if it loses, pick again (a few times, then report nothing to do).
+      let row: Record<string, any> | null = null, lease = "";
+      for (let tries = 0; tries < 3 && !lease; tries++) {
+      row = await env.DB.prepare(
         `SELECT c.* FROM capture c WHERE c.source != 'import' AND ${open} ORDER BY c.captured_at LIMIT 1`,
       )
         .bind(...openArgs)
@@ -535,30 +539,43 @@ export default {
             .run();
         }
       }
-      if (!row) return json({ capture: null });
-      await env.DB.prepare(
-        "UPDATE capture SET status='claimed', claimed_at=?, attempts = attempts + 1 WHERE id = ?",
+      if (!row) break;
+      const candidate = crypto.randomUUID();
+      const won = await env.DB.prepare(
+        `UPDATE capture SET status='claimed', claimed_at=?, attempts = attempts + 1, lease=?
+         WHERE id = ? AND attempts < ? AND (status='pending' OR (status='claimed' AND (claimed_at IS NULL OR claimed_at < ?)))`,
       )
-        .bind(new Date().toISOString(), row.id)
+        .bind(new Date().toISOString(), candidate, row.id, MAX_ATTEMPTS, staleBefore)
         .run();
+      if (won.meta.changes) lease = candidate;
+      }
+      if (!row || !lease) return json({ capture: null });
       // A user who brought their own Groq key is processed on it. It rides this
       // admin-authenticated response to the Mac worker only; it is never logged.
       const owner = row.user_id
         ? await env.DB.prepare("SELECT groq_key_enc FROM user WHERE id = ?").bind(row.user_id).first<{ groq_key_enc: string | null }>()
         : null;
       const groq_key = owner?.groq_key_enc ? await decryptKey(env, owner.groq_key_enc).catch(() => null) : null;
-      return json({ capture: { ...row, groq_key } });
+      return json({ capture: { ...row, status: "claimed", lease, groq_key } });
     }
 
     if (path === "/complete" && request.method === "POST") {
       const body = (await request.json().catch(() => null)) as
-        | { id?: string; ok?: boolean; error?: string; title?: string; usage?: any[] }
+        | { id?: string; ok?: boolean; error?: string; title?: string; usage?: any[]; lease?: string }
         | null;
       if (!body?.id) return json({ error: "need id" }, 400);
+      // Fence stale reports: the capture may be gone (account deleted), reclaimed by another runner
+      // (different lease), or already done (a late failure must not move it back to pending, and a
+      // duplicate success must not log usage or send the import-done notice twice).
+      const cur = await env.DB.prepare("SELECT user_id, status, lease FROM capture WHERE id = ?").bind(body.id)
+        .first<{ user_id: string | null; status: string; lease: string | null }>();
+      if (!cur || (body.lease && cur.lease && body.lease !== cur.lease) || cur.status === "done") return json({ ok: true, stale: true });
+      const fence = body.lease ? " AND status != 'done' AND lease IS ?" : " AND status != 'done'";
+      const fenceArgs = body.lease ? [body.lease] : [];
 
       // Attribute each AI call this capture caused to the person who saved it.
       if (Array.isArray(body.usage) && body.usage.length) {
-        const cap = await env.DB.prepare("SELECT user_id FROM capture WHERE id = ?").bind(body.id).first<{ user_id: string | null }>();
+        const cap = cur;
         for (const u of body.usage.slice(0, 50)) {
           await logEvent(env, cap?.user_id ?? null, "groq", String(u.kind ?? "chat").slice(0, 20), {
             model: String(u.model ?? "").slice(0, 60), key_type: u.key_type === "own" ? "own" : "shared",
@@ -570,9 +587,9 @@ export default {
 
       if (body.ok) {
         await env.DB.prepare(
-          "UPDATE capture SET status='done', processed_at=?, error=NULL, title=? WHERE id=?",
+          "UPDATE capture SET status='done', processed_at=?, error=NULL, title=? WHERE id=?" + fence,
         )
-          .bind(new Date().toISOString(), (body.title ?? "").slice(0, 300) || null, body.id)
+          .bind(new Date().toISOString(), (body.title ?? "").slice(0, 300) || null, body.id, ...fenceArgs)
           .run();
       } else {
         const error = (body.error ?? "").slice(0, 2000);
@@ -585,7 +602,7 @@ export default {
           await env.DB.batch([
             env.DB.prepare("UPDATE user SET groq_key_enc = NULL, owner_msg = ? WHERE id = ?")
               .bind("#gGroq Your Groq key stopped working (it may have been deleted in Groq), so Skwirl switched you back to the shared key. Paste a new key to get your own limit back.", owner401.id),
-            env.DB.prepare("UPDATE capture SET status='pending', error=?, attempts = MAX(attempts - 1, 0) WHERE id=?").bind(error, body.id),
+            env.DB.prepare("UPDATE capture SET status='pending', error=?, attempts = MAX(attempts - 1, 0) WHERE id=?" + fence).bind(error, body.id, ...fenceArgs),
           ]);
         } else if (/groq (429|503)/.test(error)) {
           // Groq out of tokens or over capacity isn't this save's fault: give the try back and park
@@ -593,8 +610,8 @@ export default {
           // rest of that person's backlog too, so we don't download them all to hit the same wall.
           // (6 Nov: a free key's daily tokens ran out and burned 3 tries off each import.)
           const now = new Date().toISOString();
-          await env.DB.prepare("UPDATE capture SET status='claimed', claimed_at=?, error=?, attempts = MAX(attempts - 1, 0) WHERE id=?")
-            .bind(now, error, body.id).run();
+          await env.DB.prepare("UPDATE capture SET status='claimed', claimed_at=?, error=?, attempts = MAX(attempts - 1, 0) WHERE id=?" + fence)
+            .bind(now, error, body.id, ...fenceArgs).run();
           const c = await env.DB.prepare("SELECT user_id, source FROM capture WHERE id = ?").bind(body.id).first<{ user_id: string | null; source: string }>();
           if (c?.source === "import") {
             // Out of today's tokens: Groq says when it resets ("try again in 3h2m7.5s"). Park the backlog
@@ -610,7 +627,7 @@ export default {
         } else {
           // Back to pending, not failed: transient breakage should retry itself.
           // Once MAX_ATTEMPTS is hit, /status reports it as a dead letter — see below.
-          await env.DB.prepare("UPDATE capture SET status='pending', error=? WHERE id=?").bind(error, body.id).run();
+          await env.DB.prepare("UPDATE capture SET status='pending', error=? WHERE id=?" + fence).bind(error, body.id, ...fenceArgs).run();
         }
       }
       // Last of someone's imported saves just finished (read or given up on): tell them on Telegram.
@@ -679,6 +696,13 @@ export default {
         ? b.mentions.filter((m: any) => m && typeof m.name === "string" && m.name.trim()).slice(0, 100)
         : [];
       const userId: string | null = b.user_id ?? null;
+      // A processor that was mid-way when the account (or this capture) was deleted, or whose claim
+      // was taken over by another runner, must not write the note back (B03).
+      const live = await env.DB.prepare(
+        "SELECT c.lease, (c.user_id IS NULL OR EXISTS (SELECT 1 FROM user u WHERE u.id = c.user_id)) AS has_user FROM capture c WHERE c.id = ? AND c.user_id IS ?",
+      ).bind(b.capture_id, userId).first<{ lease: string | null; has_user: number }>();
+      if (!live || !live.has_user) return json({ error: "capture or account no longer exists" }, 410);
+      if (b.lease && live.lease && b.lease !== live.lease) return json({ error: "claim was taken over" }, 409);
       const prior = await env.DB.prepare("SELECT id FROM note WHERE capture_id = ?")
         .bind(b.capture_id).first<{ id: string }>();
       const noteId = prior?.id ?? id();
