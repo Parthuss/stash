@@ -5,9 +5,18 @@ let token = null;
 try { token = localStorage.getItem("stash_token"); } catch {}
 const tokenFrom = (t) => ((t || "").match(/(stk_[0-9a-f]{20,}|[\w-]{24,})/) || [])[1] || (t || "").trim();
 if (!token) $("signin").hidden = false;
+// The app picks its own name, so also show where approving sends you (the redirect the server
+// already checked against this app's registration), and warn when it isn't a known AI app (S03).
+const KNOWN = ["claude.ai", "claude.com", "chatgpt.com", "chat.openai.com", "openai.com"];
+let dest = ""; try { dest = new URL(q.get("redirect_uri") || "").hostname; } catch {}
+const known = KNOWN.some((d) => dest === d || dest.endsWith("." + d));
 fetch("/oauth/client?client_id=" + encodeURIComponent(q.get("client_id") || "")).then((r) => r.json()).then((c) => {
-  if (c.name) { $("title").textContent = `Connect ${c.name}`; $("lead").textContent = `${c.name} wants to use your Skwirl.`; }
+  if (c.name) { $("title").textContent = `Connect ${c.name}`; $("lead").textContent = `An app calling itself "${c.name}" wants to use your Skwirl.`; }
 }).catch(() => {});
+if (dest) {
+  $("dest").hidden = false; $("destHost").textContent = dest;
+  $("destWarn").hidden = known;
+}
 async function answer(allow) {
   $("err").textContent = "";
   const t = token || tokenFrom($("link").value);
