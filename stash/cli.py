@@ -290,11 +290,8 @@ def _reindex(conn, args) -> int:
             "SELECT path, capture_id, status, used_where, created_at, ingredients, steps, mentions FROM note"
         )
     }
-    if db.has_vectors(conn):
-        conn.execute("DELETE FROM chunk_vec")
-    conn.execute("DELETE FROM note")
-    conn.commit()
     count = embedded = 0
+    replacement = []
     for path in sorted(CONFIG.vault_dir.glob("*.md")):
         front = vault.read_frontmatter(path)
         if not front:
@@ -342,20 +339,24 @@ def _reindex(conn, args) -> int:
             for key in ("ingredients", "steps", "mentions"):
                 if prior[key] and prior[key] != "[]":
                     note[key] = prior[key]
-        db.upsert_note(conn, note)
-        count += 1
+        replacement.append(note)
 
-    if args.no_embed:
-        # Let the normal path run (it writes chunks whenever the connection has
-        # vectors, same as any other upsert) and clear the result afterward —
-        # simpler and less surprising than threading a bypass through
-        # has_vectors()/upsert_note() for what is a rarely-used debug flag.
+    # Parse the entire replacement before touching the live index. Nested
+    # upserts must not commit: any write/embedding failure rolls back the
+    # index, FTS, vectors and index-only metadata as one unit.
+    with conn:
         if db.has_vectors(conn):
             conn.execute("DELETE FROM chunk_vec")
-        conn.execute("DELETE FROM chunk")
-        conn.commit()
-    else:
-        embedded = conn.execute("SELECT COUNT(DISTINCT note_id) c FROM chunk").fetchone()["c"]
+        conn.execute("DELETE FROM note")
+        for note in replacement:
+            db.upsert_note(conn, note, commit=False)
+            count += 1
+        if args.no_embed:
+            if db.has_vectors(conn):
+                conn.execute("DELETE FROM chunk_vec")
+            conn.execute("DELETE FROM chunk")
+        else:
+            embedded = conn.execute("SELECT COUNT(DISTINCT note_id) c FROM chunk").fetchone()["c"]
 
     print(f"reindexed {count} note(s)" + (f", {embedded} embedded" if embedded else ""))
     return 0
