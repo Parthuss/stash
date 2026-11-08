@@ -101,3 +101,54 @@ def test_playlist_video_falls_back_to_yt_dlp_when_cdn_refuses(tmp_path, monkeypa
     monkeypatch.setattr(f.subprocess, "run", fake_run)
     bundle = f._yt_dlp("https://x.com/a/status/1", "k")
     assert [i.path.name for i in bundle.items] == ["k-001.mp4", "k-002.mp4"]
+
+
+def test_video_cache_ignores_partial_audio_and_fragments(tmp_path, monkeypatch):
+    import dataclasses
+    from stash import fetch
+    monkeypatch.setattr(fetch, "CONFIG", dataclasses.replace(fetch.CONFIG, media_dir=tmp_path))
+    for name in ("key.mp4.part", "key.wav", "key.f137.mp4", "key.json", "key.mp4.ytdl"):
+        (tmp_path / name).write_bytes(b"unfinished")
+    assert fetch._cached("key") is None
+    complete = tmp_path / "key.webm"
+    complete.write_bytes(b"finished")
+    assert fetch._cached("key") == complete
+
+
+def test_download_only_publishes_on_success(tmp_path, monkeypatch):
+    import contextlib
+    from stash import fetch
+    target = tmp_path / "video.mp4"
+    class Response:
+        def raise_for_status(self): pass
+        def iter_bytes(self, size):
+            yield b"first"
+            assert not target.exists()
+            yield b"second"
+    @contextlib.contextmanager
+    def stream(*args, **kwargs): yield Response()
+    monkeypatch.setattr(fetch.httpx, "stream", stream)
+    fetch._download("https://cdn.example/video", target)
+    assert target.read_bytes() == b"firstsecond"
+    assert list(tmp_path.iterdir()) == [target]
+
+
+def test_failed_download_preserves_existing_file_and_cleans_partial(tmp_path, monkeypatch):
+    import contextlib
+    import httpx
+    import pytest
+    from stash import fetch
+    target = tmp_path / "video.mp4"
+    class Response:
+        def raise_for_status(self): pass
+        def iter_bytes(self, size):
+            yield b"partial"
+            raise httpx.ReadError("interrupted")
+    @contextlib.contextmanager
+    def stream(*args, **kwargs): yield Response()
+    monkeypatch.setattr(fetch.httpx, "stream", stream)
+    for existing in (False, True):
+        if existing: target.write_bytes(b"original")
+        with pytest.raises(httpx.ReadError): fetch._download("https://cdn.example/video", target)
+        assert sorted(p.name for p in tmp_path.iterdir()) == ([target.name] if existing else [])
+        if existing: assert target.read_bytes() == b"original"
