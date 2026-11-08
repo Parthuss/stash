@@ -16,6 +16,7 @@ import sqlite3
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 from . import db, extract, fetch, frames, notify, transcribe, vault
 from .config import CONFIG, collect_usage, guest_run, using_groq_key
@@ -345,7 +346,10 @@ def _sync_note(capture, fields, content: str, permalink, say, thumb: bytes | Non
         say(f"note push failed (kept locally): {exc}")
 
 
-def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> list[Result]:
+def drain(
+    conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True,
+    on_progress: Callable[[], None] | None = None,
+) -> list[Result]:
     """Work the queue until it is empty or ``limit`` captures have been done.
 
     Reads from the Cloudflare Worker when one is configured and from the local
@@ -364,6 +368,8 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
         capture = remote.claim_next() if remote_mode else db.claim_next(conn)
         if capture is None:
             break
+        if on_progress:
+            on_progress()
 
         override = remote.media_url_for(capture) if remote_mode else None
         # A guest's link never goes in this machine's log, only the owner's own.
@@ -415,6 +421,8 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             )
         result.guest = _is_guest(capture)
         results.append(result)
+        if on_progress:
+            on_progress()
     return results
 
 
