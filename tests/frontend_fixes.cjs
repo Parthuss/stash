@@ -34,4 +34,9 @@ async function scenario(browser, name, handler, run, signedIn=true) {
     if(u.pathname!=='/v1/notes/one')return false;
     await sleep(500);await r.fulfill({json:note});return true;
   },async p=>{await p.locator('.card[data-id]').click();await p.locator('#mentionsBtn').click();await p.waitForTimeout(650);assert.equal(await p.locator('#mentions').isVisible(),true);assert.equal(await p.locator('#note').isVisible(),false)});
+  await scenario(browser,'9 active filter remains visible',async()=>false,async p=>{
+    await p.evaluate(()=>{filter='fitness';document.getElementById('q').value='pasta';render()});
+    assert.equal(await p.locator('[data-f=fitness][aria-pressed=true]').count(),1);
+    await p.locator('[data-f=all]').click();assert.equal(await p.locator('.card[data-id]').count(),1);
+  });
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

@@ -95,7 +95,7 @@ function skeleton() { return Array.from({ length: 4 }, () => '<div class="skel s
 
 function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
-  const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
+  const topics = [...new Set([...notes.map((n) => n.topic).filter(Boolean), ...(!["all", "unused"].includes(filter) ? [filter] : [])])].sort();
   const num = { all: notes.length, unused };
   $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c === "unused" ? "to try" : c)}${num[c] ? ` <span class="n">${num[c]}</span>` : ""}</button>`).join("");
   const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
