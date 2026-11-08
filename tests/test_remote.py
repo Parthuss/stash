@@ -60,6 +60,7 @@ def test_finish_capture_sends_title_on_success(monkeypatch):
     assert seen["secret"] == "testsecret"
     assert seen["json"] == {
         "id": "abc123", "ok": True, "error": None, "title": "video-shotcraft plugin", "usage": [],
+        "lease": None,  # no /claim happened in this test, so there's no lease to return
     }
 
 
@@ -179,3 +180,30 @@ def test_usage_is_collected_and_attributed_by_key_type():
             record_usage("whisper", "w", seconds=12.5)
     assert [(b["kind"], b["key_type"]) for b in bucket] == [("chat", "shared"), ("whisper", "own")]
     assert bucket[0]["prompt_tokens"] == 100 and bucket[1]["seconds"] == 12.5
+
+
+def test_claim_lease_is_sent_back_with_note_and_complete(monkeypatch):
+    """The Worker fences stale reports by lease (audit B01-B03): whatever lease /claim handed
+    out must come back on /note and /complete for that capture, and only once on /complete."""
+    import json as _json
+
+    sent = []
+
+    def handler(request):
+        body = _json.loads(request.content or b"{}")
+        sent.append((request.url.path, body))
+        if request.url.path == "/claim":
+            return httpx.Response(200, json={"capture": {"id": "c1", "user_id": "u1", "lease": "L-1"}})
+        return httpx.Response(200, json={"ok": True})
+
+    _patch_client(monkeypatch, handler)
+    cap = remote.claim_next()
+    remote.push_note(cap, {"title": "t", "summary": "s", "topic": "x", "tools": []}, "# t", None)
+    remote.finish_capture("c1", ok=True, title="t")
+    remote.finish_capture("c1", ok=True, title="t")  # a repeat no longer claims the lease
+    by_path = {}
+    for path, body in sent:
+        by_path.setdefault(path, []).append(body)
+    assert by_path["/note"][0]["lease"] == "L-1"
+    assert by_path["/complete"][0]["lease"] == "L-1"
+    assert by_path["/complete"][1]["lease"] is None
