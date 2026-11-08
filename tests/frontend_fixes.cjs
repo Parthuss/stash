@@ -30,4 +30,8 @@ async function scenario(browser, name, handler, run, signedIn=true) {
     const old=u.searchParams.get('q')==='old';if(old)await sleep(600);
     await r.fulfill({json:{notes:old?[]:[note]}});return true;
   },async p=>{await p.locator('#q').fill('old');await p.waitForTimeout(230);await p.locator('#q').fill('pasta');await p.waitForTimeout(750);assert.equal(await p.locator('.card[data-id]').count(),1)});
+  await scenario(browser,'8 delayed note does not override navigation',async(r,u)=>{
+    if(u.pathname!=='/v1/notes/one')return false;
+    await sleep(500);await r.fulfill({json:note});return true;
+  },async p=>{await p.locator('.card[data-id]').click();await p.locator('#mentionsBtn').click();await p.waitForTimeout(650);assert.equal(await p.locator('#mentions').isVisible(),true);assert.equal(await p.locator('#note').isVisible(),false)});
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

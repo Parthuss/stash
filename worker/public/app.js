@@ -38,7 +38,8 @@ async function api(path, opts = {}) {
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
-function show(which) { tr("view", which); for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
+let activeView = null, viewVersion = 0;
+function show(which) { if (activeView !== which) { activeView = which; ++viewVersion; } tr("view", which); for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
 function signOut(msg) {
   for (const k of ["stash_token", "stash_cache", "stash_notes", "stash_outbox"]) store.del(k);
   token = null; show("auth");
@@ -200,12 +201,17 @@ async function ingest(url, source) {
 }
 let returnTo = "lib";
 const USED_LABEL = { food: "I made this" };
+let openVersion = 0;
 async function open(id, from) {
+  const version = ++openVersion, view = viewVersion;
   returnTo = from || "lib";
   const r = await api("/v1/notes/" + encodeURIComponent(id)).catch(() => null);
+  if (version !== openVersion || view !== viewVersion) return;
   const kept = cacheGet("stash_notes") || { byId: {} };
   if (r && r.ok) {
-    current = await r.json(); tr("open_note", current.topic || "other");
+    const opened = await r.json();
+    if (version !== openVersion || view !== viewVersion) return;
+    current = opened; tr("open_note", current.topic || "other");
     kept.byId[id] = current; const ids = Object.keys(kept.byId); for (const k of ids.slice(0, Math.max(0, ids.length - 40))) delete kept.byId[k];
     cacheSet("stash_notes", { byId: kept.byId });
   } else if ((!r || r.status >= 500) && kept.byId[id]) current = kept.byId[id];
