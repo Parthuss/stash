@@ -81,9 +81,12 @@ export async function handleTelegram(request: Request, env: Env, save: Save): Pr
       return new Response("ok");
     }
     const hash = await sha256(start[1]);
-    const link = await env.DB.prepare("SELECT user_key FROM telegram_link WHERE code_hash = ? AND expires_at > ?")
-      .bind(hash, new Date().toISOString()).first<{ user_key: string }>();
-    await env.DB.prepare("DELETE FROM telegram_link WHERE code_hash = ? OR expires_at < ?").bind(hash, new Date().toISOString()).run();
+    // Consume the link in the same statement that reads it, so it can only connect one chat (B04).
+    const now = new Date().toISOString();
+    const used = await env.DB.prepare("DELETE FROM telegram_link WHERE code_hash = ? RETURNING user_key, expires_at")
+      .bind(hash).first<{ user_key: string; expires_at: string }>();
+    await env.DB.prepare("DELETE FROM telegram_link WHERE expires_at < ?").bind(now).run();
+    const link = used && used.expires_at > now ? used : null;
     if (!link) { await say(env, chat, "That connect link has expired. Tap Connect Telegram in Skwirl's Set up again."); return new Response("ok"); }
     await env.DB.prepare("INSERT INTO telegram_chat (chat_id, user_key) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET user_key = excluded.user_key")
       .bind(chat, link.user_key).run();

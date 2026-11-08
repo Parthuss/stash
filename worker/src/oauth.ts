@@ -175,8 +175,8 @@ export async function handleOAuth(request: Request, env: Env, path: string, url:
 
     if (f.get("grant_type") === "authorization_code") {
       const hash = await sha256(f.get("code") ?? "");
-      const row = await env.DB.prepare("SELECT * FROM oauth_code WHERE code_hash = ?").bind(hash).first<any>();
-      await env.DB.prepare("DELETE FROM oauth_code WHERE code_hash = ?").bind(hash).run(); // single use, even on failure
+      // Read and consume in one statement: two simultaneous exchanges of one code can't both win (B04).
+      const row = await env.DB.prepare("DELETE FROM oauth_code WHERE code_hash = ? RETURNING *").bind(hash).first<any>(); // single use, even on failure
       if (!row || row.client_id !== client.id || row.expires_at < new Date().toISOString()) return oauthError("invalid_grant", "Code is invalid or expired.");
       if (f.get("redirect_uri") && f.get("redirect_uri") !== row.redirect_uri) return oauthError("invalid_grant", "redirect_uri doesn't match.");
       if ((await s256(f.get("code_verifier") ?? "")) !== row.challenge) return oauthError("invalid_grant", "PKCE check failed.");
@@ -184,9 +184,9 @@ export async function handleOAuth(request: Request, env: Env, path: string, url:
     }
     if (f.get("grant_type") === "refresh_token") {
       const hash = await sha256(f.get("refresh_token") ?? "");
-      const row = await env.DB.prepare("SELECT * FROM oauth_token WHERE token_hash = ? AND kind = 'refresh'").bind(hash).first<any>();
+      // Rotate atomically: the refresh token is consumed by the same statement that reads it (B04).
+      const row = await env.DB.prepare("DELETE FROM oauth_token WHERE token_hash = ? AND kind = 'refresh' RETURNING *").bind(hash).first<any>();
       if (!row || row.client_id !== client.id || row.expires_at < new Date().toISOString()) return oauthError("invalid_grant", "Refresh token is invalid or expired.");
-      await env.DB.prepare("DELETE FROM oauth_token WHERE token_hash = ?").bind(hash).run(); // rotate
       return issue(env, client.id, row.user_key);
     }
     return oauthError("unsupported_grant_type", "Use authorization_code or refresh_token.");

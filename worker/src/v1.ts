@@ -350,6 +350,11 @@ export async function handleV1(
       env.DB.prepare("DELETE FROM oauth_token WHERE user_key = ?").bind(userId),  // connected AI apps too
       env.DB.prepare("DELETE FROM telegram_chat WHERE user_key = ?").bind(userId),  // and Telegram
       env.DB.prepare("DELETE FROM device_token WHERE user_id = ?").bind(userId),  // and recovered devices
+      // and every grant still waiting to be redeemed, or it would mint a fresh credential after the
+      // reset (an AI-app code, a Telegram connect link, an emailed sign-in link). Audit S02.
+      env.DB.prepare("DELETE FROM oauth_code WHERE user_key = ?").bind(userId),
+      env.DB.prepare("DELETE FROM telegram_link WHERE user_key = ?").bind(userId),
+      env.DB.prepare("DELETE FROM login_code WHERE user_id = ?").bind(userId),
     ]);
     await logEvent(env, userId, "api", "token_reset");
     return json({ token });  // shown once; the old token and any connector link stop working now
