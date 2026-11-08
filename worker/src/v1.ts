@@ -152,6 +152,13 @@ export async function deleteUser(env: Env, userId: string, origin: string): Prom
   const cache = (caches as any).default as Cache;
   await Promise.all((thumbs.results ?? []).map((t) => cache.delete(`${origin}/t/${t.id}`).catch(() => false)));
   await env.DB.batch([
+    // Analytics: this person's visits and everything tracked in them, including the anonymous visits
+    // from the same device(s) before they signed up (privacy page: activity history is erased).
+    env.DB.prepare("DELETE FROM ui_event WHERE visit_id IN (SELECT id FROM visit WHERE visitor IN (SELECT visitor FROM visit WHERE user_id = ?))").bind(userId),
+    env.DB.prepare("DELETE FROM visit WHERE visitor IN (SELECT visitor FROM visit WHERE user_id = ?)").bind(userId),
+    env.DB.prepare("DELETE FROM visit WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM waitlist WHERE user_id = ? OR (email IS NOT NULL AND email = (SELECT email FROM user WHERE id = ?))").bind(userId, userId),
+    env.DB.prepare("DELETE FROM scheduled_push WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM mention_done WHERE owner_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM usage_event WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM feedback WHERE user_id = ?").bind(userId),

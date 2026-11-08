@@ -115,13 +115,23 @@ export async function pushProgress(env: Env): Promise<void> {
   }
 }
 
-/** Cron: send queued one-off notifications whose time has come (see /admin/push/user with "at"). */
+/** Cron: send queued one-off notifications whose time has come (see /admin/push/user with "at").
+ *  Each job is claimed with a compare-and-set, so overlapping cron runs can't both send it. If no
+ *  device accepted it (push service hiccup), it's released for the next run, for up to a day. */
 export async function sendScheduled(env: Env): Promise<void> {
-  const now = new Date().toISOString();
-  const { results } = await env.DB.prepare("SELECT id, user_id, title, body, url FROM scheduled_push WHERE sent_at IS NULL AND send_at <= ?")
-    .bind(now).all<{ id: number; user_id: string; title: string | null; body: string; url: string | null }>();
+  if (!env.VAPID_JWK) return;
+  const now = new Date().toISOString(), giveUp = new Date(Date.now() - 86_400_000).toISOString();
+  const { results } = await env.DB.prepare("SELECT id, user_id, title, body, url, send_at FROM scheduled_push WHERE sent_at IS NULL AND send_at <= ?")
+    .bind(now).all<{ id: number; user_id: string; title: string | null; body: string; url: string | null; send_at: string }>();
   for (const r of results ?? []) {
-    await env.DB.prepare("UPDATE scheduled_push SET sent_at = ? WHERE id = ?").bind(now, r.id).run();  // mark first: never twice
-    await pushUser(env, r.user_id, { title: r.title || "Skwirl", body: r.body, url: r.url || "/", tag: "owner-note" }).catch(() => {});
+    const claim = await env.DB.prepare("UPDATE scheduled_push SET sent_at = ? WHERE id = ? AND sent_at IS NULL").bind(now, r.id).run();
+    if (!claim.meta.changes) continue;  // another cron run took it
+    const subs = (await env.DB.prepare("SELECT endpoint, p256dh, auth FROM push_sub WHERE user_id = ?").bind(r.user_id).all<Sub>()).results ?? [];
+    const msg = { title: r.title || "Skwirl", body: r.body, url: r.url || "/", tag: "owner-note" };
+    let delivered = 0;
+    for (const s of subs) { const st = await sendPush(env, s, msg).catch(() => 0); if (st >= 200 && st < 300) delivered++; }
+    // No device took it but some exist: release it for the next run, unless it's been a day.
+    if (subs.length && !delivered && r.send_at > giveUp)
+      await env.DB.prepare("UPDATE scheduled_push SET sent_at = NULL WHERE id = ?").bind(r.id).run();
   }
 }
