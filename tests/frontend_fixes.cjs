@@ -39,4 +39,13 @@ async function scenario(browser, name, handler, run, signedIn=true) {
     assert.equal(await p.locator('[data-f=fitness][aria-pressed=true]').count(),1);
     await p.locator('[data-f=all]').click();assert.equal(await p.locator('.card[data-id]').count(),1);
   });
+  let joins=0;
+  await scenario(browser,'10 join submits once and unlocks on failure',async(r,u)=>{
+    if(u.pathname!=='/join'||r.request().method()!=='POST')return false;
+    joins++;await sleep(200);await r.fulfill({status:503,json:{error:'Try later'}});return true;
+  },async p=>{
+    await p.locator('#joinName').fill('Test');await p.locator('#joinForm').evaluate(f=>{f.requestSubmit();f.requestSubmit()});
+    await p.waitForTimeout(300);assert.equal(joins,1);assert.equal(await p.locator('#joinForm button').isDisabled(),false);
+    await p.locator('#joinForm').evaluate(f=>f.requestSubmit());await p.waitForTimeout(300);assert.equal(joins,2);
+  },false);
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});

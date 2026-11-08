@@ -269,11 +269,13 @@ $("toTop").addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top
 document.querySelector(".lsign").addEventListener("click", () => { $("signin").open = true; });
 $("joinForm").addEventListener("submit", async (e) => {
   tr("join_submit");
-  e.preventDefault(); const err = $("joinErr"); err.textContent = "";
+  e.preventDefault(); const err = $("joinErr"), button = e.currentTarget.querySelector("button[type=submit]");
+  if (button.disabled) return;
+  button.disabled = true; err.textContent = "";
   let r;
   try { r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value, email: $("joinEmail").value }) }); }
-  catch { err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
-  const body = await r.json().catch(() => ({}));
+  catch { button.disabled = false; err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
+  const body = await r.json().catch(() => ({})); button.disabled = false;
   if (!r.ok) { tr("join_err", r.status); err.textContent = body.error || "Couldn’t join. Try again."; return; }
   tr("join_ok", $("joinEmail").value ? "with_email" : "no_email");
   token = body.token; store.set("stash_token", token); store.del("stash_link_saved"); start();
