@@ -410,7 +410,7 @@ async function refreshSetup() {
   if (st.telegram) { set("bTelegram", st.telegram.connected, "Optional"); if (!st.telegram.connected) $("bTelegram").className = "badge opt"; $("tgOff").hidden = !st.telegram.connected; }
   $("adminBtn").hidden = !st.owner;
   showFeedback(); showImport(); refreshAvatar(); if (loaded && !notes.length) render();
-  if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
+  $("groqBody").hidden = !!st.owner; $("groqOwnerMsg").hidden = !st.owner;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
   $("groqOff").hidden = !st.has_groq_key || st.owner;
 }

@@ -59,4 +59,7 @@ async function scenario(browser, name, handler, run, signedIn=true) {
   },async p=>{await p.locator('#mentionsBtn').click();await p.waitForTimeout(100);await p.evaluate(()=>{document.querySelector('.tick').click();document.querySelector('.tick').click()});
     assert.equal(await p.locator('.mcard h3').first().innerText(),'First');await p.waitForTimeout(300);assert.equal(ticks,1);assert.equal(await p.locator('.tick').first().getAttribute('aria-pressed'),'false');
   });
+  await scenario(browser,'12 repeated owner setup preserves controls',async(r,u)=>{
+    if(u.pathname!=='/v1/setup')return false;await r.fulfill({json:{name:'Owner',owner:true,saved_from:{}}});return true;
+  },async p=>{await p.evaluate(async()=>{await refreshSetup();await refreshSetup()});assert.equal(await p.locator('#groqForm').count(),1);assert.equal(await p.locator('#groqPaid').count(),1);assert.equal(await p.locator('#groqBody').evaluate(e=>e.hidden),true);assert.equal(await p.locator('#groqOwnerMsg').evaluate(e=>e.hidden),false)});
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
