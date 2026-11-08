@@ -120,15 +120,19 @@ function welcomeCard(saved) {
   </div>`;
 }
 let captures = [], loaded = false, known = null, pollTimer = null, importInfo = null;
+let loadVersion = 0;
 async function load() {
+  const version = ++loadVersion;
   if (!loaded) $("list").innerHTML = skeleton();
   const q = $("q").value.trim();
   let nr, cr;
   try { [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]); } catch (e) { if (e.message !== "offline") throw e; }
+  if (version !== loadVersion || q !== $("q").value.trim()) return;
   if (!nr || nr.status >= 500) return showCopy(q);
   if (!nr.ok) { toast("Couldn't load your saves. Try again."); return; }
-  const cj = cr.ok ? await cr.json() : {};
-  notes = (await nr.json()).notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showFeedback(); showImport();
+  const [nj, cj] = await Promise.all([nr.json(), cr.ok ? cr.json() : {}]);
+  if (version !== loadVersion || q !== $("q").value.trim()) return;
+  notes = nj.notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showFeedback(); showImport();
   if (!q) cacheSet("stash_cache", { notes });
   flushOutbox();
   // A note we hadn't seen before means something just finished processing.
@@ -312,7 +316,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document
 $("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; sheet(false); await ingest(u); } });
 let searchTimer;
 $("q").addEventListener("input", () => {
-  clearTimeout(timer); timer = setTimeout(load, 200);
+  ++loadVersion; clearTimeout(timer); timer = setTimeout(load, 200);
   // One "search" per pause in typing, with how many results it found (never the words).
   clearTimeout(searchTimer); searchTimer = setTimeout(() => $("q").value.trim() && tr("search", notes.length ? (notes.length > 5 ? "6+" : notes.length) : "0 results"), 1500);
 });
