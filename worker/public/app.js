@@ -39,8 +39,39 @@ async function api(path, opts = {}) {
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
-let activeView = null, viewVersion = 0;
-function show(which) { if (activeView !== which) { activeView = which; ++viewVersion; } tr("view", which); for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
+let activeView = null, viewVersion = 0, historyPosition = 0;
+let navigationId = Math.random().toString(36).slice(2), viewScroll = {};
+function viewState(which) { return { skwirlView: which, position: historyPosition, navigationId, noteId: which === "note" ? current?.id : null, from: which === "note" ? returnTo : null }; }
+function show(which, record = true) {
+  if (activeView !== which) {
+    if (activeView) viewScroll[activeView] = scrollY;
+    if (which === "auth") { navigationId = Math.random().toString(36).slice(2); historyPosition = 0; viewScroll = {}; }
+    if (record) {
+      if (activeView && activeView !== "auth" && which !== "auth") { ++historyPosition; history.pushState(viewState(which), ""); }
+      else { historyPosition = 0; history.replaceState(viewState(which), ""); }
+    }
+    activeView = which; ++viewVersion;
+  }
+  tr("view", which);
+  for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none";
+  $("fab").style.display = which === "lib" ? "" : "none";
+  scrollTo(0, viewScroll[which] || 0);
+}
+function backTo(which) {
+  if (history.state?.navigationId === navigationId && history.state.position > 0) history.back();
+  else { show(which, false); historyPosition = 0; history.replaceState(viewState(which), ""); }
+}
+window.addEventListener("popstate", (e) => {
+  if (activeView === "auth") return;
+  ++openVersion;
+  const state = e.state;
+  if (state?.navigationId !== navigationId || !["lib", "note", "setup", "admin", "mentions", "me"].includes(state.skwirlView)) {
+    show("lib", false); historyPosition = 0; history.replaceState(viewState("lib"), ""); return;
+  }
+  historyPosition = state.position;
+  if (state.skwirlView === "note" && state.noteId !== current?.id) open(state.noteId, state.from, false);
+  else show(state.skwirlView, false);
+});
 function signOut(msg) {
   for (const k of ["stash_token", "stash_cache", "stash_notes", "stash_outbox"]) store.del(k);
   token = null; show("auth");
@@ -203,7 +234,7 @@ async function ingest(url, source) {
 let returnTo = "lib";
 const USED_LABEL = { food: "I made this" };
 let openVersion = 0;
-async function open(id, from) {
+async function open(id, from, record = true) {
   const version = ++openVersion, view = viewVersion;
   returnTo = from || "lib";
   const r = await api("/v1/notes/" + encodeURIComponent(id)).catch(() => null);
@@ -227,7 +258,7 @@ async function open(id, from) {
   const o = $("nOpen"); o.hidden = !current.permalink; if (current.permalink) o.href = current.permalink;
   $("nUsed").hidden = current.status === "used";
   $("nUnshare").hidden = !current.share_id;
-  show("note"); scrollTo(0, 0);
+  show("note", record); scrollTo(0, 0);
 }
 
 // Landing: sections fade up as they scroll in. Skipped entirely under reduced motion.
@@ -336,7 +367,7 @@ $("list").addEventListener("click", async (e) => {
   if (del) { const r = await api("/v1/captures/" + del.dataset.del, { method: "DELETE" }); toast(r.ok ? "Removed." : "Couldn't remove that one."); return load(); }
   const c = e.target.closest(".card[data-id]"); if (c) open(c.dataset.id);
 });
-$("back").addEventListener("click", () => { if (returnTo === "mentions") { show("mentions"); openMentions(); } else { show("lib"); load(); } });
+$("back").addEventListener("click", () => { backTo(returnTo); if (returnTo === "lib") load(); });
 $("nShare").addEventListener("click", async () => {
   const r = await api("/v1/notes/" + current.id + "/share", { method: "POST" }).catch(() => null);
   if (!r || !r.ok) return toast("Couldn't make a share link. Try again.");
@@ -434,7 +465,7 @@ function setTab(which) {
   $("paneIos").hidden = which !== "ios"; $("paneAnd").hidden = which !== "and";
 }
 $("setupBtn").addEventListener("click", () => openSetup(false));
-$("setupBack").addEventListener("click", () => { show("lib"); load(); refreshSetup(); });
+$("setupBack").addEventListener("click", () => { backTo("lib"); load(); refreshSetup(); });
 $("tabIos").addEventListener("click", () => setTab("ios")); $("tabAnd").addEventListener("click", () => setTab("and"));
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-copy]"); if (!b) return;
@@ -539,7 +570,7 @@ async function openAdmin() {
   }).join("");
 }
 $("adminBtn").addEventListener("click", openAdmin);
-$("adminBack").addEventListener("click", () => { show("lib"); load(); });
+$("adminBack").addEventListener("click", () => { backTo("lib"); load(); });
 
 // Anything unhandled becomes a plain message, not a silent dead button.
 window.addEventListener("unhandledrejection", (e) => {
@@ -581,7 +612,7 @@ async function openMentions() {
   allMentions = (await r.json()).mentions.sort((a, b) => Number(a.done) - Number(b.done)); renderMentions();
 }
 $("mentionsBtn").addEventListener("click", () => { mentionFilter = "all"; openMentions(); });
-$("mentionsBack").addEventListener("click", () => { show("lib"); load(); });
+$("mentionsBack").addEventListener("click", () => { backTo("lib"); load(); });
 $("mentionChips").addEventListener("click", (e) => { const k = e.target.dataset.mk; if (k) { mentionFilter = k; renderMentions(); } });
 $("mentionList").addEventListener("click", async (e) => {
   const d = e.target.closest("[data-done]");
@@ -849,7 +880,7 @@ async function openMe() {
   $("contactNote").className = "msg";
 }
 $("meBtn").addEventListener("click", openMe);
-$("meBack").addEventListener("click", () => { show("lib"); });
+$("meBack").addEventListener("click", () => { backTo("lib"); });
 $("meEmailIn").addEventListener("input", () => { const e = $("meEmailIn"); $("meConsentRow").hidden = !e.value.trim() || e.value.trim() === e.dataset.was; });
 $("meForm").addEventListener("submit", async (e) => {
   e.preventDefault();

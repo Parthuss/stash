@@ -62,4 +62,11 @@ async function scenario(browser, name, handler, run, signedIn=true) {
   await scenario(browser,'12 repeated owner setup preserves controls',async(r,u)=>{
     if(u.pathname!=='/v1/setup')return false;await r.fulfill({json:{name:'Owner',owner:true,saved_from:{}}});return true;
   },async p=>{await p.evaluate(async()=>{await refreshSetup();await refreshSetup()});assert.equal(await p.locator('#groqForm').count(),1);assert.equal(await p.locator('#groqPaid').count(),1);assert.equal(await p.locator('#groqBody').evaluate(e=>e.hidden),true);assert.equal(await p.locator('#groqOwnerMsg').evaluate(e=>e.hidden),false)});
+  await scenario(browser,'13 browser and UI Back restore library scroll',async()=>false,async p=>{
+    await p.evaluate(()=>{notes=Array.from({length:30},(_,i)=>({id:String(i),title:'Note '+i,topic:'food',status:'unused'}));render();scrollTo(0,300)});
+    await p.evaluate(()=>openSetup(false));await p.waitForTimeout(100);await p.goBack();await p.waitForTimeout(100);
+    assert.equal(await p.locator('#lib').isVisible(),true);assert.equal(await p.evaluate(()=>scrollY),300);
+    await p.evaluate(()=>openSetup(false));await p.locator('#setupBack').click();await p.waitForTimeout(100);
+    assert.equal(await p.locator('#lib').isVisible(),true);assert.equal(await p.evaluate(()=>history.state.position),0);
+  });
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
