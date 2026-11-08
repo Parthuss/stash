@@ -140,11 +140,18 @@ def _dedupe(picks: list[FrameRequest], *, min_gap: float) -> list[FrameRequest]:
 
 def extract(video: Path, requests: list[FrameRequest], out_dir: Path) -> list[Path]:
     """Grab the planned frames, downscaled. Missing frames are skipped, not fatal."""
+    return [path for path, _ in extract_with_requests(video, requests, out_dir)]
+
+
+def extract_with_requests(
+    video: Path, requests: list[FrameRequest], out_dir: Path,
+) -> list[tuple[Path, FrameRequest]]:
+    """Keep each successful image paired with its actual timestamp/reason."""
     if not shutil.which("ffmpeg"):
         return []
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    written: list[Path] = []
+    written: list[tuple[Path, FrameRequest]] = []
     for index, request in enumerate(requests):
         target = out_dir / f"{video.stem}_f{index:02d}.jpg"
         if not target.exists():
@@ -155,5 +162,5 @@ def extract(video: Path, requests: list[FrameRequest], out_dir: Path) -> list[Pa
             )
             if proc.returncode != 0 or not target.exists():
                 continue
-        written.append(target)
+        written.append((target, request))
     return written

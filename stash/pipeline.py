@@ -114,11 +114,11 @@ def process(
         )
         plan = frames.plan_frames(transcript, duration)
         say(f"frame gate picked {len(plan)} for {label.lower()}")
-        selected = frames.extract(item.path, plan, CONFIG.media_dir / "frames")
-        images.extend(selected)
+        selected = frames.extract_with_requests(item.path, plan, CONFIG.media_dir / "frames")
+        images.extend(path for path, _ in selected)
         reasons.extend(
             f"{label} at {request.timestamp:.0f}s — {request.reason}"
-            for request in plan[:len(selected)]
+            for _, request in selected
         )
 
     transcript_text = "\n\n".join(transcript_parts)

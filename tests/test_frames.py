@@ -92,3 +92,23 @@ def test_nearby_picks_are_deduped():
     timestamps = sorted(f.timestamp for f in plan)
     gaps = [b - a for a, b in zip(timestamps, timestamps[1:])]
     assert all(gap >= 1.5 for gap in gaps), timestamps
+
+
+def test_failed_frame_does_not_shift_later_timestamps(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from stash import frames
+
+    requests = [frames.FrameRequest(1, "title"), frames.FrameRequest(7, "command")]
+    monkeypatch.setattr(frames.shutil, "which", lambda _: "ffmpeg")
+
+    def run(argv, **kwargs):
+        if argv[argv.index("-ss") + 1] == "1.00":
+            return SimpleNamespace(returncode=1)
+        from pathlib import Path
+        Path(argv[-1]).write_bytes(b"frame")
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(frames.subprocess, "run", run)
+    selected = frames.extract_with_requests(tmp_path / "video.mp4", requests, tmp_path / "frames")
+    assert [(path.name, req.timestamp, req.reason) for path, req in selected] == [
+        ("video_f01.jpg", 7, "command")]
