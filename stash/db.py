@@ -247,13 +247,14 @@ def embedding_model_matches(conn: sqlite3.Connection, model_name: str) -> bool:
     return row is None or row["value"] == model_name
 
 
-def set_embedding_model(conn: sqlite3.Connection, model_name: str) -> None:
+def set_embedding_model(conn: sqlite3.Connection, model_name: str, *, commit: bool = True) -> None:
     conn.execute(
         "INSERT INTO meta (key, value) VALUES ('embedding_model', ?) "
         "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
         (model_name,),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 # ---------------------------------------------------------------------------
@@ -442,10 +443,10 @@ def _write_chunks(conn: sqlite3.Connection, note_id: str, note: dict[str, Any]) 
         "INSERT INTO chunk_vec (rowid, embedding) VALUES (?, ?)",
         (chunk_id, embed.serialize(vector)),
     )
-    set_embedding_model(conn, embed.MODEL_NAME)
+    set_embedding_model(conn, embed.MODEL_NAME, commit=False)
 
 
-def upsert_note(conn: sqlite3.Connection, note: dict[str, Any]) -> str:
+def upsert_note(conn: sqlite3.Connection, note: dict[str, Any], *, commit: bool = True) -> str:
     """Insert or replace a note by vault path, keeping FTS (and, when
     available, its vector chunk) in step.
 
@@ -485,7 +486,8 @@ def upsert_note(conn: sqlite3.Connection, note: dict[str, Any]) -> str:
         f"INSERT INTO note ({', '.join(columns)}) VALUES ({placeholders})", values
     )
     _write_chunks(conn, note["id"], note)
-    conn.commit()
+    if commit:
+        conn.commit()
     return note["id"]
 
 
