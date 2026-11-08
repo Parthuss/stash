@@ -572,7 +572,13 @@ export async function handleV1(
       // Prove it works now, so a typo fails here instead of silently at 3am.
       const check = await fetch("https://api.groq.com/openai/v1/models", { headers: { Authorization: `Bearer ${key}` } });
       if (!check.ok) return json({ error: "Groq rejected that key. Copy it again from console.groq.com/keys." }, 400);
-      await env.DB.prepare("UPDATE user SET groq_key_enc = ? WHERE id = ?").bind(await encryptKey(env, key), userId).run();
+      // A new working key: the old key's daily-limit pause no longer applies, and saves parked by it
+      // can go now (audit B08).
+      await env.DB.batch([
+        env.DB.prepare("UPDATE user SET groq_key_enc = ? WHERE id = ?").bind(await encryptKey(env, key), userId),
+        env.DB.prepare("DELETE FROM alert_state WHERE key IN (?, ?, 'imports_idle')").bind("pause:" + userId, "quota:" + userId),
+        env.DB.prepare("UPDATE capture SET status = 'pending' WHERE user_id = ? AND status = 'claimed' AND error LIKE 'groq 429%'").bind(userId),
+      ]);
       await logEvent(env, userId, "api", "own_key_saved");
       return json({ ok: true });
     }

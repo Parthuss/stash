@@ -218,12 +218,15 @@ async function kickRunner(env: Env): Promise<void> {
  * until the owner's Mac wakes up. GitHub's own schedule fires only every few hours in practice. */
 async function kickIfWaiting(env: Env): Promise<void> {
   if (!env.GH_DISPATCH_TOKEN) return;
-  const now = new Date().toISOString();
+  const now = new Date().toISOString(), stale = new Date(Date.now() - 30 * 60_000).toISOString();
+  const WAITING = "(status = 'pending' OR (status = 'claimed' AND (claimed_at IS NULL OR claimed_at < ?)))";
   const w = await env.DB.prepare(
-    `SELECT EXISTS (SELECT 1 FROM capture WHERE user_id IS NOT NULL AND status = 'pending' AND attempts < ? AND source != 'import') AS live,
-            EXISTS (SELECT 1 FROM capture WHERE user_id IS NOT NULL AND status = 'pending' AND attempts < ? AND source = 'import') AS imports,
+    // Waiting = pending, or a claim gone stale (a runner died, or a rate-limited save parked as
+    // claimed): /claim hands those out again, so they need a runner too (audit B09).
+    `SELECT EXISTS (SELECT 1 FROM capture WHERE user_id IS NOT NULL AND ${WAITING} AND attempts < ? AND source != 'import') AS live,
+            EXISTS (SELECT 1 FROM capture WHERE user_id IS NOT NULL AND ${WAITING} AND attempts < ? AND source = 'import') AS imports,
             EXISTS (SELECT 1 FROM alert_state WHERE key = 'imports_idle' AND at > ?) AS idle`,
-  ).bind(MAX_ATTEMPTS, MAX_ATTEMPTS, now).first<{ live: number; imports: number; idle: number }>();
+  ).bind(stale, MAX_ATTEMPTS, stale, MAX_ATTEMPTS, now).first<{ live: number; imports: number; idle: number }>();
   if (w && (w.live || (w.imports && !w.idle))) await kickRunner(env);
 }
 
@@ -556,6 +559,12 @@ export default {
         ? await env.DB.prepare("SELECT groq_key_enc FROM user WHERE id = ?").bind(row.user_id).first<{ groq_key_enc: string | null }>()
         : null;
       const groq_key = owner?.groq_key_enc ? await decryptKey(env, owner.groq_key_enc).catch(() => null) : null;
+      if (owner?.groq_key_enc && !groq_key) {
+        // Can't decrypt their key (e.g. STASH_SECRET was rotated). Don't keep treating them as an
+        // own-key user while quietly running on the shared key: drop it and tell them (audit S04).
+        await env.DB.prepare("UPDATE user SET groq_key_enc = NULL, owner_msg = ? WHERE id = ? AND groq_key_enc = ?")
+          .bind("#gGroq Skwirl couldn't read your saved Groq key, so it's using the shared key for now. Paste your key again to get your own limit back.", row.user_id, owner.groq_key_enc).run();
+      }
       return json({ capture: { ...row, status: "claimed", lease, groq_key } });
     }
 
