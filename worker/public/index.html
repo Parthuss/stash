@@ -446,7 +446,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .skel { aspect-ratio: 3 / 4; border-radius: var(--r-card); box-shadow: var(--lift-1); }
 .tag.err { background: #ffd5d0; color: #8c2415; }
 .cbody .why { color: var(--muted); font-size: 13px; line-height: 1.35; margin: 0 0 10px; }
-.cbody .acts { display: flex; gap: 6px; }
+.cbody .acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .cbody .acts button { height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--ink); color: #fff; font-weight: 600; font-size: 13px; }
 .cbody .acts button.soft { background: var(--bg); color: var(--ink); }
 .help p { margin: 0 0 12px; font-size: 15px; } .help p:last-child { margin: 0; }
@@ -484,6 +484,12 @@ body.on-phone .phone-handoff { display: none; }
 .mcard small { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .setup-pill { border: 0; height: 36px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .85); box-shadow: var(--lift-1); font-weight: 500; position: relative; }
 .setup-pill i { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #e8590c; }
+
+#lib header > .row { flex-wrap: nowrap; }
+#lib .brand { min-width: 0; }
+.hero h1, .card h2 { overflow-wrap: anywhere; }
+@media (max-width: 379px) { #lib .brand { font-size: 24px; } #lib .setup-pill { padding-inline: 10px; } #lib header > .row { gap: 8px; } }
+@media (max-width: 339px) { #lib .brand { font-size: 20px; } #lib header > .row { gap: 6px; } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>

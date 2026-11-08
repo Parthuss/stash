@@ -74,4 +74,13 @@ async function scenario(browser, name, handler, run, signedIn=true) {
     assert.match(await p.locator('.result-limit').innerText(),/200 newest/);
     await p.evaluate(()=>{document.getElementById('q').value='pasta';notes=notes.slice(0,20);render()});assert.match(await p.locator('.result-limit').innerText(),/top 20/);
   });
+  await scenario(browser,'15 narrow header, long note and failed actions fit',async(r,u)=>{
+    if(u.pathname!=='/v1/notes/one')return false;await r.fulfill({json:{...note,title:'X'.repeat(400)}});return true;
+  },async p=>{
+    await p.setViewportSize({width:360,height:844});
+    const centers=await p.locator('#lib header > .row').evaluate(e=>[...e.children].map(x=>{const r=x.getBoundingClientRect();return r.y+r.height/2}));assert.ok(Math.max(...centers)-Math.min(...centers)<3);
+    await p.locator('.card[data-id]').click();await p.waitForTimeout(100);assert.equal(await p.locator('#nTitle').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
+    await p.evaluate(()=>{show('lib');notes=[];captures=[{id:'failed',state:'failed',url:'https://instagram.com/reel/a/',reason:'Failed',at:new Date().toISOString()}];render()});
+    assert.equal(await p.locator('.acts').evaluate(e=>[...e.children].every(b=>b.getBoundingClientRect().right<=e.closest('.card').getBoundingClientRect().right)),true);
+  });
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
