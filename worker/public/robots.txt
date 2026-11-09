@@ -5,4 +5,4 @@ Disallow: /admin/
 Disallow: /analytics
 Disallow: /authorize
 
-Sitemap: https://skwirl.parthakholkar.com/sitemap.xml
+Sitemap: https://skwirl.app/sitemap.xml

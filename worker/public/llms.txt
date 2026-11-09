@@ -16,9 +16,9 @@ Instagram's Saved tab has no search box for most people (November 2026); Skwirl 
 - iPhone: a Shortcut in the share menu. Android: install from Chrome, then Skwirl is in the share menu. Any browser: paste a link. Also a Telegram bot.
 
 ## Pages
-- [Home](https://skwirl.parthakholkar.com/)
-- [How to search your saved Instagram reels](https://skwirl.parthakholkar.com/guides/search-saved-instagram-reels)
-- [How to save recipes from Instagram reels](https://skwirl.parthakholkar.com/guides/save-recipes-from-instagram-reels)
-- [How to export your saved Instagram posts](https://skwirl.parthakholkar.com/guides/export-instagram-saved-posts)
-- [Privacy](https://skwirl.parthakholkar.com/privacy)
-- [Terms](https://skwirl.parthakholkar.com/terms)
+- [Home](https://skwirl.app/)
+- [How to search your saved Instagram reels](https://skwirl.app/guides/search-saved-instagram-reels)
+- [How to save recipes from Instagram reels](https://skwirl.app/guides/save-recipes-from-instagram-reels)
+- [How to export your saved Instagram posts](https://skwirl.app/guides/export-instagram-saved-posts)
+- [Privacy](https://skwirl.app/privacy)
+- [Terms](https://skwirl.app/terms)

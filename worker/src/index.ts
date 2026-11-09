@@ -279,7 +279,7 @@ async function checkHealth(env: Env): Promise<void> {
 export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     if (_event.cron === "0 4 * * SUN") {  // Sunday 9:30am IST / afternoon in Australia
-      ctx.waitUntil(weeklyDigest(env, env.PUBLIC_URL ?? "https://skwirl.parthakholkar.com").catch((e) => console.log("digest", String(e))));
+      ctx.waitUntil(weeklyDigest(env, env.PUBLIC_URL ?? "https://skwirl.app").catch((e) => console.log("digest", String(e))));
       return;
     }
     ctx.waitUntil(checkHealth(env));
@@ -393,7 +393,7 @@ export default {
         .bind(new Date().toISOString(), typeof userId === "string" ? userId : null, String(b.visitor ?? "").slice(0, 40) || null,
           email || null, country, String(b.price ?? "").slice(0, 20) || null, String(b.place ?? "").slice(0, 20) || null).run();
       if (email && typeof userId === "string") await env.DB.prepare("UPDATE user SET email = COALESCE(email, ?) WHERE id = ?").bind(email, userId).run();
-      ctx.waitUntil(notifyOwner(env, `someone wants Plus (${country ?? "?"}, ${b.price ?? "?"})`, `Someone joined the Skwirl Plus waitlist.\n\nCountry: ${country ?? "?"}\nPrice shown: ${b.price ?? "?"}\nWhere: ${b.place ?? "?"}\n${typeof userId === "string" ? "A signed-in user." : "A visitor."}${email ? `\nEmail: ${email}` : ""}\n\nAll of them: https://skwirl.parthakholkar.com/analytics`));
+      ctx.waitUntil(notifyOwner(env, `someone wants Plus (${country ?? "?"}, ${b.price ?? "?"})`, `Someone joined the Skwirl Plus waitlist.\n\nCountry: ${country ?? "?"}\nPrice shown: ${b.price ?? "?"}\nWhere: ${b.place ?? "?"}\n${typeof userId === "string" ? "A signed-in user." : "A visitor."}${email ? `\nEmail: ${email}` : ""}\n\nAll of them: https://skwirl.app/analytics`));
       return json({ ok: true });
     }
 

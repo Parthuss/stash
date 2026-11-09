@@ -63,7 +63,7 @@ async function vapidHeader(env: Env, endpoint: string): Promise<string> {
   const key = await crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", x: j.x, y: j.y, d: j.d }, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
   const h = b64u(enc(JSON.stringify({ typ: "JWT", alg: "ES256" })));
   const c = b64u(enc(JSON.stringify({
-    aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: env.PUBLIC_URL ?? "https://skwirl.parthakholkar.com",
+    aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: env.PUBLIC_URL ?? "https://skwirl.app",
   })));
   const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, enc(`${h}.${c}`));
   return `vapid t=${h}.${c}.${b64u(sig)}, k=${vapidPublic(env)}`;

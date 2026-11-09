@@ -2,7 +2,7 @@
 // feeds ChatGPT search and Copilot. Run after a deploy is live:
 //   node scripts/indexnow.mjs                    every URL in the live sitemap
 //   node scripts/indexnow.mjs /guides/new-page   only these paths
-const SITE = "https://skwirl.parthakholkar.com";
+const SITE = "https://skwirl.app";
 const KEY = "0b091bd2c19ecf0059f52ff2f613c780"; // public/0b091bd2c19ecf0059f52ff2f613c780.txt proves ownership
 
 const paths = process.argv.slice(2);
