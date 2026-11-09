@@ -166,6 +166,10 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .joinbox input:focus-visible { outline: none; }
 .joinbox:focus-within { box-shadow: var(--lift-1), 0 0 0 2px var(--ink); }
 .joinbox #joinCode:not([hidden]) { border-left: 1px solid var(--line); border-radius: 0; }
+#joinMail:not([hidden]) { animation: mailIn .18s ease-out; }
+@keyframes mailIn { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { #joinMail:not([hidden]) { animation: none; } }
+#joinMailHint { max-width: 440px; margin: 6px auto 0; }
 .joinmail { display: block; width: 100%; max-width: 440px; height: 44px; margin: 10px auto 0; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: rgb(255 255 255 / .7); font-size: 15px; }
 .joinbox .btn { height: 48px; flex: none; transition: transform .15s, box-shadow .2s; }
 .joinbox .msg, .joinbox .fine { flex-basis: 100%; }
@@ -176,7 +180,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .lcopy > .msg:empty { display: none; }
 @media (min-width: 880px) {
   .lhero { grid-template-columns: 1.15fr .85fr; padding-top: 9vh; }
-  .lcopy { text-align: left; } .lhero h1, .lede { margin-left: 0; } .joinbox, .joinmail { margin-left: 0; }
+  .lcopy { text-align: left; } .lhero h1, .lede { margin-left: 0; } .joinbox, .joinmail, #joinMailHint { margin-left: 0; }
   .joinbox input { text-align: left; }
 }
 
@@ -344,6 +348,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .price em { font-family: var(--ui); font-weight: 400; font-variation-settings: normal; font-style: normal; font-size: 15px; color: var(--muted); }
 .plan ul { padding-left: 18px; margin: 0 0 12px; font-size: 15px; flex: 1; } .plan li { margin-bottom: 4px; }
 .plan.plus { background: var(--butter); }
+.plan .plusYearLine { display: block; font-weight: 400; color: var(--muted); margin: 2px 0 10px; }
 .plusform { display: grid; gap: 8px; margin-top: 10px; }
 .plusnote .plusBtn { display: flex; width: fit-content; } .plusnote .msg:empty { display: none; }
 .plusform input[type=email] { font: inherit; height: 42px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); }
@@ -524,10 +529,10 @@ body.on-phone .phone-handoff { display: none; }
         <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
         <button class="btn" type="submit">Start free</button>
       </form>
-      <input id="joinEmail" form="joinForm" class="joinmail" type="email" autocomplete="email" maxlength="120" placeholder="Email (optional)" aria-label="Email, optional" aria-describedby="joinFine">
+      <div id="joinMail" hidden><input id="joinEmail" form="joinForm" class="joinmail" type="email" autocomplete="email" maxlength="120" placeholder="Email (optional)" aria-label="Email, optional" aria-describedby="joinMailHint"><p class="fine" id="joinMailHint">Optional, only so I can help if you get stuck.</p></div>
       <p id="joinErr" role="alert" class="msg err"></p>
       <p class="note-box" id="inAppNote" hidden></p>
-      <p class="fine" id="joinFine">No password. Email is optional, only so I can help if you get stuck. iPhone, Android or computer.</p>
+      <p class="fine" id="joinFine">No password. iPhone, Android or computer.</p>
     </div>
 
     <!-- The whole product in one 16s loop: a reel → Instagram share → iOS share sheet → Saved → the real
@@ -640,19 +645,20 @@ body.on-phone .phone-handoff { display: none; }
     <p>Skwirl is free: no card, no trial that runs out. A paid plan for people who'd rather not touch keys is on the way.</p>
     <div class="plans">
       <div class="plan">
-        <small>Free</small><b class="price">$0</b>
+        <small>Free</small><b class="price"><span class="zeroPrice">$0</span></b>
         <ul><li>Up to 30 links a day</li><li>Notes, recipes, lists, search</li><li>ChatGPT and Claude connector</li><li>Import your old Instagram saves</li></ul>
         <span class="note">Read in turn on a shared AI allowance, so on busy days it can take hours.</span>
       </div>
       <div class="plan hot">
-        <small>Free, your own key</small><b class="price">$0</b>
+        <small>Free, your own key</small><b class="price"><span class="zeroPrice">$0</span></b>
         <ul><li>Use your own AI allowance</li><li>Groq's free limits cover dozens of reels a day</li><li>Everything in Free</li></ul>
         <span class="note">Paste a free Groq key in Set up. Two minutes, no card.</span>
       </div>
       <div class="plan plus" data-plus="pricing">
-        <small>Skwirl Plus · coming soon</small><b class="price"><span class="plusPrice">$2.99</span><em> / month</em></b>
-        <ul><li>No keys, nothing to set up</li><li>Your saves read first, in minutes</li><li>Bring in your whole Saved folder</li><li>Everything in Free</li></ul>
-        <span class="note">Early price, in your currency. Nothing to pay now: leave your email and you'll hear first.</span>
+        <small>Skwirl Plus · coming soon</small><b class="price"><span class="plusPrice">$4.99</span><em> / month</em></b>
+        <small class="plusYearLine">or <span class="plusYear">$39</span> a year</small>
+        <ul><li>No keys, nothing to set up</li><li>Your saves read first</li><li>Up to 500 reels a month, old saves included</li><li>Everything in Free</li></ul>
+        <span class="note">Prices in your currency. Nothing to pay now: leave your email and you'll hear first.</span>
       </div>
     </div>
     <p class="selfhost">Rather run it yourself? Skwirl is open source. <a href="https://github.com/Parthuss/stash/blob/master/docs/SELF_HOST.md" rel="noopener">Host your own copy for free ↗</a></p>
@@ -672,11 +678,11 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lsec lend reveal">
     <h2>Stop losing the good ones.</h2>
-    <a class="btn" href="#" id="toTop">Start my stash, free</a>
+    <a class="btn" href="#" id="toTop">Start Skwirl, free</a>
   </div>
 
   <details class="lsec signin" id="signin">
-    <summary>Already have a stash? Sign in</summary>
+    <summary>Already have Skwirl? Sign in</summary>
     <p>Open your sign-in link, or paste your token (it starts with <code>stk_</code>). You'll find it under your profile (the round button at the top) on a device where you're signed in.</p>
     <form id="authForm" class="row">
       <input id="token" type="password" autocomplete="off" placeholder="Paste your token" aria-label="Access token" required>
@@ -826,7 +832,7 @@ body.on-phone .phone-handoff { display: none; }
     <summary><div style="flex:1"><h2>Use your own Groq key</h2><small>Free, faster, no shared limits</small></div><span class="badge opt" id="bGroq">Optional</span></summary>
     <div class="gbody" id="groqOwnerMsg" hidden><div class="note-box">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div></div>
     <div class="gbody" id="groqBody">
-      <div class="note-box plusnote" data-plus="setup" style="margin:0 0 12px"><b>Rather not deal with keys?</b> Skwirl Plus is coming: no keys, your saves read first. <span class="plusPrice">$2.99</span>/month.</div>
+      <div class="note-box plusnote" data-plus="setup" style="margin:0 0 12px"><b>Rather not deal with keys?</b> Skwirl Plus is coming: no keys, your saves read first. <span class="plusPrice">$4.99</span>/month.</div>
       <p id="groqPaid" hidden style="margin:0 0 12px;color:var(--muted)">Or keep your own key and <a href="https://console.groq.com/settings/billing" target="_blank" rel="noopener">switch it to Groq's paid tier</a> (pay as you go) for no daily limit.</p>
       <p style="margin-top:0;color:var(--muted)">Skwirl reads reels with Groq’s AI. By default it uses a shared key with a small daily limit. Your own free key gives you a separate AI allowance. Processing still uses the shared queue.</p>
       <ol class="steps">
@@ -893,7 +899,7 @@ body.on-phone .phone-handoff { display: none; }
     <div class="gbody">
       <div class="inline-actions" style="margin-top:0"><button class="btn sm" data-copy="link">Save my sign-in link</button><button class="btn sm soft" data-copy="token">Copy token</button><button class="btn sm soft" id="exportBtn">Export my notes</button><button class="btn sm soft" id="signOutBtn">Sign out</button></div>
       <div class="inline-actions"><button class="btn sm soft" id="rotateBtn">Reset my token</button><button class="btn sm soft" id="deleteBtn" style="color:#a02d1a">Delete my account</button></div>
-      <p style="color:var(--muted);font-size:14px">Your sign-in link opens your stash on any device. Keep it private. Export gives you everything as one JSON file. Resetting your token signs out every device and disconnects every AI app. Deleting erases all your saves for good.</p>
+      <p style="color:var(--muted);font-size:14px">Your sign-in link opens your Skwirl on any device. Keep it private. Export gives you everything as one JSON file. Resetting your token signs out every device and disconnects every AI app. Deleting erases all your saves for good.</p>
     </div>
   </details>
   <p class="legal"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>

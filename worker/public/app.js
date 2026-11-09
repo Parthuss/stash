@@ -145,7 +145,7 @@ function render() {
   const caps = filter === "all" && !$("q").value.trim() ? captures.map(capCard).join("") : "";
   const first = !notes.length && filter === "all" && !$("q").value.trim();
   if (first && !welcomeSeen) { welcomeSeen = true; tr("card_shown", "welcome"); }
-  $("list").innerHTML = first ? welcomeCard(captures.length > 0) + caps : (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
+  $("list").innerHTML = first ? welcomeCard(captures.length > 0) + caps : (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Nothing saved yet"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
   const query = $("q").value.trim();
   if ((!query && notes.length >= 200) || (query && notes.length >= 20))
     $("list").insertAdjacentHTML("beforeend", `<p class="result-limit" role="status">${query ? "Showing the top 20 matches. Add another word to narrow your search." : "Browsing shows up to 200 newest saves. Search to find older saves."}</p>`);
@@ -318,6 +318,12 @@ $("lostForm").addEventListener("submit", async (e) => {
 });
 $("toTop").addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); });
 document.querySelector(".lsign").addEventListener("click", () => { $("signin").open = true; });
+// The optional email shows up once someone starts on the name field, and goes away again if they
+// leave both fields without typing an email.
+{ const fields = [$("joinName"), $("joinEmail")];
+  $("joinName").addEventListener("focus", () => { $("joinMail").hidden = false; });
+  for (const el of fields) el.addEventListener("blur", () => setTimeout(() => {
+    if (!fields.includes(document.activeElement) && !$("joinEmail").value.trim()) $("joinMail").hidden = true; }, 150)); }
 $("joinForm").addEventListener("submit", async (e) => {
   tr("join_submit");
   e.preventDefault(); const err = $("joinErr"), button = e.currentTarget.querySelector("button[type=submit]");
@@ -817,9 +823,19 @@ $("fb").addEventListener("submit", async (e) => {
 // ---- Skwirl Plus (coming soon): local early price, and a "notify me" that records interest.
 // No checkout exists yet. Prices live here; change them in one place.
 const EU = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE".split(" ");
-const plusPrice = (cc) => ({ IN: "₹149", US: "$3.99", CA: "C$4.99", GB: "£2.99", AU: "A$5.99", NZ: "NZ$5.99" }[cc] || (EU.includes(cc) ? "€3.49" : "$2.99"));
+// [currency symbol, Plus per month, Plus per year]. Base $4.99 / $39 (Nov 2026 pricing); India is set
+// for local purchasing power. Keep in step with the checkout when payments go live.
+const PRICES = { US: ["$", "4.99", "39"], IN: ["₹", "299", "2,499"], GB: ["£", "3.99", "31"], CA: ["C$", "6.99", "54"],
+  AU: ["A$", "7.99", "59"], NZ: ["NZ$", "8.99", "65"], EU: ["€", "4.99", "39"] };
+const priceFor = (cc) => PRICES[cc] || (EU.includes(cc) ? PRICES.EU : PRICES.US);
+const plusPrice = (cc) => { const [c, m] = priceFor(cc); return c + m; };
 let plusCountry = null;
-fetch("/join").then((r) => r.json()).then((m) => { plusCountry = m.country; document.querySelectorAll(".plusPrice").forEach((el) => (el.textContent = plusPrice(m.country))); }).catch(() => {});
+fetch("/join").then((r) => r.json()).then((m) => {
+  plusCountry = m.country; const [c, , y] = priceFor(m.country);
+  document.querySelectorAll(".plusPrice").forEach((el) => (el.textContent = plusPrice(m.country)));
+  document.querySelectorAll(".plusYear").forEach((el) => (el.textContent = c + y));
+  document.querySelectorAll(".zeroPrice").forEach((el) => (el.textContent = c + "0"));
+}).catch(() => {});
 document.querySelectorAll("[data-plus]").forEach((box) => {
   const place = box.dataset.plus;
   box.insertAdjacentHTML("beforeend", `<button class="btn sm plusBtn" type="button" id="plus_${place}" style="margin-top:10px;justify-self:start;align-self:flex-start">Notify me</button>
