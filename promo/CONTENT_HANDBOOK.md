@@ -65,7 +65,7 @@ statistic about how many saves people never revisit (no such study exists), or a
 | 3 | "Your Saved folder is a graveyard" carousel (8 slides) + a reel version | 7 Nov | Yes, 7 Nov morning | `out/instagram/03-graveyard/` |
 | 5 | "11:40pm. Fridge open." POV Reel v2 (34.6s) | 7 Nov | Yes, 7 Nov | `out/instagram/05-fridge/`, `src/insta/FridgePOV.tsx`, `scripts/05-fridge-v2.md` |
 | 7 | "40 book reels. 0 books read." Lists Reel (31.8s) | 7 Nov; VO redone 8-9 Nov (v3) | [CONFIRM: probably not yet, the VO was redone after the planned post time] | `out/instagram/07-books/`, `src/insta/BookList.tsx`, `scripts/07-booklist.md` |
-| 11 | "girl, zoom in" carousel (5 slides) | 9 Nov | No (post by ~18 Nov) | `out/instagram/11-zoom-in/`, `src/insta/ZoomIn.tsx`, `scripts/11-zoom-in.md` |
+| 11 | "girl, zoom in" carousel (6 slides, v2) | 9 Nov | No. AirDropped to Parth 9 Nov; post by ~18 Nov | `out/instagram/11-zoom-in/`, `src/insta/ZoomIn.tsx`, `scripts/11-zoom-in.md` |
 | 2, 4, 6, 8, 9, 10 | See INSTAGRAM_PLAN.md §2 | Not built | No | |
 
 Parth's own work in progress (NOT ours; never edit, stage or commit): `promo/src/MetaPromo.tsx` ("made
@@ -111,6 +111,19 @@ no account details, no import numbers unless Parth asks her):
 Shorter cut that's fine: "It has revolutionised therapy planning for me." (Her own words; the banned-word
 rule in INSTAGRAM_PLAN.md §0 is about our copy, not a customer's quote.)
 
+**Lessons from piece 11 (Parth's review, 9 Nov):**
+- **Every slide must set up the next one.** v1 failed: a hunt with no target, a challenge on a blurred
+  slide, and "type what you remember" before Skwirl was introduced. Order that works: task up front,
+  the hunt, the answer (never make people swipe back), introduce Skwirl, show the feature, CTA.
+- **Don't hand-draw illustrations from scratch in SVG.** Start from an open-licence reference (e.g.
+  Microsoft Fluent Emoji, MIT, github.com/microsoft/fluentui-emoji) and restyle it: brand colours plus an
+  ink outline. Piece 11's 🤏 hand is done this way in `ZoomIn.tsx`.
+- Centre lone visuals and footnote pills on card slides; left-aligned leftovers look unfinished.
+- `tools/demo/shots.cjs` now hides the prompt cards (the "How did you find Skwirl?" card shows TikTok) and
+  also takes `search-pasta.png`. Re-take screenshots before a piece; old ones said "Unused".
+- AirDrop to Parth's phone: a tiny Swift script with `NSSharingService(named: .sendViaAirDrop)` works
+  from Bash (opens the picker, he picks the iPhone).
+
 **Parth's preferences (from feedback across sessions):**
 - **Max effort from the first draft.** Every Reel gets voiceover, music cut to the beat, sound design and
   real motion. Never a silent slideshow or "add a sound in-app" placeholder.
@@ -136,8 +149,9 @@ rule in INSTAGRAM_PLAN.md §0 is about our copy, not a customer's quote.)
    teachers and trainers can follow. **Parked (9 Nov, Parth): build after the launch video and once there's
    some traction.** Hook to use: "A therapist's saved reels, from this to this" (transformation). Needs an
    OT-flavoured demo account in `tools/demo/seed.py` (categories via `PUT /v1/categories`).
-3b. **Two trend pieces, scripted 9 Nov (not built):** `scripts/11-zoom-in.md` ("girl, zoom in" carousel, BUILT 9 Nov,
-   post by ~18 Nov while the trend lasts) and `scripts/12-no-no-yes.md` ("No. No. No. Yes." Reel).
+3b. **Two trend pieces from the Nov 2026 trend lists:** `scripts/11-zoom-in.md` ("girl, zoom in" carousel, BUILT
+   9 Nov, v2, ready to post by ~18 Nov) and `scripts/12-no-no-yes.md` ("No. No. No. Yes." Reel, scripted, NOT
+   built; next piece to build).
    Both picked from the Nov 2026 trend lists to fill the relatable/demo buckets.
 4. **Remaining pieces from INSTAGRAM_PLAN.md:** 4 (Ask Claude), 8 (Import tutorial), 2 ("1,215"),
    6 (Stop saving like this), 9 (2-tap loop), 10 (founder story). Re-check each brief's facts against §1

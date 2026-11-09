@@ -65,8 +65,9 @@ only "Tried ✓"; chip "to try"; button "I tried this". "Used" is set only by th
 - Done 7 Nov (51ea4c4): iPhone Shortcut is token-free. It opens `/?url=…&src=shortcut` in Safari; the signed-in web app saves it (signed-out shares wait through sign-in). Needs one real-iPhone test. Old token Shortcuts still work.
 - Check tomorrow's `paint_ms` / `load_ms` in `ui_event` to confirm the speedup.
 - Owner todos: Email Routing → OWNER_MAIL binding; test push on a real iPhone; optional Workers Paid.
-- Instagram: carousel + fridge Reel posted 7 Nov; book Reel (`promo/out/instagram/07-books`) for
-  7 Nov evening; launch Reel planned Wed 11 Nov. Content rules: memory `content-max-effort.md`.
+- Instagram: all content state lives in `promo/CONTENT_HANDBOOK.md` (read it first). 9 Nov: "girl, zoom in"
+  carousel (piece 11) built and AirDropped, to post by ~18 Nov; "No. No. No. Yes." Reel scripted. Launch Reel
+  planned Wed 11 Nov. Content rules: memory `content-max-effort.md`.
 - Never stage the owner's own uncommitted promo files (`promo/src/Root.tsx`, `CaptureScene.tsx`,
   `MetaPromo.tsx`, `ReceiptsPromo.tsx`, `promo/public/meta-source.mp4`, `vo-*.wav`).
 - Local preview: `.claude/launch.json` ("skwirl-worker", wrangler dev on 8787, untracked).
