@@ -524,7 +524,7 @@ async function refreshSetup() {
     // An optional leading "#gGroq " names the Set up section the button opens (default: Save from your phone).
     const [, target = "gSave", text] = st.owner_msg.match(/^(?:#(\w+) )?([\s\S]*)$/);
     if (bannerKey !== "owner") tr("card_shown", "owner_msg");
-    setBanner("owner", "info", text, target === "gSave" ? "Show me how" : "Fix it", () => {
+    setBanner("owner", "info", text, target === "gSave" ? "Show me how" : target === "gCats" ? "Set them up" : "Fix it", () => {
       tr("click", "owner_msg"); clearBanner("owner"); api("/v1/owner-msg/seen", { method: "POST" }).catch(() => {});
       openSetup(false); const g = $(target) || $("gSave"); g.open = true; g.scrollIntoView({ behavior: "smooth" });
     });
