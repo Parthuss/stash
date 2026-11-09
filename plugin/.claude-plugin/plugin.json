@@ -1,0 +1,22 @@
+{
+  "name": "skwirl",
+  "version": "0.1.0",
+  "description": "Claude Code checks the reels you saved to Skwirl while you work, and can search and save to your Skwirl library.",
+  "author": {
+    "name": "Parth Akholkar",
+    "url": "https://skwirl.app"
+  },
+  "homepage": "https://skwirl.app",
+  "repository": "https://github.com/Parthuss/stash",
+  "license": "FSL-1.1-MIT",
+  "userConfig": {
+    "key": {
+      "type": "string",
+      "title": "Skwirl Claude Code key",
+      "description": "From skwirl.app: Set up, Connect ChatGPT or Claude, Using Claude Code. Starts with skc_.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "privacyPolicyUrl": "https://skwirl.app/privacy"
+}

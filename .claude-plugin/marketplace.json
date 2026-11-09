@@ -1,0 +1,15 @@
+{
+  "name": "skwirl",
+  "description": "Skwirl for Claude Code: your saved reels, checked while you work.",
+  "owner": {
+    "name": "Parth Akholkar",
+    "url": "https://skwirl.app"
+  },
+  "plugins": [
+    {
+      "name": "skwirl",
+      "source": "./plugin",
+      "description": "Claude Code checks the reels you saved to Skwirl while you work: design ideas, Claude skills, repos, tips."
+    }
+  ]
+}
