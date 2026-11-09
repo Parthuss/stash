@@ -33,8 +33,10 @@ doesn't wait to be asked.**
   `claude plugin install skwirl --marketplace Parthuss/stash --config key=...` (verified from GitHub).
 - Also merged the Craveto-clone session's work (commit 0545e3e): better connector instructions, local
   search floor 0.82, softened "Claude checks your saves while you work" landing copy, prefs line in Set up.
-- NOT yet verified: a real Claude Code session with the plugin (CLI login had expired). After
-  `claude /login`, test on a non-owner account that the hook's ${user_config.key} substitution works.
+- Verified end to end 9 Nov on a throwaway account (local hook and local MCP switched off): parallax
+  prompt -> hook handed Claude the "4 Web Animation Patterns" save, it opened it, cited it with the
+  link and marked it used; git prompt -> silent. Hook must be exec form (command + args): Claude Code
+  refuses ${user_config.*} inside a shell-form command.
 - Gotcha: `d1 execute --file` once silently didn't run (printed only the account banner). Always
   re-check with `SELECT name FROM sqlite_master WHERE name='...'` before deploying.
 
