@@ -251,6 +251,7 @@ def build_prompt(
     visual_notes: list[str],
     meta: dict[str, str],
     comments: list[str] | None = None,
+    categories: list[str] | None = None,
 ) -> str:
     parts = ["# Saved post\n"]
     if permalink:
@@ -274,7 +275,18 @@ def build_prompt(
     if comments:
         parts.append("\n## Top comments (real content, especially recipes, often lives here)\n")
         parts.extend(f"- {comment}" for comment in comments)
-    parts.append("\nRequired JSON schema:\n" + json.dumps(SCHEMA, ensure_ascii=False))
+    schema = SCHEMA
+    if categories:
+        parts.append(
+            "\n## Their own categories\n\nThey sort saves into these categories (their words). Put every one that "
+            "clearly fits this post in `categories`, using the names exactly as written. A post can fit several, "
+            "or none: an empty list is better than a stretch.\n"
+        )
+        parts.extend(f"- {name}" for name in categories)
+        schema = {**SCHEMA, "properties": {**SCHEMA["properties"], "categories": {
+            "type": "array", "items": {"type": "string", "enum": list(categories)}}},
+            "required": [*SCHEMA["required"], "categories"]}
+    parts.append("\nRequired JSON schema:\n" + json.dumps(schema, ensure_ascii=False))
     return "\n".join(parts)
 
 
@@ -289,9 +301,13 @@ def extract(
     frame_reasons: list[str] | None = None,
     meta: dict[str, str] | None = None,
     comments: list[str] | None = None,
+    categories: list[str] | None = None,
     timeout: int = 300,
 ) -> dict[str, Any]:
-    """Describe all visuals, then extract the final structured note with Groq."""
+    """Describe all visuals, then extract the final structured note with Groq.
+
+    ``categories`` are the person's own categories (e.g. "Fine motor"); the note is filed into the
+    ones that fit, decided here, while the model has the full transcript and visuals."""
     del timeout  # httpx timeouts are set at the request boundary.
     if not groq_key(CONFIG):
         raise ExtractError("GROQ_API_KEY is required for visual and structured extraction")
@@ -308,6 +324,7 @@ def extract(
         frame_reasons=visual_notes,
         meta=meta or {},
         comments=comments,
+        categories=categories,
     )
 
 
@@ -389,6 +406,7 @@ def _extract_groq(
     frame_reasons: list[str] | None = None,
     meta: dict[str, str] | None = None,
     comments: list[str] | None = None,
+    categories: list[str] | None = None,
 ) -> dict[str, Any]:
     del frames
     if is_guest_run():
@@ -406,6 +424,7 @@ def _extract_groq(
         visual_notes=frame_reasons or [],
         meta=meta or {},
         comments=comments,
+        categories=categories,
     )
     payload = _groq_request([
         {"role": "system", "content": system},
@@ -414,6 +433,7 @@ def _extract_groq(
     if "title" not in payload:
         raise ExtractError("groq extraction returned JSON without a title")
     out = _coerce(payload)
+    out["categories"] = _coerce_categories(payload.get("categories"), categories or [])
     if not out["title"]:
         raise ExtractError("groq extraction returned an empty or invalid title")
     if is_guest_run():
@@ -607,6 +627,50 @@ def _coerce_mentions(raw: Any) -> list[dict[str, str]]:
             continue
         out.append({"type": kind if kind in MENTION_TYPES else "other", "name": name})
     return out
+
+
+SORT_SYSTEM = """\
+You file saved notes into someone's own categories. The categories are theirs (their words, often a
+profession's terms, e.g. an occupational therapist's goal areas), so read each name the way that
+person would mean it.
+
+For every note, list each category that clearly fits, using the names exactly as written. A note can
+fit several, or none: an empty list is better than a stretch. Judge from what the note actually
+teaches or shows, not from passing words.
+
+Return one JSON object: {"notes": [{"id": "<note id>", "categories": ["<name>", ...]}, ...]} with an
+entry for every note you were given, and no prose."""
+
+
+def sort_into_categories(notes: list[dict[str, Any]], categories: list[str]) -> dict[str, list[str]]:
+    """Re-sort existing notes into the person's categories (after they add or change them).
+
+    Same model as note extraction, fed each note's full text (up to 4k chars), not just its title,
+    so the sort is as accurate as filing a new note."""
+    if not notes or not categories:
+        return {}
+    parts = ["# Their categories\n", *(f"- {name}" for name in categories), "\n# Notes"]
+    for note in notes:
+        parts.append(f"\n## id: {note['id']}\nTitle: {note.get('title') or ''}\nSummary: {note.get('summary') or ''}\n\n"
+                     f"{(note.get('markdown') or '')[:4000]}")
+    payload = _groq_request([
+        {"role": "system", "content": SORT_SYSTEM},
+        {"role": "user", "content": "\n".join(parts)},
+    ], max_tokens=1500)
+    picks = {}
+    for entry in payload.get("notes") or []:
+        if isinstance(entry, dict) and isinstance(entry.get("id"), str):
+            picks[entry["id"]] = _coerce_categories(entry.get("categories"), categories)
+    return picks
+
+
+def _coerce_categories(raw: Any, allowed: list[str]) -> list[str]:
+    """Keep only the person's own category names (matched case-insensitively, returned as they wrote
+    them), in their order, without duplicates."""
+    if not allowed or not isinstance(raw, list):
+        return []
+    picked = {str(item).strip().casefold() for item in raw if isinstance(item, str)}
+    return [name for name in allowed if name.casefold() in picked]
 
 
 def _coerce(payload: dict[str, Any]) -> dict[str, Any]:

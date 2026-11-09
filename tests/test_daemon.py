@@ -15,6 +15,12 @@ import time
 
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def _no_category_sort(monkeypatch):
+    # The daemon also re-sorts notes into categories after each drain; these tests are about the drain.
+    monkeypatch.setattr("stash.pipeline.sort_categories", lambda **kwargs: 0)
+
 from stash import daemon
 from stash.config import CONFIG
 

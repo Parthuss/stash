@@ -142,6 +142,8 @@ def process(
         frame_reasons=reasons,
         meta={"creator": media.uploader, "original title": media.title},
         comments=media.comments,
+        # The Worker sends the person's own categories with the claim (absent for the local queue).
+        categories=list(capture["categories"] or []) if "categories" in capture.keys() else None,
     )
 
     content = vault.render(
@@ -344,6 +346,31 @@ def _sync_note(capture, fields, content: str, permalink, say, thumb: bytes | Non
         if capture["user_id"]:
             raise
         say(f"note push failed (kept locally): {exc}")
+
+
+def sort_categories(*, max_batches: int = 5, verbose: bool = True) -> int:
+    """File existing notes into their owners' own categories, a few small batches per tick.
+
+    Runs on the owner's own Groq key when they have one (never spilling onto the shared key, like
+    imports). Stops at the first error: a rate limit or outage just means "next tick"."""
+    from . import remote
+
+    sorted_count = 0
+    for _ in range(max_batches):
+        batch = remote.sort_claim()
+        if not batch or not batch.get("notes"):
+            break
+        try:
+            with using_groq_key(batch.get("groq_key"), spill=False), guest_run(batch.get("user_id") is not None):
+                picks = extract.sort_into_categories(batch["notes"], batch.get("categories") or [])
+        except Exception as exc:  # noqa: BLE001 - try again next tick
+            if verbose:
+                print("  sorting into categories paused" if batch.get("user_id") else f"  sorting into categories paused: {exc}", flush=True)
+            break
+        results = [{"id": n["id"], "categories": picks.get(n["id"], [])} for n in batch["notes"]]
+        remote.sort_result(batch.get("user_id"), batch["version"], results)
+        sorted_count += len(results)
+    return sorted_count
 
 
 def drain(
