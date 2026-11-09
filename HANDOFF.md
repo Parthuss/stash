@@ -20,7 +20,25 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
-## 2026-11-08 to 09: audit fixes, skwirl.app, categories, payments setup (START HERE)
+## 2026-11-09 (late): recall that actually fires, Claude Code plugin (START HERE)
+
+- Finding: with the connector + stash-recall skill loaded, fresh Claude Code sessions NEVER searched
+  saves on their own (tested blind, strong matches existed). Recall is now pushed, not pulled.
+- Owner's Mac: `stash/recall_hook.py` is a UserPromptSubmit hook in ~/.claude/settings.json (local
+  vault, bge-small, distance <= 0.80, ~0.3s). Backup of settings: ~/.claude/settings.json.bak-recall.
+- Everyone else: Claude Code plugin in `plugin/` (+ `.claude-plugin/marketplace.json`). Hook is one curl
+  to `POST /v1/recall` (worker/src/recall.ts, bge-m3 score >= 0.58, jokes skipped, prompts never
+  stored). Auth: `cc_key` (skc_..., migration 0030), valid only for /v1/recall and /mcp/<key>, revoked
+  on rotate/delete. Set up card "Copy install command" mints the key and copies
+  `claude plugin install skwirl --marketplace Parthuss/stash --config key=...` (verified from GitHub).
+- Also merged the Craveto-clone session's work (commit 0545e3e): better connector instructions, local
+  search floor 0.82, softened "Claude checks your saves while you work" landing copy, prefs line in Set up.
+- NOT yet verified: a real Claude Code session with the plugin (CLI login had expired). After
+  `claude /login`, test on a non-owner account that the hook's ${user_config.key} substitution works.
+- Gotcha: `d1 execute --file` once silently didn't run (printed only the account banner). Always
+  re-check with `SELECT name FROM sqlite_master WHERE name='...'` before deploying.
+
+## 2026-11-08 to 09: audit fixes, skwirl.app, categories, payments setup
 
 **State (9 Nov):** live at https://skwirl.app (old skwirl.parthakholkar.com kept for signed-in users and
 installed apps; see the 9 Nov DOMAIN note below). Everything below is deployed and pushed; detailed
