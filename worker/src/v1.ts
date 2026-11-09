@@ -274,6 +274,7 @@ export function ftsQuery(raw: string, joiner = " OR "): string {
   return words.map((w) => `"${w}"`).join(joiner);
 }
 
+const MSG_NEXT = "\n%%next\n";
 export const DAILY_SHARED = 30, DAILY_OWN_KEY = 200;
 // Old saves from an Instagram export: how many one person can queue, by key type.
 export const IMPORT_SHARED = 100, IMPORT_OWN_KEY = 1000;
@@ -472,7 +473,10 @@ export async function handleV1(
   }
 
   if (path === "/v1/owner-msg/seen" && request.method === "POST") {
-    if (userId) await env.DB.prepare("UPDATE user SET owner_msg = NULL WHERE id = ?").bind(userId).run();
+    // Messages can be queued: "first\n%%next\nsecond" shows the second once the first is tapped.
+    if (userId) await env.DB.prepare(
+      "UPDATE user SET owner_msg = CASE WHEN instr(owner_msg, ?1) > 0 THEN substr(owner_msg, instr(owner_msg, ?1) + length(?1)) END WHERE id = ?2",
+    ).bind(MSG_NEXT, userId).run();
     return json({ ok: true });
   }
 
@@ -493,7 +497,7 @@ export async function handleV1(
       name: u?.name ?? (userId === null ? env.OWNER_NAME ?? "Owner" : null),
       push_key: vapidPublic(env),
       asked_source: Boolean(u?.found_via) || userId === null,
-      owner_msg: u?.owner_msg ?? null,
+      owner_msg: u?.owner_msg ? u.owner_msg.split(MSG_NEXT)[0] : null,
       categories: (await categoriesOf(env, userId)).names,
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
