@@ -627,7 +627,10 @@ export default {
           if (c?.source === "import") {
             // Out of today's tokens: Groq says when it resets ("try again in 3h2m7.5s"). Park the backlog
             // until then and remember it as quota:<user>, so the app can say when reading resumes.
-            const daily = /tokens per day/i.test(error), resetMs = daily ? groqWaitMs(error) : 0;
+            // Groq's wait covers only the request that failed (a few thousand tokens), but a whole note
+            // needs ~9k across 5-6 calls. Retrying that early spends tokens on calls that succeed, then
+            // loses them when a later call hits the limit. Wait for a full note's worth instead.
+            const daily = /tokens per day/i.test(error), resetMs = daily ? noteWaitMs(error) : 0;
             const until = new Date(Date.now() + (resetMs ? resetMs + 60_000 : 30 * 60_000)).toISOString();
             const who = c.user_id ?? "owner", put = "INSERT INTO alert_state (key, at) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at";
             await env.DB.batch([
@@ -913,6 +916,17 @@ async function stashMedia(env: Env, cdnUrl: string, key: string): Promise<void> 
   await env.MEDIA.put(key, response.body, {
     httpMetadata: { contentType: response.headers.get("content-type") ?? "video/mp4" },
   });
+}
+
+/** How long until a daily-limited key can afford a whole note: Groq's wait for the failed request,
+ *  scaled from the tokens it asked for up to a typical note (Groq's window frees tokens over time).
+ *  Capped at 12 h. Measured 9 Nov 2026: a finished note averages ~9.1k tokens. */
+const NOTE_TOKENS = 12_000;
+export function noteWaitMs(error: string): number {
+  const wait = groqWaitMs(error), asked = Number((error.match(/Requested (\d+)/) || [])[1]) || 0;
+  if (!wait) return 0;
+  const scale = asked > 0 ? Math.min(Math.max(NOTE_TOKENS / asked, 1), 12) : 1;
+  return Math.min(Math.round(wait * scale), 12 * 3_600_000);
 }
 
 /** Groq's "Please try again in 1h2m3.4s" as milliseconds (0 if absent). */
