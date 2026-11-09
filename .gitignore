@@ -29,3 +29,8 @@ promo/real-footage/
 worker/wrangler.local.toml
 worker/.dev.vars
 shortcuts/.Skwirl.rendered.cherri
+
+# Agent sync (AGENTS.md): only the shared hook config is committed
+.claude/*
+!.claude/settings.json
+.agents/BOARD.md

@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""What are the other agents on this repo doing? Rules are in AGENTS.md.
+
+  scripts/whatsup         print everything; silent when there's nothing to report
+  scripts/whatsup --hook  Claude Code UserPromptSubmit hook (.claude/settings.json):
+                          other worktrees only, and only when that changed this session
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+from concurrent.futures import ThreadPoolExecutor
+
+ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
+def git(cwd: str, *args: str) -> str:
+    # --no-optional-locks: this runs on every prompt, and must never hold
+    # index.lock in a worktree where another agent is mid-commit.
+    try:
+        r = subprocess.run(["git", "--no-optional-locks", "-C", cwd, *args],
+                           capture_output=True, text=True, errors="replace", timeout=5)
+    except subprocess.TimeoutExpired:
+        return ""
+    return r.stdout if r.returncode == 0 else ""
+
+
+def worktrees() -> list[tuple[str, str]]:
+    found = []
+    for block in git(ROOT, "worktree", "list", "--porcelain").split("\n\n"):
+        fields = dict((line.split(" ", 1) + [""])[:2] for line in block.splitlines())
+        path = fields.get("worktree", "")
+        if os.path.isdir(path) and "bare" not in fields:  # listed worktrees can be deleted folders
+            found.append((os.path.realpath(path), fields.get("branch", "detached").replace("refs/heads/", "")))
+    return found
+
+
+def claims(path: str) -> list[str]:
+    try:  # the board is gitignored, so each worktree has its own: read them all
+        with open(os.path.join(path, ".agents", "BOARD.md")) as f:
+            return [line.strip() for line in f if line.startswith("- ")]
+    except OSError:
+        return []
+
+
+def report(others_only: bool = False) -> str:
+    trees = worktrees()
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        # Not .strip(): the leading space in " M file" is part of the format.
+        statuses = list(pool.map(lambda t: git(t[0], "status", "--porcelain").splitlines(), trees))
+
+    dirty = []
+    for (path, branch), lines in zip(trees, statuses):
+        if lines and not (others_only and path == ROOT):
+            here = " (this worktree)" if path == ROOT else ""
+            dirty.append(f"  {branch}{here}: " + ", ".join(line[3:] for line in lines))
+
+    # Absolute dates, not %ar: "3 minutes ago" would change the output, and
+    # so trigger the hook, on every prompt.
+    # -10: a busy day is 40+ commits, and only the latest matter for "what just changed".
+    log = git(ROOT, "log", "master", "-10", "--since=24.hours", "--date=format:%d %b %H:%M", "--format=  %h %an %ad %s")
+    board = list(dict.fromkeys(c for path, _ in trees for c in claims(path)))
+
+    sections = []
+    if dirty:
+        sections.append("Uncommitted work in worktrees:\n" + "\n".join(dirty))
+    if log.strip():
+        sections.append("Commits on master, last 24h:\n" + log.rstrip())
+    if board:
+        sections.append("Open claims (.agents/BOARD.md):\n" + "\n".join("  " + c for c in board))
+    return "\n".join(sections)
+
+
+def hook() -> int:
+    try:
+        session = re.sub(r"[^\w-]", "_", json.load(sys.stdin).get("session_id") or "none")
+        text = report(others_only=True)
+        digest = hashlib.sha256(text.encode()).hexdigest()
+        path = f"/tmp/whatsup-{session}"
+        try:
+            with open(path) as f:
+                previous = f.read()
+        except OSError:
+            previous = ""
+        if digest != previous:
+            with open(path, "w") as f:
+                f.write(digest)
+            if text:
+                print(json.dumps({"hookSpecificOutput": {
+                    "hookEventName": "UserPromptSubmit",
+                    "additionalContext": "Other agents on this repo (scripts/whatsup, see AGENTS.md):\n" + text}}))
+    except Exception as exc:  # never block a prompt over this
+        print(f"whatsup skipped: {exc}", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    if "--hook" in sys.argv:
+        sys.exit(hook())
+    text = report()
+    if text:
+        print(text)
