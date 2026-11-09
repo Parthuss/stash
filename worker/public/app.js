@@ -50,7 +50,8 @@ let activeView = null, viewVersion = 0, historyPosition = 0;
 let navigationId = Math.random().toString(36).slice(2), viewScroll = {};
 function viewState(which) { return { skwirlView: which, position: historyPosition, navigationId, noteId: which === "note" ? current?.id : null, from: which === "note" ? returnTo : null }; }
 function show(which, record = true) {
-  if (activeView !== which) {
+  const changed = activeView !== which;
+  if (changed) {
     if (activeView) viewScroll[activeView] = scrollY;
     if (which === "auth") { navigationId = Math.random().toString(36).slice(2); historyPosition = 0; viewScroll = {}; }
     if (record) {
@@ -62,7 +63,7 @@ function show(which, record = true) {
   tr("view", which);
   for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none";
   $("fab").style.display = which === "lib" ? "" : "none";
-  scrollTo(0, viewScroll[which] || 0);
+  if (changed) scrollTo(0, viewScroll[which] || 0);  // re-showing the current view must not jump the scroll
 }
 function backTo(which) {
   if (history.state?.navigationId === navigationId && history.state.position > 0) history.back();

@@ -382,16 +382,12 @@ export async function handleV1(
     ).bind(userId, userId).first<{ n: number; own_key: number | null }>();
     const cap = userId === null ? 100_000 : have?.own_key ? IMPORT_OWN_KEY : IMPORT_SHARED;
     const room = Math.max(0, cap - (have?.n ?? 0));
-    // Existing saves must not consume the admission slice on repeated exports.
-    // Bound each IN query below D1's parameter limit, including the user binding.
-    const existing = new Set<string>();
-    for (let i = 0; i < urls.length; i += 50) {
-      const batch = urls.slice(i, i + 50);
-      const { results } = await env.DB.prepare(
-        `SELECT permalink FROM capture WHERE user_id IS ? AND permalink IN (${batch.map(() => "?").join(",")})`,
-      ).bind(userId, ...batch).all<{ permalink: string }>();
-      for (const row of results ?? []) existing.add(row.permalink);
-    }
+    // Existing saves must not consume the admission slice on repeated exports. One query for all of
+    // this person's links (bounded by their import cap plus live saves), not one per 50 export links:
+    // a big export would otherwise exceed D1's per-request query limit on the free plan.
+    const { results: mine } = await env.DB.prepare("SELECT permalink FROM capture WHERE user_id IS ? AND permalink IS NOT NULL")
+      .bind(userId).all<{ permalink: string }>();
+    const existing = new Set((mine ?? []).map((r) => r.permalink));
     const missing = urls.filter((u) => !existing.has(u));
     const take = missing.slice(0, room);  // the export lists newest first
     const now = new Date().toISOString();

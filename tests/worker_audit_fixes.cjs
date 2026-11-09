@@ -12,7 +12,7 @@ function database(captures=[],own=false) {
   return {captures,bindings,
     prepare(sql){const stmt={sql,args:[],bind(...args){this.args=args;bindings.push({sql,args});return this},
       async first(){if(sql.includes('COUNT(*) AS n'))return {n:captures.filter(x=>x.user==='user').length,own_key:own?1:0};return null},
-      async all(){if(sql.startsWith('SELECT permalink FROM capture')){assert.equal(this.args[0],'user');assert.ok(this.args.length<=100);return {results:captures.filter(x=>x.user===this.args[0]&&this.args.slice(1).includes(x.url)).map(x=>({permalink:x.url}))}}return {results:[]}},
+      async all(){if(sql.startsWith('SELECT permalink FROM capture')){assert.equal(this.args[0],'user');assert.ok(this.args.length<=100);const only=this.args.slice(1);return {results:captures.filter(x=>x.user===this.args[0]&&(!only.length||only.includes(x.url))).map(x=>({permalink:x.url}))}}return {results:[]}},
       async run(){return {meta:{changes:1}}}};return stmt},
     async batch(stmts){return stmts.map(s=>{const url=s.args[1],user=s.args[3];const exists=captures.some(x=>x.user===user&&x.url===url);if(!exists)captures.push({url,user});return {meta:{changes:exists?0:1}}})}
   };
