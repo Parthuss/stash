@@ -85,6 +85,11 @@ mode).
    users first in /claim and on a paid Groq key (Parth must create a paid Groq account), 500/month cap
    with a soft slow-down (not a hard stop), Get Plus buttons replacing Notify me, Plus status in Me/Set up.
    Test every path with Dodo test cards before live.
+   **Built 9 Nov on branch claude/skwirl-plus-dodo-setup-389e23 (not deployed, not merged):** migration
+   0031_plus.sql, worker/src/plus.ts, Plus-first /claim, UI. Test: `node tests/plus_dodo.cjs` (real SQLite
+   from all migrations). Gate: `PLUS_ACCESS` var (user ids, or "*" at launch); unset = nobody can buy.
+   The owner login has no user row, so test Plus on a normal account. Vars still to add to
+   wrangler.local.toml: DODO_PRODUCT_MONTHLY, DODO_PRODUCT_YEARLY, PLUS_ACCESS (live: DODO_API_BASE).
 4. Email Routing for skwirl.app: support@skwirl.app -> pakholkar@gmail.com (Parth doing it 9 Nov; the
    refund page already lists the address). The same setup can then carry OWNER_MAIL alerts.
 5. Open from the audit: none blocking. Pending owner items: Search Console + Bing for skwirl.app, update

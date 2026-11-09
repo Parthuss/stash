@@ -677,10 +677,10 @@ body.on-phone .phone-handoff { display: none; }
         <span class="note">Paste a free Groq key in Set up. Two minutes, no card.</span>
       </div>
       <div class="plan plus" data-plus="pricing">
-        <small>Skwirl Plus · coming soon</small><b class="price"><span class="plusPrice">$4.99</span><em> / month</em></b>
+        <small>Skwirl Plus<span class="plusSoon"> · coming soon</span></small><b class="price"><span class="plusPrice">$4.99</span><em> / month</em></b>
         <small class="plusYearLine">or <span class="plusYear">$39</span> a year</small>
         <ul><li>No keys, nothing to set up</li><li>Your saves read first</li><li>Up to 500 reels a month, old saves included</li><li>Everything in Free</li></ul>
-        <span class="note">Prices in your currency. Nothing to pay now: leave your email and you'll hear first.</span>
+        <span class="note plusSoon">Prices in your currency. Nothing to pay now: leave your email and you'll hear first.</span><span class="note plusLive" hidden>Prices in your currency. Cancel any time.</span>
       </div>
     </div>
     <p class="selfhost">Rather run it yourself? Skwirl's code is public. <a href="https://github.com/Parthuss/stash/blob/master/docs/SELF_HOST.md" rel="noopener">Host your own copy for free ↗</a></p>
@@ -867,7 +867,7 @@ body.on-phone .phone-handoff { display: none; }
     <summary><div style="flex:1"><h2>Use your own Groq key</h2><small>Free, faster, no shared limits</small></div><span class="badge opt" id="bGroq">Optional</span></summary>
     <div class="gbody" id="groqOwnerMsg" hidden><div class="note-box">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div></div>
     <div class="gbody" id="groqBody">
-      <div class="note-box plusnote" data-plus="setup" style="margin:0 0 12px"><b>Rather not deal with keys?</b> Skwirl Plus is coming: no keys, your saves read first. <span class="plusPrice">$4.99</span>/month.</div>
+      <div class="note-box plusnote" data-plus="setup" style="margin:0 0 12px"><span class="plusPitch"><b>Rather not deal with keys?</b> Skwirl Plus<span class="plusSoon"> is coming</span>: no keys, your saves read first. <span class="plusPrice">$4.99</span>/month.</span></div>
       <p id="groqPaid" hidden style="margin:0 0 12px;color:var(--muted)">Or keep your own key and <a href="https://console.groq.com/settings/billing" target="_blank" rel="noopener">switch it to Groq's paid tier</a> (pay as you go) for no daily limit.</p>
       <p style="margin-top:0;color:var(--muted)">Skwirl reads reels with Groq’s AI. By default it uses a shared key with a small daily limit. Your own free key gives you a separate AI allowance. Processing still uses the shared queue.</p>
       <ol class="steps">

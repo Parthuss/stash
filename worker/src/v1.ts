@@ -15,6 +15,7 @@ import { categoriesOf, setCategories, setNoteCategory } from "./categories";
 import { analyticsOverview, journey } from "./analytics";
 import { okEndpoint, sendPush, vapidPublic } from "./push";
 import { notifyOwner } from "./notify";
+import { cancelSubscription, isPlus, plusAvailable, plusRoute } from "./plus";
 import type { Env } from "./index";
 import { fuse, semanticIds } from "./embed";
 import { ccKeyRoute } from "./recall";
@@ -153,6 +154,9 @@ export async function deleteUser(env: Env, userId: string, origin: string): Prom
   const thumbs = await env.DB.prepare("SELECT id FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId).all<{ id: string }>();
   const cache = (caches as any).default as Cache;
   await Promise.all((thumbs.results ?? []).map((t) => cache.delete(`${origin}/t/${t.id}`).catch(() => false)));
+  // Stop billing before the row (and with it the subscription id) is gone.
+  const sub = (await env.DB.prepare("SELECT dodo_subscription_id s FROM user WHERE id = ?").bind(userId).first<{ s: string | null }>())?.s;
+  if (sub) await cancelSubscription(env, sub).catch((e) => notifyOwner(env, "Account deleted: cancel failed", `Couldn't cancel subscription ${sub} (${e}). Cancel it in Dodo.`));
   await env.DB.batch([
     // Analytics: this person's visits and everything tracked in them, including the anonymous visits
     // from the same device(s) before they signed up (privacy page: activity history is erased).
@@ -297,6 +301,11 @@ export async function handleV1(
       .bind(new Date().toISOString(), userId, new Date(Date.now() - 300_000).toISOString()).run();
   }
 
+  if (path.startsWith("/v1/plus/")) {
+    const res = await plusRoute(request, env, path, userId);
+    if (res) return res;
+  }
+
   if (path === "/v1/admin/analytics" && request.method === "GET") {
     if (userId !== null) return json({ error: "not found" }, 404);
     const days = Math.min(Math.max(Number(url.searchParams.get("days")) || 30, 1), 180);
@@ -322,9 +331,9 @@ export async function handleV1(
       const q = await env.DB.prepare(
         `SELECT SUM(status IN ('pending','claimed') AND source != 'import') AS waiting,
                 SUM(captured_at > ? AND source != 'import') AS today,
-                (SELECT groq_key_enc IS NOT NULL FROM user WHERE id = ?) AS own_key
+                (SELECT groq_key_enc IS NOT NULL OR (plan = 'plus' AND plan_until > ?) FROM user WHERE id = ?) AS own_key
          FROM capture WHERE user_id = ?`,
-      ).bind(new Date(Date.now() - 86_400_000).toISOString(), userId, userId)
+      ).bind(new Date(Date.now() - 86_400_000).toISOString(), new Date().toISOString(), userId, userId)
         .first<{ waiting: number | null; today: number | null; own_key: number | null }>();
       // The shared Groq key is everyone's, so people on it get a smaller daily slice.
       const daily = q?.own_key ? DAILY_OWN_KEY : DAILY_SHARED;
@@ -391,8 +400,8 @@ export async function handleV1(
     const urls = [...new Set(body!.urls.filter((u): u is string => typeof u === "string").map((u) => u.trim().replace(/^http:/, "https:")).filter((u) => POST_URL.test(u)))];
     if (!urls.length) return json({ error: "No Instagram posts found in that file." }, 400);
     const have = await env.DB.prepare(
-      "SELECT COUNT(*) AS n, (SELECT groq_key_enc IS NOT NULL FROM user WHERE id = ?) AS own_key FROM capture WHERE user_id IS ? AND source = 'import'",
-    ).bind(userId, userId).first<{ n: number; own_key: number | null }>();
+      "SELECT COUNT(*) AS n, (SELECT groq_key_enc IS NOT NULL OR (plan = 'plus' AND plan_until > ?) FROM user WHERE id = ?) AS own_key FROM capture WHERE user_id IS ? AND source = 'import'",
+    ).bind(new Date().toISOString(), userId, userId).first<{ n: number; own_key: number | null }>();
     const cap = userId === null ? 100_000 : have?.own_key ? IMPORT_OWN_KEY : IMPORT_SHARED;
     const room = Math.max(0, cap - (have?.n ?? 0));
     // Existing saves must not consume the admission slice on repeated exports. One query for all of
@@ -482,9 +491,17 @@ export async function handleV1(
     ).bind(userId).all<{ source: string; n: number }>();
     const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
     const u = userId
-      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, found_via, owner_msg FROM user WHERE id = ?").bind(userId).first<any>()
+      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, found_via, owner_msg, plan, plan_until FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
+    const plus = isPlus(u);
+    // The soft cap: past 500 in a calendar month the app says so, and everything still gets read.
+    const month = new Date().toISOString().slice(0, 7) + "-01";
+    const monthSaves = plus ? (await env.DB.prepare("SELECT COUNT(*) n FROM capture WHERE user_id = ? AND captured_at >= ?").bind(userId, month).first<{ n: number }>())?.n ?? 0 : 0;
     return json({
+      plan: plus ? "plus" : "free",
+      plan_until: plus ? u.plan_until : null,
+      plus_available: plusAvailable(env, userId),
+      plus_over_cap: monthSaves > 500,
       owner: userId === null,
       saved_from: counts,
       claude_connected: (u?.mcp_calls ?? 0) > 0,
