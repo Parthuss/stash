@@ -113,6 +113,23 @@ def test_search_still_works_with_no_vector_leg(conn, monkeypatch):
     assert hits[0]["title"] == "Agent memory with Redis"
 
 
+def test_relevance_floor_returns_nothing_for_unrelated_query(conn, monkeypatch):
+    """Far vectors are dropped and any-word keyword hits no longer count, but a
+    close vector, an all-words keyword match, and keyword-only mode still return."""
+    from stash import embed
+
+    near, far = [1.0] + [0.0] * (embed.DIM - 1), [0.0, 1.0] + [0.0] * (embed.DIM - 2)
+    monkeypatch.setattr(embed, "embed_documents", lambda texts: [near for _ in texts])
+    monkeypatch.setattr(embed, "embed_query", lambda _q: far)
+    _note(conn)
+    assert db.search_notes(conn, "redis zzzunrelated") == []          # any-word match only
+    assert len(db.search_notes(conn, "redis checkpointer")) == 1      # every word matches
+    monkeypatch.setattr(embed, "embed_query", lambda _q: near)
+    assert len(db.search_notes(conn, "zzzunrelated qqqother")) == 1   # close vector
+    monkeypatch.setattr(db, "has_vectors", lambda _conn: False)
+    assert len(db.search_notes(conn, "redis zzzunrelated")) == 1      # no index: any word still works
+
+
 def test_upsert_note_does_not_write_chunks_when_vectors_unavailable(conn, monkeypatch):
     monkeypatch.setattr(db, "has_vectors", lambda _conn: False)
     _note(conn)
