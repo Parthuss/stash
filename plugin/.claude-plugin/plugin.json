@@ -1,6 +1,6 @@
 {
   "name": "skwirl",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Claude Code checks the reels you saved to Skwirl while you work, and can search and save to your Skwirl library.",
   "author": {
     "name": "Parth Akholkar",
