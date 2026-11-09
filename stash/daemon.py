@@ -52,7 +52,7 @@ class State:
     pid: int
     started_at: float
     last_poll_at: float = 0.0
-    last_result: str = "starting"  # starting | ok | empty | error
+    last_result: str = "starting"  # starting | processing | ok | empty | error
     last_error: str = ""
     consecutive_empty: int = 0
     interval: int = 30
@@ -115,6 +115,14 @@ def run(
 
     state = State(pid=os.getpid(), started_at=time.time(), interval=min_interval)
     _write_state(state)
+
+    def progress() -> None:
+        # A backlog can take hours to drain. A completed capture is evidence
+        # of life even when the enclosing poll has not returned yet.
+        state.last_poll_at = time.time()
+        state.last_result = "processing"
+        state.last_error = ""
+        _write_state(state)
     if not quiet:
         print(f"stash daemon: polling {CONFIG.worker_url}")
         print(f"heartbeat: {CONFIG.daemon_state_path}")
@@ -127,7 +135,7 @@ def run(
             # separate /pending pre-check would just be a second round trip
             # asking the same question. Its own return value tells us whether
             # this tick was worth doing.
-            results = pipeline.drain(conn, verbose=not quiet)
+            results = pipeline.drain(conn, verbose=not quiet, on_progress=progress)
         except Exception as exc:  # noqa: BLE001 — a transient Cloudflare blip must not kill this
             state.last_result = "error"
             state.last_error = str(exc)

@@ -442,3 +442,19 @@ def test_own_key_out_of_daily_quota_spills_to_the_shared_key(monkeypatch):
         raise AssertionError("should have failed")
     except extract.ExtractError as e:
         assert "429" in str(e)
+
+
+def test_malformed_tools_and_relevance_are_not_iterated():
+    for value in (True, 7, {"unexpected": "value"}):
+        out = extract._coerce({"title": "Valid", "tools": value, "relevance": value})
+        assert out["tools"] == []
+        assert out["relevance"] == []
+    assert extract._coerce({"tools": "Groq, yt-dlp"})["tools"] == ["groq", "yt-dlp"]
+
+
+def test_extraction_rejects_empty_or_non_string_title(monkeypatch):
+    import pytest
+    for title in ("  ", None, 42):
+        monkeypatch.setattr(extract, "_groq_request", lambda *a, **k: {"title": title})
+        with pytest.raises(extract.ExtractError, match="title"):
+            extract._extract_groq(permalink=None, user_note=None, transcript_text="text")
