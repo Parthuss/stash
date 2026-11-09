@@ -136,6 +136,14 @@ def run(
             # asking the same question. Its own return value tells us whether
             # this tick was worth doing.
             results = pipeline.drain(conn, verbose=not quiet, on_progress=progress)
+            # Then file existing notes into anyone's newly added or changed categories. Secondary work:
+            # its failures never count against the poll (saves are what the heartbeat is about).
+            try:
+                sorted_notes = pipeline.sort_categories(verbose=not quiet)
+                if sorted_notes:
+                    print(f"sorted {sorted_notes} note(s) into categories", flush=True)
+            except Exception as exc:  # noqa: BLE001
+                print("  category sort skipped" if quiet else f"  category sort skipped: {exc}", flush=True)
         except Exception as exc:  # noqa: BLE001 — a transient Cloudflare blip must not kill this
             state.last_result = "error"
             state.last_error = str(exc)

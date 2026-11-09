@@ -154,6 +154,8 @@ def push_note(
             "topic": fields["topic"],
             "tools": fields["tools"],
             "mentions": fields.get("mentions", []),
+            "categories": fields.get("categories", []),
+            "cat_version": capture["cat_version"],
             "thumb": base64.b64encode(thumb).decode("ascii") if thumb else None,
             "permalink": permalink,
             "markdown": markdown,
@@ -163,6 +165,23 @@ def push_note(
     )
     if response.status_code != 200:
         raise RemoteError(f"note {response.status_code}: {response.text[:200]}")
+
+
+def sort_claim() -> dict[str, Any] | None:
+    """Next batch of notes to file into their owner's own categories, or None."""
+    scope = os.environ.get("STASH_CLAIM_SCOPE")
+    response = httpx.post(f"{CONFIG.worker_url}/sort/claim", headers=_headers(),
+                          params={"scope": scope} if scope else None, timeout=30)
+    if response.status_code != 200:
+        raise RemoteError(f"sort claim {response.status_code}: {response.text[:200]}")
+    return response.json().get("batch")
+
+
+def sort_result(user_id: str | None, version: int, results: list[dict[str, Any]]) -> None:
+    response = httpx.post(f"{CONFIG.worker_url}/sort/result", headers=_headers(),
+                          json={"user_id": user_id, "version": version, "results": results}, timeout=30)
+    if response.status_code != 200:
+        raise RemoteError(f"sort result {response.status_code}: {response.text[:200]}")
 
 
 def dead() -> list[dict[str, Any]]:

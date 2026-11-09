@@ -11,6 +11,7 @@
  *   POST|DELETE /v1/notes/:id/share     public read-only link at /n/<share_id>
  *   GET  /v1/search        ?q=               FTS5 (hybrid/vector comes later)
  */
+import { categoriesOf, setCategories, setNoteCategory } from "./categories";
 import { analyticsOverview, journey } from "./analytics";
 import { okEndpoint, sendPush, vapidPublic } from "./push";
 import { notifyOwner } from "./notify";
@@ -159,6 +160,9 @@ export async function deleteUser(env: Env, userId: string, origin: string): Prom
     env.DB.prepare("DELETE FROM visit WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM waitlist WHERE user_id = ? OR (email IS NOT NULL AND email = (SELECT email FROM user WHERE id = ?))").bind(userId, userId),
     env.DB.prepare("DELETE FROM scheduled_push WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM note_category WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
+    env.DB.prepare("DELETE FROM category WHERE owner_key = ?").bind(userId),
+    env.DB.prepare("DELETE FROM category_set WHERE owner_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM mention_done WHERE owner_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM usage_event WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM feedback WHERE user_id = ?").bind(userId),
@@ -253,7 +257,7 @@ export async function searchNotes(env: Env, userId: string | null, raw: string, 
   const ids = fuse([fts, sem]).slice(0, 40);
   if (!ids.length) return [];
   const { results } = await env.DB.prepare(
-    `SELECT n.id, n.title, n.summary, n.topic, n.tools, n.permalink, n.status, n.created_at, n.thumb_id FROM note n
+    `SELECT n.id, n.title, n.summary, n.topic, n.tools, n.permalink, n.status, n.created_at, n.thumb_id, ${CATS("n")} FROM note n
      WHERE n.id IN (${ids.map(() => "?").join(",")}) AND n.user_id IS ? AND (? IS NULL OR n.status = ?)`,
   ).bind(...ids, userId, status, status).all<any>();
   const order = new Map(ids.map((id, i) => [id, i]));
@@ -272,7 +276,8 @@ export const DAILY_SHARED = 30, DAILY_OWN_KEY = 200;
 // Old saves from an Instagram export: how many one person can queue, by key type.
 export const IMPORT_SHARED = 100, IMPORT_OWN_KEY = 1000;
 const POST_URL = /^https:\/\/(?:www\.)?instagram\.com\/(?:p|reel|reels|tv)\/[\w-]+\/?$/i;
-const NOTE_COLUMNS = "id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id, share_id";
+const CATS = (t: string) => `(SELECT json_group_array(name) FROM note_category nc WHERE nc.note_id = ${t}.id AND nc.state = 1) AS categories`;
+const NOTE_COLUMNS = "id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id, share_id, " + CATS("note");
 
 export async function handleV1(
   request: Request,
@@ -481,6 +486,7 @@ export async function handleV1(
       push_key: vapidPublic(env),
       asked_source: Boolean(u?.found_via) || userId === null,
       owner_msg: u?.owner_msg ?? null,
+      categories: (await categoriesOf(env, userId)).names,
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
   }
@@ -606,13 +612,14 @@ export async function handleV1(
 
   if (path === "/v1/notes" && request.method === "GET") {
     const status = url.searchParams.get("status");
-    const topic = url.searchParams.get("topic");
+    const topic = url.searchParams.get("topic"), category = url.searchParams.get("category");
     const limit = Math.max(1, Math.min(Math.floor(Number(url.searchParams.get("limit")) || 50), 200));
     const { results } = await env.DB.prepare(
       `SELECT ${NOTE_COLUMNS} FROM note
        WHERE user_id IS ? AND (? IS NULL OR status = ?) AND (? IS NULL OR topic = ?)
+         AND (? IS NULL OR EXISTS (SELECT 1 FROM note_category nc WHERE nc.note_id = note.id AND nc.name = ? AND nc.state = 1))
        ORDER BY created_at DESC LIMIT ?`,
-    ).bind(userId, status, status, topic, topic, limit).all();
+    ).bind(userId, status, status, topic, topic, category, category, limit).all();
     return json({ notes: results ?? [] });
   }
 
@@ -621,6 +628,22 @@ export async function handleV1(
     if (!raw) return json({ notes: [] });
     await logEvent(env, userId, "api", "search");
     return json({ notes: await searchNotes(env, userId, raw, 20) });
+  }
+
+  // Your own categories: the list, and ticking one on a note by hand.
+  if (path === "/v1/categories" && request.method === "GET") return json(await categoriesOf(env, userId));
+  if (path === "/v1/categories" && request.method === "PUT") {
+    const b = (await request.json().catch(() => null)) as { categories?: unknown } | null;
+    const err = await setCategories(env, userId, b?.categories);
+    if (err) return json({ error: err }, 400);
+    await logEvent(env, userId, "api", "categories");
+    return json(await categoriesOf(env, userId));
+  }
+  const catMatch = path.match(/^\/v1\/notes\/([^/]+)\/categories$/);
+  if (catMatch && request.method === "POST") {
+    const b = (await request.json().catch(() => null)) as { name?: unknown; on?: unknown } | null;
+    if (typeof b?.name !== "string" || typeof b?.on !== "boolean") return json({ error: "Send a category name and on: true or false." }, 400);
+    return (await setNoteCategory(env, userId, decodeURIComponent(catMatch[1]), b.name, b.on)) ? json({ ok: true }) : json({ error: "unknown note or category" }, 404);
   }
 
   const noteMatch = path.match(/^\/v1\/notes\/([^/]+)(\/used|\/share)?$/);

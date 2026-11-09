@@ -85,6 +85,17 @@ header { padding: 22px 0 6px; }
 .chips::-webkit-scrollbar { display: none; }
 .chip { flex: none; height: 36px; padding: 0 16px; border-radius: 999px; border: 0; background: rgb(255 255 255 / .75); color: var(--muted); font-weight: 500; box-shadow: var(--lift-1); text-transform: capitalize; }
 .chip[aria-pressed=true] { background: var(--ink); color: #fff; }
+.chip.addcats { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--ink); }
+.catlist { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+.catlist:empty { display: none; }
+.catitem { display: inline-flex; align-items: center; gap: 2px; height: 36px; padding: 0 4px 0 14px; border-radius: 999px; background: var(--lavender); font-weight: 600; font-size: 14px; }
+.catitem button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; font-size: 18px; line-height: 1; color: var(--ink); cursor: pointer; }
+.ncats { margin: 14px 0 0; }
+.ncats small { display: block; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.ncats small span { opacity: .8; }
+#nCatList { display: flex; flex-wrap: wrap; gap: 8px; }
+#nCatList .chip { height: 36px; }
+#nCatList .chip, #chips .chip[data-f^="cat:"] { text-transform: none; }  /* their own words, as typed */
 
 /* two-up grid of tinted cards — the "recipe box" feel */
 #list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding-top: 10px; }
@@ -742,6 +753,16 @@ body.on-phone .phone-handoff { display: none; }
     <p>A few minutes, once. Do it now or later.</p>
   </div>
 
+  <details class="group" id="gCats">
+    <summary><div style="flex:1"><h2>Your categories</h2><small>Sort every save your way</small></div><span class="badge opt" id="bCats">Optional</span></summary>
+    <div class="gbody">
+      <p style="margin-top:0;color:var(--muted)">Name the categories you think in (say, the goals you plan around) and Skwirl files every save into the ones that fit, including everything you've already saved. On any note, tap a category to fix it.</p>
+      <div class="catlist" id="catList"></div>
+      <form class="field" id="catForm"><input id="catIn" maxlength="40" placeholder="e.g. Fine motor" aria-label="New category" autocomplete="off"><button class="btn sm" type="submit">Add</button></form>
+      <p class="msg" id="catMsg" role="status"></p>
+    </div>
+  </details>
+
   <details class="group" id="gSave" open>
     <summary><div style="flex:1"><h2>Save from your phone</h2><small>Share a reel straight into Skwirl</small></div><span class="badge" id="bSave">To do</span></summary>
     <div class="gbody">
@@ -932,6 +953,7 @@ body.on-phone .phone-handoff { display: none; }
     <button class="btn soft" id="nShare">Share</button>
     <button class="btn soft" id="nUnshare" hidden>Stop sharing</button>
   </div>
+  <div class="ncats" id="nCats" hidden><small>Your categories <span>(tap to fix)</span></small><div id="nCatList"></div></div>
   <div class="body" id="nBody"></div>
 </section>
 

@@ -136,12 +136,21 @@ function capCard(c) {
 }
 function skeleton() { return Array.from({ length: 4 }, () => '<div class="skel shimmer" aria-hidden="true"></div>').join(""); }
 
+// Your own categories (names you chose; the AI files notes into them). Filters use "cat:<name>".
+let myCats = [];
+const cats = (n) => { try { return Array.isArray(n.categories) ? n.categories : JSON.parse(n.categories || "[]"); } catch { return []; } };
 function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
-  const topics = [...new Set([...notes.map((n) => n.topic).filter(Boolean), ...(!["all", "unused"].includes(filter) ? [filter] : [])])].sort();
+  // A built-in topic with the same name as one of their categories would be a confusing twin chip.
+  const mine = new Set(myCats.map((c) => c.toLowerCase()));
+  const topics = [...new Set([...notes.map((n) => n.topic).filter(Boolean), ...(!["all", "unused"].includes(filter) && !filter.startsWith("cat:") ? [filter] : [])])]
+    .filter((t) => !mine.has(t.toLowerCase())).sort();
   const num = { all: notes.length, unused };
-  $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c === "unused" ? "to try" : c)}${num[c] ? ` <span class="n">${num[c]}</span>` : ""}</button>`).join("");
-  const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
+  for (const c of myCats) num["cat:" + c] = notes.filter((n) => cats(n).includes(c)).length;
+  if (filter.startsWith("cat:") && !myCats.includes(filter.slice(4))) filter = "all";
+  $("chips").innerHTML = ["all", "unused", ...myCats.map((c) => "cat:" + c), ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c === "unused" ? "to try" : c.startsWith("cat:") ? c.slice(4) : c)}${num[c] ? ` <span class="n">${num[c]}</span>` : ""}</button>`).join("")
+    + (!myCats.length && notes.length >= 3 && setupState && !setupState.owner ? `<button class="chip addcats" type="button" data-addcats>+ Your categories</button>` : "");
+  const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : filter.startsWith("cat:") ? cats(n).includes(filter.slice(4)) : n.topic === filter));
   const caps = filter === "all" && !$("q").value.trim() ? captures.map(capCard).join("") : "";
   const first = !notes.length && filter === "all" && !$("q").value.trim();
   if (first && !welcomeSeen) { welcomeSeen = true; tr("card_shown", "welcome"); }
@@ -272,6 +281,7 @@ async function open(id, from, record = true) {
   const o = $("nOpen"); o.hidden = !current.permalink; if (current.permalink) o.href = current.permalink;
   $("nUsed").hidden = current.status === "used";
   $("nUnshare").hidden = !current.share_id;
+  renderNoteCats();
   show("note", record); scrollTo(0, 0);
 }
 
@@ -402,12 +412,56 @@ $("q").addEventListener("input", () => {
   // One "search" per pause in typing, with how many results it found (never the words).
   clearTimeout(searchTimer); searchTimer = setTimeout(() => $("q").value.trim() && tr("search", notes.length ? (notes.length > 5 ? "6+" : notes.length) : "0 results"), 1500);
 });
-$("chips").addEventListener("click", (e) => { const f = e.target.dataset.f; if (f) { filter = f; tr("filter", f); render(); } });
+$("chips").addEventListener("click", (e) => {
+  if (e.target.closest("[data-addcats]")) { tr("click", "addcats_chip"); openSetup(false); $("gCats").open = true; $("gCats").scrollIntoView({ behavior: "smooth" }); setTimeout(() => $("catIn").focus(), 400); return; }
+  const f = e.target.dataset.f; if (f) { filter = f; tr("filter", f.startsWith("cat:") ? "category" : f); render(); }
+});
 $("list").addEventListener("click", async (e) => {
   const retry = e.target.closest("[data-retry]"), del = e.target.closest("[data-del]");
   if (retry) { const r = await api("/v1/captures/" + retry.dataset.retry + "/retry", { method: "POST" }); toast(r.ok ? "Trying again." : "Couldn't retry that one."); return load(); }
   if (del) { const r = await api("/v1/captures/" + del.dataset.del, { method: "DELETE" }); toast(r.ok ? "Removed." : "Couldn't remove that one."); return load(); }
   const c = e.target.closest(".card[data-id]"); if (c) open(c.dataset.id);
+});
+function renderNoteCats() {
+  $("nCats").hidden = !myCats.length || !current;
+  if ($("nCats").hidden) return;
+  const on = cats(current);
+  $("nCatList").innerHTML = myCats.map((c) => `<button class="chip" type="button" aria-pressed="${on.includes(c)}" data-ncat="${esc(c)}">${esc(c)}</button>`).join("");
+}
+$("nCatList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-ncat]"); if (!b || !current) return;
+  const name = b.dataset.ncat, before = cats(current), turnOn = !before.includes(name), noteId = current.id;
+  const after = turnOn ? [...before, name] : before.filter((c) => c !== name);
+  const setOn = (list) => { current.categories = list; const n = notes.find((x) => x.id === noteId); if (n) n.categories = list; renderNoteCats(); };
+  setOn(after); tr("click", turnOn ? "category_on" : "category_off");
+  const r = await api(`/v1/notes/${encodeURIComponent(noteId)}/categories`, { method: "POST", body: JSON.stringify({ name, on: turnOn }) }).catch(() => null);
+  if (!r || !r.ok) { if (current?.id === noteId) setOn(before); toast("Couldn't save that. Try again."); }
+});
+function renderCatEditor() {
+  $("catList").innerHTML = myCats.map((c, i) => `<span class="catitem">${esc(c)}<button type="button" data-rmcat="${i}" aria-label="Remove ${esc(c)}">×</button></span>`).join("");
+  $("bCats").textContent = myCats.length ? `${myCats.length} set` : "Optional";
+  $("bCats").className = "badge " + (myCats.length ? "done" : "opt");
+}
+async function saveCats(next, msg) {
+  const before = myCats; myCats = next; renderCatEditor(); render();
+  const r = await api("/v1/categories", { method: "PUT", body: JSON.stringify({ categories: next }) }).catch(() => null);
+  const b = r ? await r.json().catch(() => ({})) : {};
+  if (!r || !r.ok) { myCats = before; renderCatEditor(); render(); $("catMsg").className = "msg err"; $("catMsg").textContent = b.error || "Couldn't save that. Try again."; return; }
+  myCats = b.names || next; renderCatEditor(); render();
+  $("catMsg").className = "msg ok"; $("catMsg").textContent = msg;
+}
+$("catForm").addEventListener("submit", (e) => {
+  e.preventDefault(); const name = $("catIn").value.replace(/\s+/g, " ").trim(); if (!name) return;
+  if (myCats.some((c) => c.toLowerCase() === name.toLowerCase())) { $("catMsg").className = "msg"; $("catMsg").textContent = "You already have that one."; return; }
+  if (myCats.length >= 20) { $("catMsg").className = "msg err"; $("catMsg").textContent = "Up to 20 categories."; return; }
+  $("catIn").value = ""; tr("click", "category_add");
+  saveCats([...myCats, name], "Added. Skwirl is sorting your saves into it now, old ones too. It takes a few minutes.");
+});
+$("catList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-rmcat]"); if (!b) return;
+  const gone = myCats[Number(b.dataset.rmcat)];
+  if (!confirm(`Remove "${gone}"? Notes won't be filed under it any more.`)) return;
+  tr("click", "category_remove"); saveCats(myCats.filter((c) => c !== gone), `Removed "${gone}".`);
 });
 $("back").addEventListener("click", () => { backTo(returnTo); if (returnTo === "lib") load(); });
 $("nShare").addEventListener("click", async () => {
@@ -491,6 +545,8 @@ async function refreshSetup() {
   $("groqBody").hidden = !!st.owner; $("groqOwnerMsg").hidden = !st.owner;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
   $("groqOff").hidden = !st.has_groq_key || st.owner;
+  const fresh = st.categories || [];
+  if (JSON.stringify(fresh) !== JSON.stringify(myCats)) { myCats = fresh; renderCatEditor(); if (loaded) render(); }
 }
 // Desktop → phone handoff: a QR of the sign-in link (#t=), drawn locally, never sent anywhere.
 const onPhone = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
@@ -973,6 +1029,7 @@ function renderHub(me, perm) {
       perm === "default" ? `<button class="btn sm soft" data-hub="push">Turn on</button>` : `<small>${perm === "denied" ? "Blocked in settings" : "Home-screen app only"}</small>`],
     ["ChatGPT or Claude", "Let your AI search your saves", st.claude_connected ? "Connected" : null, `<button class="btn sm soft" ${go("gClaude")}>Connect</button>`],
     ["Old Instagram saves", i ? `${i.done} of ${i.total} read${i.failed ? `, ${i.failed} couldn't be` : ""}` : "Bring in your whole Saved folder", i && i.done + i.failed >= i.total ? "Done" : null, `<button class="btn sm soft" ${go("gImport")}>${i ? "Details" : "Import"}</button>`],
+    ["Your categories", "Sort every save your way", myCats.length ? `${myCats.length} set` : null, `<button class="btn sm soft" ${go("gCats")}>${myCats.length ? "Edit" : "Set up"}</button>`],
     ["Your own Groq key", "Uses your own AI allowance", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`],
     ...(st.telegram ? [["Telegram", "Save by sending links to a bot", st.telegram.connected ? "Connected" : null, `<button class="btn sm soft" ${go("gTelegram")}>Connect</button>`]] : []),
     ["Skwirl Plus", "No keys, saves read first (coming soon)", null, `<button class="btn sm soft" ${go("gGroq")}>Notify me</button>`],

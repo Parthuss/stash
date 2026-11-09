@@ -43,6 +43,7 @@ import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth
 import { collect, pruneAnalytics } from "./analytics";
 import { notifyOwner } from "./notify";
 import { pushProgress, pushUser, sendPush, sendScheduled } from "./push";
+import { applyAiCategories, applySortResult, categoriesOf, claimSortBatch } from "./categories";
 import { emailEnabled, emailLogin, redeemLogin } from "./login";
 import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
@@ -567,7 +568,24 @@ export default {
         await env.DB.prepare("UPDATE user SET groq_key_enc = NULL, owner_msg = ? WHERE id = ? AND groq_key_enc = ?")
           .bind("#gGroq Skwirl couldn't read your saved Groq key, so it's using the shared key for now. Paste your key again to get your own limit back.", row.user_id, owner.groq_key_enc).run();
       }
-      return json({ capture: { ...row, status: "claimed", lease, groq_key } });
+      const cats = await categoriesOf(env, row.user_id ?? null);
+      return json({ capture: { ...row, status: "claimed", lease, groq_key, categories: cats.names, cat_version: cats.version } });
+    }
+
+    // Re-sorting existing notes into someone's categories (after they add or change them).
+    if (path === "/sort/claim" && request.method === "POST") {
+      const batch = await claimSortBatch(env, url.searchParams.get("scope") === "guests");
+      if (!batch) return json({ batch: null });
+      const enc = batch.user_id
+        ? await env.DB.prepare("SELECT groq_key_enc FROM user WHERE id = ?").bind(batch.user_id).first<{ groq_key_enc: string | null }>()
+        : null;
+      const groq_key = enc?.groq_key_enc ? await decryptKey(env, enc.groq_key_enc).catch(() => null) : null;
+      return json({ batch: { ...batch, groq_key } });
+    }
+    if (path === "/sort/result" && request.method === "POST") {
+      const b = (await request.json().catch(() => null)) as { user_id?: string | null; version?: number; results?: unknown } | null;
+      if (!b || typeof b.version !== "number") return json({ error: "need version" }, 400);
+      return json({ applied: await applySortResult(env, b.user_id ?? null, b.version, b.results) });
     }
 
     if (path === "/complete" && request.method === "POST") {
@@ -744,6 +762,13 @@ export default {
             .bind(thumbId, noteId, thumbData),
           env.DB.prepare("UPDATE note SET thumb_id = ? WHERE id = ?").bind(thumbId, noteId),
         ]);
+      }
+      // The person's own categories, picked while the note was read. If they changed their categories
+      // since the claim, the version won't match and the next re-sort files it properly.
+      if (Array.isArray(b.categories)) {
+        const cats = await categoriesOf(env, userId);
+        if (cats.names.length) await env.DB.batch(applyAiCategories(env, userId, noteId, b.categories, cats.names,
+          Number(b.cat_version) === cats.version ? cats.version : -1));
       }
       // (Re)embed for meaning-based search; a re-processed note gets a fresh vector.
       await env.DB.prepare("DELETE FROM note_vec WHERE note_id = ?").bind(noteId).run();
