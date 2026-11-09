@@ -298,3 +298,19 @@ worker/           Cloudflare Worker + D1 (no R2 — see above)
 shortcuts/        Cherri source for the iOS Shortcut
 scripts/          data-export backfill
 ```
+
+## License
+
+Skwirl's code is public under the [Functional Source License, Version 1.1, MIT Future License](LICENSE)
+(FSL-1.1-MIT), from 9 November 2026.
+
+In plain English:
+- **You can** read it, run it, change it, and self-host your own copy for yourself or your team, use it for
+  learning or research, and use it to provide services to a client who's running it themselves.
+- **You can't** use it to offer a competing commercial product or service (a hosted "Skwirl" for others,
+  or anything with substantially the same features).
+- **Two years after each version is published**, that version automatically becomes MIT-licensed, with no
+  restrictions.
+
+Versions published before 9 November 2026 were released under the MIT License and stay under it.
+The hosted service at [skwirl.app](https://skwirl.app) is run by Parth Akholkar.

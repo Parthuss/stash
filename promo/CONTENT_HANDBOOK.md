@@ -40,7 +40,9 @@ for existing users; never use it in new content).
   (install from Chrome, then it's in the share menu), paste a link in the app, or the Telegram bot.
 - **Import old saves** from Instagram's data export. It's a batch a day; don't promise a speed or a
   number per day (the free AI allowance varies).
-- **Free.** No card. Open source.
+- **Free.** No card. The code is public (FSL-1.1-MIT since 9 Nov 2026, so "source-available", **not
+  "open source"**: never say open source or use #opensource. INSTAGRAM_PLAN.md piece 10 still does;
+  change it if that piece gets built).
 - **Skwirl Plus is "coming soon" (waitlist only).** $4.99/month or $39/year (shown in local currency on
   the site, e.g. ₹299, A$7.99): no keys, your saves read first, up to 500 reels a month. Never say you
   can buy it yet.
@@ -63,6 +65,7 @@ statistic about how many saves people never revisit (no such study exists), or a
 | 3 | "Your Saved folder is a graveyard" carousel (8 slides) + a reel version | 7 Nov | Yes, 7 Nov morning | `out/instagram/03-graveyard/` |
 | 5 | "11:40pm. Fridge open." POV Reel v2 (34.6s) | 7 Nov | Yes, 7 Nov | `out/instagram/05-fridge/`, `src/insta/FridgePOV.tsx`, `scripts/05-fridge-v2.md` |
 | 7 | "40 book reels. 0 books read." Lists Reel (31.8s) | 7 Nov; VO redone 8-9 Nov (v3) | [CONFIRM: probably not yet, the VO was redone after the planned post time] | `out/instagram/07-books/`, `src/insta/BookList.tsx`, `scripts/07-booklist.md` |
+| 11 | "girl, zoom in" carousel (5 slides) | 9 Nov | No (post by ~18 Nov) | `out/instagram/11-zoom-in/`, `src/insta/ZoomIn.tsx`, `scripts/11-zoom-in.md` |
 | 2, 4, 6, 8, 9, 10 | See INSTAGRAM_PLAN.md §2 | Not built | No | |
 
 Parth's own work in progress (NOT ours; never edit, stage or commit): `promo/src/MetaPromo.tsx` ("made
@@ -130,7 +133,12 @@ rule in INSTAGRAM_PLAN.md §0 is about our copy, not a customer's quote.)
    to `skwirl.app` (Parth's job) and every new caption says "link in bio".
 3. **The professional angle:** "A therapist's 500 saved reels, sorted by goal" or "Your saved reels are
    your work library". Categories are live, so this can be built now, with Jacinda's quote. A version for
-   teachers and trainers can follow.
+   teachers and trainers can follow. **Parked (9 Nov, Parth): build after the launch video and once there's
+   some traction.** Hook to use: "A therapist's saved reels, from this to this" (transformation). Needs an
+   OT-flavoured demo account in `tools/demo/seed.py` (categories via `PUT /v1/categories`).
+3b. **Two trend pieces, scripted 9 Nov (not built):** `scripts/11-zoom-in.md` ("girl, zoom in" carousel, BUILT 9 Nov,
+   post by ~18 Nov while the trend lasts) and `scripts/12-no-no-yes.md` ("No. No. No. Yes." Reel).
+   Both picked from the Nov 2026 trend lists to fill the relatable/demo buckets.
 4. **Remaining pieces from INSTAGRAM_PLAN.md:** 4 (Ask Claude), 8 (Import tutorial), 2 ("1,215"),
    6 (Stop saving like this), 9 (2-tap loop), 10 (founder story). Re-check each brief's facts against §1
    before building. Piece 8 especially: the import limits in the brief are outdated.
