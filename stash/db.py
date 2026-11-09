@@ -30,6 +30,7 @@ while it's free, avoids paying it later while it's not.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -501,6 +502,30 @@ def _fts_query(raw: str) -> str:
     return " OR ".join(f'"{w}"' for w in words)
 
 
+def _fts_all_words(raw: str) -> str:
+    """FTS5 MATCH needing every meaningful word, the keyword rule the Worker uses.
+
+    ``_fts_query`` ORs every word, so "fix the typo" matches any note with "the".
+    Fine as a fallback with no vector index, but with one it floods fusion with noise.
+    """
+    words = [w for w in re.findall(r"\w+", raw) if len(w) > 1 and w.lower() not in _STOP_WORDS]
+    return " AND ".join(f'"{w}"' for w in words)
+
+
+_STOP_WORDS = frozenset(
+    "a an and are as at be but by can do for from had has have how i if in into is it its me my "
+    "of on or our so that the their them then there these they this to up was we were what when "
+    "where which who why will with you your don".split()
+)
+
+#: Past this distance a note is not about the query, so the vector leg drops it.
+#: Measured on the real vault (90 notes, bge-small-en-v1.5) with AND keywords:
+#: 0.82 kept the right note for 29 of 30 labelled queries and returned nothing for
+#: 16 of 16 unrelated prompts. 0.80 kept 28/30; 0.84 let 1 unrelated prompt back in.
+#: The margin is thin (weakest kept 0.809, closest unrelated 0.829) and specific to
+#: this model, so re-measure if embed.MODEL_NAME changes.
+_VECTOR_MAX_DISTANCE = 0.82
+
 #: Candidate depth pulled from each leg before fusion. Wider than the final
 #: `limit` on purpose — RRF needs headroom to promote an item that one leg
 #: ranked outside its own top few but the other leg loved, which is exactly
@@ -557,8 +582,9 @@ def _fts_candidates(
 
 def _vector_candidates(
     conn: sqlite3.Connection, query: str, *, topic: str | None, status: str | None
-) -> list[str]:
-    """Nearest chunks by embedding, deduped to one (best) hit per note.
+) -> list[str] | None:
+    """Nearest chunks by embedding within the floor, deduped to one (best) hit per
+    note. None means the embedder is unavailable; [] means nothing was close enough.
 
     ``k`` must be explicit in the WHERE clause — sqlite-vec rejects a bare
     LIMIT once the query is joined to another table (verified directly: the
@@ -578,7 +604,7 @@ def _vector_candidates(
         if not _warned_no_vectors:
             print("  search: vector index unavailable, falling back to keyword-only", flush=True)
             _warned_no_vectors = True
-        return []
+        return None
 
     sql = """
         SELECT c.note_id AS note_id, chunk_vec.distance AS distance
@@ -598,6 +624,8 @@ def _vector_candidates(
     seen: set[str] = set()
     ordered: list[str] = []
     for row in conn.execute(sql, params).fetchall():
+        if row["distance"] > _VECTOR_MAX_DISTANCE:
+            break
         note_id = row["note_id"]
         if note_id not in seen:
             seen.add(note_id)
@@ -640,13 +668,16 @@ def search_notes(
     if not match:
         return recent_notes(conn, limit=limit, topic=topic, status=status)
 
-    fts_ids = _fts_candidates(conn, match, topic=topic, status=status)
     vector_ids = (
         _vector_candidates(conn, query, topic=topic, status=status)
-        if has_vectors(conn) else []
+        if has_vectors(conn) else None
     )
-
-    fused = _rrf_fuse(fts_ids, vector_ids) if vector_ids else fts_ids
+    if vector_ids is None:  # keyword-only install: any-word matching is all there is
+        fused = _fts_candidates(conn, match, topic=topic, status=status)
+    else:
+        all_words = _fts_all_words(query)
+        fts_ids = _fts_candidates(conn, all_words, topic=topic, status=status) if all_words else []
+        fused = _rrf_fuse(fts_ids, vector_ids)
     fused = fused[:limit]
     if not fused:
         return []

@@ -30,8 +30,11 @@ mcp = MCPServer(
     "stash",
     instructions=(
         "The user's own saved Instagram/social content, transcribed and indexed. "
-        "Search it at the start of technical work rather than waiting to be asked — "
-        "they save things intending to use them and forget they exist."
+        "They save things to use later and forget they exist, so search it without being "
+        "asked at the start of any build, design, writing, research or planning task, "
+        "before proposing an approach. Search concept words, not the task's literal words "
+        "(a landing page that shouldn't look AI-made: 'AI-generated UI tells'), and try a "
+        "second query if the first is weak."
     ),
 )
 
@@ -115,16 +118,18 @@ def search_stash(
 ) -> str:
     """Search the user's saved social-media posts (Instagram reels, TikToks, videos).
 
-    Use this at the START of any agent-building, automation, tooling, or research
-    task, before proposing an approach — the user saves material intending to use
-    it and reliably forgets it exists. Search first, mention what you find.
+    Use this at the START of any build, design, writing, automation, research or
+    planning task, before proposing an approach. The user saves material intending
+    to use it and reliably forgets it exists. Search first, mention what you find.
+    Use concept words, not the task's literal words, and try a second query if the
+    first is weak. An empty result means nothing relevant was saved.
 
     Returns compact hits (title, one-line summary, tools) — call
     get_stash_note(id) on whichever one turns out to matter for the full
     transcript, next step, and permalink.
 
     Args:
-        query: Free text. Topic words, tool names, or a description of the problem.
+        query: Concept words, tool names, or the underlying problem, not the task as typed.
         topic: Optional exact filter, e.g. "agent-building". See list_stash_topics.
         status: "unused" to see only things never acted on yet.
         limit: Max results, default 5.

@@ -7,7 +7,7 @@
 <link rel="canonical" href="https://skwirl.app/">
 <script src="/move.js"></script>
 <script src="/boot.js"></script>
-<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "Skwirl", "url": "https://skwirl.app/", "description": "Turns the Instagram reels and videos you save into searchable notes: recipes as ingredients and steps, books and films in one list, readable by ChatGPT and Claude.", "applicationCategory": "LifestyleApplication", "operatingSystem": "iOS, Android, Web", "browserRequirements": "Requires JavaScript", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://skwirl.app/og.png", "author": {"@type": "Person", "name": "Parth Akholkar", "url": "https://parthakholkar.com"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Skwirl?", "acceptedAnswer": {"@type": "Answer", "text": "Skwirl turns the Instagram reels and videos you save into notes you can search. Share a reel to Skwirl and a couple of minutes later it's a note: recipes come back as ingredients and steps, books, films and places land in one list, and tips come with the next step. ChatGPT and Claude can read your notes too. It's free."}}, {"@type": "Question", "name": "Can I search my saved Instagram reels?", "acceptedAnswer": {"@type": "Answer", "text": "Instagram's Saved tab has no search box for most people. Skwirl reads each reel you share to it (the speech, the on-screen text and the caption) and turns it into a note, so you can search everything you saved by what was said in it."}}, {"@type": "Question", "name": "Which phones does it work on?", "acceptedAnswer": {"@type": "Answer", "text": "iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links. You can also send links to the Skwirl bot on Telegram."}}, {"@type": "Question", "name": "How long does a save take?", "acceptedAnswer": {"@type": "Answer", "text": "Usually a couple of minutes. You'll see it appear in your library with a \"Reading…\" card while it works."}}, {"@type": "Question", "name": "Who can see my saves?", "acceptedAnswer": {"@type": "Answer", "text": "Other users cannot see your saves unless you share a note. The person running Skwirl can read the database, and Groq processes media to make your notes."}}, {"@type": "Question", "name": "Can I bring in reels I saved before?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Download your Saved posts from Instagram (Accounts Center, Export your information, JSON format) and pick the file in Skwirl. It's read on your device and only the post links are sent."}}]}]</script>
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "Skwirl", "url": "https://skwirl.app/", "description": "Turns the Instagram reels and videos you save into searchable notes: recipes as ingredients and steps, books and films in one list, readable by ChatGPT and Claude.", "applicationCategory": "LifestyleApplication", "operatingSystem": "iOS, Android, Web", "browserRequirements": "Requires JavaScript", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://skwirl.app/og.png", "author": {"@type": "Person", "name": "Parth Akholkar", "url": "https://parthakholkar.com"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Skwirl?", "acceptedAnswer": {"@type": "Answer", "text": "Skwirl turns the Instagram reels and videos you save into notes you can search. Share a reel to Skwirl and a couple of minutes later it's a note: recipes come back as ingredients and steps, books, films and places land in one list, and tips come with the next step. ChatGPT and Claude can read your notes too. It's free."}}, {"@type": "Question", "name": "Can I search my saved Instagram reels?", "acceptedAnswer": {"@type": "Answer", "text": "Instagram's Saved tab has no search box for most people. Skwirl reads each reel you share to it (the speech, the on-screen text and the caption) and turns it into a note, so you can search everything you saved by what was said in it."}}, {"@type": "Question", "name": "Can Claude use my saves while I work?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Connect Skwirl to Claude and it can check your saves while you work, like coding, design, writing, research or planning a client session. If you saved a design idea, a Claude skill or a GitHub repo, it can find that note, read it and use it. It may not check every time, so ask it to check Skwirl, or add the one line from Set up to your Claude preferences."}}, {"@type": "Question", "name": "Which phones does it work on?", "acceptedAnswer": {"@type": "Answer", "text": "iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links. You can also send links to the Skwirl bot on Telegram."}}, {"@type": "Question", "name": "How long does a save take?", "acceptedAnswer": {"@type": "Answer", "text": "Usually a couple of minutes. You'll see it appear in your library with a \"Reading…\" card while it works."}}, {"@type": "Question", "name": "Who can see my saves?", "acceptedAnswer": {"@type": "Answer", "text": "Other users cannot see your saves unless you share a note. The person running Skwirl can read the database, and Groq processes media to make your notes."}}, {"@type": "Question", "name": "Can I bring in reels I saved before?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Download your Saved posts from Instagram (Accounts Center, Export your information, JSON format) and pick the file in Skwirl. It's read on your device and only the post links are sent."}}]}]</script>
 <meta name="description" content="Instagram's Saved tab has no search. Share a reel to Skwirl and it becomes a searchable note: recipes as ingredients and steps, books and films in one list. Works with ChatGPT and Claude. Free.">
 <meta property="og:title" content="Skwirl: the reels you save, finally useful">
 <meta property="og:description" content="Share a reel. Get a searchable note. Recipes, books, movies, tips, all in one place, and ChatGPT or Claude can read it.">
@@ -335,6 +335,9 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .lsteps b { display: block; margin-bottom: 2px; } .lsteps span { color: var(--muted); font-size: 15px; }
 
 .chat { background: rgb(255 255 255 / .85); border-radius: 28px; padding: 18px; box-shadow: var(--lift-1); display: flex; flex-direction: column; gap: 10px; max-width: 560px; margin: 0 auto; }
+.chats { display: grid; gap: 12px; align-items: start; }
+@media (min-width: 880px) { .chats { grid-template-columns: 1fr 1fr; } }
+.chats .chat { width: 100%; }
 .chat p { margin: 0; padding: 10px 14px; border-radius: 18px; font-size: 15px; max-width: 88%; }
 .chat .me { align-self: flex-end; background: var(--ink); color: #fff; border-bottom-right-radius: 6px; }
 .chat .ai { background: var(--bg); border-bottom-left-radius: 6px; }
@@ -535,7 +538,7 @@ body.on-phone .phone-handoff { display: none; }
     <div class="lcopy">
       <p class="eyebrow">Free · works with ChatGPT and Claude</p>
       <h1>The reels you save, finally useful.</h1>
-      <p class="lede">Share a reel to Skwirl. A couple of minutes later it's a note you can search: recipes come back as ingredients and steps, books and movies land in a list, tips come with the next step. And Claude can read all of it.</p>
+      <p class="lede">Share a reel to Skwirl. A couple of minutes later it's a note you can search: recipes come back as ingredients and steps, books and movies land in a list, tips come with the next step. And Claude can check your saves while you work.</p>
       <form id="joinForm" class="joinbox">
         <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your first name" required>
         <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
@@ -638,17 +641,24 @@ body.on-phone .phone-handoff { display: none; }
       <li><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="12" fill="#dcd8ff"/><path d="M14 24v0m5-5v10m5-14v18m5-13v8m5-4v0" stroke="#1d1b2e" stroke-width="2.6" stroke-linecap="round"/></svg>
         <div><b>Skwirl reads it</b><span>It listens to the audio, reads the text on screen, the caption and the top comments, then writes a short note.</span></div></li>
       <li><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="12" fill="#cdf3e1"/><circle cx="22" cy="22" r="7" stroke="#1d1b2e" stroke-width="2.6" fill="none"/><path d="m27 27 6 6" stroke="#1d1b2e" stroke-width="2.6" stroke-linecap="round"/></svg>
-        <div><b>Find it when you need it</b><span>Search by anything that was said or shown. Tick off recipes you made and books you read.</span></div></li>
+        <div><b>Find it when you need it</b><span>Search by anything that was said or shown, or have Claude check them while you work. Tick off recipes you made and books you read.</span></div></li>
     </ol>
   </div>
 
   <div class="lsec claude reveal">
     <h2>Ask your AI what you saved</h2>
-    <p>Connect Skwirl to ChatGPT, Claude or any app that takes connectors. Sign in once, tap Allow, and it can look through your saves on its own, on your phone or computer. Paste it a reel link and it saves that too.</p>
+    <p>Connect Skwirl to ChatGPT, Claude or any app that takes connectors. Sign in once, tap Allow, and it can look through your saves on your phone or computer. Claude can also check your saves while you work, for that design idea, Claude skill or GitHub repo you meant to try. Paste it a reel link and it saves that too.</p>
+    <div class="chats">
+    <div class="chat">
+      <p class="me">Check my Skwirl, then help me build a landing page for my client.</p>
+      <p class="typing" aria-hidden="true"><i></i><i></i><i></i></p>
+      <p class="ai"><span class="tool">Searched Skwirl</span>You saved a reel on this in March, &ldquo;Hero sections that work&rdquo;: one clear promise, one button, a real photo. I'll build the page around that. Here's the link if you want to rewatch it.</p>
+    </div>
     <div class="chat">
       <p class="me">What was that pasta recipe I saved last week?</p>
       <p class="typing" aria-hidden="true"><i></i><i></i><i></i></p>
       <p class="ai"><span class="tool">Searched Skwirl</span>The garlic butter one. 200g spaghetti, 4 cloves garlic, 3 tbsp butter. Fry the garlic slowly in the butter, then toss in the pasta with a splash of pasta water.</p>
+    </div>
     </div>
   </div>
 
@@ -680,6 +690,7 @@ body.on-phone .phone-handoff { display: none; }
     <h2>Questions</h2>
     <details class="faq"><summary>What is Skwirl?</summary><p>Skwirl turns the Instagram reels and videos you save into notes you can search. Share a reel to Skwirl and a couple of minutes later it's a note: recipes come back as ingredients and steps, books, films and places land in one list, and tips come with the next step. ChatGPT and Claude can read your notes too. It's free.</p></details>
     <details class="faq"><summary>Can I search my saved Instagram reels?</summary><p>Instagram's Saved tab has no search box for most people. Skwirl reads each reel you share to it (the speech, the on-screen text and the caption) and turns it into a note, so you can search everything you saved by what was said in it.</p></details>
+    <details class="faq"><summary>Can Claude use my saves while I work?</summary><p>Yes. Connect Skwirl to Claude and it can check your saves while you work, like coding, design, writing, research or planning a client session. If you saved a design idea, a Claude skill or a GitHub repo, it can find that note, read it and use it. It may not check every time, so ask it to check Skwirl, or add the one line from Set up to your Claude preferences.</p></details>
     <details class="faq"><summary>Which phones does it work on?</summary><p>iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links. You can also send links to the Skwirl bot on Telegram.</p></details>
     <details class="faq"><summary>How long does a save take?</summary><p>Usually a couple of minutes. You'll see it appear in your library with a "Reading…" card while it works.</p></details>
     <details class="faq"><summary>Who can see my saves?</summary><p>Other users cannot see your saves unless you share a note. The person running Skwirl can read the database, and Groq processes media to make your notes. Details in the <a href="/privacy">privacy policy</a>.</p></details>
@@ -821,14 +832,14 @@ body.on-phone .phone-handoff { display: none; }
   </details>
 
   <details class="group" id="gClaude">
-    <summary><div style="flex:1"><h2>Connect ChatGPT or Claude</h2><small>Let your AI search your saves on its own</small></div><span class="badge" id="bClaude">To do</span></summary>
+    <summary><div style="flex:1"><h2>Connect ChatGPT or Claude</h2><small>Let your AI search your saves</small></div><span class="badge" id="bClaude">To do</span></summary>
     <div class="gbody">
       <p style="margin-top:0;color:var(--muted)">One address works in every AI app that takes MCP connectors. There's nothing secret in it: the app sends you to a Skwirl page where you tap Allow.</p>
       <pre class="cmd" id="mcpAddr"></pre>
       <div class="inline-actions"><button class="btn sm" data-copy="mcp">Copy connector address</button></div>
       <ol class="steps">
         <li><b>ChatGPT</b><span>On ChatGPT on the web: open <em>Plugins</em>, then <em>+</em> → <em>Add custom MCP server</em>. Name it "Skwirl", paste the connector address as the Server URL and select OAuth. Review the prompt, create and install the plugin. Sign in to Skwirl when asked and tap Allow. Your workspace must allow custom connections.</span></li>
-        <li><b>Claude</b><span>claude.ai → Settings → Connectors → <em>Add custom connector</em>. Name it "Skwirl", paste the address, then tap Connect and Allow. It then works in the Claude phone app too.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div></li>
+        <li><b>Claude</b><span>claude.ai → Settings → Connectors → <em>Add custom connector</em>. Name it "Skwirl", paste the address, then tap Connect and Allow. It then works in the Claude phone app too.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div><span style="display:block;margin-top:12px">To make Claude more likely to check while you work, add this line to your personal preferences in Claude's settings:</span><pre class="cmd" id="claudePrefs" style="word-break:normal">Before starting a build, design, writing, research or planning task, search my Skwirl connector by concept for anything I saved on it.</pre><div class="inline-actions"><button class="btn sm soft" data-copy="prefs">Copy line</button></div></li>
         <li><b>Anything else</b><span>Le Chat, Perplexity, Cursor and other apps with "custom connector" or "MCP server" settings: paste the same address. Then ask <em>"What books have I saved?"</em> or paste a reel and say <em>"save this to Skwirl"</em>.</span></li>
       </ol>
       <b style="display:block;margin-top:4px">Using Claude Code?</b>

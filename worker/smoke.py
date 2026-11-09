@@ -13,6 +13,10 @@ c = httpx.Client(base_url=B)
 def user(name):
     r = c.post("/admin/users", headers=adm, json={"name": name}); r.raise_for_status(); return r.json()
 def h(u): return {"Authorization": f"Bearer {u['token']}"}
+def lease_of(cid):  # /note needs a live claim; the queue is oldest-first, so claim up to this capture
+    while x := c.post("/claim", headers=adm).json()["capture"]:
+        if x["id"] == cid: return x["lease"]
+    raise AssertionError(f"never claimed {cid}")
 ann, bob = user("ann"), user("bob")
 assert c.get("/v1/notes").status_code == 401
 assert c.get("/v1/notes", headers={"Authorization": "Bearer nope"}).status_code == 401
@@ -23,7 +27,7 @@ b = c.post("/v1/ingest", headers=h(bob), json=url); assert b.status_code == 202,
 assert a.json()["id"] != b.json()["id"]
 d = c.post("/v1/ingest", headers=h(ann), json=url); assert d.status_code == 200 and not d.json()["created"]
 cl = c.post("/claim", headers=adm).json()["capture"]; assert cl["user_id"] == ann["id"], cl
-note = {"capture_id": a.json()["id"], "user_id": ann["id"], "title": "Remotion animation tips",
+note = {"capture_id": a.json()["id"], "user_id": ann["id"], "lease": cl["lease"], "title": "Remotion animation tips",
         "summary": "how to animate", "topic": "tooling", "tools": ["remotion"],
         "markdown": "# Remotion\nspring easing, stagger"}
 n1 = c.post("/note", headers=adm, json=note).json()["id"]
@@ -41,7 +45,8 @@ assert c.get(f"/v1/status/{a.json()['id']}", headers=h(bob)).status_code == 404
 
 # ---- owner (STASH_SECRET as bearer) + MCP ----
 own = {"Authorization": "Bearer adm"}
-o = c.post("/note", headers=adm, json={"capture_id": "own-1", "title": "Owner secret sauce", "summary": "s",
+own1 = c.post("/ingest", headers=adm, json={"url": "https://www.instagram.com/reel/OWN1/"}).json()["id"]
+o = c.post("/note", headers=adm, json={"capture_id": own1, "lease": lease_of(own1), "title": "Owner secret sauce", "summary": "s",
      "topic": "design", "tools": ["figma"], "markdown": "# owner\nunique-owner-word"}).json()["id"]
 assert [n["id"] for n in c.get("/v1/search", headers=own, params={"q": "unique-owner-word"}).json()["notes"]] == [o]
 assert c.get("/v1/search", headers=h(ann), params={"q": "unique-owner-word"}).json()["notes"] == []
@@ -66,7 +71,7 @@ assert st["owner"]["notes"] == 1 and st["owner"]["used"] == 1, st["owner"]
 assert c.get("/admin/stats").status_code == 401
 # ---- setup, BYO key, export ----
 import os
-assert c.get("/v1/setup", headers=h(ann)).json() == {"owner": False, "saved_from": {"app": 1}, "claude_connected": True, "has_groq_key": False, "has_email": False, "name": "ann", "push_key": None, "asked_source": False, "telegram": {"connected": False}}, c.get("/v1/setup", headers=h(ann)).text
+assert c.get("/v1/setup", headers=h(ann)).json() == {"owner": False, "saved_from": {"app": 1}, "claude_connected": True, "has_groq_key": False, "has_email": False, "name": "ann", "push_key": None, "asked_source": False, "owner_msg": None, "categories": [], "telegram": {"connected": False}}, c.get("/v1/setup", headers=h(ann)).text
 assert c.put("/v1/settings/groq", headers=h(ann), json={"key": "hello"}).status_code == 400           # bad shape
 assert c.put("/v1/settings/groq", headers=h(ann), json={"key": "gsk_" + "a" * 40}).status_code == 400  # Groq rejects it
 assert c.put("/v1/settings/groq", headers=own, json={"key": "gsk_" + "a" * 40}).status_code == 400     # owner has no per-user key
@@ -173,7 +178,7 @@ assert row["api_calls_7d"] >= 2 and row["last_api"]
 # ---- /v1/mentions: scoped, filterable, and matches the MCP tool ----
 mu = user("mentions1"); mh = h(mu)
 cid = c.post("/v1/ingest", headers=mh, json={"url": "https://www.instagram.com/reel/BOOKS/"}).json()["id"]
-c.post("/note", headers=adm, json={"capture_id": cid, "user_id": mu["id"], "title": "Books I loved", "topic": "inspiration",
+c.post("/note", headers=adm, json={"capture_id": cid, "user_id": mu["id"], "lease": lease_of(cid), "title": "Books I loved", "topic": "inspiration",
   "tools": [], "mentions": [{"type": "book", "name": "Atomic Habits"}, {"type": "movie", "name": "Arrival"}],
   "markdown": "# Books I loved"})
 all_m = c.get("/v1/mentions", headers=mh).json()["mentions"]
@@ -190,17 +195,18 @@ import base64 as _b64
 tu = user("thumbuser"); th = h(tu)
 jpeg = b"\xff\xd8\xff\xe0" + b"0" * 2000 + b"\xff\xd9"
 tcid = c.post("/v1/ingest", headers=th, json={"url": "https://www.instagram.com/reel/THUMB1/"}).json()["id"]
-c.post("/note", headers=adm, json={"capture_id": tcid, "user_id": tu["id"], "title": "Pasta", "topic": "food", "tools": [],
+c.post("/note", headers=adm, json={"capture_id": tcid, "user_id": tu["id"], "lease": lease_of(tcid), "title": "Pasta", "topic": "food", "tools": [],
   "mentions": [{"type": "book", "name": "Salt Fat Acid Heat"}], "markdown": "# Pasta", "thumb": _b64.b64encode(jpeg).decode()})
 n = c.get("/v1/notes", headers=th).json()["notes"][0]
 assert n["thumb_id"] and len(n["thumb_id"]) == 32
 img = c.get(f"/t/{n['thumb_id']}")                                  # no auth needed: <img> can't send one
 assert img.status_code == 200 and img.content == jpeg and img.headers["content-type"] == "image/jpeg"
 assert c.get("/t/" + "0" * 32).status_code == 404 and c.get("/t/../v1/notes").status_code == 401 and c.get("/t/not-hex").status_code != 200
-assert c.post("/note", headers=adm, json={"capture_id": "bad", "title": "x", "markdown": "x", "thumb": "<script>"}).status_code == 200
+bad = c.post("/ingest", headers=adm, json={"url": "https://www.instagram.com/reel/BADTHUMB/"}).json()["id"]
+assert c.post("/note", headers=adm, json={"capture_id": bad, "lease": lease_of(bad), "title": "x", "markdown": "x", "thumb": "<script>"}).status_code == 200
 # ---- lists: dedupe across posts, synced done state, isolation ----
 tcid2 = c.post("/v1/ingest", headers=th, json={"url": "https://www.instagram.com/reel/THUMB2/"}).json()["id"]
-c.post("/note", headers=adm, json={"capture_id": tcid2, "user_id": tu["id"], "title": "More cooking", "topic": "food",
+c.post("/note", headers=adm, json={"capture_id": tcid2, "user_id": tu["id"], "lease": lease_of(tcid2), "title": "More cooking", "topic": "food",
   "tools": [], "mentions": [{"type": "book", "name": "salt fat acid heat "}], "markdown": "# More"})
 lm = c.get("/v1/mentions", headers=th).json()["mentions"]
 assert len(lm) == 1 and lm[0]["count"] == 2, lm                     # same book from two reels = one item
@@ -224,7 +230,7 @@ cap = c.post("/v1/ingest", headers=hh, json={"url": "https://www.instagram.com/r
 md = ("# Pasta\n\nA quick <script>alert(1)</script> pasta.\n\n## Next step\n\nBuy garlic.\n\n"
       "## Why you probably saved this\n\nPRIVATE-WHY\n\n## Ingredients\n\n- 200g spaghetti\n\n## Steps\n\n1. Boil.\n\n"
       "## Your note at capture\n\n> PRIVATE-NOTE\n\n## Transcript\n\nPRIVATE-TRANSCRIPT")
-sid = c.post("/note", headers=adm, json={"capture_id": cap, "user_id": sh["id"], "title": "Pasta <b>", "summary": "s",
+sid = c.post("/note", headers=adm, json={"capture_id": cap, "user_id": sh["id"], "lease": lease_of(cap), "title": "Pasta <b>", "summary": "s",
              "topic": "food", "tools": [], "markdown": md}).json()["id"]
 assert c.post(f"/v1/notes/{sid}/share", headers=h(ann)).status_code == 404          # not yours, can't share it
 share = c.post(f"/v1/notes/{sid}/share", headers=hh).json()["share_id"]

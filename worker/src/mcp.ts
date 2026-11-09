@@ -10,30 +10,32 @@
 import type { Env } from "./index";
 import { listMentions, logEvent, searchNotes } from "./v1";
 
-// The owner runs this inside coding agents; everyone else saves recipes, trips and books.
+// The owner's saves are all technical; everyone else's mix work and life.
 const OWNER_INSTRUCTIONS =
   "The user's own saved Instagram/YouTube/X content, transcribed and indexed. " +
   "Search it at the start of technical work rather than waiting to be asked. " +
   "they save things intending to use them and forget they exist.";
 const INSTRUCTIONS =
-  "Skwirl holds the reels and posts this person saved (Instagram, Facebook, YouTube, X), each turned " +
-  "into a note: summary, next step, transcript, recipe ingredients and steps, and the books, movies, places " +
-  "and products it names. Search it whenever they ask about something they saw or saved, or when planning " +
-  "meals, trips, reading, workouts or purchases, before answering from general knowledge. Cite the note's " +
-  "title and link. If they paste a reel or post link and want to keep it, use save_link.";
+  "Skwirl holds the reels and posts this person saved (Instagram, Facebook, YouTube, X) as notes: summary, " +
+  "next step, transcript, recipe steps, and the tools, books, movies, places and products named. They save " +
+  "things to use later and forget they exist, so search it without being asked at the start of work tasks " +
+  "(coding, design, building agents or automations, writing, client or therapy session planning, research) " +
+  "and when planning meals, trips, reading, workouts or purchases, before answering from general knowledge. " +
+  "Also search when they ask about something they saw or saved. Cite the note's title and link. If they " +
+  "paste a reel or post link and want to keep it, use save_link.";
 
 const TOOLS = [
   {
     name: "search_stash",
     description:
       "Search the user's saved social-media posts by keyword or by meaning (describe it loosely: " +
-      "'that hotel room under the sea'). Use at the START of any agent-building, " +
-      "automation, tooling, design or research task, before proposing an approach. Returns compact " +
-      "hits; call get_stash_note(id) for the full note.",
+      "'that hotel room under the sea'). Use at the START of any work task (coding, design, agents, " +
+      "automations, writing, client or session planning, research), before proposing an approach. " +
+      "Returns compact hits; call get_stash_note(id) for the full note.",
     inputSchema: {
       type: "object",
       properties: {
-        query: { type: "string", description: "Topic words, tool names, or the problem." },
+        query: { type: "string", description: "Concept words, tool names, or the underlying problem, not the task as typed. Try a second query if the first is weak." },
         status: { type: "string", description: '"unused" for things never acted on.' },
         limit: { type: "number", description: "Max results, default 5." },
       },

@@ -573,7 +573,7 @@ $("tabIos").addEventListener("click", () => setTab("ios")); $("tabAnd").addEvent
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-copy]"); if (!b) return;
   const what = b.dataset.copy;
-  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "linkonly") copy(signInLink(), "Sign-in link"); else if (what === "mcp") copy(mcpUrl(), "Connector address"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
+  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "linkonly") copy(signInLink(), "Sign-in link"); else if (what === "mcp") copy(mcpUrl(), "Connector address"); else if (what === "prefs") copy($("claudePrefs").textContent, "Line"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
 });
 $("groqOff").addEventListener("click", async () => {
   if (!confirm("Remove your Groq key? Your saves go back to Skwirl's shared key, with its small daily limit.")) return;

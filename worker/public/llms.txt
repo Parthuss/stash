@@ -11,6 +11,7 @@ Instagram's Saved tab has no search box for most people (November 2026); Skwirl 
 - Works with Instagram, Facebook, YouTube Shorts and X links.
 - Imports an Instagram "Saved" data export, so old saves become notes too.
 - Connects to ChatGPT and Claude, so you can ask "what was that recipe I saved?".
+- Useful for work too: connected to Claude, it can check your saves while you work (coding, design, writing, research, client planning), then read the note and use it, including a saved design idea, Claude skill or GitHub repo.
 
 ## How to save
 - iPhone: a Shortcut in the share menu. Android: install from Chrome, then Skwirl is in the share menu. Any browser: paste a link. Also a Telegram bot.
