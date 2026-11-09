@@ -44,9 +44,12 @@ for existing users; never use it in new content).
 - **Skwirl Plus is "coming soon" (waitlist only).** $4.99/month or $39/year (shown in local currency on
   the site, e.g. ₹299, A$7.99): no keys, your saves read first, up to 500 reels a month. Never say you
   can buy it yet.
-- **Coming, not live:** your own categories (e.g. sort by "fine motor / handwriting / emotional
-  regulation"), with AI auto-sorting. Being built now for Jacinda. **Don't show or claim it until Parth
-  confirms it shipped.**
+- **Your own categories (live since 9 Nov):** name the categories you think in (e.g. "Fine motor",
+  "Handwriting", "Emotional regulation", or "Weeknight dinners") in Set up, and Skwirl files every save
+  into the ones that fit, old saves included; tap a category on a note to fix it. Real-model test: it
+  filed OT-style activity notes correctly (a tweezer game under Fine motor, an animal-walk course under
+  Gross motor and Executive function). This is the core of the "your saved reels are your work library"
+  angle.
 
 Never claim: an App Store / Play Store app, instant processing, unlimited saves, user counts, any
 statistic about how many saves people never revisit (no such study exists), or anything on the
@@ -126,7 +129,7 @@ rule in INSTAGRAM_PLAN.md §0 is about our copy, not a customer's quote.)
 2. **A skwirl.app moment:** a Story or short Reel marking the new address. Update the Instagram bio link
    to `skwirl.app` (Parth's job) and every new caption says "link in bio".
 3. **The professional angle:** "A therapist's 500 saved reels, sorted by goal" or "Your saved reels are
-   your work library". Build once the categories feature ships, using Jacinda's quote. A version for
+   your work library". Categories are live, so this can be built now, with Jacinda's quote. A version for
    teachers and trainers can follow.
 4. **Remaining pieces from INSTAGRAM_PLAN.md:** 4 (Ask Claude), 8 (Import tutorial), 2 ("1,215"),
    6 (Stop saving like this), 9 (2-tap loop), 10 (founder story). Re-check each brief's facts against §1
