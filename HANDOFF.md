@@ -1,6 +1,6 @@
 # Stash — handoff
 
-Written 2026-08-20, last updated 2026-11-07. Everything in this file was checked
+Written 2026-08-20, last updated 2026-11-09. Everything in this file was checked
 live against the running system, not recalled from memory. Commands to
 re-verify each claim are included.
 
@@ -19,6 +19,61 @@ when it's relevant instead of waiting to be asked.
 
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
+
+## 2026-11-08 to 09: audit fixes, skwirl.app, categories, payments setup (START HERE)
+
+**State (9 Nov):** live at https://skwirl.app (old skwirl.parthakholkar.com kept for signed-in users and
+installed apps; see the 9 Nov DOMAIN note below). Everything below is deployed and pushed; detailed
+per-change notes are the "9 Nov" bullets further down this file.
+
+**Users:** Jacinda (AU, occupational therapist, found us via Google, 506 imports crawling on her free
+Groq key). She replied by email 9 Nov: "honestly perfect", would pay for a faster option, sorts saves by
+therapy goal, OK to quote her (first name + "occupational therapist"). Custom categories were built for
+her and shipped the same day. Parth's reply email to her is drafted in chat (send after Email Routing
+works; middle paragraph says categories are live). Steve (PK) has an owner_msg card waiting, never
+returned. Nobody has paid yet; Plus is still waitlist-only.
+
+**Shipped 8-9 Nov:** the audit (docs/audit/2026-11-08/, untracked) fixes from Claude and Codex merged and
+live (migrations 0027, 0028); rate-limit waste fix (imports wait for a whole note's worth of Groq
+allowance); skwirl.app domain move; landing fixes (email field shows with the name field, regional
+pricing in app.js `PRICES`, last "stash" copy); custom categories (migration 0029); content handbook
+`promo/CONTENT_HANDBOOK.md` for content-only chats; license switched to **FSL-1.1-MIT** (README explains;
+pre-9-Nov versions stay MIT; never call it "open source" now); refund policy page /refunds + Plus
+section in /terms; robots/sitemap/llms/IndexNow/guides SEO pass.
+
+**Pricing agreed (not live, no checkout yet):** Plus $4.99/mo or $39/yr; local: India ₹299/₹2,499, UK
+£3.99/£31, EU €4.99/€39, Canada C$6.99/C$54, Australia A$7.99/A$59, NZ NZ$8.99/NZ$65. Up to 500 reels a
+month. Real cost about 1.1 cents a note (measured: ~8.1k input + ~1k output tokens on qwen3.8-27b at
+$0.80/$4.00 per M, plus Whisper turbo). Parth's rule: never cut note quality to save cost.
+
+**Payments (in progress):** Dodo Payments chosen (Polar is the backup). Parth signed up as an
+**individual**, business name "Skwirl", category SaaS/AI, payout **Local** to his HDFC account;
+verification **submitted for review 9 Nov**. Ask Dodo support which currency Local payouts to India
+arrive in and whether e-FIRA is provided. The official Dodo Claude Code plugin is installed (user scope,
+`dodopayments@dodopayments`); its API MCP server needs Parth to authorise via `/mcp` (pick Skwirl + Test
+mode).
+
+**Next, in order:**
+1. After `/mcp` auth: create the two **test-mode** products (monthly $4.99, yearly $39, local prices above).
+2. Parth creates a test API key and a webhook endpoint `https://skwirl.app/webhooks/dodo` in Dodo, then
+   `cd worker && npx wrangler secret put DODO_API_KEY -c wrangler.local.toml` (and `DODO_WEBHOOK_SECRET`).
+   Never paste keys in chat.
+3. Build Plus (use the Dodo plugin skills: checkout-integration, webhook-integration,
+   subscription-integration, localized-pricing, testing-and-go-live): user.plan + plan_until + Dodo ids
+   (migration), POST /v1/plus/checkout (server-side session, metadata user_id), /webhooks/dodo
+   (Standard Webhooks signature on the raw body, idempotent on webhook-id), customer portal link, Plus
+   users first in /claim and on a paid Groq key (Parth must create a paid Groq account), 500/month cap
+   with a soft slow-down (not a hard stop), Get Plus buttons replacing Notify me, Plus status in Me/Set up.
+   Test every path with Dodo test cards before live.
+4. Email Routing for skwirl.app: support@skwirl.app -> pakholkar@gmail.com (Parth doing it 9 Nov; the
+   refund page already lists the address). The same setup can then carry OWNER_MAIL alerts.
+5. Open from the audit: none blocking. Pending owner items: Search Console + Bing for skwirl.app, update
+   the Instagram bio link to skwirl.app, test the token-free iPhone Shortcut and push on a real iPhone.
+
+**Local setup notes:** `claude` CLI shim at /opt/homebrew/bin/claude was fixed 9 Nov (backup at
+~/Work/Experiment/claude-shim.backup); the Claude Craveto / Claude BN desktop launchers don't use it.
+A second worktree `../stash-claude` (branches audit-fixes-claude, audit-integration, skwirl-app-domain)
+is merged and can be removed with `git worktree remove ../stash-claude`.
 
 ## 2026-11-06 to 07: first real users, outage fix, growth plumbing
 
