@@ -17,6 +17,7 @@ import { okEndpoint, sendPush, vapidPublic } from "./push";
 import { notifyOwner } from "./notify";
 import type { Env } from "./index";
 import { fuse, semanticIds } from "./embed";
+import { ccKeyRoute } from "./recall";
 import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
 
 const json = (body: unknown, status = 200) =>
@@ -168,6 +169,7 @@ export async function deleteUser(env: Env, userId: string, origin: string): Prom
     env.DB.prepare("DELETE FROM feedback WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM push_sub WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM device_token WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM cc_key WHERE user_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM login_code WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
     env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
@@ -349,6 +351,11 @@ export async function handleV1(
     return json({ status: dead ? "failed" : row.status, title: row.title, error: row.error });
   }
 
+  if (path === "/v1/cc-key") {
+    if (userId === null) return json({ error: "The owner uses the STASH_SECRET or the local recall hook." }, 400);
+    return ccKeyRoute(env, userId, request.method);
+  }
+
   if (path === "/v1/token/rotate" && request.method === "POST") {
     if (userId === null) return json({ error: "The owner token is the STASH_SECRET. Rotate it with wrangler." }, 400);
     const token = "stk_" + [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -357,6 +364,7 @@ export async function handleV1(
       env.DB.prepare("DELETE FROM oauth_token WHERE user_key = ?").bind(userId),  // connected AI apps too
       env.DB.prepare("DELETE FROM telegram_chat WHERE user_key = ?").bind(userId),  // and Telegram
       env.DB.prepare("DELETE FROM device_token WHERE user_id = ?").bind(userId),  // and recovered devices
+      env.DB.prepare("DELETE FROM cc_key WHERE user_key = ?").bind(userId),  // and the Claude Code plugin
       // and every grant still waiting to be redeemed, or it would mint a fresh credential after the
       // reset (an AI-app code, a Telegram connect link, an emailed sign-in link). Audit S02.
       env.DB.prepare("DELETE FROM oauth_code WHERE user_key = ?").bind(userId),

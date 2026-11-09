@@ -842,9 +842,11 @@ body.on-phone .phone-handoff { display: none; }
         <li><b>Claude</b><span>claude.ai → Settings → Connectors → <em>Add custom connector</em>. Name it "Skwirl", paste the address, then tap Connect and Allow. It then works in the Claude phone app too.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div><span style="display:block;margin-top:12px">To make Claude more likely to check while you work, add this line to your personal preferences in Claude's settings:</span><pre class="cmd" id="claudePrefs" style="word-break:normal">Before starting a build, design, writing, research or planning task, search my Skwirl connector by concept for anything I saved on it.</pre><div class="inline-actions"><button class="btn sm soft" data-copy="prefs">Copy line</button></div></li>
         <li><b>Anything else</b><span>Le Chat, Perplexity, Cursor and other apps with "custom connector" or "MCP server" settings: paste the same address. Then ask <em>"What books have I saved?"</em> or paste a reel and say <em>"save this to Skwirl"</em>.</span></li>
       </ol>
-      <b style="display:block;margin-top:4px">Using Claude Code?</b>
-      <pre class="cmd" id="cmdCode"></pre>
-      <div class="inline-actions"><button class="btn sm soft" data-copy="cc">Copy command</button></div>
+      <div id="ccBox"><b style="display:block;margin-top:4px">Using Claude Code?</b>
+      <p style="margin:4px 0 0;color:var(--muted)">Install the Skwirl plugin and Claude Code checks your saves on every message, then brings up the ones that fit the task: that design idea, Claude skill or repo you meant to try. Paste the command into Terminal and press Enter. Each message you send in Claude Code goes to Skwirl to be compared with your saves, then dropped. It's never stored.</p>
+      <pre class="cmd" id="cmdCode" hidden></pre>
+      <div class="inline-actions"><button class="btn sm" type="button" id="ccMake">Copy install command</button><button class="btn sm soft" type="button" id="ccOff" hidden>Turn off</button></div>
+      <small id="ccStatus" style="display:block;margin-top:6px;color:var(--muted)"></small></div>
     </div>
   </details>
 

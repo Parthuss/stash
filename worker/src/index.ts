@@ -38,6 +38,7 @@
  */
 
 import { embedMissing } from "./embed";
+import { ccKeyUser, recall } from "./recall";
 import { handleMcp } from "./mcp";
 import { challengeHeader, handleOAuth, pruneOAuth, userFromOAuth } from "./oauth";
 import { collect, pruneAnalytics } from "./analytics";
@@ -333,7 +334,9 @@ export default {
     const oauth = await handleOAuth(request, env, path, url);
     if (oauth) return oauth;
     if (path === "/mcp" || path.startsWith("/mcp/")) {
-      const userId = path === "/mcp" ? await userFromOAuth(request, env) : await userFromToken(decodeURIComponent(path.slice(5)), env);
+      const secret = decodeURIComponent(path.slice(5));
+      let userId = path === "/mcp" ? await userFromOAuth(request, env) : await userFromToken(secret, env);
+      if (userId === undefined && path !== "/mcp") userId = await ccKeyUser(env, secret);
       if (userId === undefined) {
         return new Response('{"error":"unauthorized"}', { status: 401, headers: { "content-type": "application/json", ...(path === "/mcp" ? challengeHeader(url.origin) : {}) } });
       }
@@ -451,6 +454,15 @@ export default {
       await env.DB.prepare("UPDATE user SET joined_via = 'invite', email = ? WHERE id = ?").bind(email, user.id).run();
       await logEvent(env, user.id, "api", "join");
       return json({ token: user.token }, 201);
+    }
+
+    // Claude Code plugin hook: takes the hook's own JSON, answers in hook format. A Claude Code key works here.
+    if (path === "/v1/recall" && request.method === "POST") {
+      const key = (request.headers.get("Authorization") ?? "").replace(/^Bearer /, "");
+      let userId = await userFromToken(key, env);
+      if (userId === undefined) userId = await ccKeyUser(env, key);
+      if (userId === undefined) return json({ error: "unauthorized" }, 401);
+      return recall(env, userId, await request.json().catch(() => ({})), userId === null && url.searchParams.has("debug"));
     }
 
     // ---- per-user API (bearer token) -----------------------------------

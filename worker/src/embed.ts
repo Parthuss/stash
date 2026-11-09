@@ -40,8 +40,8 @@ export async function embedMissing(env: Env, limit = 40): Promise<number> {
   return results.length;
 }
 
-/** Note ids ranked by meaning, best first, above a similarity floor. */
-export async function semanticIds(env: Env, userId: string | null, query: string, limit = 30): Promise<string[]> {
+/** Every note of one person scored by meaning against the query (cosine, roughly 0.3-0.6). */
+export async function semanticScores(env: Env, userId: string | null, query: string): Promise<{ id: string; s: number }[]> {
   const q = (await embed(env, [query]).catch(() => null))?.[0];
   if (!q) return [];
   const { results } = await env.DB.prepare("SELECT note_id, vec FROM note_vec WHERE user_key = ?")
@@ -52,6 +52,12 @@ export async function semanticIds(env: Env, userId: string | null, query: string
     for (let i = 0; i < v.length; i++) dot += v[i] * q[i];
     return { id: r.note_id, s: dot / (127 * 127) };
   });
+  return scored;
+}
+
+/** Note ids ranked by meaning, best first, above a similarity floor. */
+export async function semanticIds(env: Env, userId: string | null, query: string, limit = 30): Promise<string[]> {
+  const scored = await semanticScores(env, userId, query);
   // bge-m3 scores sit in a narrow band: unrelated notes land at 0.30-0.40 and a real match at
   // 0.45-0.55 (measured on the demo library). Keep matches above the floor and close to the best one.
   const top = Math.max(0, ...scored.map((x) => x.s));

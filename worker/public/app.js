@@ -536,7 +536,8 @@ async function refreshSetup() {
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
   $("homeIos").hidden = !ios && and; $("homeAnd").hidden = !and; $("homeDesk").hidden = ios || and;
   $("setupDot").hidden = phone;   // Claude is recommended, not required: don't nag forever
-  $("cmdCode").textContent = `claude mcp add --transport http skwirl ${mcpUrl()}`;
+  $("ccBox").hidden = !!st.owner;
+  if (!st.owner) api("/v1/cc-key").then((r) => r.json()).then((k) => ccShow(k.created_at)).catch(() => {});
   $("mcpAddr").textContent = mcpUrl();
   $("gTelegram").hidden = !st.telegram;
   if (st.telegram) { set("bTelegram", st.telegram.connected, "Optional"); if (!st.telegram.connected) $("bTelegram").className = "badge opt"; $("tgOff").hidden = !st.telegram.connected; }
@@ -573,7 +574,24 @@ $("tabIos").addEventListener("click", () => setTab("ios")); $("tabAnd").addEvent
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-copy]"); if (!b) return;
   const what = b.dataset.copy;
-  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "linkonly") copy(signInLink(), "Sign-in link"); else if (what === "mcp") copy(mcpUrl(), "Connector address"); else if (what === "prefs") copy($("claudePrefs").textContent, "Line"); else if (what === "cc") copy($("cmdCode").textContent, "Command");
+  if (what === "token") copy(token, "Token"); else if (what === "link") saveLink(); else if (what === "linkonly") copy(signInLink(), "Sign-in link"); else if (what === "mcp") copy(mcpUrl(), "Connector address"); else if (what === "prefs") copy($("claudePrefs").textContent, "Line");
+});
+// Claude Code plugin: each tap makes a new key (shown once, inside the command); the old one stops working.
+function ccShow(at) {
+  $("ccOff").hidden = !at;
+  $("ccStatus").textContent = at ? `Installed with a key made ${new Date(at).toLocaleDateString()}. Copying again makes a new key and the old one stops working.` : "";
+}
+$("ccMake").addEventListener("click", async () => {
+  try {
+    const { key } = await (await api("/v1/cc-key", { method: "POST" })).json();
+    const cmd = `claude plugin install skwirl --marketplace Parthuss/stash --config key=${key}`;
+    $("cmdCode").textContent = cmd; $("cmdCode").hidden = false;
+    copy(cmd, "Install command"); tr("click", "cc_install"); ccShow(new Date().toISOString());
+  } catch {}
+});
+$("ccOff").addEventListener("click", async () => {
+  if (!confirm("Turn off the Claude Code plugin? It stops checking your saves until you install it again.")) return;
+  try { await api("/v1/cc-key", { method: "DELETE" }); $("cmdCode").hidden = true; ccShow(null); toast("Claude Code plugin turned off"); } catch {}
 });
 $("groqOff").addEventListener("click", async () => {
   if (!confirm("Remove your Groq key? Your saves go back to Skwirl's shared key, with its small daily limit.")) return;

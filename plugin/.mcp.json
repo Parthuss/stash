@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "skwirl": { "type": "http", "url": "https://skwirl.app/mcp/${user_config.key}" }
+  }
+}

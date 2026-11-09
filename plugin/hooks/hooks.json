@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -sf -m 3 -X POST -H 'Content-Type: application/json' -H \"Authorization: Bearer ${user_config.key}\" --data-binary @- https://skwirl.app/v1/recall || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
