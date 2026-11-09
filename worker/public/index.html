@@ -6,7 +6,7 @@
 <title>Skwirl: search your saved Instagram reels as notes</title>
 <link rel="canonical" href="https://skwirl.parthakholkar.com/">
 <script src="/boot.js"></script>
-<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "Skwirl", "url": "https://skwirl.parthakholkar.com/", "description": "Turns the Instagram reels and videos you save into searchable notes: recipes as ingredients and steps, books and films in one list, readable by ChatGPT and Claude.", "applicationCategory": "LifestyleApplication", "operatingSystem": "iOS, Android, Web", "browserRequirements": "Requires JavaScript", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://skwirl.parthakholkar.com/og.png", "author": {"@type": "Person", "name": "Parth Akholkar", "url": "https://parthakholkar.com"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Skwirl?", "acceptedAnswer": {"@type": "Answer", "text": "Skwirl turns the Instagram reels and videos you save into notes you can search. Share a reel to Skwirl and a couple of minutes later it's a note: recipes come back as ingredients and steps, books, films and places land in one list, and tips come with the next step. ChatGPT and Claude can read your notes too. It's free."}}, {"@type": "Question", "name": "Can I search my saved Instagram reels?", "acceptedAnswer": {"@type": "Answer", "text": "Instagram's Saved tab has no search box for most people. Skwirl reads each reel you share to it (the speech, the on-screen text and the caption) and turns it into a note, so you can search everything you saved by what was said in it."}}, {"@type": "Question", "name": "Which phones does it work on?", "acceptedAnswer": {"@type": "Answer", "text": "iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links. You can also send links to the Skwirl bot on Telegram."}}, {"@type": "Question", "name": "How long does a save take?", "acceptedAnswer": {"@type": "Answer", "text": "Usually a couple of minutes. You'll see it appear in your library with a \"Reading…\" card while it works."}}, {"@type": "Question", "name": "Who can see my saves?", "acceptedAnswer": {"@type": "Answer", "text": "Only you, unless you share a note. Skwirl never re-posts the video, it keeps a short note and a small cover image."}}, {"@type": "Question", "name": "Can I bring in reels I saved before?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Download your Saved posts from Instagram (Accounts Center, Export your information, JSON format) and pick the file in Skwirl. It's read on your device and only the post links are sent."}}]}]</script>
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "Skwirl", "url": "https://skwirl.parthakholkar.com/", "description": "Turns the Instagram reels and videos you save into searchable notes: recipes as ingredients and steps, books and films in one list, readable by ChatGPT and Claude.", "applicationCategory": "LifestyleApplication", "operatingSystem": "iOS, Android, Web", "browserRequirements": "Requires JavaScript", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://skwirl.parthakholkar.com/og.png", "author": {"@type": "Person", "name": "Parth Akholkar", "url": "https://parthakholkar.com"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Skwirl?", "acceptedAnswer": {"@type": "Answer", "text": "Skwirl turns the Instagram reels and videos you save into notes you can search. Share a reel to Skwirl and a couple of minutes later it's a note: recipes come back as ingredients and steps, books, films and places land in one list, and tips come with the next step. ChatGPT and Claude can read your notes too. It's free."}}, {"@type": "Question", "name": "Can I search my saved Instagram reels?", "acceptedAnswer": {"@type": "Answer", "text": "Instagram's Saved tab has no search box for most people. Skwirl reads each reel you share to it (the speech, the on-screen text and the caption) and turns it into a note, so you can search everything you saved by what was said in it."}}, {"@type": "Question", "name": "Which phones does it work on?", "acceptedAnswer": {"@type": "Answer", "text": "iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links. You can also send links to the Skwirl bot on Telegram."}}, {"@type": "Question", "name": "How long does a save take?", "acceptedAnswer": {"@type": "Answer", "text": "Usually a couple of minutes. You'll see it appear in your library with a \"Reading…\" card while it works."}}, {"@type": "Question", "name": "Who can see my saves?", "acceptedAnswer": {"@type": "Answer", "text": "Other users cannot see your saves unless you share a note. The person running Skwirl can read the database, and Groq processes media to make your notes."}}, {"@type": "Question", "name": "Can I bring in reels I saved before?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Download your Saved posts from Instagram (Accounts Center, Export your information, JSON format) and pick the file in Skwirl. It's read on your device and only the post links are sent."}}]}]</script>
 <meta name="description" content="Instagram's Saved tab has no search. Share a reel to Skwirl and it becomes a searchable note: recipes as ingredients and steps, books and films in one list. Works with ChatGPT and Claude. Free.">
 <meta property="og:title" content="Skwirl: the reels you save, finally useful">
 <meta property="og:description" content="Share a reel. Get a searchable note. Recipes, books, movies, tips, all in one place, and ChatGPT or Claude can read it.">
@@ -106,6 +106,7 @@ header { padding: 22px 0 6px; }
 .card small { color: var(--muted); font-size: 12px; text-transform: capitalize; }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
 .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 64px 12px; }
+.result-limit { grid-column: 1 / -1; color: var(--muted); text-align: center; font-size: 14px; padding: 12px; }
 .empty b { display: block; font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 26px; color: var(--ink); margin-bottom: 6px; }
 
 .btn { height: 48px; padding: 0 22px; border-radius: var(--r-btn); border: 0; background: var(--ink); color: #fff; font-weight: 600; transition: transform .12s; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
@@ -346,7 +347,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .plusnote .plusBtn { display: flex; width: fit-content; } .plusnote .msg:empty { display: none; }
 .plusform input[type=email] { font: inherit; height: 42px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); }
 .plusform label { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--muted); }
-.plan .note { font-size: 13px; color: rgb(29 27 46 / .62); }
+.plan .note { font-size: 13px; color: var(--ink); }
 .selfhost { font-size: 15px; margin: 18px 0 0 !important; text-align: center; } .selfhost a { color: var(--ink); font-weight: 600; }
 
 .faq { background: rgb(255 255 255 / .85); border-radius: 20px; margin: 8px auto; box-shadow: var(--lift-1); max-width: 720px; }
@@ -445,7 +446,7 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .skel { aspect-ratio: 3 / 4; border-radius: var(--r-card); box-shadow: var(--lift-1); }
 .tag.err { background: #ffd5d0; color: #8c2415; }
 .cbody .why { color: var(--muted); font-size: 13px; line-height: 1.35; margin: 0 0 10px; }
-.cbody .acts { display: flex; gap: 6px; }
+.cbody .acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .cbody .acts button { height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--ink); color: #fff; font-weight: 600; font-size: 13px; }
 .cbody .acts button.soft { background: var(--bg); color: var(--ink); }
 .help p { margin: 0 0 12px; font-size: 15px; } .help p:last-child { margin: 0; }
@@ -453,13 +454,14 @@ pre.cmd { background: var(--bg); border-radius: 16px; padding: 12px 14px; font-f
 .tint .tag { z-index: 1; }
 .hthumb { display: block; width: 100%; max-height: 240px; object-fit: cover; border-radius: 22px; margin-bottom: 14px; }
 .mcard .kind img { display: block; width: 40px; height: 40px; object-fit: cover; border-radius: 50%; }
-.mcard.done { opacity: .55; } .mcard.done h3 { text-decoration: line-through; }
+.mcard.done .info { color: var(--muted); } .mcard.done h3 { text-decoration: line-through; }
 .tick { flex: none; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font-weight: 600; font-size: 13px; color: var(--ink); }
 .tick[aria-pressed=true] { background: var(--mint); border-color: var(--mint); color: #17603f; }
 .body li.ing { list-style: none; margin-left: -20px; padding: 6px 0; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; }
-.body li.ing::before { content: ""; flex: none; width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--lavender); margin-top: 2px; }
+.ing-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; min-height: 44px; width: 100%; }
+.ing-check input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ink); }
 .body li.ing.got { color: var(--muted); text-decoration: line-through; }
-.body li.ing.got::before { background: var(--mint); border-color: var(--mint); }
+
 .body ol { padding-left: 22px; } .body ol li { margin-bottom: 8px; }
 .qr { width: 180px; height: 180px; margin: 12px auto 6px; background: #fff; border-radius: 16px; padding: 10px; }
 .qr svg { width: 100%; height: 100%; display: block; }
@@ -484,6 +486,16 @@ body.on-phone .phone-handoff { display: none; }
 .setup-pill { border: 0; height: 36px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .85); box-shadow: var(--lift-1); font-weight: 500; position: relative; }
 .setup-pill i { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #e8590c; }
 
+#lib header > .row { flex-wrap: nowrap; }
+#lib .brand { min-width: 0; }
+.hero h1, .card h2 { overflow-wrap: anywhere; }
+@media (max-width: 379px) { #lib .brand { font-size: 24px; } #lib .setup-pill { padding-inline: 10px; } #lib header > .row { gap: 8px; } }
+@media (max-width: 339px) { #lib .brand { font-size: 20px; } #lib header > .row { gap: 6px; } }
+
+.sheet { max-height: 90svh; overflow-y: auto; }
+.demo-paused *, .demo-paused *::before, .demo-paused *::after { animation-play-state: paused !important; }
+#demoToggle { display: block; margin: 12px auto 0; }
+@media (prefers-reduced-motion: reduce) { #demoToggle { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 <script src="/track.js" defer></script>
@@ -519,7 +531,7 @@ body.on-phone .phone-handoff { display: none; }
 
     <!-- The whole product in one 16s loop: a reel → Instagram share → iOS share sheet → Saved → the real
          Skwirl note (a screenshot of the app). Pure CSS; reduced motion shows the final note. -->
-    <figure class="phone-wrap">
+    <figure class="phone-wrap" id="productDemo">
     <div class="phone" role="img" aria-label="Animation: a cooking reel is shared from Instagram to Skwirl and becomes a recipe note with ingredients and steps">
       <div class="screen">
         <div class="s-reel">
@@ -564,6 +576,7 @@ body.on-phone .phone-handoff { display: none; }
       </div>
     </div>
     <figcaption class="steps-cap" aria-hidden="true"><span class="c1">Watch</span><span class="c2">Share</span><span class="c3">Pick Skwirl</span><span class="c4">Get the recipe</span></figcaption>
+    <button class="btn sm soft" type="button" id="demoToggle" aria-pressed="false">Pause demo</button>
     </figure>
   </div>
 
@@ -592,7 +605,7 @@ body.on-phone .phone-handoff { display: none; }
   <div class="lsec reveal">
     <h2>Inside Skwirl</h2>
     <p>Real screens from the app.</p>
-    <div class="shots">
+    <div class="shots" tabindex="0" role="region" aria-label="Inside Skwirl screenshots">
       <figure class="shot"><div class="frame"><div><img src="/shots/library.webp" alt="Skwirl library: cards for a pasta recipe, books, a Tokyo trip, slow movies, a budget tip and a mobility routine" loading="lazy" width="540" height="1169"></div></div><figcaption><b>Everything in one place</b><span>Covers, topics, and what you haven't used yet</span></figcaption></figure>
       <figure class="shot"><div class="frame"><div><img src="/shots/note.webp" alt="A Skwirl recipe note: garlic butter pasta with summary, next step, an ingredient checklist and numbered steps" loading="lazy" width="540" height="2196" style="transform:translateY(-44%)"></div></div><figcaption><b>Recipes you can cook from</b><span>Tick ingredients off as you go</span></figcaption></figure>
       <figure class="shot"><div class="frame"><div><img src="/shots/lists.webp" alt="Skwirl lists: books, places and movies named in saved reels, each with a Read, Been or Watched button" loading="lazy" width="540" height="1169"></div></div><figcaption><b>Books, movies, places</b><span>Pulled from every reel into one list</span></figcaption></figure>
@@ -632,7 +645,7 @@ body.on-phone .phone-handoff { display: none; }
       </div>
       <div class="plan hot">
         <small>Free, your own key</small><b class="price">$0</b>
-        <ul><li>Never queued behind anyone</li><li>Groq's free limits cover dozens of reels a day</li><li>Everything in Free</li></ul>
+        <ul><li>Use your own AI allowance</li><li>Groq's free limits cover dozens of reels a day</li><li>Everything in Free</li></ul>
         <span class="note">Paste a free Groq key in Set up. Two minutes, no card.</span>
       </div>
       <div class="plan plus" data-plus="pricing">
@@ -650,10 +663,10 @@ body.on-phone .phone-handoff { display: none; }
     <details class="faq"><summary>Can I search my saved Instagram reels?</summary><p>Instagram's Saved tab has no search box for most people. Skwirl reads each reel you share to it (the speech, the on-screen text and the caption) and turns it into a note, so you can search everything you saved by what was said in it.</p></details>
     <details class="faq"><summary>Which phones does it work on?</summary><p>iPhone (through a Shortcut, Skwirl walks you through it), Android (install it from Chrome and it shows up in the share menu), and any browser, where you can paste links. You can also send links to the Skwirl bot on Telegram.</p></details>
     <details class="faq"><summary>How long does a save take?</summary><p>Usually a couple of minutes. You'll see it appear in your library with a "Reading…" card while it works.</p></details>
-    <details class="faq"><summary>Who can see my saves?</summary><p>Only you, unless you share a note. Skwirl never re-posts the video, it keeps a short note and a small cover image. Details in the <a href="/privacy">privacy policy</a>.</p></details>
+    <details class="faq"><summary>Who can see my saves?</summary><p>Other users cannot see your saves unless you share a note. The person running Skwirl can read the database, and Groq processes media to make your notes. Details in the <a href="/privacy">privacy policy</a>.</p></details>
     <details class="faq"><summary>Can I bring in reels I saved before?</summary><p>Yes. Download your Saved posts from Instagram (Accounts Center, Export your information, JSON format) and pick the file in Skwirl. It's read on your device and only the post links are sent. <a href="/guides/export-instagram-saved-posts">Step-by-step guide</a>.</p></details>
     <details class="faq"><summary>There's no password. How do I get back in?</summary><p>You get a private sign-in link. Skwirl asks you to save it (email it to yourself, or keep it in your notes). Open it on any device and you're in.</p></details>
-    <details class="faq"><summary>What's a Groq key and do I need one?</summary><p>No. Groq runs the AI that reads reels. Skwirl covers it for you. If you save a lot, a free key of your own means you're never queued behind anyone.</p></details>
+    <details class="faq"><summary>What's a Groq key and do I need one?</summary><p>No. Groq runs the AI that reads reels. Skwirl covers it for you. If you save a lot, a free key of your own gives you a separate AI allowance. Processing still uses the shared queue.</p></details>
   </div>
 
   <div class="lsec lend reveal">
@@ -732,10 +745,10 @@ body.on-phone .phone-handoff { display: none; }
           <li><b>Add the Skwirl Shortcut</b><span>Open this on your iPhone and tap <em>Add Shortcut</em>. That's it, no code to paste.</span><div class="inline-actions"><a class="btn sm" href="/Skwirl.shortcut">Get the Shortcut</a></div></li>
           <li><b>Share a reel to Skwirl</b><span>In Instagram, Facebook, YouTube or X: tap Share. In Instagram, tap <em>Share to…</em> (or <em>More</em>) to open the iPhone share sheet, then pick <em>Skwirl</em>. Don't see it? Scroll the app row to the end, tap <em>Edit Actions</em> and add Skwirl as a favourite. Skwirl opens in Safari, saves it, and the note shows up shortly. Use Safari to sign in once, so it knows it's you.</span></li>
         </ol>
-        <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code. It opens Skwirl on your phone, already signed in, so you can add the Shortcut there.<div class="qr" data-qr aria-label="QR code that opens Skwirl on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
+        <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code. It opens Skwirl on your phone, already signed in, so you can add the Shortcut there.<div class="qr" data-qr role="img" aria-label="QR code that opens Skwirl on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
       </div>
       <div id="paneAnd" hidden>
-        <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code to open Skwirl there, already signed in.<div class="qr" data-qr aria-label="QR code that opens Skwirl on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
+        <div class="note-box phone-handoff">On a computer right now? Point your phone's camera at this code to open Skwirl there, already signed in.<div class="qr" data-qr role="img" aria-label="QR code that opens Skwirl on your phone"></div><small>This code signs you in. Don't show it to anyone else.</small></div>
         <svg class="art" viewBox="0 0 360 200" role="img" aria-label="Chrome menu with Install app highlighted"><rect x="110" y="6" width="140" height="188" rx="26" fill="#fff" stroke="#e3dffa" stroke-width="3"/><rect x="122" y="18" width="116" height="26" rx="13" fill="#f0eefc"/><circle cx="224" cy="31" r="3" fill="#1d1b2e"/><circle cx="224" cy="39" r="0" fill="#1d1b2e"/><rect x="128" y="54" width="104" height="112" rx="14" fill="#f8f7ff" stroke="#e3dffa"/><rect x="136" y="64" width="88" height="14" rx="7" fill="#e9e6fb"/><rect x="136" y="86" width="88" height="20" rx="10" fill="#ffd8cb" stroke="#1d1b2e" stroke-width="2"/><text x="180" y="100" font-size="9" text-anchor="middle" fill="#1d1b2e" font-weight="600">Install app</text><rect x="136" y="114" width="88" height="14" rx="7" fill="#e9e6fb"/><rect x="136" y="136" width="88" height="14" rx="7" fill="#e9e6fb"/></svg>
         <ol class="steps">
           <li><b>Open Skwirl in Chrome</b><span>On your Android phone. If you're on a computer, scan the code above first.</span></li>
@@ -785,7 +798,7 @@ body.on-phone .phone-handoff { display: none; }
       <pre class="cmd" id="mcpAddr"></pre>
       <div class="inline-actions"><button class="btn sm" data-copy="mcp">Copy connector address</button></div>
       <ol class="steps">
-        <li><b>ChatGPT</b><span>On a computer: Settings → Apps &amp; Connectors → Advanced settings → turn on <em>Developer mode</em>. Then <em>Create</em>, name it "Skwirl", paste the address and pick OAuth. Sign in to Skwirl when asked and tap Allow.</span></li>
+        <li><b>ChatGPT</b><span>On ChatGPT on the web: open <em>Plugins</em>, then <em>+</em> → <em>Add custom MCP server</em>. Name it "Skwirl", paste the connector address as the Server URL and select OAuth. Review the prompt, create and install the plugin. Sign in to Skwirl when asked and tap Allow. Your workspace must allow custom connections.</span></li>
         <li><b>Claude</b><span>claude.ai → Settings → Connectors → <em>Add custom connector</em>. Name it "Skwirl", paste the address, then tap Connect and Allow. It then works in the Claude phone app too.</span><div class="inline-actions"><a class="btn sm soft" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Open Claude settings ↗</a></div></li>
         <li><b>Anything else</b><span>Le Chat, Perplexity, Cursor and other apps with "custom connector" or "MCP server" settings: paste the same address. Then ask <em>"What books have I saved?"</em> or paste a reel and say <em>"save this to Skwirl"</em>.</span></li>
       </ol>
@@ -804,16 +817,17 @@ body.on-phone .phone-handoff { display: none; }
           <div class="inline-actions"><label class="btn sm" for="impFile">Choose export file</label><input id="impFile" type="file" accept=".zip,.json,.html,application/zip,application/json,text/html" hidden></div>
           <p class="msg" id="impMsg" role="status"></p></li>
       </ol>
-      <p style="color:var(--muted);font-size:14px" id="impNote">Up to 100 old saves, read about 5 a day after your new ones so those stay fast. With your own free Groq key (below) it's up to 1,000 old saves, about 40 a day.</p>
+      <p style="color:var(--muted);font-size:14px" id="impNote">Import up to 100 old saves, with up to 5 read a day after new saves. With your own Groq key, import up to 1,000, with a ceiling of 150 read a day. Actual progress depends on the available AI allowance and processing queue.</p>
     </div>
   </details>
 
   <details class="group" id="gGroq">
     <summary><div style="flex:1"><h2>Use your own Groq key</h2><small>Free, faster, no shared limits</small></div><span class="badge opt" id="bGroq">Optional</span></summary>
+    <div class="gbody" id="groqOwnerMsg" hidden><div class="note-box">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div></div>
     <div class="gbody" id="groqBody">
       <div class="note-box plusnote" data-plus="setup" style="margin:0 0 12px"><b>Rather not deal with keys?</b> Skwirl Plus is coming: no keys, your saves read first. <span class="plusPrice">$2.99</span>/month.</div>
       <p id="groqPaid" hidden style="margin:0 0 12px;color:var(--muted)">Or keep your own key and <a href="https://console.groq.com/settings/billing" target="_blank" rel="noopener">switch it to Groq's paid tier</a> (pay as you go) for no daily limit.</p>
-      <p style="margin-top:0;color:var(--muted)">Skwirl reads reels with Groq’s AI. By default it uses a shared key with a small daily limit. Your own free key means your saves are never queued behind anyone else’s.</p>
+      <p style="margin-top:0;color:var(--muted)">Skwirl reads reels with Groq’s AI. By default it uses a shared key with a small daily limit. Your own free key gives you a separate AI allowance. Processing still uses the shared queue.</p>
       <ol class="steps">
         <li><b>Get a free key from Groq</b><span>Sign up free (Google or email works, no card needed), tap <em>Create API Key</em>, name it "Skwirl", and copy the key. It starts with <code>gsk_</code> and Groq only shows it once, so paste it here straight away.</span><div class="inline-actions"><a class="btn sm soft" href="https://console.groq.com/keys" target="_blank" rel="noopener">Open Groq console ↗</a></div></li>
         <li><b>Paste it here</b><span>We check it works before saving, and store it encrypted.</span>
@@ -918,8 +932,8 @@ body.on-phone .phone-handoff { display: none; }
 
 <button class="fab" id="fab" aria-label="Save a link">+</button>
 <div class="scrim" id="scrim"></div>
-<form class="sheet" id="saveForm" aria-label="Save a link">
-  <h2>Save something</h2>
+<form class="sheet" id="saveForm" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+  <h2 id="saveTitle">Save something</h2>
   <p>Paste a reel or video link from Instagram, Facebook, YouTube or X. It’ll be in your library in a minute or two.</p>
   <input id="link" type="url" placeholder="https://…" aria-label="Link to save" required>
   <div class="row" style="flex-wrap:nowrap"><button class="btn soft" type="button" id="cancel" style="flex:1">Cancel</button><button class="btn" type="submit" style="flex:1">Save</button></div>

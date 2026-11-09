@@ -33,6 +33,7 @@ async function api(path, opts = {}) {
   try {
     r = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + token, "content-type": "application/json" } });
   } catch {
+    if ($("lib").style.display === "none") toast("Can't reach Skwirl. Check your connection and try again.");
     setBanner("net", "warn", "Can't reach Skwirl. You're offline, or it's having a moment. What you see may be out of date.", "Try again", () => load());
     throw new Error("offline");
   }
@@ -40,12 +41,44 @@ async function api(path, opts = {}) {
   // notes or sign the new one out.
   if (token !== sentWith) throw new Error("stale");
   if (r.status === 401) { signOut("You were signed out (your token changed or was reset). Paste it again to get back in."); throw new Error("unauthorized"); }
-  if (r.status >= 500) { setBanner("net", "err", "Skwirl hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
+  if (r.status >= 500) { if ($("lib").style.display === "none") toast("Skwirl hit a problem. Try again in a minute."); setBanner("net", "err", "Skwirl hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
   else if (bannerKey === "net") clearBanner("net");
   return r;
 }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
-function show(which) { tr("view", which); for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none"; $("fab").style.display = which === "lib" ? "" : "none"; }
+let activeView = null, viewVersion = 0, historyPosition = 0;
+let navigationId = Math.random().toString(36).slice(2), viewScroll = {};
+function viewState(which) { return { skwirlView: which, position: historyPosition, navigationId, noteId: which === "note" ? current?.id : null, from: which === "note" ? returnTo : null }; }
+function show(which, record = true) {
+  if (activeView !== which) {
+    if (activeView) viewScroll[activeView] = scrollY;
+    if (which === "auth") { navigationId = Math.random().toString(36).slice(2); historyPosition = 0; viewScroll = {}; }
+    if (record) {
+      if (activeView && activeView !== "auth" && which !== "auth") { ++historyPosition; history.pushState(viewState(which), ""); }
+      else { historyPosition = 0; history.replaceState(viewState(which), ""); }
+    }
+    activeView = which; ++viewVersion;
+  }
+  tr("view", which);
+  for (const id of ["auth", "lib", "note", "setup", "admin", "mentions", "me"]) $(id).style.display = id === which ? "block" : "none";
+  $("fab").style.display = which === "lib" ? "" : "none";
+  scrollTo(0, viewScroll[which] || 0);
+}
+function backTo(which) {
+  if (history.state?.navigationId === navigationId && history.state.position > 0) history.back();
+  else { show(which, false); historyPosition = 0; history.replaceState(viewState(which), ""); }
+}
+window.addEventListener("popstate", (e) => {
+  if (activeView === "auth") return;
+  ++openVersion;
+  const state = e.state;
+  if (state?.navigationId !== navigationId || !["lib", "note", "setup", "admin", "mentions", "me"].includes(state.skwirlView)) {
+    show("lib", false); historyPosition = 0; history.replaceState(viewState("lib"), ""); return;
+  }
+  historyPosition = state.position;
+  if (state.skwirlView === "note" && state.noteId !== current?.id) open(state.noteId, state.from, false);
+  else show(state.skwirlView, false);
+});
 function signOut(msg) {
   // A forced sign-out (expired or reset token) keeps saves still waiting to send, so they go
   // through once you're back in. Only signing out on purpose clears them (after a warning).
@@ -104,7 +137,7 @@ function skeleton() { return Array.from({ length: 4 }, () => '<div class="skel s
 
 function render() {
   const unused = notes.filter((n) => n.status === "unused").length;
-  const topics = [...new Set(notes.map((n) => n.topic).filter(Boolean))].sort();
+  const topics = [...new Set([...notes.map((n) => n.topic).filter(Boolean), ...(!["all", "unused"].includes(filter) ? [filter] : [])])].sort();
   const num = { all: notes.length, unused };
   $("chips").innerHTML = ["all", "unused", ...topics].map((c) => `<button class="chip" aria-pressed="${c === filter}" data-f="${esc(c)}">${esc(c === "unused" ? "to try" : c)}${num[c] ? ` <span class="n">${num[c]}</span>` : ""}</button>`).join("");
   const shown = notes.filter((n) => filter === "all" || (filter === "unused" ? n.status === "unused" : n.topic === filter));
@@ -112,6 +145,9 @@ function render() {
   const first = !notes.length && filter === "all" && !$("q").value.trim();
   if (first && !welcomeSeen) { welcomeSeen = true; tr("card_shown", "welcome"); }
   $("list").innerHTML = first ? welcomeCard(captures.length > 0) + caps : (caps || shown.length) ? caps + shown.map(card).join("") : `<div class="empty"><b>${$("q").value ? "Nothing matches" : "Your stash is empty"}</b>${$("q").value ? "Try a different word." : "Tap + to paste a link, or share a reel straight from Instagram.<br><button class=\"btn soft\" type=\"button\" data-howto>How do I share from Instagram?</button>"}</div>`;
+  const query = $("q").value.trim();
+  if ((!query && notes.length >= 200) || (query && notes.length >= 20))
+    $("list").insertAdjacentHTML("beforeend", `<p class="result-limit" role="status">${query ? "Showing the top 20 matches. Add another word to narrow your search." : "Browsing shows up to 200 newest saves. Search to find older saves."}</p>`);
 }
 // First run: one card that gets you to a saved reel in 30 seconds, instead of a setup page.
 // Instagram/Facebook in-app browsers keep their own storage, so we steer people out of them.
@@ -130,15 +166,19 @@ function welcomeCard(saved) {
   </div>`;
 }
 let captures = [], loaded = false, known = null, pollTimer = null, importInfo = null;
+let loadVersion = 0;
 async function load() {
+  const version = ++loadVersion;
   if (!loaded) $("list").innerHTML = skeleton();
   const q = $("q").value.trim();
   let nr, cr;
   try { [nr, cr] = await Promise.all([api(q ? "/v1/search?q=" + encodeURIComponent(q) : "/v1/notes?limit=200"), api("/v1/captures")]); } catch (e) { if (e.message === "stale") return; if (e.message !== "offline") throw e; }
+  if (version !== loadVersion || q !== $("q").value.trim()) return;
   if (!nr || nr.status >= 500) return showCopy(q);
   if (!nr.ok) { toast("Couldn't load your saves. Try again."); return; }
-  const cj = cr.ok ? await cr.json() : {};
-  notes = (await nr.json()).notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showFeedback(); showImport();
+  const [nj, cj] = await Promise.all([nr.json(), cr.ok ? cr.json() : {}]);
+  if (version !== loadVersion || q !== $("q").value.trim()) return;
+  notes = nj.notes; captures = cj.captures || []; importInfo = cj.import || null; loaded = true; showFeedback(); showImport();
   if (!q) cacheSet("stash_cache", { notes });
   flushOutbox();
   // A note we hadn't seen before means something just finished processing.
@@ -206,12 +246,17 @@ async function ingest(url, source) {
 }
 let returnTo = "lib";
 const USED_LABEL = { food: "I made this" };
-async function open(id, from) {
+let openVersion = 0;
+async function open(id, from, record = true) {
+  const version = ++openVersion, view = viewVersion;
   returnTo = from || "lib";
   const r = await api("/v1/notes/" + encodeURIComponent(id)).catch(() => null);
+  if (version !== openVersion || view !== viewVersion) return;
   const kept = cacheGet("stash_notes") || { byId: {} };
   if (r && r.ok) {
-    current = await r.json(); tr("open_note", current.topic || "other");
+    const opened = await r.json();
+    if (version !== openVersion || view !== viewVersion) return;
+    current = opened; tr("open_note", current.topic || "other");
     kept.byId[id] = current; const ids = Object.keys(kept.byId); for (const k of ids.slice(0, Math.max(0, ids.length - 40))) delete kept.byId[k];
     cacheSet("stash_notes", { byId: kept.byId });
   } else if ((!r || r.status >= 500) && kept.byId[id]) current = kept.byId[id];
@@ -226,7 +271,7 @@ async function open(id, from) {
   const o = $("nOpen"); o.hidden = !current.permalink; if (current.permalink) o.href = current.permalink;
   $("nUsed").hidden = current.status === "used";
   $("nUnshare").hidden = !current.share_id;
-  show("note"); scrollTo(0, 0);
+  show("note", record); scrollTo(0, 0);
 }
 
 // Landing: sections fade up as they scroll in. Skipped entirely under reduced motion.
@@ -237,6 +282,11 @@ if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObse
   }), { threshold: 0.15 });
   document.querySelectorAll("#auth .reveal, #auth .chat").forEach((el) => io.observe(el));
 }
+$("demoToggle").addEventListener("click", () => {
+  const paused = $("productDemo").classList.toggle("demo-paused");
+  $("demoToggle").setAttribute("aria-pressed", String(paused));
+  $("demoToggle").textContent = paused ? "Play demo" : "Pause demo";
+});
 // Landing: ask for an invite code only when joining isn't open (or a #code= link brought one).
 async function joinMode() {
   const code = $("joinCode");
@@ -269,11 +319,13 @@ $("toTop").addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top
 document.querySelector(".lsign").addEventListener("click", () => { $("signin").open = true; });
 $("joinForm").addEventListener("submit", async (e) => {
   tr("join_submit");
-  e.preventDefault(); const err = $("joinErr"); err.textContent = "";
+  e.preventDefault(); const err = $("joinErr"), button = e.currentTarget.querySelector("button[type=submit]");
+  if (button.disabled) return;
+  button.disabled = true; err.textContent = "";
   let r;
   try { r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value, email: $("joinEmail").value }) }); }
-  catch { err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
-  const body = await r.json().catch(() => ({}));
+  catch { button.disabled = false; err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
+  const body = await r.json().catch(() => ({})); button.disabled = false;
   if (!r.ok) { tr("join_err", r.status); err.textContent = body.error || "Couldn’t join. Try again."; return; }
   tr("join_ok", $("joinEmail").value ? "with_email" : "no_email");
   token = body.token; store.set("stash_token", token); store.del("stash_link_saved"); start();
@@ -314,15 +366,32 @@ async function saveLink() {
   }
   store.set("stash_link_saved", "1"); clearBanner("savelink");
 }
-const sheet = (open) => { document.body.classList.toggle("sheet-open", open); if (open) setTimeout(() => $("link").focus(), 250); };
+let sheetFocus = null, sheetTimer;
+const sheet = (open) => {
+  clearTimeout(sheetTimer);
+  if (open && !document.body.classList.contains("sheet-open")) sheetFocus = document.activeElement;
+  document.body.classList.toggle("sheet-open", open);
+  document.querySelector("main").inert = open; $("fab").inert = open;
+  if (open) sheetTimer = setTimeout(() => $("link").focus(), 250);
+  else if (sheetFocus?.isConnected && sheetFocus.getClientRects().length) sheetFocus.focus();
+};
 $("fab").addEventListener("click", () => sheet(true));
 $("scrim").addEventListener("click", () => sheet(false));
 $("cancel").addEventListener("click", () => sheet(false));
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("sheet-open")) sheet(false); });
+document.addEventListener("keydown", (e) => {
+  if (!document.body.classList.contains("sheet-open")) return;
+  if (e.key === "Escape") { e.preventDefault(); sheet(false); }
+  if (e.key === "Tab") {
+    const controls = [...$("saveForm").querySelectorAll("input:not([disabled]), button:not([disabled]), a[href]")].filter(el => el.getClientRects().length);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
 $("saveForm").addEventListener("submit", async (e) => { e.preventDefault(); const u = $("link").value.trim(); if (u) { $("link").value = ""; sheet(false); await ingest(u); } });
 let searchTimer;
 $("q").addEventListener("input", () => {
-  clearTimeout(timer); timer = setTimeout(load, 200);
+  ++loadVersion; clearTimeout(timer); timer = setTimeout(load, 200);
   // One "search" per pause in typing, with how many results it found (never the words).
   clearTimeout(searchTimer); searchTimer = setTimeout(() => $("q").value.trim() && tr("search", notes.length ? (notes.length > 5 ? "6+" : notes.length) : "0 results"), 1500);
 });
@@ -333,7 +402,7 @@ $("list").addEventListener("click", async (e) => {
   if (del) { const r = await api("/v1/captures/" + del.dataset.del, { method: "DELETE" }); toast(r.ok ? "Removed." : "Couldn't remove that one."); return load(); }
   const c = e.target.closest(".card[data-id]"); if (c) open(c.dataset.id);
 });
-$("back").addEventListener("click", () => { if (returnTo === "mentions") { show("mentions"); openMentions(); } else { show("lib"); load(); } });
+$("back").addEventListener("click", () => { backTo(returnTo); if (returnTo === "lib") load(); });
 $("nShare").addEventListener("click", async () => {
   const r = await api("/v1/notes/" + current.id + "/share", { method: "POST" }).catch(() => null);
   if (!r || !r.ok) return toast("Couldn't make a share link. Try again.");
@@ -363,11 +432,16 @@ function enhanceRecipe(noteId) {
   const key = "ing:" + noteId; let got = [];
   try { got = JSON.parse(store.get(key) || "[]"); } catch {}
   [...list.children].forEach((li, i) => {
-    li.classList.add("ing"); li.setAttribute("role", "checkbox"); li.tabIndex = 0;
-    const set = (on) => { li.classList.toggle("got", on); li.setAttribute("aria-checked", on); };
+    li.classList.add("ing");
+    const label = document.createElement("label"), check = document.createElement("input"), text = document.createElement("span");
+    label.className = "ing-check"; check.type = "checkbox";
+    while (li.firstChild) text.appendChild(li.firstChild);
+    label.append(check, text); li.appendChild(label);
+    const set = (on) => { li.classList.toggle("got", on); check.checked = on; };
     set(got.includes(i));
-    const flip = () => { const on = !li.classList.contains("got"); set(on); got = on ? [...got, i] : got.filter((x) => x !== i); store.set(key, JSON.stringify(got)); };
-    li.addEventListener("click", flip); li.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
+    check.addEventListener("change", () => {
+      const on = check.checked; set(on); got = on ? [...got, i] : got.filter((x) => x !== i); store.set(key, JSON.stringify(got));
+    });
   });
 }
 
@@ -407,7 +481,7 @@ async function refreshSetup() {
   if (st.telegram) { set("bTelegram", st.telegram.connected, "Optional"); if (!st.telegram.connected) $("bTelegram").className = "badge opt"; $("tgOff").hidden = !st.telegram.connected; }
   $("adminBtn").hidden = !st.owner;
   showFeedback(); showImport(); refreshAvatar(); if (loaded && !notes.length) render();
-  if (st.owner) $("groqBody").innerHTML = `<div class="note-box" style="margin:0">You're the owner. Your Mac uses the Groq key in its <code>.env</code>, so there's nothing to set here.</div>`;
+  $("groqBody").hidden = !!st.owner; $("groqOwnerMsg").hidden = !st.owner;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
   $("groqOff").hidden = !st.has_groq_key || st.owner;
 }
@@ -431,7 +505,7 @@ function setTab(which) {
   $("paneIos").hidden = which !== "ios"; $("paneAnd").hidden = which !== "and";
 }
 $("setupBtn").addEventListener("click", () => openSetup(false));
-$("setupBack").addEventListener("click", () => { show("lib"); load(); refreshSetup(); });
+$("setupBack").addEventListener("click", () => { backTo("lib"); load(); refreshSetup(); });
 $("tabIos").addEventListener("click", () => setTab("ios")); $("tabAnd").addEventListener("click", () => setTab("and"));
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-copy]"); if (!b) return;
@@ -447,7 +521,8 @@ $("groqOff").addEventListener("click", async () => {
 });
 $("groqForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const m = $("groqMsg"); m.className = "msg"; m.textContent = "Checking with Groq…";
-  const r = await api("/v1/settings/groq", { method: "PUT", body: JSON.stringify({ key: $("groqKey").value }) });
+  const r = await api("/v1/settings/groq", { method: "PUT", body: JSON.stringify({ key: $("groqKey").value }) }).catch(() => null);
+  if (!r) { m.className = "msg err"; m.textContent = "Couldn't check that key. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({}));
   if (r.ok) { $("groqKey").value = ""; m.className = "msg ok"; m.textContent = "Saved. Your saves now use your own key."; refreshSetup(); }
   else { m.className = "msg err"; m.textContent = body.error || "Couldn’t save that key."; }
@@ -542,7 +617,7 @@ async function openAdmin() {
   }).join("");
 }
 $("adminBtn").addEventListener("click", openAdmin);
-$("adminBack").addEventListener("click", () => { show("lib"); load(); });
+$("adminBack").addEventListener("click", () => { backTo("lib"); load(); });
 
 // Anything unhandled becomes a plain message, not a silent dead button.
 window.addEventListener("unhandledrejection", (e) => {
@@ -562,7 +637,7 @@ function renderMentions() {
   $("mentionChips").innerHTML = ["all", ...kinds].map((k) =>
     `<button class="chip" aria-pressed="${k === mentionFilter}" data-mk="${esc(k)}">${esc(k === "all" ? "all" : PLURAL[k] || k + "s")}</button>`).join("");
   const shown = (mentionFilter === "all" ? allMentions : allMentions.filter((m) => m.type === mentionFilter))
-    .slice().sort((a, b) => Number(a.done) - Number(b.done));
+    .slice();
   $("mentionList").innerHTML = shown.length
     ? shown.map((m, i) => {
         const verb = DONE_VERB[m.type] || "Done";
@@ -571,7 +646,7 @@ function renderMentions() {
         return `<div class="mcard ${m.done ? "done" : ""}">
         <span class="kind" style="background:var(${MENTION_TINTS[m.type] || "--butter"})">${m.thumb_id ? `<img src="/t/${esc(m.thumb_id)}" alt="" loading="lazy">` : MENTION_ICONS[m.type] || "✦"}</span>
         <button class="info" type="button" data-open="${esc(m.note_id)}" style="border:0;background:none;padding:0;text-align:left;cursor:pointer"><h3>${esc(m.name)}</h3><small>${esc(kind)} · ${where}</small></button>
-        <button class="tick" type="button" data-done="${i}" aria-pressed="${m.done}">${m.done ? verb + " ✓" : verb + "?"}</button></div>`;
+        <button class="tick" type="button" data-done="${i}" aria-pressed="${m.done}" ${m.pending ? "disabled" : ""}>${m.done ? verb + " ✓" : verb + "?"}</button></div>`;
       }).join("")
     : `<div class="empty"><b>No lists yet</b>When a reel names a book, movie, show, place or podcast, it lands here automatically. Nothing to set up.</div>`;
   $("mentionList")._shown = shown;
@@ -581,18 +656,20 @@ async function openMentions() {
   $("mentionList").innerHTML = skeleton();
   const r = await api("/v1/mentions").catch(() => null);
   if (!r || !r.ok) { $("mentionList").innerHTML = `<div class="empty">Couldn't load this. Go back and try again.</div>`; return; }
-  allMentions = (await r.json()).mentions; renderMentions();
+  allMentions = (await r.json()).mentions.sort((a, b) => Number(a.done) - Number(b.done)); renderMentions();
 }
 $("mentionsBtn").addEventListener("click", () => { mentionFilter = "all"; openMentions(); });
-$("mentionsBack").addEventListener("click", () => { show("lib"); load(); });
+$("mentionsBack").addEventListener("click", () => { backTo("lib"); load(); });
 $("mentionChips").addEventListener("click", (e) => { const k = e.target.dataset.mk; if (k) { mentionFilter = k; renderMentions(); } });
 $("mentionList").addEventListener("click", async (e) => {
   const d = e.target.closest("[data-done]");
   if (d) {
-    const m = $("mentionList")._shown[Number(d.dataset.done)]; if (!m) return;
-    m.done = !m.done; renderMentions();
+    const m = $("mentionList")._shown[Number(d.dataset.done)]; if (!m || m.pending) return;
+    const wasDone = m.done; m.pending = true; m.done = !m.done; renderMentions();
     const r = await api("/v1/mentions/done", { method: "POST", body: JSON.stringify({ type: m.type, name: m.name, done: m.done }) }).catch(() => null);
-    if (!r || !r.ok) { m.done = !m.done; renderMentions(); toast("Couldn't save that. Try again."); }
+    m.pending = false;
+    if (!r || !r.ok) { m.done = wasDone; toast("Couldn't save that. Try again."); }
+    renderMentions();
     return;
   }
   const c = e.target.closest("[data-open]"); if (c) open(c.dataset.open, "mentions");
@@ -659,21 +736,21 @@ async function importFile(file) {
   const b = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok) { msg.textContent = b.error || "Couldn't add them right now. Try again."; return; }
   tr("import", `${b.added} added of ${b.found}`);
-  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. ${b.cap >= 1000 ? "They'll show up in your library about 150 a day, after any new saves." : "They'll show up in your library about 5 a day, or 150 a day with your own Groq key."}`;
+  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. They'll arrive in daily batches after new saves, within the available AI allowance.`;
   load();
 }
 function showImport() {
   const i = importInfo;
   $("bImport").textContent = i ? (i.done >= i.total - i.failed ? "Done" : `${i.done} / ${i.total}`) : "Optional";
   $("bImport").className = "badge " + (i && i.done >= i.total - i.failed ? "done" : "opt");
-  const left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState?.has_groq_key ? 40 : 5));
+  const left = i ? i.total - i.done - i.failed : 0;
   // Out of today's Groq tokens: say whose, when reading resumes, and how to go faster.
   const own = setupState?.has_groq_key, at = i?.resumes_at && left > 0 ? new Date(i.resumes_at) : null;
   const hrs = at ? Math.max(1, Math.round((at - Date.now()) / 3600e3)) : 0;
   const paused = at && `${own ? "Your Groq key's free daily limit is used up" : "Skwirl's free daily allowance is used up"}. Reading resumes at ${at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} (in about ${hrs} hour${hrs > 1 ? "s" : ""}).`;
-  const faster = own ? "To read them all now, join Skwirl Plus or switch your Groq key to its paid tier (both under Use your own Groq key)." : "Add your own free Groq key, or join Skwirl Plus, to read faster.";
+  const faster = own ? "A paid Groq key can raise your allowance. Skwirl Plus is coming soon; Notify me joins its waitlist." : "Your own Groq key provides a separate allowance. Skwirl Plus is coming soon; Notify me joins its waitlist.";
   // Not paused: still say why it's slow, so a trickle reads as a limit with a fix, not as broken.
-  const why = `${own ? "Your free Groq key reads about 40 a day" : "Skwirl's free plan reads about 5 a day"}, so about ${days} more day${days > 1 ? "s" : ""}.`;
+  const why = own ? "Old saves arrive in daily batches within your Groq key's allowance." : "The shared key reads up to 5 old saves a day, depending on its remaining allowance.";
   if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` ${paused || why} ${faster} New saves always go first.` : ""}`;
   // Big import in progress: say so on the library, with the one button that speeds it up.
   if (i && left > 0 && $("fb").hidden) {
@@ -718,10 +795,10 @@ function showFeedback() {
   $("fb").hidden = dismissed || !setupState || setupState.owner || setupState.has_email || (notes || []).length < 3 || !$("pushCard").hidden || !$("srcCard").hidden || !promptSlot("fb");
   if ($("fb").hidden) return;
   if (!showFeedback.seen) { showFeedback.seen = true; tr("card_shown", "welcome"); }
-  const i = importInfo, left = i ? i.total - i.done - i.failed : 0, days = Math.ceil(left / (setupState.has_groq_key ? 40 : 5));
+  const i = importInfo, left = i ? i.total - i.done - i.failed : 0;
   $("fbHead").textContent = `Hi${setupState.name ? " " + setupState.name : ""}, I'm Parth. I made Skwirl.`;
   $("fbBody").textContent = "Thanks for trying it. "
-    + (left > 0 ? `Your ${i.total} old saves are coming in a batch a day, so the rest should be here in about ${days} day${days > 1 ? "s" : ""}. Anything new you save jumps the queue. ` : "")
+    + (left > 0 ? `Your ${i.total} old saves are coming in daily batches within the available allowance. Anything new you save jumps the queue. ` : "")
     + "If something feels broken, confusing or missing, tell me here. I read every message.";
 }
 const fbDone = () => { showFeedback.replied = true; try { localStorage.setItem("skwirl_fb", "1"); } catch {} $("fb").hidden = true; showImport(); };
@@ -850,7 +927,7 @@ async function openMe() {
   $("contactNote").className = "msg";
 }
 $("meBtn").addEventListener("click", openMe);
-$("meBack").addEventListener("click", () => { show("lib"); });
+$("meBack").addEventListener("click", () => { backTo("lib"); });
 $("meEmailIn").addEventListener("input", () => { const e = $("meEmailIn"); $("meConsentRow").hidden = !e.value.trim() || e.value.trim() === e.dataset.was; });
 $("meForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -879,7 +956,7 @@ function renderHub(me, perm) {
       perm === "default" ? `<button class="btn sm soft" data-hub="push">Turn on</button>` : `<small>${perm === "denied" ? "Blocked in settings" : "Home-screen app only"}</small>`],
     ["ChatGPT or Claude", "Let your AI search your saves", st.claude_connected ? "Connected" : null, `<button class="btn sm soft" ${go("gClaude")}>Connect</button>`],
     ["Old Instagram saves", i ? `${i.done} of ${i.total} read${i.failed ? `, ${i.failed} couldn't be` : ""}` : "Bring in your whole Saved folder", i && i.done + i.failed >= i.total ? "Done" : null, `<button class="btn sm soft" ${go("gImport")}>${i ? "Details" : "Import"}</button>`],
-    ["Your own Groq key", "Faster, never queued behind anyone", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`],
+    ["Your own Groq key", "Uses your own AI allowance", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`],
     ...(st.telegram ? [["Telegram", "Save by sending links to a bot", st.telegram.connected ? "Connected" : null, `<button class="btn sm soft" ${go("gTelegram")}>Connect</button>`]] : []),
     ["Skwirl Plus", "No keys, saves read first (coming soon)", null, `<button class="btn sm soft" ${go("gGroq")}>Notify me</button>`],
   ];

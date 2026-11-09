@@ -414,6 +414,8 @@ def _extract_groq(
     if "title" not in payload:
         raise ExtractError("groq extraction returned JSON without a title")
     out = _coerce(payload)
+    if not out["title"]:
+        raise ExtractError("groq extraction returned an empty or invalid title")
     if is_guest_run():
         out["relevance"] = []   # belt and braces: the owner's projects never go in a friend's note
     return out
@@ -616,7 +618,7 @@ def _coerce(payload: dict[str, Any]) -> dict[str, Any]:
         value = payload.get(key) or []
         if isinstance(value, str):
             value = [part.strip() for part in value.split(",")]
-        out[key] = [str(part).strip().lower() for part in value if str(part).strip()]
+        out[key] = [str(part).strip().lower() for part in value if str(part).strip()] if isinstance(value, list) else []
     for key in ("ingredients", "steps"):  # case matters here ("Preheat" vs a lowercased tool name)
         value = payload.get(key) or []
         out[key] = [str(part).strip() for part in value if str(part).strip()] if isinstance(value, list) else []

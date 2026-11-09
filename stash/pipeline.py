@@ -16,6 +16,7 @@ import sqlite3
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 from . import db, extract, fetch, frames, notify, transcribe, vault
 from .config import CONFIG, collect_usage, guest_run, using_groq_key
@@ -73,7 +74,8 @@ def process(
         # dead-letter pile. Without a caption there is genuinely nothing to say.
         if not caption:
             raise
-        say(f"fetch failed ({str(exc)[:80]}) — falling back to caption only")
+        detail = "" if _is_guest(capture) else f" ({str(exc)[:80]})"
+        say(f"fetch failed{detail} - falling back to caption only")
         return _caption_only(conn, capture, permalink, caption, user_note, say)
 
     # The capture file often contains only the URL. yt-dlp's description is the
@@ -114,11 +116,11 @@ def process(
         )
         plan = frames.plan_frames(transcript, duration)
         say(f"frame gate picked {len(plan)} for {label.lower()}")
-        selected = frames.extract(item.path, plan, CONFIG.media_dir / "frames")
-        images.extend(selected)
+        selected = frames.extract_with_requests(item.path, plan, CONFIG.media_dir / "frames")
+        images.extend(path for path, _ in selected)
         reasons.extend(
             f"{label} at {request.timestamp:.0f}s — {request.reason}"
-            for request in plan[:len(selected)]
+            for _, request in selected
         )
 
     transcript_text = "\n\n".join(transcript_parts)
@@ -344,7 +346,10 @@ def _sync_note(capture, fields, content: str, permalink, say, thumb: bytes | Non
         say(f"note push failed (kept locally): {exc}")
 
 
-def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> list[Result]:
+def drain(
+    conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True,
+    on_progress: Callable[[], None] | None = None,
+) -> list[Result]:
     """Work the queue until it is empty or ``limit`` captures have been done.
 
     Reads from the Cloudflare Worker when one is configured and from the local
@@ -363,6 +368,8 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
         capture = remote.claim_next() if remote_mode else db.claim_next(conn)
         if capture is None:
             break
+        if on_progress:
+            on_progress()
 
         override = remote.media_url_for(capture) if remote_mode else None
         # A guest's link never goes in this machine's log, only the owner's own.
@@ -384,7 +391,8 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
         except Exception as exc:  # noqa: BLE001 - one bad capture must not stop the drain
             _finish(conn, capture["id"], ok=False, error=str(exc), remote_mode=remote_mode, usage=usage)
             if verbose:
-                print(f"  failed: {exc}", flush=True)
+                print("  failed: a friend's save (details in queue)" if _is_guest(capture)
+                      else f"  failed: {exc}", flush=True)
             # Notify on failure too. A save that silently goes nowhere is the
             # exact thing this project keeps getting bitten by.
             if not _is_guest(capture):  # never iMessage the owner about someone else's saves
@@ -413,6 +421,8 @@ def drain(conn: sqlite3.Connection, *, limit: int = 0, verbose: bool = True) -> 
             )
         result.guest = _is_guest(capture)
         results.append(result)
+        if on_progress:
+            on_progress()
     return results
 
 

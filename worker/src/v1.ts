@@ -306,6 +306,8 @@ export async function handleV1(
 
   if (path === "/v1/ingest" && request.method === "POST") {
     const body = (await request.json().catch(() => null)) as { url?: string; note?: string; source?: string } | null;
+    if (typeof body?.url !== "string" || [body.note, body.source].some((v) => v != null && typeof v !== "string"))
+      return json({ error: "URL, note and source must be text." }, 400);
     if (!body?.url) return json({ error: "need url" }, 400);
     const safeUrl = allowedUrl(body.url);
     if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, Facebook, YouTube and X links." }, 400);
@@ -380,7 +382,18 @@ export async function handleV1(
     ).bind(userId, userId).first<{ n: number; own_key: number | null }>();
     const cap = userId === null ? 100_000 : have?.own_key ? IMPORT_OWN_KEY : IMPORT_SHARED;
     const room = Math.max(0, cap - (have?.n ?? 0));
-    const take = urls.slice(0, room);  // the export lists newest first
+    // Existing saves must not consume the admission slice on repeated exports.
+    // Bound each IN query below D1's parameter limit, including the user binding.
+    const existing = new Set<string>();
+    for (let i = 0; i < urls.length; i += 50) {
+      const batch = urls.slice(i, i + 50);
+      const { results } = await env.DB.prepare(
+        `SELECT permalink FROM capture WHERE user_id IS ? AND permalink IN (${batch.map(() => "?").join(",")})`,
+      ).bind(userId, ...batch).all<{ permalink: string }>();
+      for (const row of results ?? []) existing.add(row.permalink);
+    }
+    const missing = urls.filter((u) => !existing.has(u));
+    const take = missing.slice(0, room);  // the export lists newest first
     const now = new Date().toISOString();
     let added = 0;
     for (let i = 0; i < take.length; i += 50) {
@@ -392,7 +405,7 @@ export async function handleV1(
     }
     await logEvent(env, userId, "api", "import");
     if (added) await env.DB.prepare("DELETE FROM alert_state WHERE key = 'imports_idle'").run();  // start on it now
-    return json({ found: urls.length, added, skipped_over_cap: urls.length - take.length, cap });
+    return json({ found: urls.length, added, skipped_over_cap: missing.length - take.length, cap });
   }
 
   if (path === "/v1/captures" && request.method === "GET") {
@@ -479,6 +492,8 @@ export async function handleV1(
   if (path === "/v1/feedback" && request.method === "POST") {
     if (userId === null) return json({ error: "you're the owner" }, 400);
     const body = (await request.json().catch(() => null)) as { message?: string; email?: string; consent?: boolean } | null;
+    if ([body?.message, body?.email].some((v) => v != null && typeof v !== "string") || (body?.consent != null && typeof body.consent !== "boolean"))
+      return json({ error: "Message and email must be text, and consent must be true or false." }, 400);
     const message = (body?.message ?? "").trim().slice(0, 4000);
     const email = (body?.email ?? "").trim().slice(0, 120);
     if (!message && !email) return json({ error: "Write something or leave an email." }, 400);
@@ -596,7 +611,7 @@ export async function handleV1(
   if (path === "/v1/notes" && request.method === "GET") {
     const status = url.searchParams.get("status");
     const topic = url.searchParams.get("topic");
-    const limit = Math.min(Number(url.searchParams.get("limit") ?? 50) || 50, 200);
+    const limit = Math.max(1, Math.min(Math.floor(Number(url.searchParams.get("limit")) || 50), 200));
     const { results } = await env.DB.prepare(
       `SELECT ${NOTE_COLUMNS} FROM note
        WHERE user_id IS ? AND (? IS NULL OR status = ?) AND (? IS NULL OR topic = ?)

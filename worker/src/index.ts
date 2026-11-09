@@ -431,6 +431,8 @@ export default {
       if ((today?.n ?? 0) >= 20) return json({ error: "Too many tries from this network today. Try tomorrow." }, 429);
 
       const body = (await request.json().catch(() => null)) as { name?: string; code?: string; email?: string } | null;
+      if ([body?.name, body?.code, body?.email].some((v) => v != null && typeof v !== "string"))
+        return json({ error: "Name, email and invite code must be text." }, 400);
       const name = (body?.name ?? "").trim().slice(0, 40);
       if (!name) return json({ error: "Tell us your name." }, 400);
       const email = (body?.email ?? "").trim().slice(0, 120) || null;

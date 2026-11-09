@@ -52,10 +52,11 @@ def test_pipeline_preserves_mixed_carousel_order(tmp_path, monkeypatch):
     monkeypatch.setattr(
         pipeline.frames,
         "plan_frames",
-        lambda transcript, duration: [FrameRequest(timestamp=2, reason="title card")],
+        lambda transcript, duration: [FrameRequest(timestamp=1, reason="failed title card"),
+                                      FrameRequest(timestamp=2, reason="visible command")],
     )
     monkeypatch.setattr(
-        pipeline.frames, "extract", lambda path, plan, out_dir: [video_frame]
+        pipeline.frames, "extract_with_requests", lambda path, plan, out_dir: [(video_frame, plan[1])]
     )
 
     def fake_extract(**kwargs):
@@ -82,7 +83,7 @@ def test_pipeline_preserves_mixed_carousel_order(tmp_path, monkeypatch):
     assert seen["frames"] == [first, video_frame, third]
     assert seen["frame_reasons"] == [
         "Slide 1 — static image",
-        "Slide 2 at 2s — title card",
+        "Slide 2 at 2s — visible command",
         "Slide 3 — static image",
     ]
     assert seen["caption"] == "metadata caption"
@@ -138,7 +139,7 @@ def test_pipeline_passes_comments_to_extract(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline.fetch, "fetch", lambda **kw: bundle)
     monkeypatch.setattr(pipeline.transcribe, "transcribe", lambda path: Transcript(skipped=True, reason="no audio"))
     monkeypatch.setattr(pipeline.frames, "plan_frames", lambda transcript, duration: [])
-    monkeypatch.setattr(pipeline.frames, "extract", lambda path, plan, out_dir: [])
+    monkeypatch.setattr(pipeline.frames, "extract_with_requests", lambda path, plan, out_dir: [])
     seen = {}
 
     def fake_extract(**kwargs):
@@ -190,3 +191,39 @@ def test_forget_media_deletes_only_that_guests_files(tmp_path, monkeypatch):
         p.write_bytes(b"x")
     pipeline._forget_media({"permalink": url, "media_url": None}, None)
     assert not any(p.exists() for p in mine) and other.exists()
+
+
+def test_guest_failure_does_not_write_private_url_to_daemon_log(monkeypatch, capsys):
+    import dataclasses
+    from stash import remote
+
+    monkeypatch.setattr(pipeline, "CONFIG", dataclasses.replace(
+        pipeline.CONFIG, worker_url="http://localhost:8799", worker_secret="adm"))
+    capture = remote.Row({"id": "guest-private", "user_id": "friend", "source": "import",
+                          "permalink": "https://instagram.com/p/private-content/", "media_url": None})
+    monkeypatch.setattr(remote, "claim_next", lambda: capture)
+    monkeypatch.setattr(remote, "media_url_for", lambda cap: None)
+    finishes = []
+    monkeypatch.setattr(remote, "finish_capture", lambda cap_id, **kw: finishes.append(kw))
+    monkeypatch.setattr(pipeline, "_forget_media", lambda *a: None)
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("yt-dlp failed for https://instagram.com/p/private-content/")
+
+    monkeypatch.setattr(pipeline, "process", fail)
+    pipeline.drain(None)
+    assert "private-content" not in capsys.readouterr().out
+    assert "private-content" in finishes[0]["error"]  # diagnostic stays with the authenticated queue
+
+
+def test_guest_caption_fallback_hides_fetch_exception(monkeypatch, capsys):
+    def fail(**kwargs):
+        raise pipeline.fetch.FetchError("private https://instagram.com/p/guest-secret/")
+    monkeypatch.setattr(pipeline.fetch, "fetch", fail)
+    monkeypatch.setattr(pipeline, "_caption_only", lambda *args: None)
+    capture = {"id": "guest", "user_id": "friend", "permalink": "https://instagram.com/p/guest-secret/",
+               "media_url": None, "note": None, "caption": "public caption"}
+    pipeline.process(None, capture)
+    output = capsys.readouterr().out
+    assert "guest-secret" not in output
+    assert "falling back to caption only" in output
