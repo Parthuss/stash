@@ -22,7 +22,7 @@ import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json", "cache-control": "no-store", "x-content-type-options": "nosniff" },
+    headers: { "content-type": "application/json", "cache-control": "no-store", "x-content-type-options": "nosniff", "x-acorn": "2b0e7a35" },
   });
 
 // Only these sites are fetchable. The Mac/cloud runner downloads whatever URL a

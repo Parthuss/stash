@@ -87,7 +87,7 @@ const IMPORT_DAILY_OWN = 150, IMPORT_DAILY_SHARED = 5, SHARED_IMPORT_CEILING = 1
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", "x-acorn": "2b0e7a35" },
   });
 
 /** Constant-time compare, so the shared secret cannot be probed byte by byte. */

@@ -32,6 +32,7 @@
    ground, lavender / mint / peach pastels, Recursive Casual (display) + Rethink Sans (UI),
    generously rounded corners, soft low-alpha elevation. Light mode only, by choice. */
 :root {
+  --acorn-ratio: 1;
   --bg: #f8f7ff; --surface: #ffffff; --ink: #1d1b2e; --muted: #6a6880; --line: #ebe8f7;
   --lavender: #dcd8ff; --mint: #cdf3e1; --peach: #ffd8cb; --sky: #d6ebff; --butter: #fff0c4;
   --peach-ink: #8a3b1f; /* text on --peach: the "unused" badge */
@@ -118,7 +119,7 @@ header { padding: 22px 0 6px; }
 .card small { color: var(--muted); font-size: 12px; text-transform: capitalize; }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
 .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 64px 12px; }
-.result-limit { grid-column: 1 / -1; color: var(--muted); text-align: center; font-size: 14px; padding: 12px; }
+.result-limit { grid-column: 1 / -1; color: var(--muted); text-align: center; font-size: 14px; padding: calc(12px * var(--acorn-ratio, 1)); }
 .empty b { display: block; font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 26px; color: var(--ink); margin-bottom: 6px; }
 
 .btn { height: 48px; padding: 0 22px; border-radius: var(--r-btn); border: 0; background: var(--ink); color: #fff; font-weight: 600; transition: transform .12s; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
