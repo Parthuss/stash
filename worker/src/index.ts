@@ -547,7 +547,9 @@ export default {
              AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR
                (SELECT COUNT(*) FROM capture e LEFT JOIN user v ON v.id = e.user_id
                 WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)
-           ORDER BY c.captured_at LIMIT 1`,
+           -- Never-tried saves first: a post that already failed waits behind them. One huge carousel
+           -- (58 calls, 117k tokens) sat at the front of Jacinda's import for 30 h, failing every window.
+           ORDER BY c.claimed_at IS NOT NULL, c.captured_at LIMIT 1`,
         )
           .bind(day, ...openArgs, now, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
           .first();
