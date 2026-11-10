@@ -955,10 +955,13 @@ async function stashMedia(env: Env, cdnUrl: string, key: string): Promise<void> 
   });
 }
 
-/** How long until a daily-limited key can afford a whole note: Groq's wait for the failed request,
- *  scaled from the tokens it asked for up to a typical note (Groq's window frees tokens over time).
- *  Capped at 12 h. Measured 9 Nov 2026: a finished note averages ~9.1k tokens. */
-const NOTE_TOKENS = 12_000;
+/** How long until a daily-limited key can afford a few whole notes: Groq's wait for the failed
+ *  request, scaled from the tokens it asked for. Capped at 12 h. A finished note averages ~9.1k tokens
+ *  (9 Nov 2026). Aim for ~3 notes, not 1: the window is a rolling 24 h, so each hour hands back what
+ *  was spent that hour yesterday. Waiting for one note's worth locked Jacinda's key (9-10 Nov) into a
+ *  trickle that started a reel every hour, ran out mid-reel and copied itself day to day: ~70k tokens
+ *  in 16 h, zero notes. Bigger, rarer batches finish what they start. */
+const NOTE_TOKENS = 30_000;
 export function noteWaitMs(error: string): number {
   const wait = groqWaitMs(error), asked = Number((error.match(/Requested (\d+)/) || [])[1]) || 0;
   if (!wait) return 0;
