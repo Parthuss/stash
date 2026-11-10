@@ -14,9 +14,12 @@ Model: Opus 5.5 (check `/model`). Parth posts this today, so finish it end to en
 ## Step 1: the real recording (the reel's whole claim rests on it)
 Since 9 Nov, Claude Code on Parth's Mac brings up his saves on its own (a UserPromptSubmit hook,
 `stash/recall_hook.py`, on his main account). Record a real run:
-- In an empty scratch folder, run Parth's normal `claude` (NOT the Craveto launcher; the Craveto
-  account has no Skwirl) with `-p "<task prompt>" --output-format stream-json --verbose
-  --include-hook-events`. The prompt must NOT mention saves or Skwirl.
+- In an empty scratch folder, run Parth's normal account, not Craveto (the Craveto account has no
+  Skwirl). If you are running as "Claude (Craveto)", your environment points `claude` at the Craveto
+  login, so clear it explicitly:
+  `env -u CLAUDE_CONFIG_DIR /opt/homebrew/bin/claude -p "<task prompt>" --output-format stream-json --verbose --include-hook-events < /dev/null`
+  Check the transcript's hook output contains "Skwirl: the user saved these". The prompt must NOT
+  mention saves or Skwirl.
 - Try the script's prompt first (a landing page that shouldn't look AI-made, aiming at the "18 visual
   tells of AI-generated UI" save). If the hook doesn't surface that save or Claude doesn't use it, use
   the verified one: "Help me add a scroll-driven parallax hero to a landing page. Short plan only."
