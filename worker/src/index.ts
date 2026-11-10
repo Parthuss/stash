@@ -84,6 +84,10 @@ export interface Env {
 const MAX_ATTEMPTS = 3;
 // Imports per person per day, and the shared-key day total above which imports pause (Groq free tier ≈ 25-30 reels/day).
 const IMPORT_DAILY_OWN = 150, IMPORT_DAILY_SHARED = 5, SHARED_IMPORT_CEILING = 15;
+// While an own-key user's import is paused on their daily limit, borrow the shared key for this many
+// saves a day. Shared used 26-42k of ~200k tokens/day (8-10 Nov); a save is ~9k, so 12 leaves ample room.
+// ponytail: one counter per day in daily_counter ("borrow:YYYY-MM-DD"), never pruned (one row a day).
+const BORROW_DAILY = 12;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -542,7 +546,8 @@ export default {
            LEFT JOIN (SELECT user_id, COUNT(*) n FROM capture WHERE claimed_at > ? AND source = 'import' GROUP BY user_id) r
              ON r.user_id IS c.user_id
            WHERE c.source = 'import' AND ${open}
-             AND NOT EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || COALESCE(c.user_id, 'owner') AND p.at > ?)
+             AND (NOT EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || COALESCE(c.user_id, 'owner') AND p.at > ?)
+               OR (u.groq_key_enc IS NOT NULL AND COALESCE((SELECT n FROM daily_counter WHERE key = ?), 0) < ?))
              AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL THEN ? ELSE ? END
              AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR
                (SELECT COUNT(*) FROM capture e LEFT JOIN user v ON v.id = e.user_id
@@ -551,7 +556,7 @@ export default {
            -- (58 calls, 117k tokens) sat at the front of Jacinda's import for 30 h, failing every window.
            ORDER BY c.claimed_at IS NOT NULL, c.captured_at LIMIT 1`,
         )
-          .bind(day, ...openArgs, now, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
+          .bind(day, ...openArgs, now, "borrow:" + now.slice(0, 10), BORROW_DAILY, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
           .first();
         if (!row) {
           await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('imports_idle', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
@@ -575,8 +580,15 @@ export default {
       const owner = row.user_id
         ? await env.DB.prepare("SELECT groq_key_enc FROM user WHERE id = ?").bind(row.user_id).first<{ groq_key_enc: string | null }>()
         : null;
-      const groq_key = owner?.groq_key_enc ? await decryptKey(env, owner.groq_key_enc).catch(() => null) : null;
-      if (owner?.groq_key_enc && !groq_key) {
+      // Their own key is out for the day (import paused): this one runs on the shared key instead.
+      const t = new Date().toISOString();
+      const borrowed = row.source === "import" && owner?.groq_key_enc
+        ? !!(await env.DB.prepare("SELECT 1 FROM alert_state WHERE key = ? AND at > ?").bind("pause:" + row.user_id, t).first())
+        : false;
+      if (borrowed) await env.DB.prepare("INSERT INTO daily_counter (key, n) VALUES (?, 1) ON CONFLICT(key) DO UPDATE SET n = n + 1")
+        .bind("borrow:" + t.slice(0, 10)).run();
+      const groq_key = owner?.groq_key_enc && !borrowed ? await decryptKey(env, owner.groq_key_enc).catch(() => null) : null;
+      if (owner?.groq_key_enc && !borrowed && !groq_key) {
         // Can't decrypt their key (e.g. STASH_SECRET was rotated). Don't keep treating them as an
         // own-key user while quietly running on the shared key: drop it and tell them (audit S04).
         await env.DB.prepare("UPDATE user SET groq_key_enc = NULL, owner_msg = ? WHERE id = ? AND groq_key_enc = ?")
@@ -637,7 +649,10 @@ export default {
       } else {
         const error = (body.error ?? "").slice(0, 2000);
         const owner401 = /groq 401/.test(error)
-          ? await env.DB.prepare("SELECT u.id FROM capture c JOIN user u ON u.id = c.user_id WHERE c.id = ? AND u.groq_key_enc IS NOT NULL").bind(body.id).first<{ id: string }>()
+          // Not while their import is paused: then this run borrowed the shared key, and a 401 isn't theirs.
+          ? await env.DB.prepare(`SELECT u.id FROM capture c JOIN user u ON u.id = c.user_id WHERE c.id = ? AND u.groq_key_enc IS NOT NULL
+               AND NOT (c.source = 'import' AND EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || u.id AND p.at > ?))`)
+              .bind(body.id, new Date().toISOString()).first<{ id: string }>()
           : null;
         if (owner401) {
           // Their own key was deleted or revoked in Groq: drop it (back to the shared key), tell them on
