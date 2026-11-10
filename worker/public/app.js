@@ -439,6 +439,13 @@ $("nCatList").addEventListener("click", async (e) => {
 });
 function renderCatEditor() {
   $("catList").innerHTML = myCats.map((c, i) => `<span class="catitem">${esc(c)}<button type="button" data-rmcat="${i}" aria-label="Remove ${esc(c)}">×</button></span>`).join("");
+  // One-tap starters, so nobody faces an empty box. Picked from what this person saves.
+  const work = notes.some((n) => /therap|occupational|sensory|motor skill|toddler|kids|child|classroom|teach/i.test(`${n.title} ${n.summary}`));
+  const ideas = work ? ["Fine motor", "Gross motor", "Emotional regulation", "Executive function", "Handwriting", "Sensory", "Social skills", "Self care"]
+    : ["Recipes", "Workouts", "Travel", "Books and films", "Work ideas", "Money", "Home", "Gift ideas"];
+  const have = new Set(myCats.map((c) => c.toLowerCase()));
+  $("catSuggest").innerHTML = myCats.length >= 20 ? "" : ideas.filter((c) => !have.has(c.toLowerCase()))
+    .map((c) => `<button type="button" class="chip" data-addsug="${esc(c)}">+ ${esc(c)}</button>`).join("");
   $("bCats").textContent = myCats.length ? `${myCats.length} set` : "Optional";
   $("bCats").className = "badge " + (myCats.length ? "done" : "opt");
 }
@@ -456,6 +463,11 @@ $("catForm").addEventListener("submit", (e) => {
   if (myCats.length >= 20) { $("catMsg").className = "msg err"; $("catMsg").textContent = "Up to 20 categories."; return; }
   $("catIn").value = ""; tr("click", "category_add");
   saveCats([...myCats, name], "Added. Skwirl is sorting your saves into it now, old ones too. It takes a few minutes.");
+});
+$("catSuggest").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-addsug]"); if (!b || myCats.length >= 20) return;
+  tr("click", "category_suggest");
+  saveCats([...myCats, b.dataset.addsug], "Added. Skwirl is sorting your saves into it now, old ones too. It takes a few minutes.");
 });
 $("catList").addEventListener("click", (e) => {
   const b = e.target.closest("[data-rmcat]"); if (!b) return;
@@ -547,7 +559,8 @@ async function refreshSetup() {
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
   $("groqOff").hidden = !st.has_groq_key || st.owner;
   const fresh = st.categories || [];
-  if (JSON.stringify(fresh) !== JSON.stringify(myCats)) { myCats = fresh; renderCatEditor(); if (loaded) render(); }
+  if (JSON.stringify(fresh) !== JSON.stringify(myCats)) { myCats = fresh; if (loaded) render(); }
+  renderCatEditor();  // also refreshes the suggestion chips, which depend on the notes
 }
 // Desktop → phone handoff: a QR of the sign-in link (#t=), drawn locally, never sent anywhere.
 const onPhone = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
