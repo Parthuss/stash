@@ -85,6 +85,7 @@ export interface Env {
   DODO_API_BASE?: string; // default: Dodo's test host
   DODO_PRODUCT_MONTHLY?: string;
   DODO_PRODUCT_YEARLY?: string;
+  SHARED_KEYS?: string; // how many free Groq accounts the runners rotate through (GROQ_API_KEYS); scales the shared-lane ceilings
   PLUS_ACCESS?: string; // who can buy: comma-separated user ids, or "*" for everyone. Unset: nobody.
 }
 
@@ -542,6 +543,7 @@ export default {
       // Another runner can pick the same row between our SELECT and UPDATE, so the claim below is a
       // compare-and-set; if it loses, pick again (a few times, then report nothing to do).
       let row: Record<string, any> | null = null, lease = "";
+      const sharedKeys = Math.max(1, Number(env.SHARED_KEYS) || 1);
       for (let tries = 0; tries < 3 && !lease; tries++) {
       const now = new Date().toISOString();
       // Plus members' live saves first, then everyone else's. Their imports stay behind live saves
@@ -577,7 +579,7 @@ export default {
            -- carousel (58 calls, 117k tokens) sat at the front of one person's import for 30 h, failing every window.
            ORDER BY ${plusFast} DESC, c.claimed_at IS NOT NULL, c.captured_at LIMIT 1`,
         )
-          .bind(day, ...openArgs, now, "borrow:" + now.slice(0, 10), BORROW_DAILY, now, now.slice(0, 7), IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, now, now.slice(0, 7), day, SHARED_IMPORT_CEILING, now, now.slice(0, 7))
+          .bind(day, ...openArgs, now, "borrow:" + now.slice(0, 10), BORROW_DAILY * sharedKeys, now, now.slice(0, 7), IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, now, now.slice(0, 7), day, SHARED_IMPORT_CEILING * sharedKeys, now, now.slice(0, 7))
           .first();
         if (!row) {
           await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('imports_idle', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")

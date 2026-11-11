@@ -2,7 +2,7 @@
 # Mac awake. The owner's own saves stay local-first (the Mac daemon claims those).
 #
 # Runs in a PUBLIC repo, so logs are public: --quiet prints counts only, never
-# links or titles. Secrets (Actions > Secrets): STASH_WORKER_URL, STASH_SECRET, GROQ_API_KEY.
+# links or titles. Secrets (Actions > Secrets): STASH_WORKER_URL, STASH_SECRET, GROQ_API_KEY (or GROQ_API_KEYS: several free keys, comma-separated).
 #
 # Limits: GitHub cron can't go under 5 min and often runs late. A run drains
 # everything pending, it is not one save per tick.
@@ -38,3 +38,4 @@ jobs:
           STASH_WORKER_URL: ${{ secrets.STASH_WORKER_URL }}
           STASH_SECRET: ${{ secrets.STASH_SECRET }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEYS: ${{ secrets.GROQ_API_KEYS }}
