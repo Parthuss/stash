@@ -48,7 +48,7 @@ import { applyAiCategories, applySortResult, categoriesOf, claimSortBatch } from
 import { emailEnabled, emailLogin, redeemLogin } from "./login";
 import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
-import { dodoWebhook } from "./plus";
+import { dodoWebhook, isPlus } from "./plus";
 import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
 export interface Env {
@@ -595,8 +595,10 @@ export default {
       // A user who brought their own Groq key is processed on it. It rides this
       // admin-authenticated response to the Mac worker only; it is never logged.
       const owner = row.user_id
-        ? await env.DB.prepare("SELECT groq_key_enc FROM user WHERE id = ?").bind(row.user_id).first<{ groq_key_enc: string | null }>()
+        ? await env.DB.prepare("SELECT groq_key_enc, plan, plan_until FROM user WHERE id = ?").bind(row.user_id).first<{ groq_key_enc: string | null; plan: string | null; plan_until: string | null }>()
         : null;
+      // Plus pays for the shared key: their saves never run on their own (free-tier) key, even if one is saved.
+      if (owner && isPlus(owner)) owner.groq_key_enc = null;
       // Their own key is out for the day (import paused): this one runs on the shared key instead.
       const t = new Date().toISOString();
       const borrowed = row.source === "import" && owner?.groq_key_enc
@@ -668,8 +670,9 @@ export default {
         const owner401 = /groq 401/.test(error)
           // Not while their import is paused: then this run borrowed the shared key, and a 401 isn't theirs.
           ? await env.DB.prepare(`SELECT u.id FROM capture c JOIN user u ON u.id = c.user_id WHERE c.id = ? AND u.groq_key_enc IS NOT NULL
+               AND NOT (u.plan = 'plus' AND u.plan_until > ?)
                AND NOT (c.source = 'import' AND EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || u.id AND p.at > ?))`)
-              .bind(body.id, new Date().toISOString()).first<{ id: string }>()
+              .bind(body.id, new Date().toISOString(), new Date().toISOString()).first<{ id: string }>()
           : null;
         if (owner401) {
           // Their own key was deleted or revoked in Groq: drop it (back to the shared key), tell them on
