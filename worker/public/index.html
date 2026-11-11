@@ -320,7 +320,7 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .platforms span { color: var(--muted); font-size: 14px; margin-right: 4px; }
 .platforms b { font-weight: 500; font-size: 14px; background: rgb(255 255 255 / .8); padding: 7px 14px; border-radius: 999px; box-shadow: var(--lift-1); }
 
-.lsec { margin: 72px 0 0; }
+.lsec { margin: 72px 0 0; scroll-margin-top: 110px; }
 .lsec h2 { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: clamp(30px, 5vw, 42px); line-height: 1.08; letter-spacing: -.02em; margin: 0 0 12px; text-align: center; }
 .lsec > p { color: var(--muted); margin: 0 auto 24px; font-size: 17px; max-width: 36em; text-align: center; }
 
@@ -377,7 +377,7 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .lsec > p.work-fine { font-size: 14px; margin: 16px auto 0; max-width: 34em; }
 
 .chat { background: rgb(255 255 255 / .85); border-radius: 28px; padding: 18px; box-shadow: var(--lift-1); display: flex; flex-direction: column; gap: 10px; max-width: 560px; margin: 0 auto; }
-.chats { display: grid; gap: 12px; align-items: start; }
+.chats { display: grid; gap: 12px; align-items: stretch; }
 @media (min-width: 880px) { .chats { grid-template-columns: 1fr 1fr; } }
 .chats .chat { width: 100%; }
 .chat p { margin: 0; padding: 10px 14px; border-radius: 18px; font-size: 15px; max-width: 88%; }
@@ -397,7 +397,7 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 @keyframes gone { to { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -10px; } }
 
 .plans { display: grid; gap: 12px; }
-@media (min-width: 760px) { .plans { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 760px) { .plans { grid-template-columns: repeat(2, 1fr); max-width: 860px; margin: 0 auto; } }
 .plan { background: rgb(255 255 255 / .85); border-radius: 26px; padding: 20px; box-shadow: var(--lift-1); display: flex; flex-direction: column; }
 .plan.hot { background: var(--mint); }
 .plan small { font-weight: 600; }
@@ -662,7 +662,7 @@ body.on-phone .phone-handoff { display: none; }
       </ul>
     </div>
     <div class="work-cta"><a class="btn" href="#" data-totop>Start free</a><a class="btn soft" href="/guides/use-saved-reels-in-claude">How to set it up</a></div>
-    <p class="fine work-fine">Only Claude Code checks on its own. ChatGPT and the Claude app can search your saves too: ask them to check Skwirl.</p>
+    <p class="fine work-fine">Claude Code checks your saves by itself. In ChatGPT or the Claude app, just say “check my Skwirl”.</p>
   </div>
 
   <div class="lsec reveal">
@@ -730,8 +730,10 @@ body.on-phone .phone-handoff { display: none; }
     <div class="plans">
       <div class="plan">
         <small>Free</small><b class="price"><span class="zeroPrice">$0</span></b>
+        <small class="plusYearLine">no card needed</small>
         <ul><li>10 new saves a month</li><li>Your 25 latest Instagram saves brought in</li><li>Notes, recipes, lists, search</li><li>ChatGPT, Claude and Claude Code</li></ul>
         <span class="note">Read in turn, so on busy days it can take a few hours.</span>
+        <div class="inline-actions" style="margin-top:10px"><a class="btn sm soft" href="#" data-totop>Start free</a></div>
       </div>
       <div class="plan plus" data-plus="pricing">
         <small>Skwirl Plus<span class="plusSoon"> · coming soon</span></small><b class="price"><span class="plusPrice">$4.99</span><em> / month</em></b>
