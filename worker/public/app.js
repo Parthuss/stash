@@ -544,6 +544,7 @@ async function refreshSetup() {
   const set = (id, done, todo = "To do") => { const b = $(id); b.textContent = done ? "Done ✓" : todo; b.className = "badge" + (done ? " done" : id === "bGroq" ? " opt" : ""); };
   set("bSave", phone); set("bClaude", st.claude_connected); set("bGroq", st.has_groq_key, "Optional");
   $("groqPaid").hidden = !st.has_groq_key;
+  renderPlus();
   if (standalone || st.saved_from?.pwa) { $("bHome").textContent = "Done ✓"; $("bHome").className = "badge done"; }
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
   $("homeIos").hidden = !ios && and; $("homeAnd").hidden = !and; $("homeDesk").hidden = ios || and;
@@ -644,7 +645,7 @@ async function start() {
   if (shared) history.replaceState(null, "", "/");
   if (toSave) await ingest(toSave, src === "shortcut" ? "shortcut" : null);
   await load();
-  refreshSetup();
+  if (p.get("plus") === "done") plusReturn(p.get("status")); else refreshSetup();
 }
 document.addEventListener("visibilitychange", () => token && document.visibilityState === "visible" && $("lib").style.display !== "none" && load().catch(() => {}));
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -842,14 +843,15 @@ function showImport() {
   const own = setupState?.has_groq_key, at = i?.resumes_at && left > 0 ? new Date(i.resumes_at) : null;
   const hrs = at ? Math.max(1, Math.round((at - Date.now()) / 3600e3)) : 0;
   const paused = at && `${own ? "Your Groq key's free daily limit is used up" : "Skwirl's free daily allowance is used up"}. Reading resumes at ${at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} (in about ${hrs} hour${hrs > 1 ? "s" : ""}).`;
-  const faster = own ? "A paid Groq key can raise your allowance. Skwirl Plus is coming soon; Notify me joins its waitlist." : "Your own Groq key provides a separate allowance. Skwirl Plus is coming soon; Notify me joins its waitlist.";
+  const on = setupState?.plan === "plus", plusLine = setupState?.plus_available ? "Skwirl Plus reads your saves first, with no key." : "Skwirl Plus is coming soon; Notify me joins its waitlist.";
+  const faster = on ? "" : own ? `A paid Groq key can raise your allowance. ${plusLine}` : `Your own Groq key provides a separate allowance. ${plusLine}`;
   // Not paused: still say why it's slow, so a trickle reads as a limit with a fix, not as broken.
-  const why = own ? "Old saves arrive in daily batches within your Groq key's allowance." : "The shared key reads up to 5 old saves a day, depending on its remaining allowance.";
+  const why = on ? "Old saves are read in daily batches, after new ones." : own ? "Old saves arrive in daily batches within your Groq key's allowance." : "The shared key reads up to 5 old saves a day, depending on its remaining allowance.";
   if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` ${paused || why} ${faster} New saves always go first.` : ""}`;
   // Big import in progress: say so on the library, with the one button that speeds it up.
   if (i && left > 0 && $("fb").hidden) {
     if (!bannerKey || bannerKey === "import")
-      setBanner("import", "info", `${i.done} of ${i.total} old saves read. ${paused || why}`, own ? "Go faster" : "Add a key",
+      setBanner("import", "info", `${i.done} of ${i.total} old saves read. ${paused || why}`, on ? null : own ? "Go faster" : "Add a key",
         // Both lead to the Groq section, where Skwirl Plus is the first option (Groq's paid tier sits under it).
         () => { tr("click", own ? "groq_upgrade" : "groq_add"); openSetup(false); $("gGroq").open = true; $("gGroq").scrollIntoView({ behavior: "smooth" }); });
   } else clearBanner("import");
@@ -907,28 +909,31 @@ $("fb").addEventListener("submit", async (e) => {
   fbDone(); toast("Thanks! Parth reads every one.");
 });
 
-// ---- Skwirl Plus (coming soon): local early price, and a "notify me" that records interest.
-// No checkout exists yet. Prices live here; change them in one place.
+// ---- Skwirl Plus: local prices, Get Plus for people the server allows (PLUS_ACCESS), and a
+// "notify me" that records interest for everyone else. Prices live here; change them in one place.
 const EU = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE".split(" ");
 // [currency symbol, Plus per month, Plus per year]. Base $4.99 / $39 (Nov 2026 pricing); India is set
-// for local purchasing power. Keep in step with the checkout when payments go live.
+// for local purchasing power. Keep in step with the Dodo products' local prices.
 const PRICES = { US: ["$", "4.99", "39"], IN: ["₹", "299", "2,499"], GB: ["£", "3.99", "31"], CA: ["C$", "6.99", "54"],
   AU: ["A$", "7.99", "59"], NZ: ["NZ$", "8.99", "65"], EU: ["€", "4.99", "39"] };
 const priceFor = (cc) => PRICES[cc] || (EU.includes(cc) ? PRICES.EU : PRICES.US);
 const plusPrice = (cc) => { const [c, m] = priceFor(cc); return c + m; };
-let plusCountry = null;
+let plusCountry = null, plusOpen = false;
 fetch("/join").then((r) => r.json()).then((m) => {
   plusCountry = m.country; const [c, , y] = priceFor(m.country);
   document.querySelectorAll(".plusPrice").forEach((el) => (el.textContent = plusPrice(m.country)));
   document.querySelectorAll(".plusYear").forEach((el) => (el.textContent = c + y));
   document.querySelectorAll(".zeroPrice").forEach((el) => (el.textContent = c + "0"));
+  plusOpen = m.plus_open === true; renderPlus();
 }).catch(() => {});
 document.querySelectorAll("[data-plus]").forEach((box) => {
   const place = box.dataset.plus;
   box.insertAdjacentHTML("beforeend", `<button class="btn sm plusBtn" type="button" id="plus_${place}" style="margin-top:10px;justify-self:start;align-self:flex-start">Notify me</button>
     <form class="plusform" hidden><input type="email" maxlength="120" placeholder="Your email" aria-label="Your email" autocomplete="email">
     <label><input type="checkbox"> Email me when Plus is ready. Nothing else, never shared.</label>
-    <button class="btn sm" type="submit">Notify me</button></form><p class="msg" role="status"></p>`);
+    <button class="btn sm" type="submit">Notify me</button></form><p class="msg" role="status"></p>
+    <div class="plusBuy inline-actions" hidden style="margin-top:10px"><button class="btn sm" type="button" data-buy="month">Get Plus,&nbsp;<span class="plusPrice">$4.99</span>/month</button><button class="btn sm soft" type="button" data-buy="year"><span class="plusYear">$39</span>/year</button></div>
+    <div class="plusOn" hidden style="margin-top:10px"><p class="plusOnText" style="margin:0 0 8px"></p><button class="btn sm soft" type="button" data-portal>Manage subscription</button></div>`);
   const btn = box.querySelector(".plusBtn"), form = box.querySelector("form"), msg = box.querySelector(".msg");
   const send = async (email, consent) => {
     const price = plusPrice(plusCountry);
@@ -948,6 +953,42 @@ document.querySelectorAll("[data-plus]").forEach((box) => {
   });
   form.addEventListener("submit", (e) => { e.preventDefault(); send(form.querySelector("input[type=email]").value, form.querySelector("input[type=checkbox]").checked); });
 });
+
+const plusDate = (d) => new Date(d).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+const PLUS_CAP_NOTE = "You've saved more than 500 reels this month, so new ones may take a little longer. Everything still gets read.";
+function renderPlus() {
+  const st = setupState || {}, on = st.plan === "plus", can = token ? st.plus_available : plusOpen;
+  document.querySelectorAll(".plusSoon").forEach((el) => (el.hidden = !!(can || on)));
+  document.querySelectorAll(".plusLive").forEach((el) => (el.hidden = !(can || on)));
+  document.querySelectorAll(".plusPitch").forEach((el) => (el.hidden = on));
+  document.querySelectorAll("[data-plus]").forEach((box) => {
+    if (can || on) box.querySelector(".plusBtn").hidden = box.querySelector("form").hidden = true;
+    box.querySelector(".plusBuy").hidden = !can || on;
+    box.querySelector(".plusOn").hidden = !on;
+    if (on) box.querySelector(".plusOnText").textContent = `You're on Skwirl Plus, active through ${plusDate(st.plan_until)}.${st.plus_over_cap ? " " + PLUS_CAP_NOTE : ""}`;
+  });
+}
+document.addEventListener("click", async (e) => {
+  const buy = e.target.closest("[data-buy]"), portal = e.target.closest("[data-portal]");
+  if (!buy && !portal) return;
+  if (buy && !token) { $("joinName").scrollIntoView({ behavior: "smooth", block: "center" }); return $("joinName").focus(); }
+  tr("click", buy ? "plus_checkout_" + buy.dataset.buy : "plus_portal");
+  const r = await (buy ? api("/v1/plus/checkout", { method: "POST", body: JSON.stringify({ interval: buy.dataset.buy }) }) : api("/v1/plus/portal")).catch(() => null);
+  const b = r ? await r.json().catch(() => ({})) : {};
+  if (b.checkout_url || b.link) location.href = b.checkout_url || b.link;
+  else toast(b.error || "Couldn't open that. Try again.");
+});
+// Back from Dodo. Only the webhook grants Plus, so wait for it rather than trust this URL.
+async function plusReturn(status) {
+  history.replaceState(null, "", "/");
+  if (status === "failed" || status === "cancelled") { await refreshSetup(); return toast("That payment didn't go through. Your plan hasn't changed."); }
+  for (let i = 0; i < 8; i++) {
+    await refreshSetup();
+    if (setupState?.plan === "plus") return toast("Thanks! You're on Skwirl Plus now.");
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  toast("Thanks! Plus will switch on in a moment.");
+}
 
 // ---- Notifications (Web Push). iPhone only allows them in the home-screen app, and the prompt
 // must come from a tap, so this is a card with a button. Server side: src/push.ts.
@@ -1063,7 +1104,9 @@ function renderHub(me, perm) {
     ["Your categories", "Sort every save your way", myCats.length ? `${myCats.length} set` : null, `<button class="btn sm soft" ${go("gCats")}>${myCats.length ? "Edit" : "Set up"}</button>`],
     ["Your own Groq key", "Uses your own AI allowance", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`],
     ...(st.telegram ? [["Telegram", "Save by sending links to a bot", st.telegram.connected ? "Connected" : null, `<button class="btn sm soft" ${go("gTelegram")}>Connect</button>`]] : []),
-    ["Skwirl Plus", "No keys, saves read first (coming soon)", null, `<button class="btn sm soft" ${go("gGroq")}>Notify me</button>`],
+    st.plan === "plus"
+      ? ["Skwirl Plus", `Active through ${plusDate(st.plan_until)}.${st.plus_over_cap ? " Over 500 saves this month, all still read." : ""}`, null, `<button class="btn sm soft" data-portal>Manage subscription</button>`]
+      : ["Skwirl Plus", `No keys, saves read first${st.plus_available ? "" : " (coming soon)"}`, null, `<button class="btn sm soft" ${go("gGroq")}>${st.plus_available ? "Get Plus" : "Notify me"}</button>`],
   ];
   $("hub").innerHTML = rows.filter((r) => !(me.owner && r[0] === "Skwirl Plus")).map(([t, sub, done, act]) =>
     `<div class="hubrow"><div class="t"><b>${esc(t)}</b><small>${esc(sub)}</small></div>${done ? `<span class="ok">${esc(done)} ✓</span>` : act}</div>`).join("");

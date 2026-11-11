@@ -48,6 +48,7 @@ import { applyAiCategories, applySortResult, categoriesOf, claimSortBatch } from
 import { emailEnabled, emailLogin, redeemLogin } from "./login";
 import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
+import { dodoWebhook } from "./plus";
 import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
 export interface Env {
@@ -79,6 +80,12 @@ export interface Env {
   GH_DISPATCH_TOKEN?: string;
   GH_REPO?: string; // default "Parthuss/stash" // set to get phone alerts when the queue is stuck, captures fail, or someone joins
   MAX_JOIN?: string; // cap on accounts created via /join (default 50)
+  DODO_API_KEY?: string; // Skwirl Plus (src/plus.ts)
+  DODO_WEBHOOK_SECRET?: string;
+  DODO_API_BASE?: string; // default: Dodo's test host
+  DODO_PRODUCT_MONTHLY?: string;
+  DODO_PRODUCT_YEARLY?: string;
+  PLUS_ACCESS?: string; // who can buy: comma-separated user ids, or "*" for everyone. Unset: nobody.
 }
 
 const MAX_ATTEMPTS = 3;
@@ -346,6 +353,8 @@ export default {
       }
       return handleMcp(request, env, userId, (link, note) => saveFor(userId, link, note, "mcp"));
     }
+    if (path === "/webhooks/dodo" && request.method === "POST") return dodoWebhook(request, env, ctx);
+
     if (path === "/webhook/telegram" && request.method === "POST") {
       return handleTelegram(request, env, (userId, link) => saveFor(userId, link, undefined, "telegram"));
     }
@@ -374,7 +383,7 @@ export default {
 
     // Tells the landing page whether to ask for an invite code.
     if (path === "/join" && request.method === "GET") {
-      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE), email_login: emailEnabled(env), country: request.headers.get("CF-IPCountry") });
+      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE), email_login: emailEnabled(env), country: request.headers.get("CF-IPCountry"), plus_open: env.PLUS_ACCESS === "*" });
     }
 
     // Product analytics beacon (public: visitors aren't signed in). See src/analytics.ts.
@@ -530,7 +539,16 @@ export default {
       // compare-and-set; if it loses, pick again (a few times, then report nothing to do).
       let row: Record<string, any> | null = null, lease = "";
       for (let tries = 0; tries < 3 && !lease; tries++) {
+      const now = new Date().toISOString();
+      // Plus members' live saves first, then everyone else's. Their imports stay behind live saves
+      // (below), so a big Plus import can't hold up a free user's new reel for hours.
       row = await env.DB.prepare(
+        `SELECT c.* FROM user u JOIN capture c ON c.user_id = u.id
+         WHERE u.plan = 'plus' AND u.plan_until > ? AND c.source != 'import' AND ${open} ORDER BY c.captured_at LIMIT 1`,
+      )
+        .bind(now, ...openArgs)
+        .first();
+      row ??= await env.DB.prepare(
         `SELECT c.* FROM capture c WHERE c.source != 'import' AND ${open} ORDER BY c.captured_at LIMIT 1`,
       )
         .bind(...openArgs)
@@ -538,7 +556,6 @@ export default {
       // The import query reads the whole backlog, and runners poll every few seconds: once it
       // comes back empty (everyone at their daily slice), don't ask again for 15 minutes.
       // Polling every time read 31M rows in a day from a 500-post import (6 Nov 2026).
-      const now = new Date().toISOString();
       const idle = row ? null : await env.DB.prepare("SELECT at FROM alert_state WHERE key = 'imports_idle'").first<{ at: string }>();
       if (!row && !(idle && idle.at > now)) {
         row = await env.DB.prepare(
@@ -548,15 +565,15 @@ export default {
            WHERE c.source = 'import' AND ${open}
              AND (NOT EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || COALESCE(c.user_id, 'owner') AND p.at > ?)
                OR (u.groq_key_enc IS NOT NULL AND COALESCE((SELECT n FROM daily_counter WHERE key = ?), 0) < ?))
-             AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL THEN ? ELSE ? END
-             AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR
+             AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL OR (u.plan = 'plus' AND u.plan_until > ?) THEN ? ELSE ? END
+             AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR (u.plan = 'plus' AND u.plan_until > ?) OR
                (SELECT COUNT(*) FROM capture e LEFT JOIN user v ON v.id = e.user_id
                 WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)
-           -- Never-tried saves first: a post that already failed waits behind them. One huge carousel
-           -- (58 calls, 117k tokens) sat at the front of Jacinda's import for 30 h, failing every window.
-           ORDER BY c.claimed_at IS NOT NULL, c.captured_at LIMIT 1`,
+           -- Plus first. Then never-tried saves: a post that already failed waits behind them. One huge
+           -- carousel (58 calls, 117k tokens) sat at the front of one person's import for 30 h, failing every window.
+           ORDER BY (u.plan = 'plus' AND u.plan_until > ?) DESC, c.claimed_at IS NOT NULL, c.captured_at LIMIT 1`,
         )
-          .bind(day, ...openArgs, now, "borrow:" + now.slice(0, 10), BORROW_DAILY, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, day, SHARED_IMPORT_CEILING)
+          .bind(day, ...openArgs, now, "borrow:" + now.slice(0, 10), BORROW_DAILY, now, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, now, day, SHARED_IMPORT_CEILING, now)
           .first();
         if (!row) {
           await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('imports_idle', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
@@ -975,7 +992,7 @@ async function stashMedia(env: Env, cdnUrl: string, key: string): Promise<void> 
 /** How long until a daily-limited key can afford a few whole notes: Groq's wait for the failed
  *  request, scaled from the tokens it asked for. Capped at 12 h. A finished note averages ~9.1k tokens
  *  (9 Nov 2026). Aim for ~3 notes, not 1: the window is a rolling 24 h, so each hour hands back what
- *  was spent that hour yesterday. Waiting for one note's worth locked Jacinda's key (9-10 Nov) into a
+ *  was spent that hour yesterday. Waiting for one note's worth locked one person's key (9-10 Nov) into a
  *  trickle that started a reel every hour, ran out mid-reel and copied itself day to day: ~70k tokens
  *  in 16 h, zero notes. Bigger, rarer batches finish what they start. */
 const NOTE_TOKENS = 30_000;
