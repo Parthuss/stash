@@ -21,7 +21,7 @@ from pathlib import Path
 
 import httpx
 
-from .config import CONFIG, groq_key, record_usage
+from .config import CONFIG, groq_key, record_usage, openrouter_failed, openrouter_key
 
 GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
@@ -32,6 +32,7 @@ GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 #: trade a little accuracy for a lot of speed; at a few captures a day, there
 #: is no reason to take that trade for free.
 GROQ_MODEL = "whisper-large-v3"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/audio/transcriptions"
 
 #: Below this mean volume we treat the track as silent. Muted reels are common
 #: and transcribing them wastes a request to produce hallucinated filler.
@@ -133,24 +134,43 @@ def transcribe(video: Path) -> Transcript:
 
     if groq_key(CONFIG):
         result = _groq(wav)
-        record_usage("whisper", GROQ_MODEL, seconds=duration)
+        record_usage("whisper", ("openrouter:" if result.via == "openrouter" else "") + GROQ_MODEL, seconds=duration)
         return result
     return _local(wav)
 
 
 def _groq(wav: Path) -> Transcript:
-    with wav.open("rb") as handle:
-        response = httpx.post(
-            GROQ_URL,
-            headers={"Authorization": f"Bearer {groq_key(CONFIG)}"},
-            files={"file": (wav.name, handle, "audio/wav")},
-            data={
-                "model": GROQ_MODEL,
-                "response_format": "verbose_json",
-                "timestamp_granularities[]": "segment",
-            },
-            timeout=300,
-        )
+    response = None
+    if key := openrouter_key():  # Plus: the same Whisper model, paid, on OpenRouter
+        try:
+            with wav.open("rb") as handle:
+                response = httpx.post(
+                    OPENROUTER_URL, headers={"Authorization": f"Bearer {key}"},
+                    files={"file": (wav.name, handle, "audio/wav")},
+                    data={"model": "openai/" + GROQ_MODEL, "response_format": "verbose_json",
+                          "timestamp_granularities[]": "segment"},
+                    timeout=300,
+                )
+            if response.status_code != 200 or "text" not in response.json():
+                raise ValueError(response.status_code)
+        except (httpx.HTTPError, ValueError) as exc:
+            response = None
+            openrouter_failed(3600 if str(exc) in ("401", "402", "403") else 600)
+            print(f"  openrouter transcription unavailable ({exc}): using the free keys", flush=True)
+    via = "openrouter" if response is not None else "groq"
+    if response is None:
+        with wav.open("rb") as handle:
+            response = httpx.post(
+                GROQ_URL,
+                headers={"Authorization": f"Bearer {groq_key(CONFIG)}"},
+                files={"file": (wav.name, handle, "audio/wav")},
+                data={
+                    "model": GROQ_MODEL,
+                    "response_format": "verbose_json",
+                    "timestamp_granularities[]": "segment",
+                },
+                timeout=300,
+            )
     if response.status_code != 200:
         raise TranscribeError(f"groq {response.status_code}: {response.text[:300]}")
 
@@ -169,7 +189,7 @@ def _groq(wav: Path) -> Transcript:
         text=(body.get("text") or "").strip(),
         segments=segments,
         language=body.get("language") or "",
-        via="groq",
+        via=via,
     )
 
 
