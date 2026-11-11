@@ -40,7 +40,7 @@ Parth's standing content rules (he set these; they are not optional):
 - Quality over cost: never cut frames or use a cheaper model to save time.
 
 ## Step 3: check, then hand over
-- Watch the full render yourself (extract frames at each cut, listen to the VO) before calling it done.
+- Run the content-qa skill (`.claude/skills/content-qa/SKILL.md`) on the render and iterate until it passes, before calling it done.
 - Deliver: the final MP4, a 1-2 line caption with 3-5 hashtags, and a cover frame. Put them in
   `promo/out/` and tell Parth the paths.
 - Commit the source by file name (never the other session's files, never `git add -A`), push as
