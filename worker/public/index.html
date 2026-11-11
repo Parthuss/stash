@@ -178,6 +178,8 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 .lback, .lhero .siteback { display: none; } .lback { align-items: center; text-decoration: none; color: var(--ink); }
 body.site-visit .lback { display: inline-flex; } body.site-visit .lhero .siteback { display: flex; }
 body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, body.site-visit #joinFine, body.site-visit #pwaIn, body.site-visit .work-cta [data-totop] { display: none !important; }
+.demo-toggle:not(:focus-visible) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+#productDemo .phone { cursor: pointer; }
 .lsign { display: inline-flex; align-items: center; text-decoration: none; color: var(--ink); }
 .lhero { display: grid; gap: 34px; align-items: center; padding: 7vh 0 10px; }
 .lcopy { text-align: center; }
@@ -327,7 +329,7 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .vs-col { background: rgb(255 255 255 / .85); border-radius: 28px; padding: 18px; box-shadow: var(--lift-1); }
 .vs-col small { display: block; font-weight: 600; margin-bottom: 12px; }
 .vs-col > p { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
-.grid9 { max-width: 260px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.grid9 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .grid9 i { aspect-ratio: 1; border-radius: 8px; background: linear-gradient(135deg, #e9e6fb, #f3e9f4); }
 .grid9 i:nth-child(3n+1) { background: linear-gradient(135deg, #ffe2d6, #f1e7fb); } .grid9 i:nth-child(4) { background: linear-gradient(135deg, #dff3ea, #eceaf8); }
 .vs-arrow { text-align: center; font-size: 28px; color: var(--muted); }
@@ -342,9 +344,11 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 
 .lsteps { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 @media (min-width: 880px) { .lsteps { grid-template-columns: repeat(3, 1fr); } }
-.lsteps li { background: rgb(255 255 255 / .85); border-radius: 24px; padding: 18px; box-shadow: var(--lift-1); display: flex; gap: 14px; align-items: flex-start; }
-.lsteps svg { flex: none; width: 48px; height: 48px; }
-.lsteps b { display: block; margin-bottom: 2px; } .lsteps span { color: var(--muted); font-size: 15px; }
+/* Icon and title on one line, the text full width below. */
+.lsteps li { background: rgb(255 255 255 / .85); border-radius: 24px; padding: 18px 20px 20px; box-shadow: var(--lift-1); display: grid; grid-template-columns: 44px 1fr; column-gap: 12px; row-gap: 10px; align-items: center; }
+.lsteps li > div { display: contents; }
+.lsteps svg { width: 44px; height: 44px; }
+.lsteps b { display: block; font-size: 17px; } .lsteps span { grid-column: 1 / -1; color: var(--muted); font-size: 15px; }
 
 .lhero h1, .lsec h2 { text-wrap: balance; }
 .lede b { display: block; margin-top: 12px; color: var(--ink); font-weight: 600; }
@@ -573,9 +577,8 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lhero">
     <div class="lcopy">
-      <p class="eyebrow">Free · works with ChatGPT and Claude</p>
       <h1>Everything you save, actually useful.</h1>
-      <p class="lede">Share a reel to Skwirl and a couple of minutes later it's a note you can search: recipes come back as ingredients and steps, books, films and places land in your lists.<b>And it comes back while you work: Claude Code pulls in the save that fits what you're building.</b></p>
+      <p class="lede">Share a reel and it becomes a note you can search. Claude Code brings the right one back while you work.</p>
       <div class="siteback inline-actions"><a class="btn" href="/" data-backapp>Back to my saves</a></div>
       <form id="joinForm" class="joinbox">
         <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your first name" required>
@@ -635,11 +638,32 @@ body.on-phone .phone-handoff { display: none; }
       </div>
     </div>
     <figcaption class="steps-cap" aria-hidden="true"><span class="c1">Watch</span><span class="c2">Share</span><span class="c3">Pick Skwirl</span><span class="c4">Get the recipe</span></figcaption>
-    <button class="btn sm soft" type="button" id="demoToggle" aria-pressed="false">Pause demo</button>
+    <button class="btn sm soft demo-toggle" type="button" id="demoToggle" aria-pressed="false">Pause demo</button>
     </figure>
   </div>
 
   <div class="platforms reveal"><span>Works with</span><b>Instagram</b><b>YouTube Shorts</b><b>X</b></div>
+
+  <div class="lsec work reveal" id="work">
+    <h2>Your saves, back while you work</h2>
+    <p>That tutorial you saved months ago, right when you sit down to build. With the Skwirl plugin, Claude Code checks your saves on every message and brings in the one that fits. If nothing fits, you see nothing.</p>
+    <div class="work-grid">
+      <figure class="cc">
+        <div class="cc-bar" aria-hidden="true"><i></i><i></i><i></i><span>Claude Code</span></div>
+        <p class="cc-me"><span aria-hidden="true">&gt; </span>Help me add a scroll-driven parallax hero to a landing page. Short plan only.</p>
+        <p class="cc-chip"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Checked Skwirl</p>
+        <p class="cc-ai"><span class="cc-dim" aria-hidden="true">&hellip;</span>Your saved post &ldquo;4 Web Animation Patterns&rdquo; (Web Pros, <u>link</u>) lists parallax, scrub and pin + transform as scroll patterns. This plan does the parallax.</p>
+        <figcaption>The end of Claude&rsquo;s reply in a real test, 9 November 2026. The prompt never mentioned Skwirl.</figcaption>
+      </figure>
+      <ul class="uses">
+        <li><b>Building</b><span>The Claude skills, GitHub repos and design ideas you saved to try later.</span><small><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>4 Web Animation Patterns</small></li>
+        <li><b>Planning sessions</b><span>Therapists and teachers sort activity ideas into their own categories, then pull them up to plan.</span><small><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Fine motor games with pegs</small></li>
+        <li><b>Making content</b><span>The hooks and formats you saved, there while you write.</span><small><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>3 hooks that stop the scroll</small></li>
+      </ul>
+    </div>
+    <div class="work-cta"><a class="btn" href="#" data-totop>Start free</a><a class="btn soft" href="/guides/use-saved-reels-in-claude">How to set it up</a></div>
+    <p class="fine work-fine">Only Claude Code checks on its own. ChatGPT and the Claude app can search your saves too: ask them to check Skwirl.</p>
+  </div>
 
   <div class="lsec reveal">
     <h2>Your Saved folder is a graveyard.</h2>
@@ -647,7 +671,7 @@ body.on-phone .phone-handoff { display: none; }
     <div class="vs">
       <div class="vs-col">
         <small>Instagram Saved</small>
-        <div class="grid9" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="grid9" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <p>"It was a pasta thing… somewhere in here."</p>
       </div>
       <div class="vs-arrow" aria-hidden="true">→</div>
@@ -681,27 +705,6 @@ body.on-phone .phone-handoff { display: none; }
       <li><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="12" fill="#cdf3e1"/><circle cx="22" cy="22" r="7" stroke="#1d1b2e" stroke-width="2.6" fill="none"/><path d="m27 27 6 6" stroke="#1d1b2e" stroke-width="2.6" stroke-linecap="round"/></svg>
         <div><b>Find it when you need it</b><span>Search by anything that was said or shown, or have Claude check them while you work. Tick off recipes you made and books you read.</span></div></li>
     </ol>
-  </div>
-
-  <div class="lsec work reveal" id="work">
-    <h2>Your saves, back while you work</h2>
-    <p>That tutorial you saved months ago, right when you sit down to build. With the Skwirl plugin, Claude Code checks your saves on every message and brings in the one that fits. If nothing fits, you see nothing.</p>
-    <div class="work-grid">
-      <figure class="cc">
-        <div class="cc-bar" aria-hidden="true"><i></i><i></i><i></i><span>Claude Code</span></div>
-        <p class="cc-me"><span aria-hidden="true">&gt; </span>Help me add a scroll-driven parallax hero to a landing page. Short plan only.</p>
-        <p class="cc-chip"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Checked Skwirl</p>
-        <p class="cc-ai"><span class="cc-dim" aria-hidden="true">&hellip;</span>Your saved post &ldquo;4 Web Animation Patterns&rdquo; (Web Pros, <u>link</u>) lists parallax, scrub and pin + transform as scroll patterns. This plan does the parallax.</p>
-        <figcaption>The end of Claude&rsquo;s reply in a real test, 9 November 2026. The prompt never mentioned Skwirl.</figcaption>
-      </figure>
-      <ul class="uses">
-        <li><b>Building</b><span>The Claude skills, GitHub repos and design ideas you saved to try later.</span><small><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>4 Web Animation Patterns</small></li>
-        <li><b>Planning sessions</b><span>Therapists and teachers sort activity ideas into their own categories, then pull them up to plan.</span><small><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Fine motor games with pegs</small></li>
-        <li><b>Making content</b><span>The hooks and formats you saved, there while you write.</span><small><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>3 hooks that stop the scroll</small></li>
-      </ul>
-    </div>
-    <div class="work-cta"><a class="btn" href="#" data-totop>Start free</a><a class="btn soft" href="/guides/use-saved-reels-in-claude">How to set it up</a></div>
-    <p class="fine work-fine">Only Claude Code checks on its own. ChatGPT and the Claude app can search your saves too: ask them to check Skwirl.</p>
   </div>
 
   <div class="lsec claude reveal">

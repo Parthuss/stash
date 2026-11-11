@@ -312,6 +312,7 @@ if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObse
   }), { threshold: 0.15 });
   document.querySelectorAll("#auth .reveal, #auth .chat").forEach((el) => io.observe(el));
 }
+$("productDemo").querySelector(".phone").addEventListener("click", () => $("demoToggle").click());
 $("demoToggle").addEventListener("click", () => {
   const paused = $("productDemo").classList.toggle("demo-paused");
   $("demoToggle").setAttribute("aria-pressed", String(paused));
