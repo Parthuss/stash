@@ -172,7 +172,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
   background: linear-gradient(135deg, rgb(255 255 255 / .62), rgb(255 255 255 / .32)); border: 1px solid rgb(255 255 255 / .7);
   -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .9), inset 0 -1px 0 rgb(255 255 255 / .25), 0 10px 30px rgb(60 50 120 / .12); }
-.lnav .brand { font-size: 26px; }
+.lnav .brand { font-size: 26px; color: var(--ink); text-decoration: none; }
 .lnk { color: var(--muted); text-decoration: none; font-weight: 500; padding: 0 10px; }
 /* Signed in and visiting the site: no join or sign-in, a way back to the app instead. */
 .lback, .lhero .siteback { display: none; } .lback { align-items: center; text-decoration: none; color: var(--ink); }
@@ -566,7 +566,7 @@ body.on-phone .phone-handoff { display: none; }
 <main>
 
 <section id="auth">
-  <nav class="lnav"><span class="brand"><img src="/mark.svg" alt="">Skwirl</span><a href="#pricing" class="lnk">Pricing</a><a href="#signin" class="setup-pill lsign">Sign in</a><a href="/" class="setup-pill lback" data-backapp>My saves</a></nav>
+  <nav class="lnav"><a href="/" class="brand" data-brand><img src="/mark.svg" alt="">Skwirl</a><a href="#pricing" class="lnk">Pricing</a><a href="#signin" class="setup-pill lsign">Sign in</a><a href="/" class="setup-pill lback" data-backapp>My saves</a></nav>
 
   <div class="pwa-in" id="pwaIn" hidden>
     <h2>Welcome back</h2>

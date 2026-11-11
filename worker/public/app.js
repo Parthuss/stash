@@ -51,6 +51,19 @@ const tier = () => setupState?.tier || "free";
 const isEarly = () => tier() === "early" || tier() === "owner";
 function openPlus() { openSetup(false); const g = $("gPlus"); g.hidden = false; g.open = true; g.scrollIntoView({ behavior: "smooth" }); }
 document.addEventListener("click", (e) => { if (e.target.closest("[data-goplus]")) { tr("click", "go_plus"); openPlus(); } });
+// In-page links (Pricing, Sign in) scroll there without leaving #pricing in the address bar, so a
+// reload starts at the top. A shared skwirl.app/#pricing link still lands on the section once.
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#auth [data-brand]")) { e.preventDefault(); const y = scrollY; scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => { if (scrollY === y) scrollTo(0, 0); }, 350); return; }
+  const a = e.target.closest('#auth a[href^="#"]'), el = a && a.getAttribute("href").length > 1 && document.getElementById(a.getAttribute("href").slice(1));
+  if (!el) return;
+  e.preventDefault(); if (el.tagName === "DETAILS") el.open = true; goTo(el);
+});
+// Smooth where the browser animates it; some webviews ignore smooth scrolling, so jump if nothing moved.
+function goTo(el) { const y = scrollY; el.scrollIntoView({ behavior: "smooth" }); setTimeout(() => { if (scrollY === y) el.scrollIntoView(); }, 350); }
+{ const h = location.hash.slice(1), el = /^[a-z][\w-]*$/i.test(h) && document.getElementById(h);
+  // After the first render (showing the landing resets the scroll to the top).
+  if (el && el.closest("#auth")) { history.replaceState(null, "", location.pathname + location.search); setTimeout(() => el.scrollIntoView(), 300); } }
 // Signed in, looking at the website (pricing, how it works) without signing out.
 function visitSite() { document.body.classList.add("site-visit"); show("auth"); renderPlus(); scrollTo(0, 0); }
 document.addEventListener("click", (e) => {
