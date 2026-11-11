@@ -45,6 +45,12 @@ async function api(path, opts = {}) {
   else if (bannerKey === "net") clearBanner("net");
   return r;
 }
+// Tiers: "free" accounts (made from 11 Nov 2026) get 10 saves a month and no own key or categories;
+// "early" accounts keep the old free rules; Plus gets the lot.
+const tier = () => setupState?.tier || "free";
+const isEarly = () => tier() === "early" || tier() === "owner";
+function openPlus() { openSetup(false); const g = $("gPlus"); g.hidden = false; g.open = true; g.scrollIntoView({ behavior: "smooth" }); }
+document.addEventListener("click", (e) => { if (e.target.closest("[data-goplus]")) { tr("click", "go_plus"); openPlus(); } });
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
 let activeView = null, viewVersion = 0, historyPosition = 0;
 let navigationId = Math.random().toString(36).slice(2), viewScroll = {};
@@ -197,7 +203,7 @@ async function load() {
   if (!q) known = ids;
   // Slow queue? Say so, and point at the fix.
   const slow = captures.some((c) => c.state === "processing" && Date.now() - Date.parse(c.at) > 15 * 60000);
-  if (slow && bannerKey !== "owner") setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", ...(setupState?.has_groq_key ? [] : ["Add my own Groq key", () => openSetup(false)]));
+  if (slow && bannerKey !== "owner") setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", ...(setupState?.has_groq_key || !isEarly() ? [] : ["Add my own Groq key", () => openSetup(false)]));
   else clearBanner("busy");
   if (!bannerKey && !store.get("stash_link_saved") && !(setupState && setupState.owner))
     setBanner("savelink", "warn", "No password here: your sign-in link is how you get back in. Save it somewhere safe.", "Save my link", saveLink);
@@ -249,9 +255,15 @@ async function ingest(url, source) {
     toast("Skwirl's server is busy. It's kept on this device and saves when it's back."); return;
   }
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) { toast(body.error || "Couldn't save that link. Try again."); return; }
+  if (!r.ok) {
+    if (body.plus) { tr("limit", "free_monthly"); setBanner("limit", "info", body.error, "See Plus", openPlus); return; }
+    toast(body.error || "Couldn't save that link. Try again."); return;
+  }
   tr("save", body.created ? "new" : "duplicate");
-  toast(body.created ? "Saved. Takes a minute or two." : "You already saved that one.");
+  const left = body.created && setupState?.free_left != null ? (setupState.free_left = Math.max(0, setupState.free_left - 1)) : null;
+  toast(!body.created ? "You already saved that one."
+    : left != null && left <= 3 ? `Saved. ${left ? `${left} free save${left > 1 ? "s" : ""} left this month.` : "That was your last free save this month."}`
+    : "Saved. Takes a minute or two.");
   load().catch(() => {});
 }
 let returnTo = "lib";
@@ -444,7 +456,7 @@ function renderCatEditor() {
   const ideas = work ? ["Fine motor", "Gross motor", "Emotional regulation", "Executive function", "Handwriting", "Sensory", "Social skills", "Self care"]
     : ["Recipes", "Workouts", "Travel", "Books and films", "Work ideas", "Money", "Home", "Gift ideas"];
   const have = new Set(myCats.map((c) => c.toLowerCase()));
-  $("catSuggest").innerHTML = myCats.length >= 20 ? "" : ideas.filter((c) => !have.has(c.toLowerCase()))
+  $("catSuggest").innerHTML = myCats.length >= 20 || setupState?.tier === "free" ? "" : ideas.filter((c) => !have.has(c.toLowerCase()))
     .map((c) => `<button type="button" class="chip" data-addsug="${esc(c)}">+ ${esc(c)}</button>`).join("");
   $("bCats").textContent = myCats.length ? `${myCats.length} set` : "Optional";
   $("bCats").className = "badge " + (myCats.length ? "done" : "opt");
@@ -544,6 +556,19 @@ async function refreshSetup() {
   const set = (id, done, todo = "To do") => { const b = $(id); b.textContent = done ? "Done ✓" : todo; b.className = "badge" + (done ? " done" : id === "bGroq" ? " opt" : ""); };
   set("bSave", phone); set("bClaude", st.claude_connected); set("bGroq", st.has_groq_key, "Optional");
   $("groqPaid").hidden = !st.has_groq_key;
+  const early = st.tier === "early" || st.owner, plusOn = st.plan === "plus";
+  $("gGroq").hidden = !early && !st.has_groq_key;
+  $("gPlus").hidden = !!st.owner;
+  $("bPlus").textContent = plusOn ? "Active ✓" : st.free_left != null ? `${st.free_left} of ${st.free_limit} left` : "Optional";
+  $("bPlus").className = "badge " + (plusOn ? "done" : "opt");
+  $("freeLeft").textContent = plusOn ? "" : st.free_left != null ? `You have ${st.free_left} of ${st.free_limit} free saves left this month. They reset on the 1st.` : "";
+  $("freeLeft").hidden = !$("freeLeft").textContent;
+  const catsLocked = st.tier === "free";
+  $("catsPlus").hidden = !catsLocked; $("catForm").hidden = catsLocked; $("catSuggestBox").hidden = catsLocked;
+  if (early && !st.owner) $("limitsHelp").innerHTML = "<b>Limits.</b> 25 saves waiting at once, and 30 a day on the shared AI allowance (200 a day with your own Groq key). Skwirl Plus reads up to 250 a month first.";
+  if (st.import_cap) $("impNote").textContent = plusOn ? `Bring in up to ${st.import_cap.toLocaleString()} old saves. Plus reads them first, up to 250 a month, then the rest in turn.`
+    : early ? (st.has_groq_key ? "Import up to 1,000 old saves, with a ceiling of 150 read a day on your own key." : "Import up to 100 old saves, with up to 5 read a day after new saves.") + " New saves always go first."
+    : `Free brings in your ${st.import_cap} latest old saves, read a few a day after new ones. Skwirl Plus brings in your whole Saved folder.`;
   renderPlus();
   if (standalone || st.saved_from?.pwa) { $("bHome").textContent = "Done ✓"; $("bHome").className = "badge done"; }
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
@@ -838,7 +863,7 @@ async function importFile(file) {
   const b = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok) { msg.textContent = b.error || "Couldn't add them right now. Try again."; return; }
   tr("import", `${b.added} added of ${b.found}`);
-  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap} limit` : ""}. They'll arrive in daily batches after new saves, within the available AI allowance.`;
+  msg.textContent = `Added ${b.added} old saves${b.skipped_over_cap ? `. ${b.skipped_over_cap} more are over your ${b.cap.toLocaleString()} limit${b.plus ? ": Skwirl Plus brings in the rest" : ""}` : ""}. They'll arrive in batches after new saves.`;
   load();
 }
 function showImport() {
@@ -851,16 +876,16 @@ function showImport() {
   const hrs = at ? Math.max(1, Math.round((at - Date.now()) / 3600e3)) : 0;
   const paused = at && `${own ? "Your Groq key's free daily limit is used up" : "Skwirl's free daily allowance is used up"}. Reading resumes at ${at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} (in about ${hrs} hour${hrs > 1 ? "s" : ""}).`;
   const on = setupState?.plan === "plus", plusLine = setupState?.plus_available ? "Skwirl Plus reads your saves first, with no key." : "Skwirl Plus is coming soon; Notify me joins its waitlist.";
-  const faster = on ? "" : own ? `A paid Groq key can raise your allowance. ${plusLine}` : `Your own Groq key provides a separate allowance. ${plusLine}`;
+  const faster = on ? "" : !isEarly() ? "Skwirl Plus reads up to 250 a month first." : own ? `A paid Groq key can raise your allowance. ${plusLine}` : `Your own Groq key provides a separate allowance. ${plusLine}`;
   // Not paused: still say why it's slow, so a trickle reads as a limit with a fix, not as broken.
   const why = on ? "Old saves are read in daily batches, after new ones." : own ? "Old saves arrive in daily batches within your Groq key's allowance." : "The shared key reads up to 5 old saves a day, depending on its remaining allowance.";
   if (i && !$("impMsg").textContent.startsWith("Added")) $("impMsg").textContent = `${i.done} of ${i.total} old saves read so far${i.failed ? `, ${i.failed} couldn't be read (private or deleted)` : ""}.${left > 0 ? ` ${paused || why} ${faster} New saves always go first.` : ""}`;
   // Big import in progress: say so on the library, with the one button that speeds it up.
   if (i && left > 0 && $("fb").hidden) {
     if (!bannerKey || bannerKey === "import")
-      setBanner("import", "info", `${i.done} of ${i.total} old saves read. ${paused || why}`, on ? null : own ? "Go faster" : "Add a key",
+      setBanner("import", "info", `${i.done} of ${i.total} old saves read. ${paused || why}`, on ? null : !isEarly() ? "See Plus" : own ? "Go faster" : "Add a key",
         // Both lead to the Groq section, where Skwirl Plus is the first option (Groq's paid tier sits under it).
-        () => { tr("click", own ? "groq_upgrade" : "groq_add"); openSetup(false); $("gGroq").open = true; $("gGroq").scrollIntoView({ behavior: "smooth" }); });
+        () => { if (!isEarly()) return openPlus(); tr("click", own ? "groq_upgrade" : "groq_add"); openSetup(false); $("gGroq").open = true; $("gGroq").scrollIntoView({ behavior: "smooth" }); });
   } else clearBanner("import");
 }
 $("impFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });
@@ -962,7 +987,7 @@ document.querySelectorAll("[data-plus]").forEach((box) => {
 });
 
 const plusDate = (d) => new Date(d).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
-const PLUS_CAP_NOTE = "You've saved more than 500 reels this month, so new ones may take a little longer. Everything still gets read.";
+const PLUS_CAP_NOTE = "You've used this month's 250 first-in-line saves, so new ones are read in turn until the 1st. Everything still gets read.";
 function renderPlus() {
   const st = setupState || {}, on = st.plan === "plus", can = token ? st.plus_available : plusOpen;
   document.querySelectorAll(".plusSoon").forEach((el) => (el.hidden = !!(can || on)));
@@ -1119,12 +1144,12 @@ function renderHub(me, perm) {
       perm === "default" ? `<button class="btn sm soft" data-hub="push">Turn on</button>` : `<small>${perm === "denied" ? "Blocked in settings" : "Home-screen app only"}</small>`],
     ["ChatGPT or Claude", "Let your AI search your saves", st.claude_connected ? "Connected" : null, `<button class="btn sm soft" ${go("gClaude")}>Connect</button>`],
     ["Old Instagram saves", i ? `${i.done} of ${i.total} read${i.failed ? `, ${i.failed} couldn't be` : ""}` : "Bring in your whole Saved folder", i && i.done + i.failed >= i.total ? "Done" : null, `<button class="btn sm soft" ${go("gImport")}>${i ? "Details" : "Import"}</button>`],
-    ["Your categories", "Sort every save your way", myCats.length ? `${myCats.length} set` : null, `<button class="btn sm soft" ${go("gCats")}>${myCats.length ? "Edit" : "Set up"}</button>`],
-    ["Your own Groq key", "Uses your own AI allowance", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`],
+    ["Your categories", st.tier === "free" ? "Comes with Skwirl Plus" : "Sort every save your way", myCats.length ? `${myCats.length} set` : null, `<button class="btn sm soft" ${go("gCats")}>${myCats.length ? "Edit" : st.tier === "free" ? "See" : "Set up"}</button>`],
+    ...(st.tier === "early" || st.has_groq_key ? [["Your own Groq key", "Uses your own AI allowance", st.has_groq_key ? "Added" : null, `<button class="btn sm soft" ${go("gGroq")}>Add</button>`]] : []),
     ...(st.telegram ? [["Telegram", "Save by sending links to a bot", st.telegram.connected ? "Connected" : null, `<button class="btn sm soft" ${go("gTelegram")}>Connect</button>`]] : []),
     st.plan === "plus"
-      ? ["Skwirl Plus", `Active through ${plusDate(st.plan_until)}.${st.plus_over_cap ? " Over 500 saves this month, all still read." : ""}`, null, `<button class="btn sm soft" data-portal>Manage subscription</button>`]
-      : ["Skwirl Plus", `No keys, saves read first${st.plus_available ? "" : " (coming soon)"}`, null, `<button class="btn sm soft" ${go("gGroq")}>${st.plus_available ? "Get Plus" : "Notify me"}</button>`],
+      ? ["Skwirl Plus", `Active through ${plusDate(st.plan_until)}.${st.plus_over_cap ? " This month's 250 first-in-line saves are used; the rest are read in turn." : ""}`, null, `<button class="btn sm soft" data-portal>Manage subscription</button>`]
+      : ["Skwirl Plus", st.free_left != null ? `${st.free_left} of ${st.free_limit} free saves left this month` : "Up to 250 saves a month, read first", null, `<button class="btn sm soft" ${go("gPlus")}>${st.plus_available ? "Get Plus" : "Notify me"}</button>`],
   ];
   $("hub").innerHTML = rows.filter((r) => !(me.owner && r[0] === "Skwirl Plus")).map(([t, sub, done, act]) =>
     `<div class="hubrow"><div class="t"><b>${esc(t)}</b><small>${esc(sub)}</small></div>${done ? `<span class="ok">${esc(done)} ✓</span>` : act}</div>`).join("");

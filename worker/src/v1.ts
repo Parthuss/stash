@@ -282,6 +282,23 @@ const MSG_NEXT = "\n%%next\n";
 export const DAILY_SHARED = 30, DAILY_OWN_KEY = 200;
 // Old saves from an Instagram export: how many one person can queue, by key type.
 export const IMPORT_SHARED = 100, IMPORT_OWN_KEY = 1000;
+// Tiers (11 Nov 2026). Free: FREE_MONTHLY new saves a month, FREE_IMPORT old saves once, no own Groq key,
+// no own categories. Plus: up to PLUS_IMPORT old saves, categories, its 250 a month read first.
+// Accounts made before TIERS_FROM ("early") keep the old free rules: 30 a day, own key, categories.
+export const TIERS_FROM = "2026-11-11T12:00:00.000Z";
+export const FREE_MONTHLY = 10, FREE_IMPORT = 25, PLUS_IMPORT = 2000;
+type Tier = "owner" | "plus" | "early" | "free";
+const tierOf = (u: { plan?: string | null; plan_until?: string | null; created_at?: string | null } | null, userId: string | null): Tier =>
+  userId === null ? "owner" : isPlus(u) ? "plus" : (u?.created_at ?? "") < TIERS_FROM ? "early" : "free";
+const userTier = async (env: Env, userId: string | null) => userId === null ? { tier: "owner" as Tier, u: null } : await env.DB
+  .prepare("SELECT plan, plan_until, created_at, groq_key_enc FROM user WHERE id = ?").bind(userId).first<any>()
+  .then((u) => ({ tier: tierOf(u, userId), u }));
+const monthStart = () => new Date().toISOString().slice(0, 7) + "-01";
+// ponytail: counts this month's live saves still in the table, so deleting one frees a slot. Fine at 10.
+const freeUsed = async (env: Env, userId: string) => (await env.DB
+  .prepare("SELECT COUNT(*) n FROM capture WHERE user_id = ? AND source != 'import' AND captured_at >= ?")
+  .bind(userId, monthStart()).first<{ n: number }>())?.n ?? 0;
+const PLUS_PITCH = "Skwirl Plus reads up to 250 a month, first in line.";
 const POST_URL = /^https:\/\/(?:www\.)?instagram\.com\/(?:p|reel|reels|tv)\/[\w-]+\/?$/i;
 const CATS = (t: string) => `(SELECT json_group_array(name) FROM note_category nc WHERE nc.note_id = ${t}.id AND nc.state = 1) AS categories`;
 const NOTE_COLUMNS = "id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id, share_id, " + CATS("note");
@@ -329,13 +346,17 @@ export async function handleV1(
     const safeUrl = allowedUrl(body.url);
     if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, Facebook, YouTube and X links." }, 400);
     if (userId) {  // per-user brakes so one account can't flood the queue
+      const { tier, u } = await userTier(env, userId);
       const q = await env.DB.prepare(
         `SELECT SUM(status IN ('pending','claimed') AND source != 'import') AS waiting,
                 SUM(captured_at > ? AND source != 'import') AS today,
-                (SELECT groq_key_enc IS NOT NULL OR (plan = 'plus' AND plan_until > ?) FROM user WHERE id = ?) AS own_key
+                SUM(captured_at >= ? AND source != 'import') AS month
          FROM capture WHERE user_id = ?`,
-      ).bind(new Date(Date.now() - 86_400_000).toISOString(), new Date().toISOString(), userId, userId)
-        .first<{ waiting: number | null; today: number | null; own_key: number | null }>();
+      ).bind(new Date(Date.now() - 86_400_000).toISOString(), monthStart(), userId)
+        .first<{ waiting: number | null; today: number | null; month: number | null }>()
+        .then((r) => ({ ...r, own_key: tier === "plus" || !!u?.groq_key_enc }));
+      if (tier === "free" && (q?.month ?? 0) >= FREE_MONTHLY)
+        return json({ error: `That's your ${FREE_MONTHLY} free saves for this month. ${PLUS_PITCH}`, plus: true }, 402);
       // The shared Groq key is everyone's, so people on it get a smaller daily slice.
       const daily = q?.own_key ? DAILY_OWN_KEY : DAILY_SHARED;
       if ((q?.waiting ?? 0) >= 25) return json({ error: "You have 25 saves waiting. Let those finish first." }, 429);
@@ -400,10 +421,10 @@ export async function handleV1(
     if (!Array.isArray(body?.urls)) return json({ error: "need urls" }, 400);
     const urls = [...new Set(body!.urls.filter((u): u is string => typeof u === "string").map((u) => u.trim().replace(/^http:/, "https:")).filter((u) => POST_URL.test(u)))];
     if (!urls.length) return json({ error: "No Instagram posts found in that file." }, 400);
-    const have = await env.DB.prepare(
-      "SELECT COUNT(*) AS n, (SELECT groq_key_enc IS NOT NULL OR (plan = 'plus' AND plan_until > ?) FROM user WHERE id = ?) AS own_key FROM capture WHERE user_id IS ? AND source = 'import'",
-    ).bind(new Date().toISOString(), userId, userId).first<{ n: number; own_key: number | null }>();
-    const cap = userId === null ? 100_000 : have?.own_key ? IMPORT_OWN_KEY : IMPORT_SHARED;
+    const have = await env.DB.prepare("SELECT COUNT(*) AS n FROM capture WHERE user_id IS ? AND source = 'import'")
+      .bind(userId).first<{ n: number }>();
+    const { tier, u } = await userTier(env, userId);
+    const cap = tier === "owner" ? 100_000 : tier === "plus" ? PLUS_IMPORT : tier === "free" ? FREE_IMPORT : u?.groq_key_enc ? IMPORT_OWN_KEY : IMPORT_SHARED;
     const room = Math.max(0, cap - (have?.n ?? 0));
     // Existing saves must not consume the admission slice on repeated exports. One query for all of
     // this person's links (bounded by their import cap plus live saves), not one per 50 export links:
@@ -424,7 +445,7 @@ export async function handleV1(
     }
     await logEvent(env, userId, "api", "import");
     if (added) await env.DB.prepare("DELETE FROM alert_state WHERE key = 'imports_idle'").run();  // start on it now
-    return json({ found: urls.length, added, skipped_over_cap: missing.length - take.length, cap });
+    return json({ found: urls.length, added, skipped_over_cap: missing.length - take.length, cap, plus: tier === "free" });
   }
 
   if (path === "/v1/captures" && request.method === "GET") {
@@ -495,17 +516,21 @@ export async function handleV1(
     ).bind(userId).all<{ source: string; n: number }>();
     const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
     const u = userId
-      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, found_via, owner_msg, plan, plan_until FROM user WHERE id = ?").bind(userId).first<any>()
+      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, found_via, owner_msg, plan, plan_until, created_at FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
-    const plus = isPlus(u);
-    // The soft cap: past 500 in a calendar month the app says so, and everything still gets read.
-    const month = new Date().toISOString().slice(0, 7) + "-01";
-    const monthSaves = plus ? (await env.DB.prepare("SELECT COUNT(*) n FROM capture WHERE user_id = ? AND captured_at >= ?").bind(userId, month).first<{ n: number }>())?.n ?? 0 : 0;
+    const plus = isPlus(u), tier = tierOf(u, userId);
+    // Past the 250 fast-lane saves in a month the app says so; everything still gets read.
+    const fast = plus ? (await env.DB.prepare("SELECT n FROM daily_counter WHERE key = ?")
+      .bind(`pm:${userId}:${new Date().toISOString().slice(0, 7)}`).first<{ n: number }>())?.n ?? 0 : 0;
     return json({
       plan: plus ? "plus" : "free",
       plan_until: plus ? u.plan_until : null,
       plus_available: plusAvailable(env, userId),
-      plus_over_cap: monthSaves > 500,
+      plus_over_cap: fast >= 250,
+      tier,
+      free_limit: FREE_MONTHLY,
+      free_left: tier === "free" ? Math.max(0, FREE_MONTHLY - await freeUsed(env, userId!)) : null,
+      import_cap: tier === "owner" ? null : tier === "plus" ? PLUS_IMPORT : tier === "free" ? FREE_IMPORT : u?.groq_key_enc ? IMPORT_OWN_KEY : IMPORT_SHARED,
       owner: userId === null,
       saved_from: counts,
       claude_connected: (u?.mcp_calls ?? 0) > 0,
@@ -612,6 +637,8 @@ export async function handleV1(
       return json({ ok: true });
     }
     if (request.method === "PUT") {
+      if ((await userTier(env, userId)).tier !== "early")
+        return json({ error: "Skwirl reads your saves for you, so there's no key to add. Saving a lot? Skwirl Plus reads up to 250 a month, first in line.", plus: true }, 403);
       const body = (await request.json().catch(() => null)) as { key?: string } | null;
       const key = (body?.key ?? "").trim();
       if (!/^gsk_[A-Za-z0-9]{20,}$/.test(key)) return json({ error: "That doesn't look like a Groq key (it starts with gsk_)." }, 400);
@@ -662,6 +689,8 @@ export async function handleV1(
   // Your own categories: the list, and ticking one on a note by hand.
   if (path === "/v1/categories" && request.method === "GET") return json(await categoriesOf(env, userId));
   if (path === "/v1/categories" && request.method === "PUT") {
+    if ((await userTier(env, userId)).tier === "free")
+      return json({ error: "Your own categories come with Skwirl Plus.", plus: true }, 402);
     const b = (await request.json().catch(() => null)) as { categories?: unknown } | null;
     const err = await setCategories(env, userId, b?.categories);
     if (err) return json({ error: err }, 400);

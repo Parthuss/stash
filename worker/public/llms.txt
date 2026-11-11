@@ -1,6 +1,6 @@
 # Skwirl
 
-> Skwirl turns the Instagram reels and videos people save into searchable notes. Share a reel to Skwirl and a couple of minutes later it is a note: recipes come back as ingredients and steps, books, films and places land in one list you can tick off, and tips come with the next step. Notes can be read by ChatGPT and Claude through Skwirl's connector. Free. Made by Parth Akholkar (https://parthakholkar.com).
+> Skwirl turns the Instagram reels and videos people save into searchable notes. Share a reel to Skwirl and a couple of minutes later it is a note: recipes come back as ingredients and steps, books, films and places land in one list you can tick off, and tips come with the next step. Notes can be read by ChatGPT and Claude through Skwirl's connector. Free to try (10 saves a month); Skwirl Plus is $4.99 a month for up to 250 saves read first. Made by Parth Akholkar (https://parthakholkar.com).
 
 Instagram's Saved tab has no search box for most people (November 2026); Skwirl makes saved reels searchable by what was said in them.
 
