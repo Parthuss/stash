@@ -85,6 +85,10 @@ mode).
    users first in /claim and on a paid Groq key (Parth must create a paid Groq account), 500/month cap
    with a soft slow-down (not a hard stop), Get Plus buttons replacing Notify me, Plus status in Me/Set up.
    Test every path with Dodo test cards before live.
+   **LIVE 11 Nov 2026:** DODO_API_BASE live, live product ids, PLUS_ACCESS="*", live key + live webhook secret set.
+   Test run passed first (Indian card, AU card A$59 incl GST, UPI; webhook flips plan; portal link; success screen).
+   Test user "Plus test" 1f542f2698ca47c5 (token in ~/.crew/inputs, private) is free again. The live webhook
+   secret is only proven by the first real payment: check webhook_seen + the buyer's plan after it.
    **11 Nov: merged + deployed (853b005), migration 0031 applied. Dodo live payments approved 11 Nov.** Products
    (tax inclusive, local prices by currency) and webhook `https://skwirl.app/webhooks/dodo` exist in BOTH modes:
    test monthly pdt_0NrhCk1gsfDRGrVFoNgAY / yearly pdt_0NrhD3Z4kmy3gP9icwBOt (in wrangler.local.toml vars now);
