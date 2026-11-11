@@ -54,6 +54,7 @@ class Config:
     db_path: Path = ROOT / "stash.sqlite"
 
     groq_api_key: str = os.environ.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEYS", "").split(",")[0].strip()
+    groq_api_keys: tuple = tuple(k.strip() for k in os.environ.get("GROQ_API_KEYS", "").split(",") if k.strip())
 
     #: A Netscape-format cookies.txt scoped to instagram.com. Preferred over
     #: `cookies_from_browser`: reading Chrome's jar directly needs the "Chrome
@@ -133,8 +134,7 @@ _spent_until: dict[str, float] = {}
 
 
 def _shared_pool(cfg) -> list[str]:
-    keys = [k.strip() for k in os.environ.get("GROQ_API_KEYS", "").split(",") if k.strip()]
-    return keys or ([cfg.groq_api_key] if cfg.groq_api_key else [])
+    return list(getattr(cfg, "groq_api_keys", ()) or ([cfg.groq_api_key] if cfg.groq_api_key else []))
 
 
 def _shared_key(cfg) -> str:
@@ -144,6 +144,32 @@ def _shared_key(cfg) -> str:
 
 def groq_key(cfg) -> str:
     return _groq_override.get() or _shared_key(cfg)
+
+
+# Plus saves (the worker marks them lane="plus") run on OpenRouter when OPENROUTER_API_KEY is set: same
+# model, paid, no daily cap. If OpenRouter refuses (no credit, key limit, outage) the save falls back to the
+# free Groq keys and OpenRouter is skipped for a while, so nothing gets stuck.
+_plus_lane: ContextVar[bool] = ContextVar("plus_lane", default=False)
+_openrouter_down_until = [0.0]
+
+
+@contextmanager
+def plus_lane(on: bool):
+    token = _plus_lane.set(bool(on))
+    try:
+        yield
+    finally:
+        _plus_lane.reset(token)
+
+
+def openrouter_key() -> str:
+    """The OpenRouter key if this save should use it right now, else ''."""
+    key = os.environ.get("OPENROUTER_API_KEY", "")
+    return key if key and _plus_lane.get() and time.time() >= _openrouter_down_until[0] else ""
+
+
+def openrouter_failed(wait_s: float) -> None:
+    _openrouter_down_until[0] = time.time() + wait_s
 
 
 def next_shared_key(cfg, wait_s: float) -> bool:
@@ -189,7 +215,7 @@ def record_usage(kind: str, model: str, *, prompt: int = 0, completion: int = 0,
         bucket.append({
             "kind": kind, "model": model, "prompt_tokens": int(prompt or 0),
             "completion_tokens": int(completion or 0), "seconds": round(float(seconds or 0), 2),
-            "key_type": "own" if _groq_override.get() else "shared",
+            "key_type": "plus" if model.startswith("openrouter:") else "own" if _groq_override.get() else "shared",
         })
 
 

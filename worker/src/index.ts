@@ -608,6 +608,11 @@ export default {
       // Count this month's Plus saves (first claim only, retries don't count) toward PLUS_FAST_MONTHLY.
       if (owner && isPlus(owner) && !row.claimed_at) await env.DB.prepare("INSERT INTO daily_counter (key, n) VALUES (?, 1) ON CONFLICT(key) DO UPDATE SET n = n + 1")
         .bind(`pm:${row.user_id}:${new Date().toISOString().slice(0, 7)}`).run();
+      // Plus saves inside this month's fast lane run on the paid model (OpenRouter); the rest on the free keys.
+      const plusN = owner && isPlus(owner)
+        ? (await env.DB.prepare("SELECT n FROM daily_counter WHERE key = ?").bind(`pm:${row.user_id}:${new Date().toISOString().slice(0, 7)}`).first<{ n: number }>())?.n ?? 0
+        : Infinity;
+      const lane = plusN <= PLUS_FAST_MONTHLY ? "plus" : null;
       // Their own key is out for the day (import paused): this one runs on the shared key instead.
       const t = new Date().toISOString();
       const borrowed = row.source === "import" && owner?.groq_key_enc
@@ -623,7 +628,7 @@ export default {
           .bind("#gGroq Skwirl couldn't read your saved Groq key, so it's using the shared key for now. Paste your key again to get your own limit back.", row.user_id, owner.groq_key_enc).run();
       }
       const cats = await categoriesOf(env, row.user_id ?? null);
-      return json({ capture: { ...row, status: "claimed", lease, groq_key, categories: cats.names, cat_version: cats.version } });
+      return json({ capture: { ...row, status: "claimed", lease, groq_key, lane, categories: cats.names, cat_version: cats.version } });
     }
 
     // Re-sorting existing notes into someone's categories (after they add or change them).

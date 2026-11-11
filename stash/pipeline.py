@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Callable
 
 from . import db, extract, fetch, frames, notify, transcribe, vault
-from .config import CONFIG, collect_usage, guest_run, using_groq_key
+from .config import CONFIG, collect_usage, guest_run, plus_lane, using_groq_key
 
 
 @dataclass
@@ -410,7 +410,9 @@ def drain(
             usage: list = []
             own_key = capture["groq_key"] if "groq_key" in capture.keys() else None
             try:
-                with using_groq_key(own_key, spill=capture["source"] != "import"), guest_run(_is_guest(capture)), collect_usage() as usage:
+                lane = capture["lane"] if "lane" in capture.keys() else None
+                with using_groq_key(own_key, spill=capture["source"] != "import"), guest_run(_is_guest(capture)), \
+                        plus_lane(lane == "plus"), collect_usage() as usage:
                     result = process(conn, capture, verbose=verbose, media_url=override)
             finally:
                 if _is_guest(capture):
