@@ -21,6 +21,7 @@ Instagram's Saved tab has no search box for most people (November 2026); Skwirl 
 - [How to search your saved Instagram reels](https://skwirl.app/guides/search-saved-instagram-reels)
 - [How to save recipes from Instagram reels](https://skwirl.app/guides/save-recipes-from-instagram-reels)
 - [How to export your saved Instagram posts](https://skwirl.app/guides/export-instagram-saved-posts)
+- [How to use your saved Instagram reels in Claude](https://skwirl.app/guides/use-saved-reels-in-claude)
 - [Privacy](https://skwirl.app/privacy)
 - [Terms](https://skwirl.app/terms)
 - [Refunds](https://skwirl.app/refunds)

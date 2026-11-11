@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script src="/move.js"></script>
+<title>How to use your saved Instagram reels in Claude · Skwirl</title>
+<meta name="description" content="Saved a reel you meant to use at work? Here's how to get it back while you work: the Skwirl plugin for Claude Code, plus the connector for the Claude app and ChatGPT.">
+<link rel="canonical" href="https://skwirl.app/guides/use-saved-reels-in-claude">
+<meta property="og:title" content="How to use your saved Instagram reels in Claude"><meta property="og:description" content="Saved a reel you meant to use at work? Here's how to get it back while you work: the Skwirl plugin for Claude Code, plus the connector for the Claude app and ChatGPT.">
+<meta property="og:url" content="https://skwirl.app/guides/use-saved-reels-in-claude"><meta property="og:type" content="article"><meta property="og:site_name" content="Skwirl">
+<meta property="og:image" content="https://skwirl.app/og.png"><meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f8f7ff"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/rethink-sans.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts.css">
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "Article", "headline": "How to use your saved Instagram reels in Claude", "description": "Saved a reel you meant to use at work? Here's how to get it back while you work: the Skwirl plugin for Claude Code, plus the connector for the Claude app and ChatGPT.", "url": "https://skwirl.app/guides/use-saved-reels-in-claude", "datePublished": "2026-11-09", "dateModified": "2026-11-09", "image": "https://skwirl.app/og.png", "author": {"@type": "Person", "name": "Parth Akholkar", "url": "https://parthakholkar.com"}, "publisher": {"@type": "Organization", "name": "Skwirl", "url": "https://skwirl.app/"}}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Skwirl", "item": "https://skwirl.app/"}, {"@type": "ListItem", "position": 2, "name": "How to use your saved Instagram reels in Claude", "item": "https://skwirl.app/guides/use-saved-reels-in-claude"}]}]</script>
+<style>
+:root { --bg:#f8f7ff; --ink:#1d1b2e; --muted:#6a6880; --lavender:#dcd8ff; }
+* { box-sizing:border-box; } html { color-scheme: light; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 "Rethink Sans", ui-sans-serif, system-ui, sans-serif; padding:24px 18px 60px; }
+main { max-width:680px; margin:0 auto; background:#fff; border-radius:28px; padding:28px 24px; box-shadow:0 4px 10px rgb(60 50 120 / .08), 0 18px 40px rgb(60 50 120 / .10); }
+h1 { font-family:Recursive, system-ui, sans-serif; font-weight:800; font-variation-settings:"CASL" 1; font-size:36px; line-height:1.1; margin:6px 0 4px; }
+h2 { font-family:Recursive, system-ui, sans-serif; font-weight:800; font-variation-settings:"CASL" 1; font-size:22px; margin:26px 0 6px; }
+.muted { color:var(--muted); font-size:14px; } a { color:inherit; }
+.back { display:inline-block; margin-bottom:10px; text-decoration:none; background:var(--bg); border-radius:999px; padding:8px 16px; font-weight:600; }
+.note { background:#fff0c4; border-radius:16px; padding:12px 14px; font-size:14px; }
+ul { padding-left:20px; } li { margin-bottom:6px; }
+ol { padding-left:22px; } ol li { margin-bottom:8px; }
+.cta { display:inline-block; margin-top:8px; background:var(--ink); color:#fff; text-decoration:none; border-radius:999px; padding:12px 22px; font-weight:600; }
+.more { margin-top:28px; border-top:1px solid #eceaf7; padding-top:14px; font-size:15px; }
+pre { background:var(--bg); border-radius:12px; padding:12px 14px; margin:8px 0; font:13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
+.ex { background:var(--bg); border-radius:16px; padding:12px 14px; font-size:15px; }
+.ex p { margin:0 0 8px; } .ex p:last-child { margin:0; }
+</style><script src="/track.js" defer></script>
+</head><body><main><a class="back" href="/">← Skwirl</a>
+<h1>How to use your saved Instagram reels in Claude</h1>
+<p class="muted">By <a href="https://parthakholkar.com">Parth Akholkar</a>, who makes Skwirl · 9 November 2026</p>
+<p>You saved a reel about scroll animations, a Claude skill, a GitHub repo, an activity to try with a client. The week you finally need it, you've forgotten it exists. <a href="/">Skwirl</a> turns each reel you share to it into a note, and Claude can use those notes while you work.</p>
+
+<h2>What it does</h2>
+<ul>
+<li><b>Claude Code:</b> with the Skwirl plugin, every message you send is checked against your saves automatically. If one fits the task, Claude gets it. If nothing fits, you see nothing.</li>
+<li><b>Claude app and ChatGPT:</b> connect Skwirl and they can search your saves when you work. They don't check every time, so it helps to ask.</li>
+</ul>
+<p>Here's what the plugin looks like, from a test on a throwaway account on 9 November 2026. Nobody mentioned Skwirl in the message:</p>
+<div class="ex">
+<p><b>Prompt:</b> Help me add a scroll-driven parallax hero to a landing page. Short plan only.</p>
+<p><b>End of Claude's plan:</b> Your saved post "4 Web Animation Patterns" (Web Pros, link) lists parallax, scrub and pin + transform as scroll patterns. This plan does the parallax.</p>
+</div>
+<p>In the same test, an unrelated question about git brought up nothing.</p>
+
+<h2>Set it up in Claude Code</h2>
+<p>You need <a href="/">a Skwirl account</a> (free, no password, no card) and Claude Code installed.</p>
+<ol>
+<li>Open Skwirl, tap <b>Set up</b>, then open <b>Connect ChatGPT or Claude</b>.</li>
+<li>Under <b>Using Claude Code?</b>, tap <b>Copy install command</b>. It makes your personal key and puts it inside the command, which looks like this:
+<pre>claude plugin install skwirl --marketplace Parthuss/stash --config key=YOUR_KEY</pre></li>
+<li>Paste it into Terminal and press Enter.</li>
+</ol>
+<p>The key only works for this plugin and Skwirl's connector. It can't be used to sign in to your account. Tapping the button again makes a new key and the old one stops working.</p>
+
+<h2>Set it up in the Claude app or ChatGPT</h2>
+<p>Your connector address is in the same place: <b>Set up</b>, then <b>Connect ChatGPT or Claude</b>.</p>
+<ol>
+<li><b>Claude:</b> on claude.ai go to Settings, then Connectors, then <b>Add custom connector</b>. Name it Skwirl, paste the address, then tap Connect and Allow. It then works in the Claude phone app too.</li>
+<li><b>ChatGPT:</b> on ChatGPT on the web open Plugins, then <b>+</b>, then <b>Add custom MCP server</b>. Name it Skwirl, paste the address as the Server URL and select OAuth. Create and install the plugin, sign in to Skwirl and tap Allow. Your workspace must allow custom connections.</li>
+</ol>
+<p>To make Claude more likely to check while you work, add this line to your personal preferences in Claude's settings:</p>
+<pre>Before starting a build, design, writing, research or planning task, search my Skwirl connector by concept for anything I saved on it.</pre>
+<p>In ChatGPT, or any time Claude doesn't check, just say "check Skwirl for this".</p>
+
+<h2>What it's good for</h2>
+<ul>
+<li><b>Building:</b> the Claude skills, GitHub repos and design ideas you saved to try later.</li>
+<li><b>Planning sessions:</b> therapists and teachers can sort activity ideas into their own categories and pull them up when planning.</li>
+<li><b>Making content:</b> hooks and formats you saved, while you write.</li>
+</ul>
+
+<h2>What gets sent</h2>
+<p>With the Claude Code plugin, each message you send goes to Skwirl. Claude Code also includes details like the folder you're working in and a session ID. Skwirl ignores those.</p>
+<ul>
+<li>Your message is compared with your saves by Cloudflare's AI, using its first 2,000 characters, and then dropped. <b>It's never stored or logged.</b></li>
+<li>Very short messages and slash commands aren't searched at all.</li>
+<li>If saves fit, up to three go back to Claude: title, short summary and whether you've used it yet. Claude can then open the full note.</li>
+<li>Skwirl keeps a count of how often a save was brought up, not what you asked.</li>
+</ul>
+<p>To stop it, tap <b>Turn off</b> in the same Set up card. Other users can't see your saves unless you share a note. The full details, including who else processes your data, are in the <a href="/privacy">privacy policy</a>.</p>
+<p><a class="cta" href="/">Try Skwirl free</a></p>
+<p class="more">More guides: <a href="/guides/search-saved-instagram-reels">How to search your saved Instagram reels</a> · <a href="/guides/save-recipes-from-instagram-reels">How to save recipes from Instagram reels (as real recipes)</a> · <a href="/guides/export-instagram-saved-posts">How to export your saved Instagram posts and reels</a></p>
+</main></body></html>

@@ -338,7 +338,7 @@ $("lostForm").addEventListener("submit", async (e) => {
   const b = r ? await r.json().catch(() => ({})) : {};
   $("lostMsg").textContent = r && r.ok ? "If that email is on a Skwirl account, a sign-in link is on its way. Check spam too." : b.error || "Couldn't send. Try again.";
 });
-$("toTop").addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); });
+document.querySelectorAll("#toTop, [data-totop]").forEach((el) => el.addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); }));
 document.querySelector(".lsign").addEventListener("click", () => { $("signin").open = true; });
 // The optional email shows up once someone starts on the name field, and goes away again if they
 // leave both fields without typing an email.
