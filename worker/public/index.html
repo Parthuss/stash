@@ -137,6 +137,12 @@ body.sheet-open .scrim { opacity: 1; pointer-events: auto; }
 body.sheet-open .sheet { transform: none; visibility: visible; transition-delay: 0s; }
 .sheet h2 { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 28px; margin: 0 0 4px; }
 .sheet p { color: var(--muted); margin: 0 0 14px; }
+.plusdone { border: 0; border-radius: 28px; padding: 26px 22px 20px; max-width: 400px; width: calc(100% - 32px); background: #fff; color: var(--ink); box-shadow: var(--lift-2); }
+.plusdone::backdrop { background: rgba(20, 16, 40, .45); }
+.plusdone h2 { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 28px; margin: 0 0 6px; }
+.plusdone p { color: var(--muted); margin: 0 0 14px; }
+.plusdone ul { margin: 0 0 14px; padding-left: 20px; line-height: 1.7; }
+.plusdone .small { font-size: 14px; }
 .sheet input { width: 100%; height: 52px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); margin-bottom: 12px; }
 
 .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 96px); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 999px; font-size: 14px; z-index: 9; max-width: 90vw; text-align: center; }
@@ -984,6 +990,13 @@ body.on-phone .phone-handoff { display: none; }
   <input id="link" type="url" placeholder="https://…" aria-label="Link to save" required>
   <div class="row" style="flex-wrap:nowrap"><button class="btn soft" type="button" id="cancel" style="flex:1">Cancel</button><button class="btn" type="submit" style="flex:1">Save</button></div>
 </form>
+<dialog class="plusdone" id="plusDone" aria-labelledby="plusDoneTitle">
+  <h2 id="plusDoneTitle">You're on Skwirl Plus</h2>
+  <p id="plusDoneLede">Thanks for backing Skwirl.</p>
+  <ul id="plusDoneList"><li>No Groq key needed</li><li>Your saves are read first</li><li>Up to 500 saves a month</li></ul>
+  <p class="small" id="plusDoneFoot">Manage or cancel any time in Set up.</p>
+  <form method="dialog"><button class="btn" style="width:100%">Done</button></form>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="/app.js" defer></script>

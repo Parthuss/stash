@@ -85,7 +85,7 @@ function signOut(msg) {
   // through once you're back in. Only signing out on purpose clears them (after a warning).
   const forced = typeof msg === "string";
   for (const k of ["stash_token", "stash_cache", "stash_notes", ...(forced ? [] : ["stash_outbox"])]) store.del(k);
-  token = null; show("auth");
+  token = null; show("auth"); plusSignedOut();
   const m = typeof msg === "string" ? msg : ""; $("authErr").textContent = m; if (m) $("signin").open = true;
 }
 
@@ -659,7 +659,14 @@ if (loginCode) {
   fetch("/login/redeem", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: loginCode }) })
     .then(async (r) => { const b = await r.json().catch(() => ({})); tr("login_link", r.ok ? "ok" : "expired"); if (!r.ok) throw new Error(b.error); token = b.token; store.set("stash_token", token); store.del("stash_link_saved"); start(); })
     .catch((e) => { show("auth"); joinMode(); $("signin").open = true; $("authErr").textContent = e.message || "That link didn't work. Ask for a new one."; });
-} else token ? start().catch(() => {}) : (show("auth"), joinMode());
+} else token ? start().catch(() => {}) : (show("auth"), joinMode(), plusSignedOut());
+function plusSignedOut() {
+  const p = new URLSearchParams(location.search);
+  if (p.get("plus") !== "done") return;
+  history.replaceState(null, "", "/");  // the return URL carries the email; don't leave it in the address bar
+  if (p.get("status") === "failed" || p.get("status") === "cancelled") return toast("That payment didn't go through. Nothing was charged.");
+  plusDone("Skwirl Plus is on for your account. Open Skwirl where you're signed in, or sign in here with the same email.", null, true);
+}
 // A different account's sign-in link opened on a signed-in device: switch only if it works.
 if (linkToken) fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + linkToken } })
   .then((r) => { if (r.ok) { store.set("stash_token", linkToken); store.del("stash_link_saved"); location.reload(); }
@@ -984,10 +991,21 @@ async function plusReturn(status) {
   if (status === "failed" || status === "cancelled") { await refreshSetup(); return toast("That payment didn't go through. Your plan hasn't changed."); }
   for (let i = 0; i < 8; i++) {
     await refreshSetup();
-    if (setupState?.plan === "plus") return toast("Thanks! You're on Skwirl Plus now.");
+    if (setupState?.plan === "plus") {
+      const until = setupState.plan_until && new Date(setupState.plan_until).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+      return plusDone(null, until ? `Renews on ${until}. Manage or cancel any time in Set up.` : null);
+    }
     await new Promise((r) => setTimeout(r, 2000));
   }
-  toast("Thanks! Plus will switch on in a moment.");
+  plusDone("Payment received. Plus switches on in a minute or two, no need to stay on this page.");
+}
+// Success screen after checkout. Signed out (paid on another device or browser), it still confirms the payment.
+function plusDone(lede, foot, signedOut) {
+  if (signedOut) { $("plusDoneTitle").textContent = "Payment received"; $("plusDoneList").hidden = true; }
+  if (lede) $("plusDoneLede").textContent = lede;
+  if (foot) $("plusDoneFoot").textContent = foot;
+  tr("card_shown", signedOut ? "plus_done_signed_out" : "plus_done");
+  $("plusDone").showModal();
 }
 
 // ---- Notifications (Web Push). iPhone only allows them in the home-screen app, and the prompt
