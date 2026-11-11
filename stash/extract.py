@@ -24,9 +24,10 @@ from typing import Any, TypeVar
 
 import httpx
 
-from .config import CONFIG, groq_key, is_guest_run, next_shared_key, record_usage, spill_to_shared_key
+from .config import CONFIG, groq_key, is_guest_run, next_shared_key, openrouter_failed, openrouter_key, record_usage, spill_to_shared_key
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
+OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 #: A hard API limit on how many images ONE request may contain — the model
 #: rejects a 4th with "This model supports up to 3 images" (HTTP 400). This is
@@ -491,6 +492,32 @@ def _vision_image(path: Path) -> tuple[bytes, str]:
 
 
 def _post_groq(messages: list[dict[str, Any]], max_tokens: int) -> httpx.Response:
+    if key := openrouter_key():
+        try:
+            response = httpx.post(
+                OPENROUTER_CHAT_URL,
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                         "HTTP-Referer": "https://skwirl.app", "X-Title": "Skwirl"},
+                json={
+                    "model": CONFIG.extract_model,
+                    "messages": messages,
+                    "response_format": {"type": "json_object"},
+                    "temperature": 0.1,
+                    "max_tokens": max_tokens,
+                    # Only providers that don't store or train on prompts, and that honour JSON mode.
+                    "provider": {"data_collection": "deny", "require_parameters": True, "order": ["nebius", "deepinfra", "parasail"]},
+                },
+                timeout=300,
+            )
+            if response.status_code == 200 and response.json().get("choices"):
+                response.headers["x-via"] = "openrouter"
+                return response
+            status = response.status_code
+        except (httpx.HTTPError, ValueError) as exc:
+            status = f"error {exc}"
+        # No credit / key limit (402, 401, 403) waits an hour; anything else 10 minutes. Free keys meanwhile.
+        openrouter_failed(3600 if status in (401, 402, 403) else 600)
+        print(f"  openrouter unavailable ({status}): this save and the next ones use the free keys", flush=True)
     return httpx.post(
         GROQ_CHAT_URL,
         headers={
@@ -552,7 +579,8 @@ def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[st
         raise ExtractError(f"groq {response.status_code}: {response.text[:300]}")
     try:
         u = response.json().get("usage") or {}
-        record_usage("chat", CONFIG.extract_model, prompt=u.get("prompt_tokens", 0), completion=u.get("completion_tokens", 0))
+        model = ("openrouter:" if response.headers.get("x-via") == "openrouter" else "") + CONFIG.extract_model
+        record_usage("chat", model, prompt=u.get("prompt_tokens", 0), completion=u.get("completion_tokens", 0))
     except (ValueError, AttributeError):
         pass
     try:

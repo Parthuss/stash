@@ -39,3 +39,4 @@ jobs:
           STASH_SECRET: ${{ secrets.STASH_SECRET }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEYS: ${{ secrets.GROQ_API_KEYS }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
