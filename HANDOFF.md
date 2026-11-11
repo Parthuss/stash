@@ -87,6 +87,7 @@ mode).
    Test every path with Dodo test cards before live.
    **LIVE 11 Nov 2026:** DODO_API_BASE live, live product ids, PLUS_ACCESS="*", live key + live webhook secret set.
    **Processing (11 Nov 2026):** Plus fast lane = first 250 saves/month (counter `pm:<user>:<YYYY-MM>` in daily_counter). Those run on OpenRouter (`OPENROUTER_API_KEY` in .env + GH secret; same qwen3.8-27b, providers nebius/deepinfra/parasail, data_collection deny; ~0.25c a save); OpenRouter failure falls back to the free Groq keys. Shared lane rotates 5 free Groq accounts (`GROQ_API_KEYS`, worker var `SHARED_KEYS=5`). Groq paid upgrades were closed 11 Nov. OpenRouter key limit $5 for now; when Plus revenue starts raise to $20/month and enable auto top-up ($10 below $3).
+   **Tiers (11 Nov 2026, 81760ce):** accounts created from TIERS_FROM (2026-11-11T12:00Z, v1.ts) are "free": 10 live saves/calendar month (402 + plus:true at the limit), 25 imported, no own Groq key (403), no own categories (402). Plus: 250 fast/month, 2,000 imported, categories. Earlier accounts are "early": old rules (30/day, own key, categories). /v1/setup returns tier, free_left, free_limit, import_cap.
    Test run passed first (Indian card, AU card A$59 incl GST, UPI; webhook flips plan; portal link; success screen).
    Test user "Plus test" 1f542f2698ca47c5 (token in ~/.crew/inputs, private) is free again. The live webhook
    secret is only proven by the first real payment: check webhook_seen + the buyer's plan after it.
