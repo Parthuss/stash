@@ -569,7 +569,7 @@ export default {
            LEFT JOIN (SELECT user_id, COUNT(*) n FROM capture WHERE claimed_at > ? AND source = 'import' GROUP BY user_id) r
              ON r.user_id IS c.user_id
            WHERE c.source = 'import' AND ${open}
-             AND (NOT EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || COALESCE(c.user_id, 'owner') AND p.at > ?)
+             AND (${plusFast} OR NOT EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || COALESCE(c.user_id, 'owner') AND p.at > ?)
                OR (u.groq_key_enc IS NOT NULL AND COALESCE((SELECT n FROM daily_counter WHERE key = ?), 0) < ?))
              AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL OR ${plusFast} THEN ? ELSE ? END
              AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR ${plusFast} OR
@@ -579,7 +579,7 @@ export default {
            -- carousel (58 calls, 117k tokens) sat at the front of one person's import for 30 h, failing every window.
            ORDER BY ${plusFast} DESC, c.claimed_at IS NOT NULL, c.captured_at LIMIT 1`,
         )
-          .bind(day, ...openArgs, now, "borrow:" + now.slice(0, 10), BORROW_DAILY * sharedKeys, now, now.slice(0, 7), IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, now, now.slice(0, 7), day, SHARED_IMPORT_CEILING * sharedKeys, now, now.slice(0, 7))
+          .bind(day, ...openArgs, now, now.slice(0, 7), now, "borrow:" + now.slice(0, 10), BORROW_DAILY * sharedKeys, now, now.slice(0, 7), IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, now, now.slice(0, 7), day, SHARED_IMPORT_CEILING * sharedKeys, now, now.slice(0, 7))
           .first();
         if (!row) {
           await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('imports_idle', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
