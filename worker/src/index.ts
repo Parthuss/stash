@@ -571,7 +571,7 @@ export default {
            WHERE c.source = 'import' AND ${open}
              AND (${plusFast} OR NOT EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || COALESCE(c.user_id, 'owner') AND p.at > ?)
                OR (u.groq_key_enc IS NOT NULL AND COALESCE((SELECT n FROM daily_counter WHERE key = ?), 0) < ?))
-             AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL OR ${plusFast} THEN ? ELSE ? END
+             AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN ${plusFast} THEN ${PLUS_FAST_MONTHLY} WHEN u.groq_key_enc IS NOT NULL THEN ? ELSE ? END
              AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR ${plusFast} OR
                (SELECT COUNT(*) FROM capture e LEFT JOIN user v ON v.id = e.user_id
                 WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)
