@@ -95,6 +95,10 @@ const IMPORT_DAILY_OWN = 150, IMPORT_DAILY_SHARED = 5, SHARED_IMPORT_CEILING = 1
 // saves a day. Shared used 26-42k of ~200k tokens/day (8-10 Nov); a save is ~9k, so 12 leaves ample room.
 // ponytail: one counter per day in daily_counter ("borrow:YYYY-MM-DD"), never pruned (one row a day).
 const BORROW_DAILY = 12;
+// Plus saves per calendar month that get the fast lane (first in line, Plus import limits). Past it they
+// still get read, in the normal queue, so a heavy month can't cost more than Plus earns (~1.1c a save).
+const PLUS_FAST_MONTHLY = 250;
+const plusFast = `(u.plan = 'plus' AND u.plan_until > ? AND COALESCE((SELECT n FROM daily_counter WHERE key = 'pm:' || u.id || ':' || ?), 0) < ${PLUS_FAST_MONTHLY})`;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -544,9 +548,9 @@ export default {
       // (below), so a big Plus import can't hold up a free user's new reel for hours.
       row = await env.DB.prepare(
         `SELECT c.* FROM user u JOIN capture c ON c.user_id = u.id
-         WHERE u.plan = 'plus' AND u.plan_until > ? AND c.source != 'import' AND ${open} ORDER BY c.captured_at LIMIT 1`,
+         WHERE ${plusFast} AND c.source != 'import' AND ${open} ORDER BY c.captured_at LIMIT 1`,
       )
-        .bind(now, ...openArgs)
+        .bind(now, now.slice(0, 7), ...openArgs)
         .first();
       row ??= await env.DB.prepare(
         `SELECT c.* FROM capture c WHERE c.source != 'import' AND ${open} ORDER BY c.captured_at LIMIT 1`,
@@ -565,15 +569,15 @@ export default {
            WHERE c.source = 'import' AND ${open}
              AND (NOT EXISTS (SELECT 1 FROM alert_state p WHERE p.key = 'pause:' || COALESCE(c.user_id, 'owner') AND p.at > ?)
                OR (u.groq_key_enc IS NOT NULL AND COALESCE((SELECT n FROM daily_counter WHERE key = ?), 0) < ?))
-             AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL OR (u.plan = 'plus' AND u.plan_until > ?) THEN ? ELSE ? END
-             AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR (u.plan = 'plus' AND u.plan_until > ?) OR
+             AND COALESCE(r.n, 0) < CASE WHEN c.user_id IS NULL THEN 1000 WHEN u.groq_key_enc IS NOT NULL OR ${plusFast} THEN ? ELSE ? END
+             AND (u.groq_key_enc IS NOT NULL OR c.user_id IS NULL OR ${plusFast} OR
                (SELECT COUNT(*) FROM capture e LEFT JOIN user v ON v.id = e.user_id
                 WHERE e.claimed_at > ? AND e.user_id IS NOT NULL AND v.groq_key_enc IS NULL) < ?)
            -- Plus first. Then never-tried saves: a post that already failed waits behind them. One huge
            -- carousel (58 calls, 117k tokens) sat at the front of one person's import for 30 h, failing every window.
-           ORDER BY (u.plan = 'plus' AND u.plan_until > ?) DESC, c.claimed_at IS NOT NULL, c.captured_at LIMIT 1`,
+           ORDER BY ${plusFast} DESC, c.claimed_at IS NOT NULL, c.captured_at LIMIT 1`,
         )
-          .bind(day, ...openArgs, now, "borrow:" + now.slice(0, 10), BORROW_DAILY, now, IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, now, day, SHARED_IMPORT_CEILING, now)
+          .bind(day, ...openArgs, now, "borrow:" + now.slice(0, 10), BORROW_DAILY, now, now.slice(0, 7), IMPORT_DAILY_OWN, IMPORT_DAILY_SHARED, now, now.slice(0, 7), day, SHARED_IMPORT_CEILING, now, now.slice(0, 7))
           .first();
         if (!row) {
           await env.DB.prepare("INSERT INTO alert_state (key, at) VALUES ('imports_idle', ?) ON CONFLICT(key) DO UPDATE SET at = excluded.at")
@@ -599,6 +603,9 @@ export default {
         : null;
       // Plus pays for the shared key: their saves never run on their own (free-tier) key, even if one is saved.
       if (owner && isPlus(owner)) owner.groq_key_enc = null;
+      // Count this month's Plus saves (first claim only, retries don't count) toward PLUS_FAST_MONTHLY.
+      if (owner && isPlus(owner) && !row.claimed_at) await env.DB.prepare("INSERT INTO daily_counter (key, n) VALUES (?, 1) ON CONFLICT(key) DO UPDATE SET n = n + 1")
+        .bind(`pm:${row.user_id}:${new Date().toISOString().slice(0, 7)}`).run();
       // Their own key is out for the day (import paused): this one runs on the shared key instead.
       const t = new Date().toISOString();
       const borrowed = row.source === "import" && owner?.groq_key_enc
