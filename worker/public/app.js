@@ -51,11 +51,18 @@ const tier = () => setupState?.tier || "free";
 const isEarly = () => tier() === "early" || tier() === "owner";
 function openPlus() { openSetup(false); const g = $("gPlus"); g.hidden = false; g.open = true; g.scrollIntoView({ behavior: "smooth" }); }
 document.addEventListener("click", (e) => { if (e.target.closest("[data-goplus]")) { tr("click", "go_plus"); openPlus(); } });
+// Signed in, looking at the website (pricing, how it works) without signing out.
+function visitSite() { document.body.classList.add("site-visit"); show("auth"); renderPlus(); scrollTo(0, 0); }
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-site]")) { e.preventDefault(); tr("click", "visit_site"); visitSite(); }
+  else if (e.target.closest("[data-backapp]") && token) { e.preventDefault(); show("lib"); }
+});
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
 let activeView = null, viewVersion = 0, historyPosition = 0;
 let navigationId = Math.random().toString(36).slice(2), viewScroll = {};
 function viewState(which) { return { skwirlView: which, position: historyPosition, navigationId, noteId: which === "note" ? current?.id : null, from: which === "note" ? returnTo : null }; }
 function show(which, record = true) {
+  if (which !== "auth") document.body.classList.remove("site-visit");
   const changed = activeView !== which;
   if (changed) {
     if (activeView) viewScroll[activeView] = scrollY;
@@ -91,7 +98,7 @@ function signOut(msg) {
   // through once you're back in. Only signing out on purpose clears them (after a warning).
   const forced = typeof msg === "string";
   for (const k of ["stash_token", "stash_cache", "stash_notes", ...(forced ? [] : ["stash_outbox"])]) store.del(k);
-  token = null; show("auth"); plusSignedOut();
+  token = null; document.body.classList.remove("site-visit"); show("auth"); plusSignedOut();
   const m = typeof msg === "string" ? msg : ""; $("authErr").textContent = m; if (m) $("signin").open = true;
 }
 

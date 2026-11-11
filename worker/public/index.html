@@ -174,6 +174,10 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .9), inset 0 -1px 0 rgb(255 255 255 / .25), 0 10px 30px rgb(60 50 120 / .12); }
 .lnav .brand { font-size: 26px; }
 .lnk { color: var(--muted); text-decoration: none; font-weight: 500; padding: 0 10px; }
+/* Signed in and visiting the site: no join or sign-in, a way back to the app instead. */
+.lback, .lhero .siteback { display: none; } .lback { align-items: center; text-decoration: none; color: var(--ink); }
+body.site-visit .lback { display: inline-flex; } body.site-visit .lhero .siteback { display: flex; }
+body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, body.site-visit #joinFine, body.site-visit #pwaIn, body.site-visit .work-cta [data-totop] { display: none !important; }
 .lsign { display: inline-flex; align-items: center; text-decoration: none; color: var(--ink); }
 .lhero { display: grid; gap: 34px; align-items: center; padding: 7vh 0 10px; }
 .lcopy { text-align: center; }
@@ -558,7 +562,7 @@ body.on-phone .phone-handoff { display: none; }
 <main>
 
 <section id="auth">
-  <nav class="lnav"><span class="brand"><img src="/mark.svg" alt="">Skwirl</span><a href="#pricing" class="lnk">Pricing</a><a href="#signin" class="setup-pill lsign">Sign in</a></nav>
+  <nav class="lnav"><span class="brand"><img src="/mark.svg" alt="">Skwirl</span><a href="#pricing" class="lnk">Pricing</a><a href="#signin" class="setup-pill lsign">Sign in</a><a href="/" class="setup-pill lback" data-backapp>My saves</a></nav>
 
   <div class="pwa-in" id="pwaIn" hidden>
     <h2>Welcome back</h2>
@@ -572,6 +576,7 @@ body.on-phone .phone-handoff { display: none; }
       <p class="eyebrow">Free · works with ChatGPT and Claude</p>
       <h1>Everything you save, actually useful.</h1>
       <p class="lede">Share a reel to Skwirl and a couple of minutes later it's a note you can search: recipes come back as ingredients and steps, books, films and places land in your lists.<b>And it comes back while you work: Claude Code pulls in the save that fits what you're building.</b></p>
+      <div class="siteback inline-actions"><a class="btn" href="/" data-backapp>Back to my saves</a></div>
       <form id="joinForm" class="joinbox">
         <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your first name" required>
         <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
@@ -957,6 +962,7 @@ body.on-phone .phone-handoff { display: none; }
   <div class="topbar"><button class="btn soft" id="meBack">← Back</button></div>
   <div class="setup-head mehead"><span class="avatar big" id="meAvatar">·</span><div><h1 id="meName">You</h1><p id="meSub"></p></div></div>
   <div class="stats" id="meStats"></div>
+  <p style="margin:0 0 14px"><a href="/" data-site class="btn sm soft">About Skwirl and pricing</a></p>
 
   <div class="group hub"><h2>Your setup</h2><p class="muted" style="margin:2px 0 10px">Everything you can turn on, in one place. Skipped something earlier? Do it here.</p><div id="hub"></div></div>
 
