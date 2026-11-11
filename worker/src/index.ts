@@ -95,7 +95,7 @@ const IMPORT_DAILY_OWN = 150, IMPORT_DAILY_SHARED = 5, SHARED_IMPORT_CEILING = 1
 // While an own-key user's import is paused on their daily limit, borrow the shared key for this many
 // saves a day. Shared used 26-42k of ~200k tokens/day (8-10 Nov); a save is ~9k, so 12 leaves ample room.
 // ponytail: one counter per day in daily_counter ("borrow:YYYY-MM-DD"), never pruned (one row a day).
-const BORROW_DAILY = 12;
+const BORROW_DAILY = 20;  // per shared key (x SHARED_KEYS): 5 keys = 100 a day, about 90% of their daily tokens
 // Plus saves per calendar month that get the fast lane (first in line, Plus import limits). Past it they
 // still get read, in the normal queue, so a heavy month can't cost more than Plus earns (~1.1c a save).
 const PLUS_FAST_MONTHLY = 250;
