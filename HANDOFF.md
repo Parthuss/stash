@@ -85,7 +85,13 @@ mode).
    users first in /claim and on a paid Groq key (Parth must create a paid Groq account), 500/month cap
    with a soft slow-down (not a hard stop), Get Plus buttons replacing Notify me, Plus status in Me/Set up.
    Test every path with Dodo test cards before live.
-   **Built 9 Nov on branch claude/skwirl-plus-dodo-setup-389e23 (not deployed, not merged):** migration
+   **11 Nov: merged + deployed (853b005), migration 0031 applied. Dodo live payments approved 11 Nov.** Products
+   (tax inclusive, local prices by currency) and webhook `https://skwirl.app/webhooks/dodo` exist in BOTH modes:
+   test monthly pdt_0NrhCk1gsfDRGrVFoNgAY / yearly pdt_0NrhD3Z4kmy3gP9icwBOt (in wrangler.local.toml vars now);
+   live monthly pdt_0NrhDL5uG0jhbKcdFCLSL / yearly pdt_0NrhDOdc7RKqK9MK5ODtI. Left for Parth: test API key +
+   test webhook signing secret via `wrangler secret put`, a normal test account whose id goes in PLUS_ACCESS,
+   a test-card run. Go-live = live ids + `DODO_API_BASE = "https://live.dodopayments.com"` + live key/secret.
+   Was: built 9 Nov on branch claude/skwirl-plus-dodo-setup-389e23. Migration
    0031_plus.sql, worker/src/plus.ts, Plus-first /claim, UI. Test: `node tests/plus_dodo.cjs` (real SQLite
    from all migrations). Gate: `PLUS_ACCESS` var (user ids, or "*" at launch); unset = nobody can buy.
    The owner login has no user row, so test Plus on a normal account. Vars still to add to
