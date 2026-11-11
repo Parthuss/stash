@@ -9,6 +9,7 @@ file rather than in D1. Configuration only ever *adds* capability.
 from __future__ import annotations
 
 import os
+import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -52,7 +53,7 @@ class Config:
     #: Queue + search index.
     db_path: Path = ROOT / "stash.sqlite"
 
-    groq_api_key: str = os.environ.get("GROQ_API_KEY", "")
+    groq_api_key: str = os.environ.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEYS", "").split(",")[0].strip()
 
     #: A Netscape-format cookies.txt scoped to instagram.com. Preferred over
     #: `cookies_from_browser`: reading Chrome's jar directly needs the "Chrome
@@ -124,8 +125,33 @@ CONFIG = Config()
 _groq_override: ContextVar[str | None] = ContextVar("groq_override", default=None)
 
 
+# The shared lane can hold several free Groq keys: GROQ_API_KEYS="gsk_a,gsk_b,..." (GROQ_API_KEY alone
+# still works). Groq's limits are per account (organization), so only keys from separate accounts add
+# capacity. A key that hits its daily limit is skipped until Groq says it resets.
+# ponytail: per-process memory; each runner rediscovers a spent key with one 429.
+_spent_until: dict[str, float] = {}
+
+
+def _shared_pool(cfg) -> list[str]:
+    keys = [k.strip() for k in os.environ.get("GROQ_API_KEYS", "").split(",") if k.strip()]
+    return keys or ([cfg.groq_api_key] if cfg.groq_api_key else [])
+
+
+def _shared_key(cfg) -> str:
+    pool, now = _shared_pool(cfg), time.time()
+    return next((k for k in pool if _spent_until.get(k, 0) <= now), pool[0] if pool else "")
+
+
 def groq_key(cfg) -> str:
-    return _groq_override.get() or cfg.groq_api_key
+    return _groq_override.get() or _shared_key(cfg)
+
+
+def next_shared_key(cfg, wait_s: float) -> bool:
+    """The shared key in use hit its daily limit: park it for wait_s. True if another shared key is free."""
+    if _groq_override.get():
+        return False
+    _spent_until[_shared_key(cfg)] = time.time() + wait_s
+    return any(_spent_until.get(k, 0) <= time.time() for k in _shared_pool(cfg))
 
 
 _may_spill: ContextVar[bool] = ContextVar("may_spill", default=True)
