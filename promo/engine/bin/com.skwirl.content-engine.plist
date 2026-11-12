@@ -9,8 +9,9 @@
   <array>
     <string>/bin/zsh</string>
     <string>-lc</string>
-    <string>[ -f ~/.config/skwirl-engine/env ] &amp;&amp; set -a &amp;&amp; . ~/.config/skwirl-engine/env &amp;&amp; set +a; /opt/homebrew/bin/python3 ~/Work/Experiment/stash/promo/engine/bin/weekly.py auto</string>
+    <string>[ -f ~/.config/skwirl-engine/env ] &amp;&amp; set -a &amp;&amp; . ~/.config/skwirl-engine/env &amp;&amp; set +a; ~/Work/Experiment/stash/promo/engine/.venv/bin/python ~/Work/Experiment/stash/promo/engine/bin/weekly.py auto</string>
   </array>
+  <key>StartInterval</key><integer>900</integer>
   <key>StartCalendarInterval</key>
   <array>
     <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>

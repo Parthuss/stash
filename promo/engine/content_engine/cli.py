@@ -59,6 +59,8 @@ def main(argv: list[str] | None = None) -> int:
         if name == "stage":
             s.add_argument("--restage", action="store_true")
     sub.add_parser("queue")
+    sync = sub.add_parser("sync-dashboard")
+    sync.add_argument("--ideas", type=Path)
     for name in ("approve", "skip"):
         sub.add_parser(name).add_argument("id")
     s = sub.add_parser("pull-perf")
@@ -94,6 +96,18 @@ def main(argv: list[str] | None = None) -> int:
         except schedule.ScheduleError as e:
             print(e)
             return 1
+        from .dashboard import export
+        export(ctx)
+    elif a.cmd == "sync-dashboard":
+        from .dashboard import export
+        if a.ideas:
+            rows = json.loads(a.ideas.read_text())
+            if not isinstance(rows, list) or any(not isinstance(row, dict) or not row.get('hook') or not row.get('id') for row in rows):
+                raise SystemExit('Expected an ideas array with id, hook, format and optional score')
+            # Project only public editorial fields, never raw research inputs.
+            ctx.store.put_json('dashboard/ideas.json', [{key: row.get(key) for key in ('id', 'hook', 'format', 'score', 'score_label')} for row in rows])
+        export(ctx)
+        print('Owner content summary updated.')
     elif a.cmd == "queue":
         print(publisher.queue_text(ctx.store) or "Queue is empty.")
     elif a.cmd in ("approve", "skip"):

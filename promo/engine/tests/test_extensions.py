@@ -138,6 +138,7 @@ def test_carousel_standard_is_enforced(tmp_path):
 
 
 def test_weekly_runner_research_codex_make_claude_and_overrides(tmp_path, monkeypatch):
+    monkeypatch.setenv("ENGINE_ENABLED", "1")
     source = Path(__file__).resolve().parents[1] / 'bin/weekly.py'
     spec = importlib.util.spec_from_file_location('weekly', source)
     weekly = importlib.util.module_from_spec(spec)
@@ -247,3 +248,40 @@ def test_connect_env_round_trips_shell_metacharacters_without_execution(tmp_path
     module.write_env(TEST=value)
     assert module.read_env()['TEST'] == value
     assert module.ENV.stat().st_mode & 0o777 == 0o600
+
+
+# Base-branch cases retained with the Maker's assets schema (the legacy art map was replaced).
+def test_stills_require_art_and_check_all_copy(tmp_path):
+    script = tmp_path / 'post.json'
+    script.write_text(json.dumps({'kind':'static','slides':[{'layout':'promise','title':'Useful','bridge':'Try it'}]}))
+    with pytest.raises(ValueError, match='artwork'):
+        stills.read_script(script)
+    data = {'kind':'static','assets':{'one':{'type':'art','file':'one.png','prompt':'NO TEXT'}},
+            'slides':[{'layout':'promise','title':'Useful','bridge':'Try it','card':'Unlimited saves'}]}
+    script.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match='unlimited'):
+        stills.read_script(script)
+    data['slides'][0]['card'] = 'A note'
+    script.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match='missing asset'):
+        stills.build(script, tmp_path / 'out')
+
+
+def test_weekly_runner_defaults_codex_and_accepts_override(tmp_path, monkeypatch):
+    monkeypatch.setenv('ENGINE_ENABLED','1')
+    source = Path(__file__).resolve().parents[1] / 'bin/weekly.py'
+    spec = importlib.util.spec_from_file_location('weekly_base_cases', source)
+    weekly = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(weekly)
+    monkeypatch.setattr(weekly, 'OUTPUT', tmp_path)
+    monkeypatch.setattr(sys, 'argv', ['weekly.py','research'])
+    for variable in ('ENGINE_AGENT','ENGINE_RESEARCH_AGENT','ENGINE_LOCAL_STORE','R2_BUCKET'):
+        monkeypatch.delenv(variable, raising=False)
+    called = []
+    monkeypatch.setitem(sys.modules,'crew',SimpleNamespace(start=lambda *a,**k: called.append((a,k)) or {'id':'fake'}))
+    assert weekly.main() == 0 and called[-1][0][0] == 'codex'
+    assert weekly.main() == 0 and len(called) == 1
+    for marker in tmp_path.glob('.started-*'):
+        marker.unlink()
+    monkeypatch.setenv('ENGINE_AGENT','claude-craveto')
+    assert weekly.main() == 0 and called[-1][0][0] == 'claude-craveto'

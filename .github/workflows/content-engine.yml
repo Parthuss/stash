@@ -10,14 +10,14 @@ on:
   workflow_dispatch:
     inputs:
       command:
-        description: "tick, insights or queue"
+        description: "Engine command (research/make require the configured Mac agent)"
         default: tick
         type: choice
-        options: [tick, insights, queue]
+        options: [tick, insights, queue, research, make, pause, resume]
       dry_run:
         description: "Dry run (never call the publishing APIs)"
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -34,15 +34,14 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-        with:
-          sparse-checkout: promo/engine
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install --quiet "httpx>=0.27" "boto3>=1.34"
+      - run: pip install --quiet "httpx>=0.27" "boto3>=1.34" "Pillow>=10"
       - name: Run
         working-directory: promo/engine
         env:
+          ENGINE_ENABLED: ${{ vars.ENGINE_ENABLED }}
           AUTO_APPROVE: ${{ vars.AUTO_APPROVE }}
           ENGINE_DRY_RUN: ${{ inputs.dry_run && '1' || vars.ENGINE_DRY_RUN }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
@@ -61,5 +60,5 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then cmd="${{ inputs.command }}";
           elif [ "${{ github.event.schedule }}" = "41 3 * * *" ]; then cmd=insights; else cmd=tick; fi
-          python -m content_engine "$cmd"
-          if [ "$cmd" = tick ]; then python -m content_engine insights; fi
+          python bin/workflow.py "$cmd"
+          if [ "$cmd" = tick ]; then python bin/workflow.py insights; fi

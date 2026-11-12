@@ -20,6 +20,8 @@ Node >=20 and Google Chrome are needed for HTML still renders. Reels use the exi
 
 Secrets go only into terminal hidden prompts in `bin/connect.py`, a local chmod-600 file at `~/.config/skwirl-engine/env`, and GitHub Actions secrets. Never paste them in chat, commit them, put them in a command-line argument, or screenshot them. Do not source a file from an unknown author.
 
+<a id="instagram"></a>
+
 ## 1. Instagram Creator account: Instagram API with Instagram Login
 
 1. In [Meta's developer dashboard](https://developers.facebook.com/apps/), create your own app for managing Instagram content. Use the Instagram business-login/API use case, and Business app type if asked. Dashboard labels change; choose **Instagram API with Instagram Login**, not the Facebook Login/Page flow. A linked Facebook Page is not required for this path.
@@ -36,6 +38,8 @@ Secrets go only into terminal hidden prompts in `bin/connect.py`, a local chmod-
 
 Official references: [login/token lifecycle](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login), [publishing](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/content-publishing), [insights](https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights). Meta returned 429/unavailable on rechecking these pages in this run; the recovered API notes are implementation references, and the exact dashboard labels/version/permission availability still need confirming during your connection. No live Meta contract test has been run.
 
+<a id="youtube"></a>
+
 ## 2. Google project + YouTube OAuth refresh token
 
 1. Open [Google Cloud Console](https://console.cloud.google.com/), create a project, and enable **YouTube Data API v3** in APIs & Services > Library.
@@ -47,6 +51,8 @@ Official references: [login/token lifecycle](https://developers.facebook.com/doc
 
 References: [upload privacy and fields](https://developers.google.com/youtube/v3/docs/videos/insert), [resumable upload recovery](https://developers.google.com/youtube/v3/guides/using_resumable_upload_protocol), [OAuth token expiry](https://developers.google.com/identity/protocols/oauth2). A Short is classified by YouTube from duration/aspect; `#Shorts` is not an API guarantee. The Make task must produce eligible vertical videos.
 
+<a id="r2"></a>
+
 ## 3. Private R2 storage
 
 1. In Cloudflare > R2, enable R2 billing/subscription if needed; create a **Standard** bucket such as `skwirl-content`.
@@ -54,6 +60,8 @@ References: [upload privacy and fields](https://developers.google.com/youtube/v3
 3. Create an R2 S3 API token scoped to Object Read & Write for this bucket. Note the account ID, access key ID and secret key.
 4. Run `.venv/bin/python bin/connect.py r2`; enter the values in your terminal. It tests write and presigned read. It stores `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`.
 5. Keep media available until container processing has finished. URL fetchability is an authenticated account integration check still pending. Restrict bucket credentials and keep the state objects after any media cleanup.
+
+<a id="telegram"></a>
 
 ## 4. One-tap approval
 
@@ -65,6 +73,8 @@ The product's current Telegram bot has a webhook. Telegram disallows getUpdates 
 4. Staged post IDs are immutable. To change a caption or asset, use a new post ID and fresh approval. Re-running stage cannot replace what an existing approval refers to.
 
 This bot must be created by you. No Telegram message was sent by this run. If you prefer the existing product bot, integration must later be built into its webhook explicitly; do not delete that webhook.
+
+<a id="engine"></a>
 
 ## 5. Secrets and GitHub Actions
 
@@ -144,3 +154,35 @@ Make produces platform captions/titles, cover, schedule and QA. Only approved du
 48 h and 7 d snapshots go to private R2 performance.json. `python -m content_engine pull-perf --out "$ENGINE_HOME/performance.json"` refreshes the research copy; set ENGINE_HOME first. Unsupported/null metrics are left missing. Late collection records its actual timestamp. No signup attribution is inferred from views.
 
 Before enabling live, separately review one real Reel on both accounts and one carousel/static on Instagram: token refresh, presigned fetch, actual public visibility, approval ownership and returned insights. These account-specific checks cannot be completed with mocks. Cost and usage boundaries: [COSTS.md](COSTS.md).
+
+
+<a id="dry_run"></a>
+
+## How to use it day to day
+
+Open **[skwirl.app/owner#content](https://skwirl.app/owner#content)** while signed in as the owner. Content has the setup checklist, scored ideas, draft previews/captions/gate findings, scheduled dates and posted 48-hour/7-day measurements. Before connection it shows the five curated ideas and a clearly labeled local carousel sample. Missing metrics mean not measured, not zero. Credential presence means configured, not a verified healthy account.
+
+1. **Research, then make.** The buttons appear after both the private R2 binding and dedicated dispatch token exist. They dispatch `content-engine.yml` in dry run, enqueue a private request, and the configured Mac launch agent picks it up within about 15 minutes while awake. GitHub does not run Claude or render video. The existing crew research/make tasks use Codex and Claude Craveto; inspect their completion in crew. Research syncs curated `ideas.json`; make stages only after independent gates. To publish a local read model manually: `python -m content_engine sync-dashboard --ideas "$ENGINE_HOME/ideas.json"`.
+2. **Review each draft.** Inspect every slide/video, cover, caption and gate findings. Approve/Skip queues a hash-bound command for the next tick. The engine rechecks the current post, report, policy and actual uploaded media through the same `apply_action` as Telegram. Changed drafts need another review. A queued command is not approval or a post. Final PASS reports cannot be hand-written.
+3. **Telegram is the same queue.** Preview messages contain the quality report and approval buttons; `/queue`, `/pause`, `/resume` still work. Either surface updates the shared state. Console pause/resume keeps a persistent dry-run lock; Telegram resume preserves it.
+4. **Watch scheduled and posted.** Dates are UTC in the console; the draft keeps its scheduling timezone. Metrics appear after 48 hours and 7 days when the platform provides them. No signup attribution is inferred.
+
+### Connect the owner console
+
+Keep the engine bucket private. Add the following binding to the Worker's **active** `worker/wrangler.local.toml` (template comments also live in `wrangler.toml`), using the same bucket as the engine's `R2_BUCKET`, then deploy normally. No D1 migration is needed.
+
+```toml
+[[r2_buckets]]
+binding = "CONTENT_ENGINE"
+bucket_name = "YOUR_PRIVATE_ENGINE_BUCKET"
+```
+
+Set **CONTENT_GH_TOKEN** with `npx wrangler secret put CONTENT_GH_TOKEN -c wrangler.local.toml` from `worker/`. Use a fine-grained GitHub token restricted to this repository with Actions write permission. Never paste it into chat or commit it. It is separate from the capture runner token. Without it, workflow buttons stay hidden; setup/ideas/previews still work. All Content routes and private media require the console's existing owner bearer auth.
+
+The engine writes `dashboard/summary.json`, curated `dashboard/ideas.json`, and consumes `commands/pending/`; it records command receipts in `commands/results/`. The Worker never rewrites post records. Mac research/make requests use `state/jobs/pending/`; `weekly.py auto` starts them once and moves them to `state/jobs/started/`. A started job is not completed. The launch plist checks every 15 minutes in addition to the weekly slots; use the engine venv and set `ENGINE_ENABLED=1` in the private local env only when deliberately ready. Do not load it before setup.
+
+### Stay safe until the live check
+
+`ENGINE_ENABLED` is currently unset in GitHub, so the publishing job is skipped before checkout or API clients. `bin/workflow.py` independently exits without opening state when it is unset. Manual Actions defaults to dry run; every console workflow request forces dry run. Console actions also persist `dry_run: true` in private `state/paused.json`, which subsequent scheduled ticks honor. Resume does not enable the GitHub variable or live posting.
+
+After separately reviewing real-account smoke tests, deliberately configure `ENGINE_DRY_RUN`, `ENGINE_ENABLED`, and clear the private state's dry-run lock only when ready for live publishing. Keep `AUTO_APPROVE` unset for manual review. Nothing in this merge creates credentials, enables the engine, sends approval messages or posts.

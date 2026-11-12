@@ -185,10 +185,10 @@ def _handle_update(ctx: Ctx, u: dict) -> None:
         if cmd == "/queue":
             ctx.notify(queue_text(ctx.store) or "Queue is empty.")
         elif cmd == "/pause":
-            ctx.store.put_json("state/paused.json", {"paused": True, "at": ctx.now().isoformat()})
+            ctx.store.put_json("state/paused.json", {**(ctx.store.get_json("state/paused.json") or {}), "paused": True, "at": ctx.now().isoformat()})
             ctx.notify("Paused. Nothing will post until you send /resume.")
         elif cmd == "/resume":
-            ctx.store.put_json("state/paused.json", {"paused": False, "at": ctx.now().isoformat()})
+            ctx.store.put_json("state/paused.json", {**(ctx.store.get_json("state/paused.json") or {}), "paused": False, "at": ctx.now().isoformat()})
             ctx.notify("Resumed.")
 
 
@@ -509,8 +509,13 @@ def refresh_ig_token(ctx: Ctx) -> None:
 
 
 def tick(ctx: Ctx) -> None:
+    from .dashboard import apply_commands, export
+    control = ctx.store.get_json("state/paused.json") or {}
+    if control.get("dry_run"):
+        ctx.cfg.dry_run = True
     handle_telegram(ctx)
     apply_intents(ctx)
+    apply_commands(ctx)
     if ctx.cfg.auto_approve:
         for p in load_posts(ctx.store, ctx):
             if p.get("status") == "awaiting_approval":
@@ -522,3 +527,4 @@ def tick(ctx: Ctx) -> None:
                 ctx.say(f"{p['id']}: auto-approved")
     refresh_ig_token(ctx)
     publish_due(ctx)
+    export(ctx)

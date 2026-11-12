@@ -38,7 +38,21 @@ def effort_for(job: str, agent: str) -> str:
 
 
 def main() -> int:
-    job = sys.argv[1] if len(sys.argv) > 1 else "auto"
+    if os.environ.get("ENGINE_ENABLED", "").strip() != "1":
+        return 0
+    request_key = None
+    store = None
+    sys.path.insert(0, str(ENGINE))
+    from content_engine.config import Config
+    from content_engine.store import from_config
+    cfg = Config.from_env()
+    if cfg.r2_bucket or cfg.local_store:
+        store = from_config(cfg)
+        pending = store.list("state/jobs/pending/")
+        if pending:
+            request_key = pending[0]
+    request = store.get_json(request_key) if request_key else None
+    job = (request or {}).get("command") or (sys.argv[1] if len(sys.argv) > 1 else "auto")
     if job == "auto":
         job = {4: "research", 5: "make"}.get(datetime.now().weekday(), "")
         if not job:
@@ -48,11 +62,13 @@ def main() -> int:
         return 2
     OUTPUT.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y-%m-%d")
-    marker = OUTPUT / f".started-{job}-{stamp}"
+    marker = OUTPUT / (f".request-{Path(request_key).stem}" if request_key else f".started-{job}-{stamp}")
     if marker.exists():  # launchd can fire twice (wake + schedule): one task per job per day
+        if request_key:
+            store.delete(request_key)
         return 0
     prompt = (ENGINE / "prompts" / f"{job}.md").read_text()
-    prompt = f"ENGINE_HOME={OUTPUT}\n\n" + prompt
+    prompt = f"ENGINE_HOME={OUTPUT}\nENGINE_DRY_RUN=1. Never publish. Console request; all mandatory quality gates apply.\n\n" + prompt
     sys.path.insert(0, str(CREW))
     import crew  # noqa: E402  (crew.py, the agent orchestrator)
 
@@ -60,6 +76,9 @@ def main() -> int:
     m = crew.start(agent, str(REPO), prompt, name=f"Content engine: {job} {stamp}",
                    effort=effort_for(job, agent))
     marker.write_text(m["id"])
+    if request_key:
+        store.put_json(request_key.replace('/pending/', '/started/', 1), {**request, 'task_id': m['id']})
+        store.delete(request_key)
     print(f"started {job}: crew task {m['id']}")
     return 0
 

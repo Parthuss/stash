@@ -20,6 +20,11 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
+## 2026-11-12: Content engine
+- Merged base `80d711d`, Claude Maker `04ddb9d`, mandatory quality/ideation `dc5bb04`; static/reel evidence now matches `promo/engine/playbooks/INTEGRATION.md`, with fail-closed approval/publishing.
+- Owner Content at `/owner#content`: setup, ideas, draft previews/gates, hash-bound Approve/Skip, schedule and 48h/7d metrics; private R2 summary/commands, same owner auth and Telegram gate.
+- Engine stays off (`ENGINE_ENABLED` unset); console controls hidden until private bucket + `CONTENT_GH_TOKEN` configured. Connect IG, YouTube, R2, Telegram and Mac agent per `promo/engine/SETUP.md` day-to-day guide. No migration, secrets or posts in this integration.
+
 ## 2026-11-12 (later): owner can add an email
 - Parth's "P" account is the OWNER (STASH_SECRET, OWNER_NAME "Parthus"), which had no way to add an email. Now it can: migration 0033 (owner_login + owner_token), `sto_` owner device tokens, owner caps 6 codes / 10 guesses a day, Telegram ping on each owner sign-in. Details: docs/ACCOUNTS.md "The owner's email". Tests: node tests/signin_otp.cjs (27 checks).
 - The yellow "No password here: your sign-in link..." banner was a race (shown before /v1/setup answered, never cleared for the owner). Now decided once setup is known: email on + has email = nothing; no email = "Add your email" dialog/banner; old banner only while email sign-in is off. Profile has an Email row for everyone.
