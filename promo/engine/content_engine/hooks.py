@@ -38,7 +38,8 @@ PAIN_CUES = ("lost", "lose", "losing", "gone", "disappear", "disappeared", "dele
              "buried", "where", "which one", "what was", "send me", "still don't", "still do not",
              "again", "scroll", "scrolling", "somewhere", "no idea", "name of", "its name", "the name",
              "not the creator", "never tried", "never cooked", "never opened", "never used", "used it",
-             "actually", "wish", "want", "need")
+             "actually", "wish", "want", "need", "missed", "miss", "twice", "rewatch", "rewatching",
+             "pausing", "unavailable")
 # Everyday moments a stranger recognises (cooking, travel, watching, learning, a friend asking).
 MOMENT_CUES = ("recipe", "pasta", "dinner", "cook", "cooking", "shop", "shopping", "ingredients", "cafe",
                "café", "place", "trip", "travel", "holiday", "restaurant", "movie", "film", "show", "book",

@@ -42,10 +42,11 @@ def parse_model_json(text: str):
     return json.loads(text)
 
 
-def planning_history(root: Path) -> list[dict]:
-    result = read_history(root)
+def planning_history(root: Path, exclude_ids=()) -> list[dict]:
+    """exclude_ids: ids of drafts being re-planned (e.g. promoted backlog I-01), so they are not their own duplicates."""
+    result = read_history(root, exclude_ids)
     if '/.crew/wt/' in str(root):
-        result += read_history(Path(str(root).split('/.crew/wt/')[0]))
+        result += read_history(Path(str(root).split('/.crew/wt/')[0]), exclude_ids)
     # Stable deduped packet keeps token use bounded without discarding substantive text.
     seen, rows = set(), []
     for row in result:
