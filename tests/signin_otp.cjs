@@ -128,17 +128,31 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   assert.equal(r.status, 400);
   ok('5 wrong tries kill the code');
 
-  // 9. A new code replaces the old one
-  await post('/auth/email/start', { email: 'sam@example.com' }); const old = lastCode();
-  await post('/auth/email/start', { email: 'sam@example.com' }); const fresh = lastCode();
-  if (old !== fresh) { r = await post('/auth/email/verify', { email: 'sam@example.com', code: old }); assert.equal(r.status, 400); }
-  r = await post('/auth/email/verify', { email: 'sam@example.com', code: fresh }); assert.equal(r.status, 200);
-  ok('asking again replaces the old code');
+  // 9. Asking again keeps older live codes (up to 3), so nobody can cancel the one you're typing
+  const codes = [];
+  for (let i = 0; i < 4; i++) { await post('/auth/email/start', { email: 'sam@example.com' }); codes.push(lastCode()); }
+  assert.equal(row('SELECT COUNT(*) n FROM email_code').n, 3);  // the oldest of 4 was dropped
+  if (!codes.slice(1).includes(codes[0])) { r = await post('/auth/email/verify', { email: 'sam@example.com', code: codes[0] }); assert.equal(r.status, 400); }
+  r = await post('/auth/email/verify', { email: 'sam@example.com', code: codes[2] }); assert.equal(r.status, 200);
+  assert.equal(row('SELECT COUNT(*) n FROM email_code').n, 0);  // signing in clears the rest
+  r = await post('/auth/email/verify', { email: 'sam@example.com', code: codes[3] }); assert.equal(r.status, 400);
+  ok('older codes keep working (3 live), signing in spends them all');
 
-  // 10. Rate limit per address (5 an hour, from any network)
-  for (let i = 0; i < 5; i++) assert.equal((await post('/auth/email/start', { email: 'flood@x.com' })).status, 200);
-  r = await post('/auth/email/start', { email: 'FLOOD@x.com' }); assert.equal(r.status, 429);
-  ok('per-address limit (5/hour), case-insensitive');
+  // 9b. Parallel guesses share the try budget (one atomic UPDATE per attempt)
+  await post('/auth/email/start', { email: 'race@x.com' }); const rc = lastCode();
+  const burst = await Promise.all(Array.from({ length: 12 }, () => post('/auth/email/verify', { email: 'race@x.com', code: wrong(rc), name: 'R' })));
+  const bodies = await Promise.all(burst.map((x) => x.json()));
+  assert.equal(bodies.filter((x) => typeof x.left === 'number').length, 5);
+  assert.equal((await post('/auth/email/verify', { email: 'race@x.com', code: rc, name: 'R' })).status, 400);
+  ok('a burst of guesses still gets only 5 tries');
+
+  // 10. Rate limit per address: 5 an hour from one network, 15 from everywhere
+  const fip = freshIp();
+  for (let i = 0; i < 5; i++) assert.equal((await post('/auth/email/start', { email: 'flood@x.com' }, { ip: fip })).status, 200);
+  assert.equal((await post('/auth/email/start', { email: 'FLOOD@x.com' }, { ip: fip })).status, 429);
+  for (let i = 0; i < 10; i++) assert.equal((await post('/auth/email/start', { email: 'flood@x.com' })).status, 200);
+  assert.equal((await post('/auth/email/start', { email: 'flood@x.com' })).status, 429);
+  ok('per-address limits (5/hour per network, 15/hour total), case-insensitive');
 
   // 11. Rate limit per network (10 an hour), and wrong codes per network (30 an hour)
   const ip = freshIp();
@@ -157,6 +171,7 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   // 13. Joining rules still apply: invite-only + cap
   delete env.OPEN_JOIN; env.JOIN_CODE = 'letmein';
   r = await post('/auth/email/start', { email: 'new@x.com', signup: true, invite: 'nope' }); assert.equal(r.status, 403);
+  r = await post('/auth/email/start', { email: 'sam@example.com', signup: true, invite: 'nope' }); assert.equal(r.status, 403);  // same answer for an existing address
   r = await post('/auth/email/start', { email: 'new@x.com', signup: true, invite: 'letmein' }); assert.equal(r.status, 200);
   r = await post('/auth/email/verify', { email: 'new@x.com', code: lastCode(), name: 'Nia', invite: 'nope' }); assert.equal(r.status, 403);
   r = await post('/auth/email/verify', { email: 'new@x.com', code: lastCode(), name: 'Nia', invite: 'letmein' }); assert.equal(r.status, 201);
@@ -212,12 +227,17 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   r = await call(samA, '/v1/me', { name: 'Sam A', email: '' }, 'PUT'); assert.equal(r.status, 400);
   ok('profile email change needs the code; email cannot be emptied');
 
-  // 17. Send failure while adding never strands anyone: saved unproven
+  // 17. A failed add-email send saves nothing (the app offers "Finish later" instead)
   const realKey = env.RESEND_API_KEY; env.RESEND_API_KEY = 're_broken';
-  r = await call('legacy2', '/v1/email/start', { email: 'jo2@x.com' }); b = await r.json();
-  assert.equal(b.saved, true); assert.deepEqual(row("SELECT email, email_verified FROM user WHERE id = 'legacy2'"), { email: 'jo2@x.com', email_verified: 0 });
+  r = await call('legacy2', '/v1/email/start', { email: 'jo2@x.com' });
+  assert.equal(r.status, 502); assert.equal(row("SELECT email FROM user WHERE id = 'legacy2'").email, null);
   env.RESEND_API_KEY = realKey;
-  ok('a failed add-email send saves the address (unverified) instead of blocking');
+  // Feedback and waitlist addresses never land on the account unproven
+  sql.prepare("INSERT INTO user (id, name, token_hash, created_at) VALUES ('fb', 'F', 'h-fb', '2026-10-01')").run();
+  r = await call('fb', '/v1/feedback', { message: 'hi', email: 'Victim@x.com', consent: true }); assert.equal(r.status, 200);
+  assert.equal(row("SELECT email FROM user WHERE id = 'fb'").email, null);
+  assert.equal(row("SELECT reply_to FROM feedback WHERE user_id = 'fb'").reply_to, 'victim@x.com');
+  ok('failed sends and feedback addresses never put an unproven email on an account');
 
   // ---- Google ----------------------------------------------------------------------------------
   const subtle = webcrypto.subtle;
@@ -233,7 +253,7 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
     const sig = await subtle.sign('RSASSA-PKCS1-v1_5', key.priv, Buffer.from(h + '.' + p));
     return `${h}.${p}.${b64u(new Uint8Array(sig))}`;
   };
-  const vg = (cred) => google.verifyGoogleIdToken(env, cred, fakeFetch);
+  const vg = (cred, at) => google.verifyGoogleIdToken(env, cred, fakeFetch, at);
   const g = await vg(await jwt());
   assert.equal(g.sub, 'g-111'); assert.equal(g.email, 'gina@gmail.com'); assert.equal(g.given_name, 'Gina');
   assert.ok((await vg(await jwt({ iss: 'accounts.google.com' }))));
@@ -256,9 +276,12 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
 
   const before = jwksFetches;
   assert.equal(await vg(await jwt({}, { kid: 'kid-unknown' })), null);
-  assert.equal(jwksFetches, before + 1);  // an unknown kid refetches once (key rotation), then gives up
-  await vg(await jwt()); assert.equal(jwksFetches, before + 1);  // cached otherwise
-  ok('JWKS cached; unknown kid triggers one refetch');
+  assert.equal(jwksFetches, before);  // just fetched: an unknown kid doesn't refetch within a minute
+  const later = Date.now() + 61_000;
+  assert.equal(await vg(await jwt({}, { kid: 'kid-unknown' }), later), null);
+  assert.equal(jwksFetches, before + 1);  // after that, one refetch (key rotation), then gives up
+  await vg(await jwt(), later); assert.equal(jwksFetches, before + 1);  // cached otherwise
+  ok('JWKS cached; unknown kid refetches at most once a minute');
 
   // /auth/google: create, sign in again, link to an existing email account
   r = await post('/auth/google', { credential: await jwt() }); b = await r.json();
@@ -270,6 +293,9 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   r = await post('/auth/google', { credential: await jwt({ sub: 'g-222', email: 'Sam@Example.com', given_name: 'Samuel' }) });
   b = await r.json(); assert.equal(b.created, false); assert.equal(await whoIs(b.token), samA);
   assert.equal(row('SELECT google_sub FROM user WHERE id = ?', samA).google_sub, 'g-222');
+  // a different Google account with the same address doesn't take the account over
+  r = await post('/auth/google', { credential: await jwt({ sub: 'g-333', email: 'sam@example.com' }) }); assert.equal(r.status, 409);
+  assert.equal(row('SELECT google_sub FROM user WHERE id = ?', samA).google_sub, 'g-222');
   // and email sign-in reaches the Google-made account
   await post('/auth/email/start', { email: 'gina@gmail.com' });
   assert.equal(await whoIs((await (await post('/auth/email/verify', { email: 'gina@gmail.com', code: lastCode() })).json()).token), gina);
@@ -278,7 +304,7 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   assert.equal((await post('/auth/google', { credential: await jwt() })).status, 503);
   assert.equal((await (await get('/join')).json()).google_client_id, null);
   env.GOOGLE_CLIENT_ID = cid;
-  ok('/auth/google creates, re-finds by Google id, links by verified email; hidden without GOOGLE_CLIENT_ID');
+  ok('/auth/google creates, re-finds by Google id, links by email once (no re-link); hidden without GOOGLE_CLIENT_ID');
 
   // Nothing in the worker finds a user by name.
   const src = fs.readdirSync(path.join(__dirname, '../worker/src')).map((f) => fs.readFileSync(path.join(__dirname, '../worker/src', f), 'utf8')).join('\n');

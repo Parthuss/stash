@@ -14,16 +14,18 @@ export type GoogleUser = { sub: string; email: string; given_name: string | null
 type Jwk = JsonWebKey & { kid?: string };
 
 // Google rotates its keys every few days and says how long to cache them (Cache-Control max-age).
-let jwks: { keys: Jwk[]; until: number } | null = null;
+let jwks: { keys: Jwk[]; until: number; at: number } | null = null;
 export const resetJwksCache = () => { jwks = null; };
 
 async function keysFor(kid: string, fetchImpl: typeof fetch, now: number): Promise<Jwk | undefined> {
   for (const fresh of [false, true]) {
+    // An unknown kid refetches (Google rotated), but at most once a minute.
+    if (fresh && jwks && now - jwks.at < 60_000) break;
     if (fresh || !jwks || jwks.until < now) {
       const r = await fetchImpl(GOOGLE_JWKS);
       if (!r.ok) throw new Error(`google jwks ${r.status}`);
       const maxAge = Number((r.headers.get("cache-control") ?? "").match(/max-age=(\d+)/)?.[1] ?? 3600);
-      jwks = { keys: ((await r.json()) as { keys: Jwk[] }).keys ?? [], until: now + Math.min(maxAge, 86_400) * 1000 };
+      jwks = { keys: ((await r.json()) as { keys: Jwk[] }).keys ?? [], until: now + Math.min(maxAge, 86_400) * 1000, at: now };
     }
     const k = jwks.keys.find((k) => k.kid === kid);
     if (k) return k;

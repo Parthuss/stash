@@ -6,15 +6,17 @@ Written 12 Nov 2026 on branch `crew/1112-121225-d392`. Not merged or deployed. T
 
 - **Create account:** first name + email, then a 6-digit code we email you. The account is created once the code comes back, so every address on file has been proven.
 - **Sign in:** email, then the code. If that address has no account, the code still works and the page asks for a first name to create one. This tells the person nothing they couldn't already learn, because they've just proven the inbox is theirs.
-- **Continue with Google:** shown only when `GOOGLE_CLIENT_ID` is set. The ID token is checked on the server against Google's JWKS: RS256 signature, `iss`, `aud`, `exp`/`iat` (5 min skew) and `email_verified`. The account is found by Google id first, then by email, and the two are linked from then on.
-- **Codes:** 10 minutes, single use (spent atomically), 5 wrong tries kills the code, and a new request replaces the old code. At rest the address is hashed (`email_hash`) and the code is an HMAC keyed with `STASH_SECRET`.
+- **Continue with Google:** shown only when `GOOGLE_CLIENT_ID` is set. The ID token is checked on the server against Google's JWKS: RS256 signature, `iss`, `aud`, `exp`/`iat` (5 min skew) and `email_verified`. The account is found by Google id first, then by email, and the two are linked from then on. Linking happens only once: an account already tied to a different Google account is never taken over (for example a reassigned work address). That person gets a 409 and can use an email code instead.
+- **Codes:** 10 minutes, single use (spent atomically), 5 tries.
+  - Each attempt first spends a try on every live code for the address in one `UPDATE … RETURNING`, so parallel guesses can't share a try.
+  - Up to 3 codes are live per address. Asking again doesn't cancel the one you're typing, so a stranger can't block your sign-in by requesting codes. Signing in spends them all. At rest the address is hashed (`email_hash`) and the code is an HMAC keyed with `STASH_SECRET`.
 - **Rate limits:**
-  - per network: 10 codes an hour and 30 wrong codes an hour
-  - per address: 5 codes an hour
+  - per network: 10 codes an hour and 30 code attempts an hour
+  - per address: 5 codes an hour from one network, 15 an hour in total
   - per signed-in account adding an email: 10 an hour
   - Google: 20 tries per 10 minutes per network
   - The existing join limits (8 per 10 minutes, 20 a day per network, `MAX_JOIN`, invite code) apply to every way of creating an account.
-- **No probing:** `/auth/email/start` gives the same answer whether or not the address has an account. The only difference is inside the email itself: "to sign in" or "to create your account".
+- **No probing:** `/auth/email/start` gives the same answer whether or not the address has an account. With an invite code required, a wrong code gets the same 403 for known and unknown addresses. The only difference is inside the email itself: "to sign in" or "to create your account".
 - **Each sign-in mints a device token.** The phone Shortcut, AI apps, Telegram and other signed-in devices keep working. Resetting the token in Profile still signs every device out.
 - **Signed out?** Every way of landing signed out opens the Sign in dialog with the email box: forced sign-out, signing out yourself, a device that was signed in before, the home-screen app, a bad `#login=` link, and `skwirl.app/#signin`. "Sign in" is in the header, under the Create account form and at the bottom of the landing page.
 - **Old ways in still work:** pasting a sign-in link or token ("Have a sign-in link instead?"), `#t=` links and Telegram `/login` links.
@@ -23,7 +25,7 @@ Written 12 Nov 2026 on branch `crew/1112-121225-d392`. Not merged or deployed. T
 
 - On their next open, accounts with no email get **"Add your email"** with a **Not now** button. Tapping it is recorded on the server (`email_skip_at`). From the next open on, the prompt has no Not now, and Esc can't close it.
 - Adding the email sends a code; the address is saved once the code is entered.
-- **No lockout.** Once a code has gone out, a **Finish later** link appears, and the token keeps working the whole time. If the email can't be sent, the address is saved unverified so nobody gets stuck. It becomes verified the first time they sign in with it.
+- **No lockout.** Once a code has gone out, a **Finish later** link appears, and the token keeps working the whole time. If adding fails (offline, address taken, send error, too many tries), **Finish later** appears right away. A failed send saves nothing: otherwise anyone could park an address they don't own by using up the sender's daily quota.
 - The owner account is never asked.
 - Changing your email in Profile also goes through a code, and it can't be blanked.
 
@@ -39,7 +41,9 @@ Written 12 Nov 2026 on branch `crew/1112-121225-d392`. Not merged or deployed. T
 
 Accounts are keyed by `user.id`. Sign-in finds an account by `email` (verified owner first) or `google_sub`, never by name. I checked every `FROM user` and `UPDATE user` in worker/src, and the test suite asserts that no query finds a user by name. Two people called Sam get two accounts (test 6).
 
-One known edge case: an address typed in **without** proof (before the sender is live, or when an add-email send failed) is trusted the first time its owner proves it, by code or by Google. So if someone typed another person's address into their own account before launch, that person would sign in to it. Only the 1 existing email and any typed during the pre-sender window are affected.
+Feedback and Plus-waitlist addresses no longer get copied onto the account. The feedback reply address is stored with the message (`feedback.reply_to`).
+
+One known edge case: an address typed in **without** proof is trusted the first time its owner proves it, by code or by Google. Once the sender is live, that can only come from the pre-sender window (email-off `/join` and add-email). So if someone typed another person's address into their own account before launch, that person would sign in to it. Only the 1 existing email and any typed during the pre-sender window are affected.
 
 ## Email sender: Resend free plan (recommended)
 
@@ -106,23 +110,24 @@ Checked 12 Nov 2026: resend.com/pricing, resend.com/docs/api-reference/emails/se
 
 ## Tests
 
-`node tests/signin_otp.cjs` runs 22 checks against a real SQLite database built from every migration. They cover:
+`node tests/signin_otp.cjs` runs 23 checks against a real SQLite database built from every migration. They cover:
 
 - normalisation
 - sign-up with the name prompt
 - single use and hashing at rest
 - same-name accounts
 - expiry and the 5-try limit
-- code replacement
+- 3 live codes per address
+- a burst of parallel guesses
 - per-address and per-network limits
 - no probing
 - invite gating
 - email off/on
 - the add-email ask (skippable, then required)
 - profile email change
-- the send-failure fallback
+- a failed send or a feedback address never puts an unproven email on an account
 - Google tokens: valid; wrong aud, wrong iss, expired, future iat, unverified email, forged signature, alg none, tampered; JWKS cache and refetch
-- /auth/google creating, re-finding and linking accounts
+- /auth/google creating, re-finding and linking accounts (no re-link to a second Google account)
 - no user lookups by name
 
 The Resend and Google JWKS stubs are local, so nothing leaves the machine.

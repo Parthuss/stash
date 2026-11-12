@@ -10,15 +10,21 @@ CREATE INDEX IF NOT EXISTS user_email ON user(email);
 CREATE UNIQUE INDEX IF NOT EXISTS user_email_verified ON user(email) WHERE email_verified = 1;
 CREATE UNIQUE INDEX IF NOT EXISTS user_google_sub ON user(google_sub) WHERE google_sub IS NOT NULL;
 
--- One live code per address (a new request replaces the old one). Keyed by a hash of the address,
--- the code itself is an HMAC (6 digits are too few for a plain hash). user_id is set when the code
--- verifies an address for a signed-in account ("Add your email"), NULL for sign-in / sign-up.
+-- Emailed codes. Up to 3 live per address (asking again doesn't kill the one you're typing, so
+-- nobody can block your sign-in by requesting codes for your address). Keyed by a hash of the
+-- address; the code itself is an HMAC (6 digits are too few for a plain hash). Every guess counts
+-- against every live code for the address. user_id is set for "Add your email" (a signed-in
+-- account proving an address), NULL for sign-in / sign-up.
 CREATE TABLE IF NOT EXISTS email_code (
   email_hash TEXT NOT NULL,
   purpose TEXT NOT NULL,           -- 'signin' | 'add'
   user_id TEXT,
   code_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL,
   expires_at TEXT NOT NULL,
   tries INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (email_hash, purpose)
+  PRIMARY KEY (email_hash, purpose, code_hash)
 );
+-- A feedback reply address lives with the message, not on the account (an unproven address on an
+-- account could later capture its owner's sign-in).
+ALTER TABLE feedback ADD COLUMN reply_to TEXT;

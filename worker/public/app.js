@@ -417,7 +417,7 @@ document.addEventListener("click", (e) => {
 });
 $("authDlg").addEventListener("click", (e) => {
   if (e.target.closest("[data-close]") || e.target === $("authDlg")) closeDlg($("authDlg"));
-  else if (e.target.closest("[data-back]")) { step("email"); $("authErr").textContent = ""; $("signEmail").focus(); }
+  else if (e.target.closest("[data-back]")) { step("email"); $("codeNameRow").hidden = true; $("authErr").textContent = ""; $("signEmail").focus(); }
   else if (e.target.closest("[data-create]")) { closeDlg($("authDlg")); document.body.classList.remove("site-visit"); show("auth"); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 300); }
 });
 // "Send a new code" waits 30 s between sends.
@@ -497,7 +497,7 @@ function askEmail() {
   const st = setupState; if (!st || !st.email_ask || emailAsked || $("emailDlg").open || $("plusDone").open) return;
   emailAsked = true; addMode = st.email_ask;
   $("addStep").hidden = false; $("addCodeStep").hidden = true; $("addErr").textContent = "";
-  $("addSkipRow").hidden = addMode !== "skippable";
+  $("addSkipRow").hidden = addMode !== "skippable"; $("addSkip").textContent = "Not now";
   tr("card_shown", "add_email_" + addMode);
   $("emailDlg").showModal(); setTimeout(() => $("addEmail").focus(), 50);
 }
@@ -507,29 +507,34 @@ function addCodeStep(email, canLeave) {
   setTimeout(() => $("addCode").focus(), 50);
 }
 // Esc can't dismiss the required ask; "Finish later" (after a code went out) and "Not now" can.
-$("emailDlg").addEventListener("cancel", (e) => { if (addMode === "required" && $("addLaterRow").hidden) e.preventDefault(); });
+$("emailDlg").addEventListener("cancel", (e) => { if (addMode === "required" && $("addLaterRow").hidden && $("addSkipRow").hidden) e.preventDefault(); });
+// Required, but never a trap: if adding fails (offline, address taken, too many tries) a way out appears.
+function addFailed(msg) {
+  $("addErr").textContent = msg;
+  if (addMode === "required") { $("addSkip").textContent = "Finish later"; $("addSkipRow").hidden = false; $("addLaterRow").hidden = false; }
+}
 $("addSkip").addEventListener("click", () => { tr("click", "add_email_skip"); api("/v1/email/skip", { method: "POST" }).catch(() => {}); closeDlg($("emailDlg")); });
 $("addLater").addEventListener("click", () => { tr("click", "add_email_later"); closeDlg($("emailDlg")); });
 $("addChange").addEventListener("click", () => { $("addStep").hidden = false; $("addCodeStep").hidden = true; $("addErr").textContent = ""; $("addEmail").focus(); });
 async function startAdd(email) {
-  let r; try { r = await api("/v1/email/start", { method: "POST", body: JSON.stringify({ email }) }); } catch { $("addErr").textContent = "Can't reach Skwirl. Try again."; return; }
+  let r; try { r = await api("/v1/email/start", { method: "POST", body: JSON.stringify({ email }) }); } catch { addFailed("Can't reach Skwirl. Try again."); return false; }
   const b = await r.json().catch(() => ({}));
-  if (!r.ok) { $("addErr").textContent = b.error || "Couldn't add that email. Try again."; return; }
+  if (!r.ok) { addFailed(b.error || "Couldn't add that email. Try again."); return false; }
   if (b.saved) { tr("email_added", "unverified"); closeDlg($("emailDlg")); toast("Email added. You can sign in with it from now on."); refreshSetup(); return; }
-  tr("email_code_sent"); addCodeStep(b.email, true);
+  tr("email_code_sent"); addCodeStep(b.email, true); return true;
 }
 $("addForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const btn = e.submitter || e.currentTarget.querySelector("button"); if (btn.disabled) return;
   btn.disabled = true; $("addErr").textContent = ""; await startAdd($("addEmail").value.trim()); btn.disabled = false;
 });
-$("addResend").addEventListener("click", async () => { await startAdd(addEmailAddr); toast("New code sent."); });
+$("addResend").addEventListener("click", async () => { if (await startAdd(addEmailAddr)) toast("New code sent."); });
 $("addCodeForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const btn = e.submitter || e.currentTarget.querySelector("button"); if (btn.disabled) return;
   btn.disabled = true; $("addErr").textContent = "";
   let r; try { r = await api("/v1/email/verify", { method: "POST", body: JSON.stringify({ email: addEmailAddr, code: $("addCode").value }) }); }
-  catch { btn.disabled = false; $("addErr").textContent = "Can't reach Skwirl. Try again."; return; }
+  catch { btn.disabled = false; addFailed("Can't reach Skwirl. Try again."); return; }
   const b = await r.json().catch(() => ({})); btn.disabled = false;
-  if (!r.ok) { $("addErr").textContent = b.error || "That didn't work. Try again."; return; }
+  if (!r.ok) { addFailed(b.error || "That didn't work. Try again."); return; }
   tr("email_added", "verified"); closeDlg($("emailDlg")); toast("Email confirmed. You can sign in with it anywhere.");
   await refreshSetup(); if ($("me").style.display !== "none") openMe();
 });
@@ -1347,7 +1352,7 @@ $("meForm").addEventListener("submit", async (e) => {
   const b = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok) { $("meMsg").className = "msg err"; $("meMsg").textContent = b.error || "Couldn't save. Try again."; return; }
   tr("profile_saved"); $("meMsg").className = "msg ok"; $("meMsg").textContent = "Saved.";
-  if (b.sent) { addCodeStep(b.email, true); $("emailDlg").showModal(); return; }  // new email: confirm it with the code first
+  if (b.sent) { addCodeStep(b.email, true); if (!$("emailDlg").open) $("emailDlg").showModal(); return; }  // new email: confirm it with the code first
   await refreshSetup(); openMe();
 });
 $("mePushOn").addEventListener("click", () => enablePush($("mePushMsg"), openMe));

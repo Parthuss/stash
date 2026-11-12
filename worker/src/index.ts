@@ -417,7 +417,6 @@ export default {
       await env.DB.prepare("INSERT INTO waitlist (at, user_id, visitor, email, country, price, place) VALUES (?, ?, ?, ?, ?, ?, ?)")
         .bind(new Date().toISOString(), typeof userId === "string" ? userId : null, String(b.visitor ?? "").slice(0, 40) || null,
           email || null, country, String(b.price ?? "").slice(0, 20) || null, String(b.place ?? "").slice(0, 20) || null).run();
-      if (email && typeof userId === "string") await env.DB.prepare("UPDATE user SET email = COALESCE(email, ?) WHERE id = ?").bind(email.toLowerCase(), userId).run();
       ctx.waitUntil(notifyOwner(env, `someone wants Plus (${country ?? "?"}, ${b.price ?? "?"})`, `Someone joined the Skwirl Plus waitlist.\n\nCountry: ${country ?? "?"}\nPrice shown: ${b.price ?? "?"}\nWhere: ${b.place ?? "?"}\n${typeof userId === "string" ? "A signed-in user." : "A visitor."}${email ? `\nEmail: ${email}` : ""}\n\nAll of them: https://skwirl.app/analytics`));
       return json({ ok: true });
     }
@@ -458,10 +457,11 @@ export default {
       const email = normEmail(b.email);
       if (!email) return json({ error: "That email doesn't look right." }, 400);
       if (await limited(env, "otp:" + ip, 10, 3600_000)) return json({ error: "Too many codes from this network. Wait an hour." }, 429);
+      // Creating an account: say now if joining is closed or the invite code is wrong, before an
+      // email goes out. Checked before looking the address up, so the answer can't reveal an account.
+      if (b.signup) { const no = await joinGate(b.invite); if (no) return json({ error: no.error }, no.status); }
       const acct = await accountByEmail(env, email);
-      // Creating an account: say now if joining is closed or the invite code is wrong, before an email goes out.
-      if (!acct && b.signup) { const no = await joinGate(b.invite); if (no) return json({ error: no.error }, no.status); }
-      const code = await newCode(env, email, "signin");
+      const code = await newCode(env, email, "signin", null, ip);
       if (!code) return json({ error: "We've sent a lot of codes to that email. Wait an hour, or check spam for one we sent." }, 429);
       try { await sendEmail(env, codeEmail(email, code, acct?.name ?? null, "signin")); }
       catch (e) { console.log("code email failed", String(e)); return json({ error: "Couldn't send the email. Try again in a minute." }, 502); }
@@ -471,25 +471,26 @@ export default {
     // Step 2: the code. Signs in to the account on that address, or makes one (needs a first name;
     // without one the code is left unspent and the page asks for the name).
     if (path === "/auth/email/verify" && request.method === "POST") {
-      if (await over(env, "otpbad:" + ip, 30, 3600_000)) return json({ error: "Too many wrong codes from this network. Wait an hour." }, 429);
+      if (await limited(env, "otpv:" + ip, 30, 3600_000)) return json({ error: "Too many codes tried from this network. Wait an hour." }, 429);
       const b = ((await request.json().catch(() => null)) ?? {}) as any;
       const email = normEmail(b.email);
       if (!email) return json({ error: "That email doesn't look right." }, 400);
       const acct = await accountByEmail(env, email), name = cleanName(b.name);
       if (!acct && !name) {
         const peek = await checkCode(env, email, "signin", b.code, false);
-        if (!peek.ok) { await note(env, "otpbad:" + ip); return json({ error: peek.error, left: peek.left }, 400); }
+        if (!peek.ok) return json({ error: peek.error, left: peek.left }, 400);
         return json({ needs_name: true, error: "No Skwirl account uses this email yet. Add your first name to create one." }, 409);
       }
       if (!acct) { const no = await joinGate(b.invite); if (no) return json({ error: no.error }, no.status); }
       const spent = await checkCode(env, email, "signin", b.code, true);
-      if (!spent.ok) { await note(env, "otpbad:" + ip); return json({ error: spent.error, left: spent.left }, 400); }
+      if (!spent.ok) return json({ error: spent.error, left: spent.left }, 400);
       if (acct) {
         if (!acct.email_verified) await markVerified(acct.id);
         await logEvent(env, acct.id, "api", "signin_email");
         return json({ token: await mintDeviceToken(env, acct.id), name: acct.name, created: false });
       }
-      const user = await makeAccount(name, email, true);
+      const user = await makeAccount(name, email, true).catch(() => null);  // lost a race for the address
+      if (!user) return json({ error: "Something went wrong. Sign in with that email again." }, 409);
       return json({ token: user.token, name, created: true }, 201);
     }
 
@@ -505,14 +506,20 @@ export default {
       const bySub = await env.DB.prepare("SELECT id, name FROM user WHERE google_sub = ?").bind(g.sub).first<{ id: string; name: string }>();
       const acct = bySub ?? (email ? await accountByEmail(env, email) : null);
       if (acct) {
-        if (!bySub) await env.DB.prepare("UPDATE user SET google_sub = ?, email_verified = 1 WHERE id = ?").bind(g.sub, acct.id).run();
+        // Link once. An account already tied to a different Google account (say a reassigned work
+        // address) isn't taken over; its owner can still use an email code.
+        if (!bySub) {
+          const linked = await env.DB.prepare("UPDATE user SET google_sub = ?, email_verified = 1 WHERE id = ? AND google_sub IS NULL").bind(g.sub, acct.id).run().catch(() => null);
+          if (!linked?.meta?.changes) return json({ error: "That email's Skwirl account is linked to a different Google account. Sign in with an email code instead." }, 409);
+        }
         await logEvent(env, acct.id, "api", "signin_google");
         return json({ token: await mintDeviceToken(env, acct.id), name: acct.name, created: false });
       }
       if (!email) return json({ error: "Your Google account has no email we can use." }, 400);
       const no = await joinGate(b.invite); if (no) return json({ error: no.error }, no.status);
       const name = cleanName(b.name) || cleanName(g.given_name) || cleanName(g.name?.split(" ")[0]) || "there";
-      const user = await makeAccount(name, email, true, g.sub);
+      const user = await makeAccount(name, email, true, g.sub).catch(() => null);
+      if (!user) return json({ error: "Something went wrong. Try again." }, 409);
       return json({ token: user.token, name, created: true }, 201);
     }
 

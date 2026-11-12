@@ -569,12 +569,11 @@ export async function handleV1(
       "SELECT (SELECT COUNT(*) FROM feedback WHERE user_id = ? AND at > ?) AS mine, (SELECT COUNT(*) FROM feedback WHERE at > ?) AS everyone",
     ).bind(userId, dayAgo, dayAgo).first<{ mine: number; everyone: number }>();
     if (message && (sent?.mine ?? 0) >= 5) return json({ error: "That's a lot of messages for one day. Try again tomorrow." }, 429);
-    // A reply-to address only fills an empty slot: the sign-in email changes through a code (/v1/email).
-    if (email) await env.DB.prepare("UPDATE user SET email = COALESCE(email, ?) WHERE id = ?").bind(email, userId).run();
-    if (message) await env.DB.prepare("INSERT INTO feedback (user_id, at, message) VALUES (?, ?, ?)").bind(userId, new Date().toISOString(), message).run();
+    // The reply address stays with the message: the sign-in email only changes through a code.
+    await env.DB.prepare("INSERT INTO feedback (user_id, at, message, reply_to) VALUES (?, ?, ?, ?)").bind(userId, new Date().toISOString(), message, email || null).run();
     if (message && (sent?.everyone ?? 0) < 20) {
       const who = await env.DB.prepare("SELECT name, email FROM user WHERE id = ?").bind(userId).first<{ name: string; email: string | null }>();
-      await notifyOwner(env, `message from ${who?.name ?? "someone"}`, `${who?.name ?? "Someone"}${who?.email ? ` (${who.email}, reply to them there)` : " (no email on file)"} wrote:\n\n${message}`);
+      await notifyOwner(env, `message from ${who?.name ?? "someone"}`, `${who?.name ?? "Someone"}${email || who?.email ? ` (${email || who?.email}, reply to them there)` : " (no email on file)"} wrote:\n\n${message}`);
     }
     return json({ ok: true });
   }
@@ -622,13 +621,12 @@ export async function handleV1(
     const b = ((await request.json().catch(() => null)) ?? {}) as any;
     const email = normEmail(b.email);
     if (!email) return json({ error: "That email doesn't look right." }, 400);
-    const check = await checkCode(env, email, "add", b.code, false);
-    if (!check.ok) return json({ error: check.error, left: check.left }, 400);
-    if (check.userId !== userId) return json({ error: "That code was for a different account. Ask for a new one." }, 400);
+    if (await limited(env, "otpvu:" + userId, 20, 3600_000)) return json({ error: "Too many codes tried. Wait an hour." }, 429);
     if (await takenByOther(env, email, userId)) return json({ error: "That email is already on another Skwirl account. Sign out and sign in with it instead." }, 409);
-    const spent = await checkCode(env, email, "add", b.code, true);
-    if (!spent.ok) return json({ error: spent.error }, 400);
-    await env.DB.prepare("UPDATE user SET email = ?, email_verified = 1 WHERE id = ?").bind(email, userId).run();
+    const spent = await checkCode(env, email, "add", b.code, true, userId);
+    if (!spent.ok) return json({ error: spent.error, left: spent.left }, 400);
+    const saved = await env.DB.prepare("UPDATE user SET email = ?, email_verified = 1 WHERE id = ?").bind(email, userId).run().catch(() => null);
+    if (!saved) return json({ error: "That email is already on another Skwirl account. Sign out and sign in with it instead." }, 409);
     await logEvent(env, userId, "api", "email_added");
     return json({ ok: true, email });
   }
@@ -783,8 +781,9 @@ export async function handleV1(
 const takenByOther = async (env: Env, email: string, userId: string) =>
   Boolean(await env.DB.prepare("SELECT 1 FROM user WHERE email = ? AND email_verified = 1 AND id != ?").bind(email, userId).first());
 
-/** Start adding/changing a signed-in account's email: a code by email, or (no sender, or the send
- *  failed) saved unproven so nobody is ever stuck behind an email that can't arrive. */
+/** Start adding/changing a signed-in account's email: a code by email, or (no sender set up yet)
+ *  saved unproven. A failed send saves nothing (else anyone could park an address they don't own
+ *  by exhausting the sender); the app lets the person finish later instead. */
 async function emailChange(env: Env, userId: string, email: string): Promise<Response> {
   if (await takenByOther(env, email, userId)) return json({ error: "That email is already on another Skwirl account. Sign out and sign in with it instead." }, 409);
   const saveUnproven = async () => {
@@ -794,10 +793,10 @@ async function emailChange(env: Env, userId: string, email: string): Promise<Res
   };
   if (!emailEnabled(env)) return saveUnproven();
   if (await limited(env, "otpu:" + userId, 10, 3600_000)) return json({ error: "That's a lot of codes. Wait an hour and try again." }, 429);
-  const code = await newCode(env, email, "add", userId);
+  const code = await newCode(env, email, "add", userId, "u:" + userId);
   if (!code) return json({ error: "We've sent a lot of codes to that email. Wait an hour, or check spam for one we sent." }, 429);
   const name = (await env.DB.prepare("SELECT name FROM user WHERE id = ?").bind(userId).first<{ name: string }>())?.name ?? null;
   try { await sendEmail(env, codeEmail(email, code, name, "add")); }
-  catch (e) { console.log("add-email code failed", String(e)); return saveUnproven(); }
+  catch (e) { console.log("add-email code failed", String(e)); return json({ error: "Couldn't send the email just now. Try again in a minute, or finish later." }, 502); }
   return json({ sent: true, email });
 }

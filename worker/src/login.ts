@@ -2,7 +2,7 @@
  * Accounts you can get back into. Sign in (or create an account) with your email and a 6-digit
  * code we email you, or with Google (src/google.ts). No passwords to store or reset.
  *
- * Codes: 10 minutes, single use, 5 wrong tries, one live code per address (a new one replaces it),
+ * Codes: 10 minutes, single use, 5 tries, up to 3 live per address (asking again keeps the older ones),
  * HMAC'd with STASH_SECRET at rest (6 digits are too few for a plain hash). Requests are limited
  * per network (in index.ts) and per address (here). Spending a code mints an extra device token, so
  * the phone Shortcut, AI apps and other signed-in devices keep working.
@@ -18,7 +18,9 @@ async function sha256(text: string): Promise<string> {
 }
 
 export const CODE_TTL_MS = 10 * 60_000, CODE_TRIES = 5;
-export const PER_EMAIL_HOUR = 5;  // codes sent to one address per hour
+export const PER_EMAIL_HOUR = 5;          // codes sent to one address per hour, from one network
+export const PER_EMAIL_HOUR_TOTAL = 15;   // ... and from everywhere
+const LIVE_CODES = 3;                     // live codes kept per address
 
 /** One spelling per address: trimmed, lowercased. null if it isn't an email. Gmail dots and +tags
  *  are left alone (they can be different inboxes elsewhere, and people expect what they typed). */
@@ -81,16 +83,21 @@ export function sixDigits(): string {
   for (;;) { crypto.getRandomValues(buf); if (buf[0] < 4_294_000_000) return String(buf[0] % 1_000_000).padStart(6, "0"); }
 }
 
-/** Make and store a fresh code for this address (replacing any older one). Returns the code, or
- *  null when the address has had too many codes this hour. */
-export async function newCode(env: Env, email: string, purpose: Purpose, userId: string | null = null): Promise<string | null> {
+/** Make and store a fresh code for this address. Older live codes keep working (up to 3), so a
+ *  stranger asking for codes can't cancel the one you're typing. Returns the code, or null when the
+ *  address has had too many codes this hour (from this network, or from everywhere). */
+export async function newCode(env: Env, email: string, purpose: Purpose, userId: string | null = null, ip = "?"): Promise<string | null> {
   const h = await emailHash(email);
-  if (await limited(env, `otpm:${h}`, PER_EMAIL_HOUR, 3600_000)) return null;
-  const code = sixDigits(), now = Date.now();
+  if (await over(env, `otpm:${h}`, PER_EMAIL_HOUR_TOTAL, 3600_000)) return null;
+  if (await limited(env, `otpm:${h}:${ip}`, PER_EMAIL_HOUR, 3600_000)) return null;
+  await note(env, `otpm:${h}`);
+  const code = sixDigits(), now = Date.now(), iso = new Date(now).toISOString();
   await env.DB.batch([
-    env.DB.prepare("DELETE FROM email_code WHERE expires_at < ?").bind(new Date(now).toISOString()),
-    env.DB.prepare("INSERT OR REPLACE INTO email_code (email_hash, purpose, user_id, code_hash, expires_at, tries) VALUES (?, ?, ?, ?, ?, 0)")
-      .bind(h, purpose, userId, await codeHash(env, email, code), new Date(now + CODE_TTL_MS).toISOString()),
+    env.DB.prepare("DELETE FROM email_code WHERE expires_at < ?").bind(iso),
+    env.DB.prepare("INSERT OR REPLACE INTO email_code (email_hash, purpose, user_id, code_hash, created_at, expires_at, tries) VALUES (?, ?, ?, ?, ?, ?, 0)")
+      .bind(h, purpose, userId, await codeHash(env, email, code), iso, new Date(now + CODE_TTL_MS).toISOString()),
+    env.DB.prepare(`DELETE FROM email_code WHERE email_hash = ?1 AND purpose = ?2 AND code_hash NOT IN
+      (SELECT code_hash FROM email_code WHERE email_hash = ?1 AND purpose = ?2 ORDER BY created_at DESC, rowid DESC LIMIT ${LIVE_CODES})`).bind(h, purpose),
   ]);
   return code;
 }
@@ -98,31 +105,39 @@ export async function newCode(env: Env, email: string, purpose: Purpose, userId:
 export type Check = { ok: true; userId: string | null } | { ok: false; error: string; left?: number };
 const MSG_GONE = "That code has expired or was already used. Ask for a new one.";
 
-/** Is this the live code for this address? A wrong guess uses up one of the 5 tries (the 5th
- *  kills the code). With consume, a right code is spent atomically, so it works exactly once. */
-export async function checkCode(env: Env, email: string, purpose: Purpose, code: unknown, consume: boolean): Promise<Check> {
+/** Is this a live code for this address? Every attempt first spends a try on every live code for
+ *  the address in one statement (so parallel guesses can't share a try), then compares. The 5th
+ *  try kills a code. With consume, a right code is spent atomically, so it works exactly once;
+ *  without (a peek), the try is given back. For "add", only that account's codes count. */
+export async function checkCode(env: Env, email: string, purpose: Purpose, code: unknown, consume: boolean, userId: string | null = null): Promise<Check> {
   const h = await emailHash(email), now = new Date().toISOString();
-  const row = await env.DB.prepare("SELECT code_hash, expires_at, tries, user_id FROM email_code WHERE email_hash = ? AND purpose = ?")
-    .bind(h, purpose).first<{ code_hash: string; expires_at: string; tries: number; user_id: string | null }>();
-  if (!row || row.expires_at <= now || row.tries >= CODE_TRIES) {
-    if (row) await env.DB.prepare("DELETE FROM email_code WHERE email_hash = ? AND purpose = ?").bind(h, purpose).run();
-    return { ok: false, error: MSG_GONE };
-  }
+  const scope = purpose === "add" ? " AND user_id = ?4" : "";
+  const live = (await env.DB.prepare(
+    `UPDATE email_code SET tries = tries + 1 WHERE email_hash = ?1 AND purpose = ?2 AND expires_at > ?3 AND tries < ${CODE_TRIES}${scope}
+     RETURNING code_hash, tries, user_id`,
+  ).bind(h, purpose, now, ...(purpose === "add" ? [userId] : [])).all<{ code_hash: string; tries: number; user_id: string | null }>()).results ?? [];
+  await env.DB.prepare(`DELETE FROM email_code WHERE email_hash = ? AND purpose = ? AND (tries >= ${CODE_TRIES} OR expires_at <= ?)`).bind(h, purpose, now).run();
+  if (!live.length) return { ok: false, error: MSG_GONE };
   const clean = String(code ?? "").replace(/\D/g, "");
   const given = /^\d{6}$/.test(clean) ? await codeHash(env, email, clean) : "";
-  if (given !== row.code_hash) {
-    const tries = row.tries + 1;
-    if (tries >= CODE_TRIES) {
-      await env.DB.prepare("DELETE FROM email_code WHERE email_hash = ? AND purpose = ?").bind(h, purpose).run();
-      return { ok: false, error: "Too many wrong codes. Ask for a new one.", left: 0 };
-    }
-    await env.DB.prepare("UPDATE email_code SET tries = ? WHERE email_hash = ? AND purpose = ?").bind(tries, h, purpose).run();
-    return { ok: false, error: `That code isn't right. ${CODE_TRIES - tries} ${CODE_TRIES - tries === 1 ? "try" : "tries"} left.`, left: CODE_TRIES - tries };
+  const hit = live.find((r) => r.code_hash === given);
+  if (!hit) {
+    const left = Math.max(0, CODE_TRIES - Math.min(...live.map((r) => r.tries)));
+    return left === 0
+      ? { ok: false, error: "Too many wrong codes. Ask for a new one.", left: 0 }
+      : { ok: false, error: `That code isn't right. ${left} ${left === 1 ? "try" : "tries"} left.`, left };
   }
-  if (!consume) return { ok: true, userId: row.user_id };
+  if (!consume) {
+    await env.DB.prepare("UPDATE email_code SET tries = MAX(tries - 1, 0) WHERE email_hash = ? AND purpose = ?").bind(h, purpose).run();
+    return { ok: true, userId: hit.user_id };
+  }
   const spent = await env.DB.prepare("DELETE FROM email_code WHERE email_hash = ? AND purpose = ? AND code_hash = ? AND expires_at > ? RETURNING user_id")
     .bind(h, purpose, given, now).first<{ user_id: string | null }>();
-  return spent ? { ok: true, userId: spent.user_id } : { ok: false, error: MSG_GONE };
+  if (!spent) return { ok: false, error: MSG_GONE };
+  // Done with this address: the other live codes for it go too.
+  await env.DB.prepare(`DELETE FROM email_code WHERE email_hash = ? AND purpose = ?${purpose === "add" ? " AND user_id = ?" : ""}`)
+    .bind(h, purpose, ...(purpose === "add" ? [userId] : [])).run();
+  return { ok: true, userId: spent.user_id };
 }
 
 // ---- accounts --------------------------------------------------------------------------------
