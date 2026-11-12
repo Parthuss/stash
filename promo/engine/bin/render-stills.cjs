@@ -29,17 +29,33 @@ async function main() {
       const slide = slides.nth(i);
       const issues = await slide.evaluate(el => {
         const outer = el.getBoundingClientRect();
-        const texts = [...el.querySelectorAll('[data-copy], .payoff')].map(t => ({t, r:t.getBoundingClientRect()}));
         const bad = [];
-        for (const {t,r} of texts) {
+        const hit = (x, y) => Math.min(x.right, y.right) - Math.max(x.left, y.left) > 2 && Math.min(x.bottom, y.bottom) - Math.max(x.top, y.top) > 2;
+        // Copy stays inside the safe margin, never clips, and is big enough to read on a phone (IG shows 1080px at ~390pt).
+        for (const t of el.querySelectorAll('[data-copy]')) {
+          const r = t.getBoundingClientRect();
           if (r.left < outer.left+48 || r.right > outer.right-48 || r.top < outer.top+48 || r.bottom > outer.bottom-40
             || t.scrollWidth > t.clientWidth+1 || t.scrollHeight > t.clientHeight+1) bad.push(`overflow: ${t.innerText}`);
+          const min = t.closest('.meta') ? 26 : 30;
+          for (const n of [t, ...t.querySelectorAll('*')]) {
+            if ([...n.childNodes].some(c => c.nodeType === 3 && c.textContent.trim()) && parseFloat(getComputedStyle(n).fontSize) < min)
+              bad.push(`text under ${min}px: ${n.innerText.slice(0, 40)}`);
+          }
         }
-        const regions = [...el.querySelectorAll('h1,.body,.art,.payoff,.bridge,.label')].map(t => ({t,r:t.getBoundingClientRect()}));
-        for (let a=0; a<regions.length; a++) for (let b=a+1; b<regions.length; b++) {
-          const x=regions[a].r,y=regions[b].r;
-          if(Math.min(x.right,y.right)-Math.max(x.left,y.left)>2 && Math.min(x.bottom,y.bottom)-Math.max(x.top,y.top)>2)
-            bad.push(`overlap: ${regions[a].t.className || regions[a].t.tagName} / ${regions[b].t.className || regions[b].t.tagName}`);
+        // Nothing outside the headline block may sit on top of it.
+        const text = el.querySelector('.text');
+        if (text) {
+          const tr = text.getBoundingClientRect();
+          for (const t of el.querySelectorAll('[data-region],[data-copy]')) {
+            if (text.contains(t) || t.contains(text)) continue;
+            if (hit(tr, t.getBoundingClientRect())) bad.push(`overlaps headline block: ${t.className || t.tagName} ${t.innerText.slice(0, 30)}`);
+          }
+        }
+        // Copy blocks inside the visual must not collide with each other.
+        const loose = [...el.querySelectorAll('[data-copy]')].filter(t => !text || !text.contains(t));
+        for (let a=0; a<loose.length; a++) for (let b=a+1; b<loose.length; b++) {
+          if (loose[a].contains(loose[b]) || loose[b].contains(loose[a])) continue;
+          if (hit(loose[a].getBoundingClientRect(), loose[b].getBoundingClientRect())) bad.push(`copy overlap: ${loose[a].innerText.slice(0,20)} / ${loose[b].innerText.slice(0,20)}`);
         }
         return bad;
       });

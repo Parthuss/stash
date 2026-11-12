@@ -2,12 +2,12 @@
 
 Research -> make -> review -> approve -> publish -> learn. Built for Instagram Creator (Reels, carousels, statics) and YouTube Shorts (Reels only). **Inactive until Parth connects accounts and explicitly enables Actions.** Nothing was posted or staged by this build.
 
-Read [SETUP.md](SETUP.md), [first 15 ideas](ideas.md), [sample carousel](samples/disappearing/README.md), [cost boundaries](COSTS.md), and [build verification](VERIFICATION.md).
+Read [SETUP.md](SETUP.md), [first 15 ideas](ideas.md), [carousel standard](CAROUSEL_STANDARD.md), [reel recipe cards](recipes/INDEX.md), [sample carousel](samples/disappearing/README.md), [cost boundaries](COSTS.md), and [build verification](VERIFICATION.md).
 
 | Step | Runtime | Implementation |
 |---|---|---|
-| Research | Weekly crew task, default Codex; ENGINE_AGENT can select claude-craveto | `bin/weekly.py`, `prompts/research.md`, `research/gather.py`: local stash MCP, performance, made-content inventory, optional YouTube/Reddit reads + agent web research |
-| Make | Weekly agent with local production tools | `prompts/make.md`; existing Remotion + Kokoro + Whisper + beat-cut music/SFX for Reels; `content_engine.stills` + built-in imagegen + HTML for 1080x1350 stills |
+| Research | Weekly crew task, default Codex (ENGINE_RESEARCH_AGENT) | `bin/weekly.py`, `prompts/research.md`, `research/gather.py`: local stash MCP, performance, made-content inventory, optional YouTube/Reddit reads + agent web research |
+| Make | Weekly crew task, default claude-craveto at max effort (ENGINE_MAKE_AGENT), for Reels and carousels/statics | `prompts/make.md`. Reels: Remotion + Kokoro + Whisper, beat-cut music/SFX, motion from the recipe cards (`recipes/INDEX.md`, components in `promo/src/recipes/shots.tsx`). Stills: `content_engine.stills` layouts on real app captures from the seeded demo app, per `CAROUSEL_STANDARD.md`, 1080x1350 |
 | Content QA | Before staging | Existing content-qa skill; manual visual/truth/viewer pass plus checks; generated still copy/media hashes checked at validation |
 | Approve | Dedicated Telegram bot, or local CLI intent | Owner-only Approve / Skip. AUTO_APPROVE=1 approves waiting items on the next tick; skipped/missed/failed records stay untouched. Existing product bot remains untouched because it already has a webhook. |
 | Publish | GitHub Actions roughly every 15 min | Approved due records in private R2; Instagram create/poll/publish; YouTube persisted resumable sessions. No Mac needed after staging. |
@@ -22,7 +22,7 @@ Read [SETUP.md](SETUP.md), [first 15 ideas](ideas.md), [sample carousel](samples
 - Missing credentials leave clear disconnected/waiting states. No token or account is fabricated. Three publishing failures stop an item; Retry-After and retry delays are honoured. Instagram quota and per-platform daily caps apply.
 - More than 12 h late without starting: ask again. /pause stops publishing. GitHub cron is best effort, not exact delivery at 22:30.
 - Code rejects prohibited caption copy and missing QA. Manual truth review remains essential: a regex cannot prove a product claim. Remote staging cannot bypass QA with --no-qa.
-- Research and generation are agent jobs, not a template factory. They require a running/waking production machine in this version. The runner start marker is not evidence of completion. A runner without imagegen access must stop with prompts, not substitute junk.
+- Research and generation are agent jobs, not a template factory. They require a running/waking production machine in this version. The runner start marker is not evidence of completion. The product is the hero visual; illustration is optional and never placeholder or stock art.
 - Reddit has no automated write path. No product code or claimed handbook was changed.
 
 ## Local verification

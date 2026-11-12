@@ -43,3 +43,14 @@ Parth must create/connect the Meta app + Creator grant, Google project/OAuth cha
 Research/production still require a production machine with crew, the vault, Remotion/Kokoro/Whisper and imagegen access. Publishing/learning are Mac-independent after staging. A runner lacking imagegen stops with an explicit missing capability. No claim of reliable blind content quality or exact cron timing is made.
 
 Weekly cost: see COSTS.md. Expected infrastructure increment can be near zero within free allowances; actual subscription quota and image usage are account-dependent. Craveto usage was zero in this run. No exact all-in weekly price is supported.
+
+## Make step takeover (Claude, branch crew/1112-165200-8149, 12 Nov 2026)
+
+Branched off crew/1112-162347-e589. The make step now runs on claude-craveto, and research stays on Codex (`bin/weekly.py`, per-job ENGINE_*_AGENT).
+
+| Check | Result |
+|---|---|
+| `pytest promo/engine/tests` | 50 passed. Includes new tests for the carousel standard and the per-job runner. |
+| I-01 carousel v2 | 7 slides rendered from real demo-app captures. Mechanical check PASS. Content-qa PASS after 2 rounds (QA in `samples/disappearing/QA.md`). Preview is `samples/disappearing/preview.jpg`. |
+| Recipe library | Remotion components in `promo/src/recipes/shots.tsx`, cards in `recipes/cards/`, catalog in `recipes/INDEX.md`. `eslint src/recipes` clean. tsc reports no errors in `src/recipes`. The demo was rendered through `bin/make-reel.sh` to `promo/out/recipes/mastered/` and contact sheets were reviewed. The demo is silent (it measured -70 LUFS), so the loudness path was exercised but not proven on real audio. |
+| Not done | No real reel was made in this run. No staging, posting, secrets or merge. |
