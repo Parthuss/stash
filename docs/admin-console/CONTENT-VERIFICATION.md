@@ -31,6 +31,10 @@ Live screenshots: [desktop](content-live-1440.png), [phone](content-live-390.png
 
 Independent scoped UI review: [CONTENT-REVIEW.md](CONTENT-REVIEW.md), disposition **ship** after valid decoded-media desktop/phone captures. This is layout/interaction review, not publication approval.
 
+## CI runner dependency repair
+
+The first pushed GitHub run failed because Ubuntu no longer includes ffprobe (116 passed, one optional render skipped, one media-measurement test failed). The workflow now installs FFmpeg explicitly, installs the locked Playwright package and Chromium, and supplies their paths so the real render case runs in CI rather than skipping. It uses the complete requirements.txt and checks the browser executable before pytest. This changes only the test workflow; the publishing workflow remains disabled.
+
 ## What is live and what remains
 
 The owner sees setup, curated ideas and the local sample now. Real drafts, scheduled items and 48h/7d results populate from the same private R2 engine state after configuration. Approve/Skip queues a displayed-content hash; the serialized engine applies the same full report/policy/uploaded-byte gate as Telegram. Missing, failed, changed or stale reports refuse approval and publishing.

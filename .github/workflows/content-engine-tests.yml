@@ -14,5 +14,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install --quiet "httpx>=0.27" pytest pillow
-      - run: python -m pytest promo/engine/tests -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install media and render dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          npm ci --prefix promo/engine
+          node promo/engine/node_modules/playwright-core/cli.js install --with-deps chromium
+      - run: pip install --quiet -r promo/engine/requirements.txt
+      - name: Test engine including real still render
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/promo/engine/node_modules/playwright-core
+        run: |
+          export CHROME_PATH="$(node -e 'process.stdout.write(require("./promo/engine/node_modules/playwright-core").chromium.executablePath())')"
+          test -x "$CHROME_PATH"
+          ffprobe -version
+          python -m pytest promo/engine/tests -q
