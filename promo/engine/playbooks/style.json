@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "max_reading_grade": 8,
+  "max_hook_words": 12,
+  "max_caption_lines": 2,
+  "max_hashtags": 5,
+  "instagram_caption_chars": 2200,
+  "youtube_title_chars": 100,
+  "youtube_description_chars": 5000,
+  "banned_phrases": ["game changer", "game-changer", "revolutionize", "revolutionise", "unlock your potential", "delve", "in today's fast-paced world", "in the ever-evolving", "seamlessly", "leverage", "supercharge", "elevate your", "look no further", "ultimate guide", "take it to the next level", "harness the power", "say goodbye to", "secret weapon", "effortlessly", "transform your life", "you won't believe", "this changes everything"],
+  "note": "Editorial defaults, not platform algorithms. The exact authorised Jacinda quote is exempt from slop wording only. Five hashtags is a house ceiling, not a claim about an API limit."
+}
