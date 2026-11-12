@@ -20,6 +20,10 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
+## 2026-11-12: accounts live (email + 6-digit code, Google)
+- Merged aaf288e, privacy lines aee4602. Migration 0032_accounts applied to prod D1 once (email_code table, user.email_verified/google_sub/email_skip_at, feedback.reply_to; verified in sqlite_master). Secrets RESEND_API_KEY, EMAIL_FROM, GOOGLE_CLIENT_ID set; /join returns email_login:true + google_client_id.
+- Design and setup notes: docs/ACCOUNTS.md. Tests: node tests/signin_otp.cjs (23 checks). Old users get an "Add your email" prompt (skippable once). Stale device-code branch crew/1112-120240-1dc4 kept (3 unmerged commits), delete if not wanted.
+
 ## 2026-11-09 (late): recall that actually fires, Claude Code plugin (START HERE)
 
 - Finding: with the connector + stash-recall skill loaded, fresh Claude Code sessions NEVER searched
