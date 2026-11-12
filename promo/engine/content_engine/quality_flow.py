@@ -103,6 +103,8 @@ def generate_plan(root: Path, model=None, n: int = 5, now: datetime | None = Non
             draft['claims']=[{'text':features[fid]['claim'],'feature_id':fid} for fid in draft['feature_ids']]
             # Standard caption contract, independent of legacy Make's presentation.
             draft['caption']=draft['hook']+'\n'+draft['claims'][0]['text']+' '+draft['cta']+'\n#Skwirl'
+    if len(drafts) != n:
+        raise ValueError(f'Expected {n} drafts, got {len(drafts)}')
     result={'version':1,'generated_at':now.isoformat(),'mode':mode,'history_digest':digest(history),
             'history_units':len(history),'drafts':drafts,'template_skips':len(initial['skipped']),
             'status':'DRAFTS_ONLY_NOT_APPROVABLE','checks':[]}

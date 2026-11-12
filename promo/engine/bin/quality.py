@@ -28,6 +28,9 @@ def main():
             review=run_judge(draft,history,call,platforms)
             errors=validate_judge(review,judge_packet(draft,history,platforms))
             reviews.append({'id':draft['id'],'review':review,'errors':errors,'verdict':'FAIL' if errors else 'PASS'})
+            # Preserve completed reviews if the next model call fails or usage runs out.
+            args.out.parent.mkdir(parents=True,exist_ok=True)
+            args.out.write_text(json.dumps({'status':'PARTIAL_COPY_REVIEW', 'reviews':reviews},indent=2,ensure_ascii=False)+'\n')
             print(draft['id'],reviews[-1]['verdict'],flush=True)
         result={'status':'COPY_REVIEW_ONLY_NO_MEDIA_APPROVAL','reviews':reviews}
     else:

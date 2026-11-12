@@ -73,11 +73,20 @@ def report_for(post: dict, directory: Path, draft: dict, history: list[dict],
                 if name == 'copy.json':
                     copy = load_json(p)
                     final_strings = []
+                    def inventory(value, key=''):
+                        # Only renderer controls/asset references are non-public. Unknown text is copy.
+                        if key in ('id','kind','layout','template','image','image_path','art','art_path','src','font','color'):
+                            return
+                        if isinstance(value,str) and value.strip():
+                            final_strings.append(value.strip())
+                        elif isinstance(value,dict):
+                            for field, item in value.items():
+                                inventory(item,field)
+                        elif isinstance(value,list):
+                            for item in value:
+                                inventory(item)
                     for slide in copy.get('slides', []):
-                        for key in ('kicker','title','body','bridge','label','card_title','card'):
-                            value = slide.get(key)
-                            if isinstance(value, str) and value.strip():
-                                final_strings.append(value.strip())
+                        inventory(slide)
                     public = {u['text'] for u in public_units(draft)}
                     for text in final_strings:
                         if text not in public:

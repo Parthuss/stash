@@ -123,12 +123,18 @@ def read_history(repo_root, exclude_ids=(), today: datetime | None = None) -> li
             units += [_unit(f"{rel}#L{i + 1}", rel, l, fdate) for i, l in enumerate(raw.splitlines()) if len(l.split()) >= 3]
     ideas = root / "promo/engine/ideas.md"
     if ideas.exists():
+        current_idea = None
         for i, line in enumerate(ideas.read_text(errors="replace").splitlines()):
+            heading = re.match(r"###\s+(I-\d+|quality-\d+)\b", line)
+            if heading:
+                current_idea = heading[1]
+            elif line.startswith('## '):
+                current_idea = None
             m = re.match(r"\|\s*(I-\d+)\s*\|(.*)\|", line) or re.match(r"\*\*(I-\d+)\b(.*)", line)
             if m:
                 units.append(_unit(m[1], "promo/engine/ideas.md", m[2].replace("|", " ")))
             elif len(line.split()) >= 3:
-                units.append(_unit(f"ideas.md#L{i + 1}", "promo/engine/ideas.md", line.replace("|", " ")))
+                units.append(_unit(current_idea or f"ideas.md#L{i + 1}", "promo/engine/ideas.md", line.replace("|", " ")))
     hb = root / "promo/CONTENT_HANDBOOK.md"
     if hb.exists():
         sec = re.search(r"## 2\. What's been made and posted(.*?)\n## ", hb.read_text(errors="replace") + "\n## ", re.S)

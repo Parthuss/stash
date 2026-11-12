@@ -119,7 +119,7 @@ def validate_media(post: dict, directory: Path, evidence: dict) -> tuple[list[di
                 if evidence.get('captions', {}).get('burned_in') is not True:
                     fail('media.captions', 'Rendered burned-in captions must be confirmed by viewer')
                 expected = post.get('duration_s')
-                if expected is not None and abs(duration - float(expected)) > 1:
+                if expected is not None and (not math.isfinite(float(expected)) or abs(duration - float(expected)) > 1):
                     fail('media.duration_brief', 'Rendered duration differs from brief by >1s')
             else:
                 if (w, h) != (1080, 1350):

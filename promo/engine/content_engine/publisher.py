@@ -115,7 +115,7 @@ def apply_action(ctx: Ctx, p: dict, action: str) -> str:
         p["status"] = "skipped"
         save(ctx.store, p)
         return f"Skipped {p['id']}. Nothing will be posted."
-    problems = record_problems(ctx, p)
+    problems = record_problems(ctx, p, verify_media=True)
     if problems:
         return "Quality gate blocked approval: " + "; ".join(problems)
     p["status"] = "approved"
@@ -514,7 +514,7 @@ def tick(ctx: Ctx) -> None:
     if ctx.cfg.auto_approve:
         for p in load_posts(ctx.store, ctx):
             if p.get("status") == "awaiting_approval":
-                if record_problems(ctx, p):
+                if record_problems(ctx, p, verify_media=True):
                     ctx.say(f"{p['id']}: quality gate blocked auto-approval")
                     continue
                 p.update(status="approved", approved_at=ctx.now().isoformat(), approval_method="AUTO_APPROVE")

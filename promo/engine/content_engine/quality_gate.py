@@ -40,7 +40,7 @@ def stage_reports(schedule: dict, week_dir: Path, now=None) -> dict:
             raise ScheduleError('Quality gate: unsafe post directory')
         # Exclude exactly this artifact, never the rest of the week or older ideas.
         own = str(directory.resolve())
-        filtered = [h for h in history if str((root / h['path'].split('#')[0]).resolve()) != own
+        filtered = [h for h in history if h['id'] != post.get('idea_id') and str((root / h['path'].split('#')[0]).resolve()) != own
                     and not str((root / h['path'].split('#')[0]).resolve()).startswith(own + '/')]
         # Reviews are rerun at the boundary; Maker-authored PASS JSON cannot approve itself.
         report = validate_post(post, directory, filtered, root, now, judge_model=editor_json, viewer_model=viewer)

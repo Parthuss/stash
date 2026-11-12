@@ -250,6 +250,146 @@
       ]
     },
     {
+      "id": "note_share",
+      "title": "Public note link",
+      "name": "Public note link",
+      "claim": "Create a public link to a Skwirl note.",
+      "approved_copy": [
+        "Create a public link to a Skwirl note."
+      ],
+      "claims": [
+        {
+          "text": "Create a public link to a Skwirl note.",
+          "feature_id": "note_share"
+        }
+      ],
+      "tags": [
+        "notes",
+        "sharing"
+      ],
+      "limits": "Anyone with the link can read that shared note. Not a private chat or collaboration feature.",
+      "sources": [
+        {
+          "path": "worker/src/v1.ts",
+          "anchor": "POST|DELETE /v1/notes/:id/share",
+          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "id": "stop_sharing",
+      "title": "Stop sharing",
+      "name": "Stop sharing",
+      "claim": "Stop sharing a Skwirl note so its old public link no longer works.",
+      "approved_copy": [
+        "Stop sharing a Skwirl note so its old public link no longer works."
+      ],
+      "claims": [
+        {
+          "text": "Stop sharing a Skwirl note so its old public link no longer works.",
+          "feature_id": "stop_sharing"
+        }
+      ],
+      "tags": [
+        "sharing",
+        "privacy"
+      ],
+      "limits": "Revokes the Skwirl link, not copies or screenshots someone already kept. Do not promise erasure from recipients.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "Stopped sharing. The old link no longer works.",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 802
+        }
+      ]
+    },
+    {
+      "id": "export_notes",
+      "title": "Export notes",
+      "name": "Export notes",
+      "claim": "Download your Skwirl notes as a JSON file.",
+      "approved_copy": [
+        "Download your Skwirl notes as a JSON file."
+      ],
+      "claims": [
+        {
+          "text": "Download your Skwirl notes as a JSON file.",
+          "feature_id": "export_notes"
+        }
+      ],
+      "tags": [
+        "export",
+        "notes"
+      ],
+      "limits": "JSON export, not PDF, Markdown, automatic backup, import into every tool or a video archive.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "a.download = \"skwirl-export.json\"",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 955
+        }
+      ]
+    },
+    {
+      "id": "offline_notes",
+      "title": "Cached notes",
+      "name": "Cached notes",
+      "claim": "While Skwirl stays open, you can read notes already cached on this device if the connection drops.",
+      "approved_copy": [
+        "While Skwirl stays open, you can read notes already cached on this device if the connection drops."
+      ],
+      "claims": [
+        {
+          "text": "While Skwirl stays open, you can read notes already cached on this device if the connection drops.",
+          "feature_id": "offline_notes"
+        }
+      ],
+      "tags": [
+        "offline",
+        "notes"
+      ],
+      "limits": "Only already cached notes on this signed-in device, not your entire library. Keep the page open; do not promise loading the app from cold offline or new saves processing offline.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "else if ((!r || r.status >= 500) && kept.byId[id]) current = kept.byId[id];",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 306
+        }
+      ]
+    },
+    {
+      "id": "correct_category",
+      "title": "Correct a category",
+      "name": "Correct a category",
+      "claim": "With Skwirl Plus, tap a category on a note to add or remove it.",
+      "approved_copy": [
+        "With Skwirl Plus, tap a category on a note to add or remove it."
+      ],
+      "claims": [
+        {
+          "text": "With Skwirl Plus, tap a category on a note to add or remove it.",
+          "feature_id": "correct_category"
+        }
+      ],
+      "tags": [
+        "categories",
+        "notes"
+      ],
+      "limits": "Needs existing categories and Plus entitlement for new accounts. Manual correction, not guaranteed perfect categorisation.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "turnOn = !before.includes(name)",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 744
+        }
+      ]
+    },
+    {
       "id": "claude_code",
       "title": "Claude Code recall",
       "claim": "Claude Code can automatically surface relevant saves while you work.",

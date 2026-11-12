@@ -270,3 +270,11 @@ def test_full_good_carousel_report_and_mutation(tmp_path):
     (tmp_path/'01.png').write_bytes(b'broken after review')
     report=validate.report_for(p,tmp_path,d,history,judge,viewer,evidence)
     assert report['verdict']=='FAIL' and 'quality.viewer' in codes(report['errors'])
+
+
+def test_heading_idea_exclusion_keeps_other_history(tmp_path):
+    from content_engine.ideation import read_history
+    (tmp_path/'promo/engine').mkdir(parents=True)
+    (tmp_path/'promo/engine/ideas.md').write_text('### quality-01\nThe drill is out. Where are the instructions?\n### quality-02\nA different rainy day story.\n')
+    history=read_history(tmp_path,exclude_ids=['quality-01'])
+    assert history and {h['id'] for h in history}=={'quality-02'}
