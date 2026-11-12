@@ -53,8 +53,8 @@ export async function contentOverview(env: Env) {
   const setup = ['instagram', 'youtube', 'r2', 'telegram', 'engine', 'dry_run'].map(key => {
     const source = (Array.isArray(summary.setup) ? summary.setup : []).find((s: any) => s.key === key) || {};
     const label = ({ instagram: 'Instagram', youtube: 'YouTube', r2: 'Private R2 bucket', telegram: 'Telegram', engine: 'Content engine', dry_run: 'Dry run' } as Record<string, string>)[key];
-    const connected = key === 'r2' ? Boolean(bucket && !unavailable) : source.connected === true;
-    return { key, label, connected, status: (key === 'r2' ? (unavailable ? 'Unavailable' : connected ? 'Connected' : 'Not connected') : source.status) || (connected ? 'Connected' : key === 'engine' ? 'Off' : key === 'dry_run' ? 'On by default' : 'Not connected'), href: SETUP + '#' + key };
+    const connected = key === 'r2' ? Boolean(bucket && !unavailable) : key === 'dry_run' ? control?.dry_run === true || source.connected === true : source.connected === true;
+    return { key, label, connected, status: (key === 'r2' ? (unavailable ? 'Unavailable' : connected ? 'Connected' : 'Not connected') : key === 'dry_run' && control?.dry_run ? 'On' : source.status) || (connected ? 'Connected' : key === 'engine' ? 'Off' : key === 'dry_run' ? 'On by default' : 'Not connected'), href: SETUP + '#' + key };
   });
   return { updated_at: summary.updated_at || null, setup, ideas: list('ideas'), drafts: list('drafts').map(row),
     scheduled: list('scheduled').map(row), posted: list('posted').map(row),
