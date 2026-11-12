@@ -1,7 +1,7 @@
 /**
  * First-party product analytics: who visits, where from, what they look at and tap, how long
  * they stay, where they stop. public/track.js sends batches to POST /e; the owner reads them on
- * /analytics. Never typed text, search words or note content. No third party, no IPs kept.
+ * /owner. Never typed text, search words or note content. No third party, no IPs kept.
  */
 import type { Env } from "./index";
 import { TIERS_FROM } from "./tiers";
@@ -85,7 +85,7 @@ export async function collect(request: Request, env: Env, userId: string | null 
 
 const NOT_OWNER = "v.visitor NOT IN (SELECT visitor FROM visit WHERE owner = 1)";
 
-/** Everything the /analytics page shows, for the last `days` days. Owner only. */
+/** Legacy analytics API compatibility, for the last `days` days. Owner only. */
 export async function analyticsOverview(env: Env, days: number) {
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
   const all = async (sql: string, ...args: unknown[]) => (await env.DB.prepare(sql).bind(...args).all<any>()).results ?? [];
@@ -243,23 +243,28 @@ export async function ownerConsole(env: Env, days: number, now = Date.now()) {
     (await env.DB.prepare(sql).bind(...args).all<any>()).results ?? [];
   const first = async (sql: string, ...args: (string | number | null)[]) =>
     await env.DB.prepare(sql).bind(...args).first<any>();
-  const statements = [
-    // Each stream is time bounded before aggregation. Active users are recorded activity, not a
-    // last_seen snapshot (which cannot reconstruct an earlier period). Owner visitors excluded.
-    all(`WITH stream AS (
-      SELECT 'signups' key, created_at at, id identity FROM user WHERE created_at >= ?1 AND created_at < ?3
-      UNION ALL SELECT 'saves', captured_at, id FROM capture WHERE captured_at >= ?1 AND captured_at < ?3
-      UNION ALL SELECT 'processed', processed_at, id FROM capture WHERE status = 'done' AND processed_at >= ?1 AND processed_at < ?3
-      UNION ALL SELECT 'visitors', started_at, visitor FROM visit v WHERE started_at >= ?1 AND started_at < ?3 AND ${NOT_OWNER}
-      UNION ALL SELECT 'active', started_at, user_id FROM visit v WHERE started_at >= ?1 AND started_at < ?3 AND user_id IS NOT NULL AND ${NOT_OWNER}
-      UNION ALL SELECT 'active', at, user_id FROM usage_event WHERE at >= ?1 AND at < ?3 AND kind = 'api' AND user_id IS NOT NULL
-      UNION ALL SELECT 'active', captured_at, user_id FROM capture WHERE captured_at >= ?1 AND captured_at < ?3 AND user_id IS NOT NULL
-    ), intervals AS (
-      SELECT key, identity, CASE WHEN at >= ?2 THEN 0 ELSE 1 END period,
+  // D1 allows at most five terms in one compound SELECT. Keep metric streams separate;
+  // active-user sources still aggregate together so one person is never counted three times.
+  const metricStreams = [
+    ['signups', "SELECT created_at at, id identity FROM user WHERE created_at >= ?1 AND created_at < ?3"],
+    ['saves', "SELECT captured_at at, id identity FROM capture WHERE captured_at >= ?1 AND captured_at < ?3"],
+    ['processed', "SELECT processed_at at, id identity FROM capture WHERE status = 'done' AND processed_at >= ?1 AND processed_at < ?3"],
+    ['visitors', `SELECT started_at at, visitor identity FROM visit v WHERE started_at >= ?1 AND started_at < ?3 AND ${NOT_OWNER}`],
+    ['active', `SELECT started_at at, user_id identity FROM visit v WHERE started_at >= ?1 AND started_at < ?3 AND user_id IS NOT NULL AND ${NOT_OWNER}
+      UNION ALL SELECT at, user_id FROM usage_event WHERE at >= ?1 AND at < ?3 AND kind = 'api' AND user_id IS NOT NULL
+      UNION ALL SELECT captured_at, user_id FROM capture WHERE captured_at >= ?1 AND captured_at < ?3 AND user_id IS NOT NULL`],
+  ];
+  const metricReads = metricStreams.map(async ([key, stream]) => {
+    const rows = await all(`WITH stream AS (${stream}), intervals AS (
+      SELECT identity, CASE WHEN at >= ?2 THEN 0 ELSE 1 END period,
         CAST((julianday(at) - julianday(CASE WHEN at >= ?2 THEN ?2 ELSE ?1 END)) * 86400000.0 / ?4 + 0.000001 AS INTEGER) bucket FROM stream WHERE at >= ?2 OR at < ?5
-    ) SELECT key, period, -1 bucket, COUNT(DISTINCT identity) value FROM intervals GROUP BY key, period
-      UNION ALL SELECT key, period, bucket, COUNT(DISTINCT identity) value FROM intervals GROUP BY key, period, bucket`,
-      previous_since, since, until, bucketMs, previous_until),
+      ) SELECT period, -1 bucket, COUNT(DISTINCT identity) value FROM intervals GROUP BY period
+        UNION ALL SELECT period, bucket, COUNT(DISTINCT identity) value FROM intervals GROUP BY period, bucket`,
+      previous_since, since, until, bucketMs, previous_until);
+    return rows.map(row => ({...row,key}));
+  });
+  const statements = [
+    Promise.all(metricReads).then(rows => rows.flat()),
     all(`SELECT CASE WHEN ${FAILED} THEN 'failed' WHEN status = 'done' THEN 'done'
       WHEN status = 'claimed' THEN 'processing' ELSE 'pending' END state, COUNT(*) n FROM capture GROUP BY state`),
     first(`SELECT COUNT(*) total, COALESCE(SUM(plan = 'plus' AND plan_until > ?),0) plus FROM user`, until),

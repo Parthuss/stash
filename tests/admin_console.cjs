@@ -15,10 +15,10 @@ function load(name) {
 }
 const sql = new DatabaseSync(':memory:');
 for (const f of fs.readdirSync(path.join(__dirname,'../worker/migrations')).sort()) sql.exec(fs.readFileSync(path.join(__dirname,'../worker/migrations',f),'utf8'));
-let reads = 0;
+let reads = 0; const queries = [];
 const DB = {prepare(s){const st={sql:s,args:[],bind(...a){st.args=a;return st;},
-  async first(){reads++;return sql.prepare(s).get(...st.args)??null;},
-  async all(){reads++;return {results:sql.prepare(s).all(...st.args)};},
+  async first(){reads++;queries.push({sql:s,args:st.args});return sql.prepare(s).get(...st.args)??null;},
+  async all(){reads++;queries.push({sql:s,args:st.args});return {results:sql.prepare(s).all(...st.args)};},
   async run(){return {meta:{changes:Number(sql.prepare(s).run(...st.args).changes)}};}};return st;},
   async batch(sts){return Promise.all(sts.map(s=>s.run()));}};
 const env={DB,STASH_SECRET:'private-test-secret',SHARED_KEYS:'5'};
@@ -46,7 +46,22 @@ let checks=0;const ok=t=>console.log('ok',++checks,t);
   visit('n1','new-browser','new','2026-11-12T01:00:00.000Z');visit('n2','new-browser','new','2026-11-12T02:00:00.000Z');visit('p','prev-browser','previous','2026-11-11T01:00:00.000Z');
   visit('g','gap-browser','gap','2026-11-11T19:00:00.000Z');visit('owner-early','owner-browser',null,'2026-11-12T01:00:00.000Z');visit('owner-authed','owner-browser',null,'2026-11-12T02:00:00.000Z',1);
   ins("INSERT INTO usage_event(at,user_id,kind,action,model,key_type,prompt_tokens,completion_tokens) VALUES('2026-11-12T02:00:00.000Z','new','groq','chat','openrouter:qwen/qwen3.8-27b','shared',8000,1000)");
-  const data=await ownerConsole(env,1,now), k=key=>data.kpis.find(k=>k.key===key);
+  const data=await ownerConsole(env,1,now), consoleQueries=queries.slice(), k=key=>data.kpis.find(k=>k.key===key);
+  // Native SQLite's default compound limit is much higher than D1's. Prepare the actual
+  // emitted SQL against SQLite with D1's limit of five, not a source-text approximation.
+  const limited = require('node:child_process').spawnSync('python3', ['-c', `
+import json,pathlib,sqlite3,sys
+c=sqlite3.connect(':memory:')
+for p in sorted(pathlib.Path(sys.argv[1]).glob('*.sql')): c.executescript(p.read_text())
+c.setlimit(sqlite3.SQLITE_LIMIT_COMPOUND_SELECT,5)
+try:
+ c.execute('SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6')
+ raise AssertionError('Compound limit was not enforced')
+except sqlite3.OperationalError as e:
+ assert 'too many terms' in str(e)
+for q in json.load(sys.stdin): c.execute('EXPLAIN '+q['sql'],q['args'])
+`, path.join(__dirname,'../worker/migrations')], {input:JSON.stringify(consoleQueries),encoding:'utf8'});
+  assert.equal(limited.status,0,limited.stderr);ok('actual console SQL prepares under D1 five-term compound SELECT limit');
   assert.equal(k('signups').value,1);assert.equal(k('signups').previous,1);assert.equal(k('visitors').value,1);assert.equal(k('visitors').previous,1);
   assert.equal(k('active').value,1);assert.equal(k('active').previous,1);assert.equal(k('processed').value,1);assert.equal(k('saves').value,8);ok('KPI counts deduplicate browser/users, omit owner traffic and exclude comparison gap');
   assert.equal(k('saves').series.length,12);assert.equal(k('saves').series.reduce((n,x)=>n+x.value,0),8);assert.equal(k('saves').series[2].value,6);ok('hourly sparkline values zero-fill and match current interval');

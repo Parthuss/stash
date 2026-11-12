@@ -49,3 +49,7 @@ All new action routes use the same owner gate and require an existing user ID. I
 - [OpenRouter Whisper endpoint pricing](https://openrouter.ai/api/v1/models/openai/whisper-large-v3/endpoints): assume DeepInfra $0.0000075/second for recorded OpenRouter v3 audio. This is the lowest currently listed option; actual routing is not recorded.
 
 The estimate prices only recognized model/action combinations. Unknown models contribute to `unpriced_calls`, never a guessed total. Current list prices are applied to the selected period for planning; historical rate changes, actual provider selection, free-tier allowances, caching discounts, credits, image/accounting differences, taxes, and unrecorded failures/retries can change actual spend. Groq list-price equivalents include user keys and the shared free pool: they are not asserted to be charges paid by Skwirl. No credentials are used to obtain these public rates, and the console makes no external pricing request at render time.
+
+## D1 compatibility regression
+
+D1 limits a compound SELECT to five terms, below native SQLite defaults. The owner console therefore runs five separately aggregated metric streams (the active-user stream retains three sources for deduplication), with 19 read queries total per request. The regression test prepares actual emitted queries under `SQLITE_LIMIT_COMPOUND_SELECT = 5`. All 19 current queries were also executed read-only against production D1 after the fix (7,785 rows read, zero written).
