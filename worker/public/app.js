@@ -325,7 +325,56 @@ if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObse
   }), { threshold: 0.15 });
   document.querySelectorAll("#auth .reveal, #auth .chat").forEach((el) => io.observe(el));
 }
-$("productDemo").querySelector(".phone").addEventListener("click", () => $("demoToggle").click());
+// Wrap each letter (or word) in a span with its order in --i, for the typing and streaming animations.
+function splitText(el, words) {
+  let i = 0;
+  const walk = (node) => [...node.childNodes].forEach((n) => {
+    if (n.nodeType !== 3) return walk(n);
+    const frag = document.createDocumentFragment();
+    (words ? n.data.split(/(\s+)/) : [...n.data]).forEach((part) => {
+      if (!part) return;
+      if (words && !part.trim()) return frag.append(part);
+      const s = document.createElement("span");
+      s.className = words ? "wd" : "ch"; s.style.setProperty("--i", i++); s.textContent = part; frag.append(s);
+    });
+    n.replaceWith(frag);
+  });
+  walk(el); return i;
+}
+// Same, but screen readers keep reading the plain sentence.
+function splitForMotion(el, words) {
+  const plain = document.createElement("span"), shown = document.createElement("span");
+  plain.className = "vh"; plain.innerHTML = el.innerHTML;
+  shown.setAttribute("aria-hidden", "true"); shown.innerHTML = el.innerHTML;
+  el.replaceChildren(plain, shown);
+  return splitText(shown, words);
+}
+const motionOK = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Hero: the loop is drawn on a fixed 380px stage and scaled to the column, so it looks the same on every screen.
+{
+  const demo = $("productDemo"), hv = demo.querySelector(".hv");
+  const fit = () => { const w = demo.clientWidth; if (w) hv.style.setProperty("--s", Math.min(1.15, w / 380).toFixed(3)); };
+  fit(); if ("ResizeObserver" in window) new ResizeObserver(fit).observe(demo);
+  if (motionOK) { splitText(hv.querySelector(".hv-type")); splitText(hv.querySelector(".hv-ai"), true); }
+  if ("IntersectionObserver" in window) new IntersectionObserver(([e]) => demo.classList.toggle("demo-off", !e.isIntersecting)).observe(hv);
+  hv.addEventListener("click", () => $("demoToggle").click());
+}
+// #work: the Claude Code card types the prompt, checks Skwirl and streams the reply, once, when it scrolls in;
+// the use cases light up after the chip. Reduced motion keeps the finished card.
+if (motionOK && "IntersectionObserver" in window) {
+  const grid = document.querySelector("#work .work-grid"), cc = grid.querySelector(".cc"), uses = grid.querySelector(".uses");
+  const tc = 250 + splitForMotion(cc.querySelector(".cc-type")) * 24 + 350;
+  splitForMotion(cc.querySelector(".cc-ai"), true);
+  grid.style.setProperty("--tc", tc + "ms"); grid.classList.add("cc-anim");
+  let ccAt = 0, usesIn = false;
+  const startUses = () => { if (ccAt && usesIn) setTimeout(() => uses.classList.add("play"), Math.max(0, ccAt + tc - performance.now())); };
+  const wio = new IntersectionObserver((es) => es.forEach((e) => {
+    if (!e.isIntersecting) return; wio.unobserve(e.target);
+    if (e.target === cc) { ccAt = performance.now(); cc.classList.add("play"); } else usesIn = true;
+    startUses();
+  }), { threshold: 0.5 });
+  wio.observe(cc); wio.observe(uses);
+}
 $("demoToggle").addEventListener("click", () => {
   const paused = $("productDemo").classList.toggle("demo-paused");
   $("demoToggle").setAttribute("aria-pressed", String(paused));

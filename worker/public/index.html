@@ -179,7 +179,6 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 body.site-visit .lback { display: inline-flex; } body.site-visit .lhero .siteback { display: flex; }
 body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, body.site-visit #joinFine, body.site-visit #pwaIn, body.site-visit .work-cta [data-totop] { display: none !important; }
 .demo-toggle:not(:focus-visible) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-#productDemo .phone { cursor: pointer; }
 .lsign { display: inline-flex; align-items: center; text-decoration: none; color: var(--ink); }
 .lhero { display: grid; gap: 34px; align-items: center; padding: 7vh 0 10px; }
 .lcopy { text-align: center; }
@@ -213,98 +212,86 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .pwa-in { margin: 24px auto 0; max-width: 440px; background: var(--butter); border-radius: 28px; padding: 22px; text-align: center; box-shadow: var(--lift-1); }
 .pwa-in h2 { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 28px; margin: 0 0 6px; }
 .pwa-in p { color: var(--ink); margin: 0 0 14px; font-size: 15px; }
-/* the phone loop: 16s. reel 0–31%, IG sheet 33–47%, iOS sheet 47–62%, alert 62–74%, note 75–100% */
-.phone-wrap { --d: 16s; margin: 0; text-align: center; }
-.phone { width: 280px; height: 580px; margin: 0 auto; border-radius: 46px; background: #15131f; padding: 9px; box-shadow: 0 40px 80px rgb(60 50 120 / .28), 0 0 0 1.5px #2b2838 inset; position: relative; }
-.phone::before { content: ""; position: absolute; top: 18px; left: 50%; width: 84px; height: 24px; margin-left: -42px; border-radius: 20px; background: #000; z-index: 5; }
-.screen { position: relative; height: 100%; border-radius: 38px; overflow: hidden; background: var(--bg); font-family: -apple-system, system-ui, sans-serif; }
-.screen svg { width: 24px; height: 24px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.s-reel { position: absolute; inset: 0; opacity: 0; background: #2a211d; animation: reel var(--d) infinite; color: #fff; }
-@keyframes reel { 0%, 73% { opacity: 1; } 76%, 98% { opacity: 0; } 100% { opacity: 1; } }
-.vid { position: absolute; inset: 0; background: radial-gradient(120% 70% at 50% 40%, #6b5444 0%, #3a2d26 55%, #1f1814 100%); overflow: hidden; }
-.pan { position: absolute; left: 50%; top: 40%; width: 190px; height: 190px; margin: -95px 0 0 -95px; border-radius: 50%; background: radial-gradient(circle, #3d3a40 0 58%, #2a272d 59% 66%, #18161a 67%); box-shadow: 0 18px 40px rgb(0 0 0 / .5), inset 0 0 0 3px #4a4650; animation: pan 3s ease-in-out infinite; }
-@keyframes pan { 50% { transform: translateX(4px) rotate(3deg); } }
-.noodles { position: absolute; inset: 22px; width: auto !important; height: auto !important; animation: spin 6s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.garlic { position: absolute; width: 14px; height: 9px; border-radius: 50%; background: #fbf3dc; box-shadow: inset 0 -2px 0 #e9d9a8; opacity: 0; animation: drop var(--d) infinite; }
-.g1 { left: 70px; top: 60px; } .g2 { left: 100px; top: 84px; animation-delay: .25s; } .g3 { left: 82px; top: 112px; animation-delay: .5s; }
-@keyframes drop { 0%, 7% { opacity: 0; transform: translateY(-90px) rotate(0); } 10% { opacity: 1; transform: none; } 31% { opacity: 1; } 32%, 100% { opacity: 0; } }
-.butter { position: absolute; left: 110px; top: 58px; width: 26px; height: 20px; border-radius: 4px; background: #fff3b0; box-shadow: 0 0 12px #ffe38a; animation: melt var(--d) infinite; }
-@keyframes melt { 0% { transform: scale(1); opacity: 1; } 25% { transform: scale(.35); opacity: .6; } 30%, 100% { transform: scale(0); opacity: 0; } }
-.flake { position: absolute; width: 4px; height: 4px; border-radius: 1px; background: #e2482a; opacity: 0; animation: drop var(--d) infinite 1.9s; } .f1 { left: 96px; top: 70px; } .f2 { left: 120px; top: 100px; animation-delay: 2.1s; }
-.steam { position: absolute; top: 18%; width: 10px; height: 46px; border-radius: 10px; background: rgb(255 255 255 / .35); filter: blur(4px); animation: steam 2.2s ease-in infinite; }
-.s1 { left: 42%; } .s2 { left: 52%; animation-delay: .7s; } .s3 { left: 60%; animation-delay: 1.4s; }
-@keyframes steam { from { transform: translateY(30px) scaleX(1); opacity: 0; } 40% { opacity: 1; } to { transform: translateY(-30px) scaleX(1.8); opacity: 0; } }
-.kt { position: absolute; left: 0; right: 0; top: 66%; text-align: center; font: 800 21px/1.1 -apple-system, system-ui, sans-serif; letter-spacing: -.01em; color: #fff; text-shadow: 0 2px 0 #000, 0 0 12px rgb(0 0 0 / .5); opacity: 0; animation: kt var(--d) infinite; }
-.k2 { animation-delay: 1.25s; } .k3 { animation-delay: 2.5s; } .k4 { animation-delay: 3.75s; }
-@keyframes kt { 0% { opacity: 0; transform: scale(.8); } 1% { opacity: 1; transform: scale(1.08); } 2% { transform: none; } 7% { opacity: 1; } 7.8%, 100% { opacity: 0; } }
-.ig-top { position: absolute; top: 50px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 20px; text-shadow: 0 1px 4px rgb(0 0 0 / .4); }
-.ig-rail { position: absolute; right: 8px; bottom: 96px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.ig-rail span { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.ig-rail small { font-size: 11px; font-weight: 600; }
-.heart { animation: like var(--d) infinite; }
-@keyframes like { 0%, 12% { fill: none; stroke: #fff; transform: none; } 13% { fill: #ff3040; stroke: #ff3040; transform: scale(1.3); } 15%, 100% { fill: #ff3040; stroke: #ff3040; transform: none; } }
-.disc { width: 26px; height: 26px; border-radius: 7px; border: 2px solid #fff; background: linear-gradient(135deg, #f3a26b, #b56cc8); }
-.ig-cap { position: absolute; left: 12px; right: 58px; bottom: 22px; font-size: 12.5px; line-height: 1.35; text-align: left; }
-.who { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
-.who i { width: 26px; height: 26px; border-radius: 50%; background: #ffd8cb; box-shadow: 0 0 0 2px #2a211d, 0 0 0 3.5px #e1306c; }
-.who span { border: 1px solid rgb(255 255 255 / .7); border-radius: 8px; padding: 2px 9px; font-size: 11.5px; font-weight: 600; }
-.ig-cap p { margin: 0 0 5px; } .ig-cap em { font-style: normal; color: rgb(255 255 255 / .7); } .ig-cap small { font-size: 11px; opacity: .9; }
-.ig-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgb(255 255 255 / .3); }
-.ig-prog::after { content: ""; position: absolute; inset: 0; background: #fff; transform-origin: left; animation: prog var(--d) linear infinite; }
-@keyframes prog { from { transform: scaleX(0); } 31%, to { transform: scaleX(1); } }
-.ring { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgb(255 255 255 / .35); border: 2px solid #fff; opacity: 0; pointer-events: none; }
-.plane .ring { top: 12px; }
-.r1 { animation: tap1 var(--d) infinite; } .r2 { animation: tap2 var(--d) infinite; border-color: #1d1b2e; background: rgb(29 27 46 / .12); } .r3 { animation: tap3 var(--d) infinite; border-color: #0a84ff; background: rgb(10 132 255 / .15); width: 60px; height: 60px; margin: -30px 0 0 -30px; left: 22%; }
-@keyframes tap1 { 0%, 28% { opacity: 0; transform: scale(.5); } 30% { opacity: 1; transform: scale(1); } 33%, 100% { opacity: 0; transform: scale(1.5); } }
-@keyframes tap2 { 0%, 42% { opacity: 0; transform: scale(.5); } 44% { opacity: 1; transform: scale(1); } 47%, 100% { opacity: 0; transform: scale(1.5); } }
-@keyframes tap3 { 0%, 56% { opacity: 0; transform: scale(.5); } 58% { opacity: 1; transform: scale(1); } 61%, 100% { opacity: 0; transform: scale(1.5); } }
-/* Instagram's own share sheet */
-.s-ig { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; color: #111; border-radius: 22px 22px 0 0; padding: 8px 14px 22px; transform: translateY(105%); animation: igsheet var(--d) infinite cubic-bezier(.2,.7,.2,1); text-align: left; }
-@keyframes igsheet { 0%, 31% { transform: translateY(105%); } 34%, 46% { transform: none; } 48%, 100% { transform: translateY(105%); } }
-.grab { display: block; width: 36px; height: 4px; border-radius: 4px; background: #d8d8d8; margin: 0 auto 12px; }
-.ig-search { background: #efefef; border-radius: 10px; padding: 7px 12px; font-size: 13px; color: #8e8e8e; margin-bottom: 14px; }
-.ig-friends { display: flex; justify-content: space-between; margin-bottom: 16px; }
-.ig-friends span, .ig-acts span { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10.5px; width: 56px; text-align: center; }
-.ig-friends i { width: 48px; height: 48px; border-radius: 50%; background: var(--c); }
-.ig-acts { display: flex; justify-content: space-between; border-top: 1px solid #efefef; padding-top: 14px; }
-.ig-acts i { position: relative; width: 44px; height: 44px; border-radius: 50%; background: #efefef; display: grid; place-items: center; font-style: normal; font-size: 17px; }
-.ig-acts svg { stroke: #111; width: 20px; height: 20px; }
-/* iOS share sheet */
-.s-ios { position: absolute; left: 0; right: 0; bottom: 0; background: #f2f2f7; color: #111; border-radius: 22px 22px 0 0; padding: 14px 12px 22px; transform: translateY(105%); animation: iossheet var(--d) infinite cubic-bezier(.2,.7,.2,1); text-align: left; }
-@keyframes iossheet { 0%, 46% { transform: translateY(105%); } 49%, 61% { transform: none; } 63%, 100% { transform: translateY(105%); } }
-.ios-head { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #ddd; margin-bottom: 12px; }
-.ios-head i { width: 38px; height: 38px; border-radius: 8px; background: linear-gradient(135deg, #6b5444, #2a211d); }
-.ios-head div { flex: 1; } .ios-head b { display: block; font-size: 13px; } .ios-head small { font-size: 11px; color: #8e8e93; }
-.ios-head span { width: 24px; height: 24px; border-radius: 50%; background: #e3e3e8; display: grid; place-items: center; font-size: 11px; color: #8e8e93; }
-.ios-apps { display: flex; justify-content: space-between; margin-bottom: 14px; }
-.ios-apps span { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; width: 56px; }
-.ios-apps i { width: 50px; height: 50px; border-radius: 12px; background: var(--c); }
-.ios-list { background: #fff; border-radius: 12px; }
-.ios-list span { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; font-size: 14px; border-bottom: 1px solid #e5e5ea; }
-.ios-list span:last-child { border: 0; }
-.ios-list em { font-style: normal; color: #8e8e93; }
-.ios-list .sc { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #ff6b8a, #7b5cff); }
-.ios-list .pick { animation: pick var(--d) infinite; }
-@keyframes pick { 0%, 57% { background: #fff; } 58%, 62% { background: #e5e5ea; } 63%, 100% { background: #fff; } }
-/* the Shortcut's confirmation */
-.s-alert { position: absolute; inset: 0; background: rgb(0 0 0 / .35); display: grid; place-items: center; opacity: 0; animation: alert var(--d) infinite; }
-@keyframes alert { 0%, 62% { opacity: 0; } 63.5%, 73% { opacity: 1; } 75%, 100% { opacity: 0; } }
-.s-alert div { width: 210px; background: rgb(245 245 247 / .96); backdrop-filter: blur(20px); border-radius: 14px; text-align: center; color: #111; overflow: hidden; }
-.s-alert b { display: block; font-size: 15px; padding: 16px 14px 2px; } .s-alert p { font-size: 12.5px; margin: 0 14px 14px; }
-.s-alert span { display: block; border-top: 1px solid #d1d1d6; padding: 10px; color: #0a84ff; font-weight: 600; font-size: 15px; }
-/* the real app: a screenshot of Skwirl's note screen, scrolling down to the ingredients */
-.s-note { position: absolute; inset: 0; padding-top: 44px; background: var(--bg); animation: note var(--d) infinite; }
-.s-note img { display: block; width: 100%; height: auto; transform: translateY(-46%); animation: scrollnote var(--d) infinite cubic-bezier(.45,0,.2,1); }
-@keyframes note { 0%, 73% { opacity: 0; } 76%, 97% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes scrollnote { 0%, 80% { transform: none; } 92%, 100% { transform: translateY(-46%); } }
-.steps-cap { display: flex; justify-content: center; gap: 6px; margin-top: 18px; flex-wrap: wrap; }
-.steps-cap span { font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: rgb(255 255 255 / .7); color: var(--muted); animation: 16s infinite; }
-.c1 { animation-name: cap1; } .c2 { animation-name: cap2; } .c3 { animation-name: cap3; } .c4 { animation-name: cap4; }
-@keyframes cap1 { 0%, 29% { background: var(--ink); color: #fff; } 31%, 100% { background: rgb(255 255 255 / .7); color: var(--muted); } }
-@keyframes cap2 { 0%, 29% { background: rgb(255 255 255 / .7); color: var(--muted); } 31%, 46% { background: var(--ink); color: #fff; } 48%, 100% { background: rgb(255 255 255 / .7); color: var(--muted); } }
-@keyframes cap3 { 0%, 46% { background: rgb(255 255 255 / .7); color: var(--muted); } 48%, 73% { background: var(--ink); color: #fff; } 75%, 100% { background: rgb(255 255 255 / .7); color: var(--muted); } }
-@keyframes cap4 { 0%, 73% { background: rgb(255 255 255 / .7); color: var(--muted); } 75%, 100% { background: var(--ink); color: #fff; } }
+/* Hero visual: one 15s loop on a fixed 380x540 stage, scaled to the column by app.js (--s).
+   0–4.9s three reels drop into Skwirl as notes (design 0s, recipe 1.6s, book 3.2s; 1s = 6.667%),
+   5.4s Claude Code opens, 6.1s the prompt types, 8.3s the saved tutorial lifts out and becomes the
+   "Checked Skwirl" chip, 9.1s the reply streams, hold, 14.3s fade and loop.
+   Base styles are the final frame (what reduced motion shows); keyframes only add the journey. */
+.hv-wrap { --d: 15s; --io: cubic-bezier(.65,0,.35,1); --out: cubic-bezier(.23,1,.32,1); margin: 0; min-width: 0; text-align: center; }
+.hv { --s: 1; position: relative; width: calc(380px * var(--s)); height: calc(540px * var(--s)); margin: 0 auto; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+@media (max-width: 420px) { .hv { --s: .9; } }
+.hv-in { position: absolute; left: 0; top: 0; width: 380px; height: 540px; transform: scale(var(--s)); transform-origin: 0 0; text-align: left; }
+.hv svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.hv-phone { position: absolute; left: 80px; top: 0; width: 220px; height: 440px; padding: 7px; border-radius: 40px; background: #15131f; box-shadow: 0 30px 60px rgb(60 50 120 / .22), 0 0 0 1.5px #2b2838 inset; }
+.hv-phone::before { content: ""; position: absolute; top: 15px; left: 50%; width: 62px; height: 18px; margin-left: -31px; border-radius: 10px; background: #000; z-index: 2; }
+.hv-screen { position: relative; height: 100%; border-radius: 33px; overflow: hidden; background: var(--bg); }
+.hv-app { position: absolute; top: 40px; left: 14px; display: flex; align-items: center; gap: 5px; }
+.hv-app b { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 17px; letter-spacing: -.02em; }
+.hv-search { position: absolute; top: 70px; left: 12px; right: 12px; height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: var(--lift-1); color: var(--muted); font-size: 11.5px; }
+.hv-search svg, .hv-ghost svg, .hv-chip svg { width: 12px; height: 12px; flex: none; }
+.hv-list { position: absolute; top: 114px; left: 12px; right: 12px; height: 288px; animation: hvList var(--d) infinite; }
+.hc { position: absolute; left: 0; right: 0; height: 66px; display: flex; align-items: center; gap: 9px; padding: 9px; border-radius: 16px; background: #fff; box-shadow: var(--lift-1); }
+.hc i { flex: none; width: 48px; height: 48px; border-radius: 12px; background: var(--t); display: grid; place-items: center; font: normal 800 22px/1 var(--display); font-variation-settings: "CASL" 1; color: rgb(29 27 46 / .82); }
+.hc div { min-width: 0; }
+.hc b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; line-height: 1.25; font-weight: 600; }
+.hc small { display: block; margin-top: 2px; font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-book { top: 0; animation: hcBook var(--d) infinite; }
+.hc-rec { top: 74px; animation: hcRec var(--d) infinite; }
+.hc-des { top: 148px; animation: hcDes var(--d) infinite; }
+.hc-tok { top: 222px; animation: hcTok var(--d) infinite; }
+/* the match: a ring around the saved tutorial when Claude finds it */
+.hc-des::after { content: ""; position: absolute; inset: -3px; border-radius: 19px; box-shadow: 0 0 0 2px #8f84f5, 0 10px 24px rgb(110 95 230 / .22); animation: hcRing var(--d) infinite var(--out); }
+
+/* reels: dark 9:16 tiles that fly into the top slot and turn into the note */
+.hr { position: absolute; width: 72px; height: 128px; border-radius: 14px; overflow: hidden; box-shadow: 0 14px 30px rgb(29 27 46 / .28); opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.45); animation: hvReel var(--d) infinite; }
+.hr > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hr b { position: absolute; top: 12px; left: 6px; right: 6px; text-align: center; font-size: 8px; line-height: 1.2; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #fff; }
+.hr-cap { position: absolute; left: 8px; bottom: 12px; width: 40px; height: 4px; border-radius: 2px; background: rgb(255 255 255 / .5); box-shadow: 0 -8px 0 -0.5px rgb(255 255 255 / .3); }
+.hr-share { position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px; border-radius: 50%; background: #fff; color: var(--ink); display: grid; place-items: center; }
+.hr-share svg { width: 12px; height: 12px; stroke-width: 2; }
+.hr-des { left: 300px; top: 24px; --r: 6deg; --dx: -146px; --dy: 66px; background: #12172a; }
+.hr-rec { left: 8px; top: 40px; --r: -6deg; --dx: 146px; --dy: 50px; background: #2a211d; animation-delay: 1.6s; }
+.hr-book { left: 300px; top: 60px; --r: 5deg; --dx: -146px; --dy: 30px; background: #2b2540; animation-delay: 3.2s; }
+
+/* the save lifting out of Skwirl into Claude's answer */
+.hv-ghost { position: absolute; left: 112px; top: 292px; height: 24px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 999px; background: var(--lavender); color: var(--ink); font-size: 11.5px; font-weight: 600; white-space: nowrap; box-shadow: 0 8px 20px rgb(110 95 230 / .3); opacity: 0; animation: hvGhost var(--d) infinite; }
+
+.hv-cc { position: absolute; left: 14px; right: 14px; top: 342px; padding: 14px 16px 16px; border-radius: 22px; background: #15131f; color: #eceaf8; box-shadow: 0 30px 60px rgb(29 27 46 / .3), 0 0 0 1px #2b2838 inset; font: 12px/1.5 var(--mono); animation: hvCC var(--d) infinite var(--out); }
+.hv-cc .cc-bar { margin-bottom: 12px; }
+.hv-cc p { margin: 0; }
+.hv-me { color: #fff; } .hv-me > span:first-child { color: #a9a5c4; }
+.hv-chip { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 8px !important; padding: 3px 10px; border-radius: 999px; background: var(--lavender); color: var(--ink); font: 600 11.5px/1.5 var(--ui); animation: hvChip var(--d) infinite; }
+.hv-ai .cc-dim { display: inline; margin: 0; color: #8d89a8; }
+.hv-ai u { text-underline-offset: 3px; text-decoration-color: #8d89a8; }
+.hv .ch { animation: hvCh var(--d) infinite; animation-delay: calc(var(--i) * 27ms); }
+.hv .wd { display: inline-block; animation: hvWd var(--d) infinite; animation-delay: calc(var(--i) * 55ms); }
+
+.hv-cap { display: flex; justify-content: center; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
+.hv-cap span { font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: rgb(255 255 255 / .7); color: var(--muted); animation: var(--d) infinite; }
+.hv-cap .p3 { background: var(--ink); color: #fff; }
+.hv-cap .p1 { animation-name: hvP1; } .hv-cap .p2 { animation-name: hvP2; } .hv-cap .p3 { animation-name: hvP3; }
+
+@keyframes hvList { 0% { opacity: 0; } 1.67%, 95.33% { opacity: 1; } 98%, 100% { opacity: 0; } }
+@keyframes hcTok { 0%, 7.67% { transform: translateY(-222px); animation-timing-function: var(--io); } 10.33%, 18.33% { transform: translateY(-148px); animation-timing-function: var(--io); } 21%, 29% { transform: translateY(-74px); animation-timing-function: var(--io); } 31.67%, 100% { transform: none; } }
+@keyframes hcDes { 0%, 9% { opacity: 0; transform: translateY(-148px) scale(.94); animation-timing-function: var(--out); } 11%, 18.33% { opacity: 1; transform: translateY(-148px); animation-timing-function: var(--io); } 21%, 29% { opacity: 1; transform: translateY(-74px); animation-timing-function: var(--io); } 31.67%, 100% { opacity: 1; transform: none; } }
+@keyframes hcRec { 0%, 19.67% { opacity: 0; transform: translateY(-74px) scale(.94); animation-timing-function: var(--out); } 21.67%, 29% { opacity: 1; transform: translateY(-74px); animation-timing-function: var(--io); } 31.67%, 100% { opacity: 1; transform: none; } }
+@keyframes hcBook { 0%, 30.33% { opacity: 0; transform: scale(.94); animation-timing-function: var(--out); } 32.33%, 100% { opacity: 1; transform: none; } }
+@keyframes hcRing { 0%, 55% { opacity: 0; transform: scale(1.05); } 57%, 100% { opacity: 1; transform: none; } }
+@keyframes hvReel {
+  0%, 1.33% { opacity: 0; transform: translate(8px, 10px) rotate(var(--r)) scale(.92); animation-timing-function: var(--out); }
+  3.33%, 7.33% { opacity: 1; transform: translate(0, 0) rotate(var(--r)) scale(1); animation-timing-function: var(--io); }
+  9.33% { opacity: 1; }
+  10.67%, 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(0deg) scale(.45); }
+}
+@keyframes hvGhost { 0%, 55.33% { opacity: 0; transform: translate(0, 0) scale(.92); animation-timing-function: var(--out); } 56.33% { opacity: 1; transform: translate(0, -6px) scale(1.04); animation-timing-function: var(--io); } 58.67% { opacity: 1; transform: translate(-82px, 136px) scale(.9); } 59.67%, 100% { opacity: 0; transform: translate(-82px, 136px) scale(.9); } }
+@keyframes hvCC { 0%, 36% { opacity: 0; transform: translateY(18px) scale(.98); } 39.33%, 95.33% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; transform: none; } }
+@keyframes hvChip { 0%, 58.33% { opacity: 0; transform: scale(.8); } 59.33% { opacity: 1; transform: scale(1.05); } 60.33%, 100% { opacity: 1; transform: none; } }
+@keyframes hvCh { 0%, 40.66% { opacity: 0; box-shadow: none; } 40.67%, 41% { opacity: 1; box-shadow: inset -1.5px 0 #cfc9ff; } 41.01%, 99% { opacity: 1; box-shadow: none; } 100% { opacity: 0; } }
+@keyframes hvWd { 0%, 60.67% { opacity: 0; transform: translateY(4px); } 62.33%, 99% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes hvP1 { 0%, 9% { background: var(--ink); color: #fff; } 10%, 100% { background: rgb(255 255 255 / .7); color: var(--muted); } }
+@keyframes hvP2 { 0%, 9% { background: rgb(255 255 255 / .7); color: var(--muted); } 10%, 35.5% { background: var(--ink); color: #fff; } 36.5%, 100% { background: rgb(255 255 255 / .7); color: var(--muted); } }
+@keyframes hvP3 { 0%, 35.5% { background: rgb(255 255 255 / .7); color: var(--muted); } 36.5%, 99% { background: var(--ink); color: #fff; } 100% { background: rgb(255 255 255 / .7); color: var(--muted); } }
 
 /* real app screens */
 .shots { display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px 18px 20px; margin: 0 -18px; scrollbar-width: none; }
@@ -360,7 +347,7 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .cc-bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a3650; }
 .cc-bar span { margin-left: 8px; font-family: var(--ui); font-size: 12px; font-weight: 600; color: #a9a5c4; }
 .cc p { margin: 0; }
-.cc-me { color: #fff; } .cc-me span { color: #a9a5c4; }
+.cc-me { color: #fff; } .cc-me > span:first-child { color: #a9a5c4; }
 .cc-chip { display: inline-flex !important; align-items: center; gap: 6px; margin: 14px 0 10px !important; padding: 4px 10px; border-radius: 999px; background: var(--lavender); color: var(--ink); font-family: var(--ui); font-size: 12px; font-weight: 600; }
 .cc svg, .uses svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; flex: none; }
 .cc-dim { display: block; color: #8d89a8; margin-bottom: 6px; }
@@ -375,6 +362,28 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .uses li:nth-child(2) small { background: var(--mint); } .uses li:nth-child(3) small { background: var(--peach); }
 .work-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 26px; }
 .lsec > p.work-fine { font-size: 14px; margin: 16px auto 0; max-width: 34em; }
+/* #work plays once when scrolled into view: app.js adds .cc-anim (motion allowed), then .play on the
+   Claude Code card and on the use cases. Without JS or with reduced motion it is the finished state. */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.cc u .wd { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #8d89a8; }
+.cc-anim .cc .ch, .cc-anim .cc-chip, .cc-anim .cc-ai .wd { opacity: 0; }
+.cc-anim .cc-ai .wd { display: inline-block; transform: translateY(4px); }
+.cc-anim .cc.play .ch { animation: wkCh 50ms steps(1, end) forwards; animation-delay: calc(250ms + var(--i) * 24ms); }
+.cc-anim .cc.play .cc-chip { animation: wkPop .45s var(--tc) cubic-bezier(.23,1,.32,1) forwards; }
+.cc-anim .cc.play .cc-ai .wd { animation: wkWd .35s calc(var(--tc) + 300ms + var(--i) * 45ms) cubic-bezier(.23,1,.32,1) forwards; }
+.uses li { position: relative; isolation: isolate; }
+.uses li::before { content: ""; position: absolute; inset: 2px -12px; z-index: -1; border-radius: 18px; background: #fff; box-shadow: var(--lift-1); opacity: 0; }
+.uses li:nth-child(2) { --i: 1; } .uses li:nth-child(3) { --i: 2; }
+.cc-anim .uses li { opacity: .4; }
+.cc-anim .uses small { opacity: 0; transform: scale(.9); }
+.cc-anim .uses.play li { animation: wkLi .5s calc(var(--i, 0) * 700ms) cubic-bezier(.23,1,.32,1) forwards; }
+.cc-anim .uses.play li::before { animation: wkGlow 1.6s calc(var(--i, 0) * 700ms) ease-out; }
+.cc-anim .uses.play small { animation: wkPop .45s calc(var(--i, 0) * 700ms + 180ms) cubic-bezier(.23,1,.32,1) forwards; }
+@keyframes wkCh { from { opacity: 1; box-shadow: inset -1.5px 0 #cfc9ff; } to { opacity: 1; box-shadow: none; } }
+@keyframes wkPop { from { opacity: 0; transform: scale(.85); } 60% { opacity: 1; transform: scale(1.04); } to { opacity: 1; transform: none; } }
+@keyframes wkWd { to { opacity: 1; transform: none; } }
+@keyframes wkLi { to { opacity: 1; } }
+@keyframes wkGlow { 25% { opacity: 1; } }
 
 .chat { background: rgb(255 255 255 / .85); border-radius: 28px; padding: 18px; box-shadow: var(--lift-1); display: flex; flex-direction: column; gap: 10px; max-width: 560px; margin: 0 auto; }
 .chats { display: grid; gap: 12px; align-items: stretch; }
@@ -555,7 +564,7 @@ body.on-phone .phone-handoff { display: none; }
 @media (max-width: 339px) { #lib .brand { font-size: 20px; } #lib header > .row { gap: 6px; } }
 
 .sheet { max-height: 90svh; overflow-y: auto; }
-.demo-paused *, .demo-paused *::before, .demo-paused *::after { animation-play-state: paused !important; }
+.demo-paused *, .demo-paused *::before, .demo-paused *::after, .demo-off *, .demo-off *::before, .demo-off *::after { animation-play-state: paused !important; }
 #demoToggle { display: block; margin: 12px auto 0; }
 @media (prefers-reduced-motion: reduce) { #demoToggle { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -591,53 +600,39 @@ body.on-phone .phone-handoff { display: none; }
       <p class="fine" id="joinFine">No password. iPhone, Android or computer.</p>
     </div>
 
-    <!-- The whole product in one 16s loop: a reel → Instagram share → iOS share sheet → Saved → the real
-         Skwirl note (a screenshot of the app). Pure CSS; reduced motion shows the final note. -->
-    <figure class="phone-wrap" id="productDemo">
-    <div class="phone" role="img" aria-label="Animation: a cooking reel is shared from Instagram to Skwirl and becomes a recipe note with ingredients and steps">
-      <div class="screen">
-        <div class="s-reel">
-          <div class="vid">
-            <div class="pan"><svg viewBox="0 0 100 100" class="noodles" aria-hidden="true"><g fill="none" stroke="#f3d37a" stroke-width="2.4" stroke-linecap="round"><path d="M30 50c0-12 9-20 20-20s21 8 21 20-9 21-21 21-17-8-17-18 7-15 16-15 13 6 13 13-5 10-11 10-8-4-8-8"/><path d="M24 46c4-16 18-24 32-21s24 15 21 30-15 25-31 23" opacity=".85"/><path d="M36 30c10-6 26-4 33 6m-45 22c2 10 12 18 24 18" opacity=".7"/></g></svg>
-              <i class="garlic g1"></i><i class="garlic g2"></i><i class="garlic g3"></i><i class="butter"></i><i class="flake f1"></i><i class="flake f2"></i></div>
-            <span class="steam s1"></span><span class="steam s2"></span><span class="steam s3"></span>
-            <b class="kt k1">15 MIN PASTA 🍝</b><b class="kt k2">4 cloves garlic 🧄</b><b class="kt k3">low + slow 🔥</b><b class="kt k4">toss it all 👌</b>
+    <!-- The capability in one 15s loop: three different reels (a design tutorial, a recipe, a book) drop into
+         Skwirl and become notes; then in Claude Code a work prompt checks Skwirl and the saved tutorial is
+         pulled into the reply (the real 9 Nov test, same wording as #work). Pure CSS; app.js only scales the
+         stage and splits the prompt into letters. Reduced motion shows the final frame. -->
+    <figure class="hv-wrap" id="productDemo">
+    <div class="hv" role="img" aria-label="Animation: a web design tutorial, a recipe and a book saved from reels become Skwirl notes. Then a prompt in Claude Code about a scroll-driven parallax hero checks Skwirl, and the reply cites the saved post 4 Web Animation Patterns by Web Pros.">
+      <div class="hv-in" aria-hidden="true">
+        <div class="hv-phone"><div class="hv-screen">
+          <div class="hv-app"><img src="/mark.svg" alt="" width="18" height="18"><b>Skwirl</b></div>
+          <div class="hv-search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Search your saves</div>
+          <div class="hv-list">
+            <div class="hc hc-book"><i style="--t:var(--mint)">F</i><div><b>Four Thousand Weeks</b><small>book · not read yet</small></div></div>
+            <div class="hc hc-rec"><i style="--t:var(--peach)">G</i><div><b>Garlic butter pasta</b><small>4 ingredients · 5 steps</small></div></div>
+            <div class="hc hc-des"><i style="--t:var(--lavender)">W</i><div><b>4 Web Animation Patterns</b><small>Web Pros · parallax, scrub, pin</small></div></div>
+            <div class="hc hc-tok"><i style="--t:var(--sky)">T</i><div><b>Tokyo trip</b><small>places · saved in March</small></div></div>
           </div>
-          <div class="ig-top"><b>Reels</b><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="4"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg></div>
-          <div class="ig-rail">
-            <span><svg viewBox="0 0 24 24" class="heart"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><small>12.4K</small></span>
-            <span><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-3.2-6.4A8 8 0 0 1 20 12zm0 0v8l-3-2"/></svg><small>318</small></span>
-            <span class="plane"><svg viewBox="0 0 24 24"><path d="M21 4 3 11l7 3 3 7 8-17zM10 14l5-5"/></svg><small>2,041</small><b class="ring r1"></b></span>
-            <span><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></span>
-            <i class="disc"></i>
-          </div>
-          <div class="ig-cap">
-            <div class="who"><i></i><b>pastaqueen</b><span>Follow</span></div>
-            <p>15 min garlic butter pasta 🍝 full recipe in the comments… <em>more</em></p>
-            <small>♫ pastaqueen · Original audio</small>
-          </div>
-          <div class="ig-prog"></div>
+        </div></div>
+
+        <div class="hr hr-des"><svg viewBox="0 0 72 128"><g fill="none" stroke-width="2" stroke-linejoin="round" transform="translate(0 14)"><rect x="14" y="40" width="44" height="30" rx="5" stroke="#5b6fa8"/><rect x="18" y="34" width="44" height="30" rx="5" stroke="#8fa2e0"/><rect x="22" y="28" width="44" height="30" rx="5" stroke="#c9c4ff" fill="#1b2140"/></g><path d="M30 96h24M36 102h12" stroke="#8fa2e0" stroke-width="2" stroke-linecap="round"/></svg><b>scroll animations</b><span class="hr-cap"></span><span class="hr-share"><svg viewBox="0 0 16 16"><path d="M8 10V2m0 0L5 5m3-3 3 3M3 8v5h10V8"/></svg></span></div>
+        <div class="hr hr-rec"><svg viewBox="0 0 72 128"><g transform="translate(0 10)"><circle cx="36" cy="58" r="22" fill="#3b2f29"/><g fill="none" stroke="#f3d37a" stroke-width="2" stroke-linecap="round"><path d="M24 58c0-7 5-12 12-12s12 5 12 12-5 12-12 12-10-5-10-10 4-9 9-9 7 3 7 7-3 6-6 6"/><path d="M20 55c3-9 11-14 19-12" opacity=".7"/></g><circle cx="29" cy="49" r="2.4" fill="#fff6e0"/><circle cx="44" cy="64" r="2.4" fill="#fff6e0"/></g></svg><b>15 min pasta</b><span class="hr-cap"></span><span class="hr-share"><svg viewBox="0 0 16 16"><path d="M8 10V2m0 0L5 5m3-3 3 3M3 8v5h10V8"/></svg></span></div>
+        <div class="hr hr-book"><svg viewBox="0 0 72 128"><g transform="translate(0 12)"><rect x="22" y="30" width="30" height="42" rx="3" fill="#fff0c4"/><rect x="22" y="30" width="5" height="42" rx="2" fill="#e6cf8a"/><path d="M32 42h14M32 48h10" stroke="#8a6d1f" stroke-width="2" stroke-linecap="round"/></g></svg><b>read this one</b><span class="hr-cap"></span><span class="hr-share"><svg viewBox="0 0 16 16"><path d="M8 10V2m0 0L5 5m3-3 3 3M3 8v5h10V8"/></svg></span></div>
+
+
+        <div class="hv-cc">
+          <div class="cc-bar"><i></i><i></i><i></i><span>Claude Code</span></div>
+          <p class="hv-me"><span>&gt; </span><span class="hv-type">Help me add a scroll-driven parallax hero to a landing page. Short plan only.</span></p>
+          <p class="hv-chip"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Checked Skwirl</p>
+          <p class="hv-ai"><span class="cc-dim">&hellip; </span>Your saved post &ldquo;4 Web Animation Patterns&rdquo; (Web Pros, <u>link</u>) lists parallax, scrub and pin + transform as scroll patterns.</p>
         </div>
-
-        <div class="s-ig">
-          <span class="grab"></span>
-          <div class="ig-search">Search</div>
-          <div class="ig-friends"><span><i style="--c:#ffd8cb"></i>maya</span><span><i style="--c:#cdf3e1"></i>arjun</span><span><i style="--c:#d6ebff"></i>sam.k</span><span><i style="--c:#fff0c4"></i>priya</span></div>
-          <div class="ig-acts"><span><i>＋</i>Add to story</span><span><i>🔗</i>Copy link</span><span class="sh"><i><svg viewBox="0 0 24 24"><path d="M12 15V3m0 0L8 7m4-4 4 4M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/></svg><b class="ring r2"></b></i>Share</span><span><i>↓</i>Download</span></div>
-        </div>
-
-        <div class="s-ios">
-          <div class="ios-head"><i></i><div><b>Instagram</b><small>instagram.com</small></div><span>✕</span></div>
-          <div class="ios-apps"><span><i style="--c:#34c759"></i>Messages</span><span><i style="--c:#0a84ff"></i>Mail</span><span><i style="--c:#ffd60a"></i>Notes</span><span><i style="--c:#ff9f0a"></i>Reminders</span></div>
-          <div class="ios-list"><span>Copy<em>⧉</em></span><span class="pick">Skwirl<em class="sc"></em><b class="ring r3"></b></span><span>Add to Reading List<em>∞</em></span></div>
-        </div>
-
-        <div class="s-alert"><div><b>Saved to Skwirl</b><p>Your note will be ready in a few minutes.</p><span>OK</span></div></div>
-
-        <div class="s-note"><img src="/shots/note.webp" alt="" width="540" height="2196" decoding="async" fetchpriority="low"></div>
+        <div class="hv-ghost"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>4 Web Animation Patterns</div>
       </div>
     </div>
-    <figcaption class="steps-cap" aria-hidden="true"><span class="c1">Watch</span><span class="c2">Share</span><span class="c3">Pick Skwirl</span><span class="c4">Get the recipe</span></figcaption>
+    <figcaption class="hv-cap" aria-hidden="true"><span class="p1">Save anything</span><span class="p2">Get a note</span><span class="p3">Back while you work</span></figcaption>
     <button class="btn sm soft demo-toggle" type="button" id="demoToggle" aria-pressed="false">Pause demo</button>
     </figure>
   </div>
@@ -650,7 +645,7 @@ body.on-phone .phone-handoff { display: none; }
     <div class="work-grid">
       <figure class="cc">
         <div class="cc-bar" aria-hidden="true"><i></i><i></i><i></i><span>Claude Code</span></div>
-        <p class="cc-me"><span aria-hidden="true">&gt; </span>Help me add a scroll-driven parallax hero to a landing page. Short plan only.</p>
+        <p class="cc-me"><span aria-hidden="true">&gt; </span><span class="cc-type">Help me add a scroll-driven parallax hero to a landing page. Short plan only.</span></p>
         <p class="cc-chip"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Checked Skwirl</p>
         <p class="cc-ai"><span class="cc-dim" aria-hidden="true">&hellip;</span>Your saved post &ldquo;4 Web Animation Patterns&rdquo; (Web Pros, <u>link</u>) lists parallax, scrub and pin + transform as scroll patterns. This plan does the parallax.</p>
         <figcaption>The end of Claude&rsquo;s reply in a real test, 9 November 2026. The prompt never mentioned Skwirl.</figcaption>
