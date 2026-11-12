@@ -177,7 +177,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 /* Signed in and visiting the site: no join or sign-in, a way back to the app instead. */
 .lback, .lhero .siteback { display: none; } .lback { align-items: center; text-decoration: none; color: var(--ink); }
 body.site-visit .lback { display: inline-flex; } body.site-visit .lhero .siteback { display: flex; }
-body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, body.site-visit #joinFine, body.site-visit #pwaIn, body.site-visit .work-cta [data-totop] { display: none !important; }
+body.site-visit .lsign, body.site-visit #joinForm, body.site-visit .haveacct, body.site-visit #gJoin, body.site-visit .signin-cta, body.site-visit #joinFine, body.site-visit #pwaIn, body.site-visit .work-cta [data-totop] { display: none !important; }
 .demo-toggle:not(:focus-visible) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .lsign { display: inline-flex; align-items: center; text-decoration: none; color: var(--ink); }
 .lhero { display: grid; gap: 34px; align-items: center; padding: 7vh 0 10px; }
@@ -191,11 +191,36 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .joinbox input:focus-visible { outline: none; }
 .joinbox:focus-within { box-shadow: var(--lift-1), 0 0 0 2px var(--ink); }
 .joinbox #joinCode:not([hidden]) { border-left: 1px solid var(--line); border-radius: 0; }
-#joinMail:not([hidden]) { animation: mailIn .18s ease-out; }
-@keyframes mailIn { from { opacity: 0; transform: translateY(-4px); } }
-@media (prefers-reduced-motion: reduce) { #joinMail:not([hidden]) { animation: none; } }
-#joinMailHint { max-width: 440px; margin: 6px auto 0; }
-.joinmail { display: block; width: 100%; max-width: 440px; height: 44px; margin: 10px auto 0; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: rgb(255 255 255 / .7); font-size: 15px; }
+.joinbox { border-radius: 26px; }
+.joinfields { display: flex; flex: 1 1 100%; min-width: 0; }
+.joinfields input + input { border-left: 1px solid var(--line); }
+#joinForm > .btn { flex: 1 1 100%; }
+@media (max-width: 520px) { .joinfields { flex-direction: column; } .joinfields input { flex: none; width: 100%; } .joinfields input + input { border-left: 0; border-top: 1px solid var(--line); } }
+.haveacct { margin: 12px auto 0; max-width: 440px; font-size: 15px; color: var(--ink); }
+.linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.gwrap { max-width: 440px; margin: 12px auto 0; display: grid; justify-items: center; gap: 10px; }
+.gwrap .or { font-size: 13px; color: var(--muted); }
+.gwrap .gbtn { min-height: 44px; }
+.signin-cta { text-align: center; margin-top: 56px; }
+.signin-cta p { color: var(--muted); margin: 0 0 10px; }
+.authdlg { border: 0; border-radius: 28px; padding: 28px 22px 20px; max-width: 400px; width: calc(100% - 32px); background: #fff; color: var(--ink); box-shadow: var(--lift-2); position: fixed; }
+.authdlg::backdrop { background: rgba(20, 16, 40, .45); }
+.authdlg h2 { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 28px; margin: 0 0 8px; }
+.authdlg p { color: var(--muted); margin: 0 0 4px; font-size: 15px; }
+.authdlg .stack { display: grid; gap: 10px; margin: 0; }
+.authdlg input { width: 100%; box-sizing: border-box; height: 48px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-size: 16px; min-width: 0; }
+.authdlg .codein { font-family: var(--mono); font-size: 26px; letter-spacing: .35em; text-align: center; padding: 0 0 0 .35em; height: 56px; }
+.authdlg .btn { width: 100%; height: 48px; }
+.authdlg .msg:empty { display: none; }
+.authdlg .msg { margin: 10px 0 0; }
+.authdlg .msg.info { color: var(--ink); }
+.dlgx { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--bg); font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink); }
+.dlgfoot { margin-top: 16px !important; text-align: center; font-size: 14px !important; }
+.dlgnote { background: var(--butter); color: var(--ink) !important; border-radius: 16px; padding: 10px 14px; margin: 6px 0 8px !important; }
+.tokenalt { margin-top: 14px; font-size: 14px; }
+.tokenalt summary { cursor: pointer; color: var(--muted); padding: 6px 0; }
+.tokenalt[open] summary { margin-bottom: 8px; }
+.tokenalt code { font-family: var(--mono); font-size: 13px; background: var(--bg); padding: 1px 6px; border-radius: 8px; }
 .joinbox .btn { height: 48px; flex: none; transition: transform .15s, box-shadow .2s; }
 .joinbox .msg, .joinbox .fine { flex-basis: 100%; }
 .joinwrap .fine { margin-top: 10px; }
@@ -205,7 +230,7 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .lcopy > .msg:empty { display: none; }
 @media (min-width: 880px) {
   .lhero { grid-template-columns: 1.15fr .85fr; padding-top: 9vh; }
-  .lcopy { text-align: left; } .lhero h1, .lede { margin-left: 0; } .joinbox, .joinmail, #joinMailHint { margin-left: 0; }
+  .lcopy { text-align: left; } .lhero h1, .lede { margin-left: 0; } .joinbox, .haveacct, .gwrap { margin-left: 0; } .gwrap { justify-items: start; }
   .joinbox input { text-align: left; }
 }
 
@@ -427,15 +452,9 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit #joinMail, bo
 .faq summary::after { content: "+"; color: var(--muted); transition: transform .2s; }
 .faq[open] summary::after { transform: rotate(45deg); }
 .faq p { margin: 0; padding: 0 18px 16px; color: var(--muted); font-size: 15px; }
-.faq a, .signin a { color: inherit; }
+.faq a { color: inherit; }
 .lend { text-align: center; padding: 30px 0 0; }
 .lend h2 { font-size: clamp(36px, 7vw, 56px); }
-.signin { background: rgb(255 255 255 / .7); border-radius: 22px; padding: 4px 18px; box-shadow: var(--lift-1); max-width: 560px; margin-left: auto; margin-right: auto; margin-top: 56px; }
-.signin summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
-.signin p { color: var(--muted); font-size: 15px; margin: 0 0 10px; }
-.signin form { flex-wrap: nowrap; margin-bottom: 8px; }
-.signin input { flex: 1; min-width: 0; height: 48px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); }
-.signin code { font-family: var(--mono); font-size: 13px; background: var(--bg); padding: 1px 6px; border-radius: 8px; }
 
 /* scroll reveal, only when JS is on and motion is allowed (set in app.js) */
 .js-reveal .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
@@ -575,12 +594,13 @@ body.on-phone .phone-handoff { display: none; }
 <main>
 
 <section id="auth">
-  <nav class="lnav"><a href="/" class="brand" data-brand><img src="/mark.svg" alt="">Skwirl</a><a href="#pricing" class="lnk">Pricing</a><a href="#signin" class="setup-pill lsign">Sign in</a><a href="/" class="setup-pill lback" data-backapp>My saves</a></nav>
+  <nav class="lnav"><a href="/" class="brand" data-brand><img src="/mark.svg" alt="">Skwirl</a><a href="#pricing" class="lnk">Pricing</a><a href="#signin" class="setup-pill lsign" data-signin>Sign in</a><a href="/" class="setup-pill lback" data-backapp>My saves</a></nav>
 
   <div class="pwa-in" id="pwaIn" hidden>
     <h2>Welcome back</h2>
-    <p>This home-screen Skwirl needs your sign-in link once. Copy it in Safari (Set up → Put Skwirl on your home screen), then tap below.</p>
-    <button class="btn" type="button" id="pwaPaste">Paste my sign-in link</button>
+    <p>Sign in once on this home-screen Skwirl. We'll email you a code.</p>
+    <button class="btn" type="button" data-signin>Sign in</button>
+    <p class="small"><button class="linkbtn" type="button" id="pwaPaste">Paste a sign-in link instead</button></p>
     <p class="msg err" id="pwaErr" role="alert"></p>
   </div>
 
@@ -589,15 +609,19 @@ body.on-phone .phone-handoff { display: none; }
       <h1>Everything you save, actually useful.</h1>
       <p class="lede">Share a reel and it becomes a note you can search. Claude Code brings the right one back while you work.</p>
       <div class="siteback inline-actions"><a class="btn" href="/" data-backapp>Back to my saves</a></div>
-      <form id="joinForm" class="joinbox">
-        <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your first name" required>
+      <form id="joinForm" class="joinbox" aria-label="Create your Skwirl account">
+        <div class="joinfields">
+          <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name" aria-label="First name" required>
+          <input id="joinEmail" type="email" autocomplete="email" maxlength="120" placeholder="Email" aria-label="Email" required>
+        </div>
         <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
-        <button class="btn" type="submit">Start free</button>
+        <button class="btn" type="submit">Create account</button>
       </form>
-      <div id="joinMail" hidden><input id="joinEmail" form="joinForm" class="joinmail" type="email" autocomplete="email" maxlength="120" placeholder="Email (optional)" aria-label="Email, optional" aria-describedby="joinMailHint"><p class="fine" id="joinMailHint">Optional, only so I can help if you get stuck.</p></div>
+      <div class="gwrap" id="gJoin" hidden><span class="or">or</span><div class="gbtn"></div></div>
+      <p class="haveacct">Already have an account? <button class="linkbtn" type="button" data-signin>Sign in</button></p>
       <p id="joinErr" role="alert" class="msg err"></p>
       <p class="note-box" id="inAppNote" hidden></p>
-      <p class="fine" id="joinFine">No password. iPhone, Android or computer.</p>
+      <p class="fine" id="joinFine">No password to remember: we email you a code. iPhone, Android or computer.</p>
     </div>
 
     <!-- The capability in one 15s loop: three different reels (a design tutorial, a recipe, a book) drop into
@@ -748,7 +772,7 @@ body.on-phone .phone-handoff { display: none; }
     <details class="faq"><summary>How long does a save take?</summary><p>Usually a couple of minutes. You'll see it appear in your library with a "Reading…" card while it works.</p></details>
     <details class="faq"><summary>Who can see my saves?</summary><p>Other users cannot see your saves unless you share a note. The person running Skwirl can read the database, and Groq processes media to make your notes. Details in the <a href="/privacy">privacy policy</a>.</p></details>
     <details class="faq"><summary>Can I bring in reels I saved before?</summary><p>Yes. Download your Saved posts from Instagram (Accounts Center, Export your information, JSON format) and pick the file in Skwirl. It's read on your device and only the post links are sent. <a href="/guides/export-instagram-saved-posts">Step-by-step guide</a>.</p></details>
-    <details class="faq"><summary>There's no password. How do I get back in?</summary><p>You get a private sign-in link. Skwirl asks you to save it (email it to yourself, or keep it in your notes). Open it on any device and you're in.</p></details>
+    <details class="faq"><summary>There's no password. How do I get back in?</summary><p>Tap Sign in and enter your email: we send you a 6-digit code, and you're in on any phone or computer. Nothing to remember or reset.</p></details>
     <details class="faq"><summary>What's a Groq key and do I need one?</summary><p>No. Groq runs the AI that reads reels. Skwirl covers it for you. If you save a lot, a free key of your own gives you a separate AI allowance. Processing still uses the shared queue.</p></details>
   </div>
 
@@ -757,21 +781,10 @@ body.on-phone .phone-handoff { display: none; }
     <a class="btn" href="#" id="toTop">Start Skwirl, free</a>
   </div>
 
-  <details class="lsec signin" id="signin">
-    <summary>Already have Skwirl? Sign in</summary>
-    <p>Open your sign-in link, or paste your token (it starts with <code>stk_</code>). You'll find it under your profile (the round button at the top) on a device where you're signed in.</p>
-    <form id="authForm" class="row">
-      <input id="token" type="password" autocomplete="off" placeholder="Paste your token" aria-label="Access token" required>
-      <button class="btn" type="submit">Sign in</button>
-    </form>
-    <p id="authErr" role="alert" class="msg err"></p>
-    <p class="lost"><b>Lost your link?</b> If you connected Telegram, send <code>/login</code> to <a href="https://t.me/skwirl_bot" rel="noopener">@skwirl_bot</a> for a fresh one.<span id="lostMail" hidden> Or get one by email, if you gave us your address:</span></p>
-    <form id="lostForm" class="row" hidden>
-      <input id="lostEmail" type="email" autocomplete="email" maxlength="120" placeholder="Your email" aria-label="Your email" required>
-      <button class="btn soft" type="submit">Email me a link</button>
-    </form>
-    <p id="lostMsg" role="status" class="msg"></p>
-  </details>
+  <div class="lsec signin-cta">
+    <p>Already have Skwirl?</p>
+    <button class="btn soft" type="button" data-signin>Sign in</button>
+  </div>
   <p class="legal"><a href="/guides/search-saved-instagram-reels">Search saved reels</a> · <a href="/guides/save-recipes-from-instagram-reels">Save recipes from reels</a> · <a href="/guides/export-instagram-saved-posts">Export your saves</a> · <a href="/guides/use-saved-reels-in-claude">Use your saves in Claude</a><br><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/refunds">Refunds</a> · <a href="https://github.com/Parthuss/stash" rel="noopener">GitHub</a></p>
 </section>
 
@@ -864,7 +877,7 @@ body.on-phone .phone-handoff { display: none; }
           <li><b>Copy your sign-in link</b><span>The home-screen version starts signed out on iPhone, so you'll paste this once.</span><div class="inline-actions"><button class="btn sm" data-copy="linkonly">Copy sign-in link</button></div></li>
           <li><b>Open this page in Safari</b><span>It has to be Safari. In other browsers the option isn't there.</span></li>
           <li><b>Tap Share, then <em>Add to Home Screen</em></b><span>Share is the square with an arrow at the bottom of Safari. Scroll down the list if you don't see it, then tap <em>Add</em>.</span></li>
-          <li><b>Open Skwirl from your home screen</b><span>Tap <em>Paste my sign-in link</em> and you're in.</span></li>
+          <li><b>Open Skwirl from your home screen</b><span>Sign in with your email, or tap <em>Paste a sign-in link instead</em>.</span></li>
         </ol>
       </div>
       <div id="homeAnd" hidden>
@@ -971,7 +984,7 @@ body.on-phone .phone-handoff { display: none; }
     <div class="gbody">
       <form id="meForm" class="meform">
         <label>Name<input id="meNameIn" maxlength="40" autocomplete="given-name" required></label>
-        <label>Email <small>(optional: for replies and sign-in links)</small><input id="meEmailIn" type="email" maxlength="120" autocomplete="email"></label>
+        <label>Email <small>(how you sign in)</small><input id="meEmailIn" type="email" maxlength="120" autocomplete="email"></label>
         <label class="fbok" id="meConsentRow" hidden><input type="checkbox" id="meConsent"> Skwirl may email me about my account and big updates. Never shared.</label>
         <div class="inline-actions"><button class="btn sm" type="submit">Save</button></div>
         <p class="msg" id="meMsg" role="status"></p>
@@ -1051,6 +1064,63 @@ body.on-phone .phone-handoff { display: none; }
   <ul id="plusDoneList"><li>Up to 250 saves a month, read first</li><li>Your whole Saved folder, if you import it</li><li>Your own categories</li></ul>
   <p class="small" id="plusDoneFoot">Manage or cancel any time in Set up.</p>
   <form method="dialog"><button class="btn" style="width:100%">Done</button></form>
+</dialog>
+<!-- Sign in / finish creating an account: email, then the 6-digit code. -->
+<dialog class="authdlg" id="authDlg" aria-labelledby="authTitle">
+  <button class="dlgx" type="button" data-close aria-label="Close">×</button>
+  <div id="stepEmail">
+    <h2 id="authTitle">Sign in</h2>
+    <form id="emailForm" class="stack" data-on="email">
+      <p>Enter the email on your account. We'll send you a 6-digit code.</p>
+      <input id="signEmail" type="email" autocomplete="email" maxlength="120" placeholder="you@example.com" aria-label="Email" required>
+      <button class="btn" type="submit">Email me a code</button>
+    </form>
+    <p class="dlgnote" data-on="noemail" hidden>Email sign-in is switching on soon. Until then, open your sign-in link, or paste it below.</p>
+    <div class="gwrap" id="gDlg" hidden><span class="or">or</span><div class="gbtn"></div></div>
+    <details class="tokenalt" id="tokenAlt">
+      <summary>Have a sign-in link instead?</summary>
+      <form id="authForm" class="stack">
+        <input id="token" type="password" autocomplete="off" placeholder="Paste your sign-in link or token" aria-label="Sign-in link or token" required>
+        <button class="btn soft" type="submit">Sign in with link</button>
+      </form>
+      <p class="small">Connected Telegram? Send <code>/login</code> to <a href="https://t.me/skwirl_bot" rel="noopener">@skwirl_bot</a> for a fresh link.</p>
+    </details>
+    <p class="dlgfoot">New to Skwirl? <button class="linkbtn" type="button" data-create>Create an account</button></p>
+  </div>
+  <div id="stepCode" hidden>
+    <h2>Check your email</h2>
+    <form id="codeForm" class="stack">
+      <p>We sent a 6-digit code to <b id="codeTo"></b>. It works for 10 minutes. Check spam if it's not there.</p>
+      <input id="codeIn" class="codein" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="123456" aria-label="6-digit code" required>
+      <div id="codeNameRow" hidden><input id="codeName" type="text" autocomplete="given-name" maxlength="40" placeholder="Your first name" aria-label="Your first name"></div>
+      <button class="btn" type="submit">Continue</button>
+    </form>
+    <p class="dlgfoot"><button class="linkbtn" type="button" id="codeResend">Send a new code</button> · <button class="linkbtn" type="button" data-back>Use a different email</button></p>
+  </div>
+  <p id="authErr" role="alert" class="msg err"></p>
+</dialog>
+
+<!-- Accounts from before email was required: add one (once skippable, then required). -->
+<dialog class="authdlg" id="emailDlg" aria-labelledby="emailDlgTitle">
+  <div id="addStep">
+    <h2 id="emailDlgTitle">Add your email</h2>
+    <p>So you can sign in again: on a new phone, another computer, or if you're ever signed out. We only email you sign-in codes.</p>
+    <form id="addForm" class="stack">
+      <input id="addEmail" type="email" autocomplete="email" maxlength="120" placeholder="you@example.com" aria-label="Email" required>
+      <button class="btn" type="submit">Add email</button>
+    </form>
+    <p class="dlgfoot" id="addSkipRow"><button class="linkbtn" type="button" id="addSkip">Not now</button></p>
+  </div>
+  <div id="addCodeStep" hidden>
+    <h2>Check your email</h2>
+    <form id="addCodeForm" class="stack">
+      <p>We sent a 6-digit code to <b id="addTo"></b>. Enter it to confirm the address is yours.</p>
+      <input id="addCode" class="codein" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="123456" aria-label="6-digit code" required>
+      <button class="btn" type="submit">Confirm</button>
+    </form>
+    <p class="dlgfoot"><button class="linkbtn" type="button" id="addResend">Send a new code</button> · <button class="linkbtn" type="button" id="addChange">Change email</button><span id="addLaterRow" hidden> · <button class="linkbtn" type="button" id="addLater">Finish later</button></span></p>
+  </div>
+  <p id="addErr" role="alert" class="msg err"></p>
 </dialog>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 

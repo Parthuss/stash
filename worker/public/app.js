@@ -40,7 +40,7 @@ async function api(path, opts = {}) {
   // The account changed while this was in flight: drop it, so it can't show the old account's
   // notes or sign the new one out.
   if (token !== sentWith) throw new Error("stale");
-  if (r.status === 401) { signOut("You were signed out (your token changed or was reset). Paste it again to get back in."); throw new Error("unauthorized"); }
+  if (r.status === 401) { signOut("You were signed out on this device. Sign in with your email to get back in."); throw new Error("unauthorized"); }
   if (r.status >= 500) { if ($("lib").style.display === "none") toast("Skwirl hit a problem. Try again in a minute."); setBanner("net", "err", "Skwirl hit a problem on our end. Nothing is lost. Try again in a minute.", "Try again", () => load()); }
   else if (bannerKey === "net") clearBanner("net");
   return r;
@@ -112,7 +112,8 @@ function signOut(msg) {
   const forced = typeof msg === "string";
   for (const k of ["stash_token", "stash_cache", "stash_notes", ...(forced ? [] : ["stash_outbox"])]) store.del(k);
   token = null; document.body.classList.remove("site-visit"); show("auth"); plusSignedOut();
-  const m = typeof msg === "string" ? msg : ""; $("authErr").textContent = m; if (m) $("signin").open = true;
+  // Wherever you end up signed out, the email sign-in is right there.
+  openSignin(typeof msg === "string" ? msg : "");
 }
 
 // ---- markdown: escape FIRST, then add structure. Notes contain third-party captions. ----
@@ -225,7 +226,7 @@ async function load() {
   const slow = captures.some((c) => c.state === "processing" && Date.now() - Date.parse(c.at) > 15 * 60000);
   if (slow && bannerKey !== "owner") setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", ...(setupState?.has_groq_key || !isEarly() ? [] : ["Add my own Groq key", () => openSetup(false)]));
   else clearBanner("busy");
-  if (!bannerKey && !store.get("stash_link_saved") && !(setupState && setupState.owner))
+  if (!bannerKey && !store.get("stash_link_saved") && !(setupState && (setupState.owner || (setupState.has_email && setupState.email_login))))
     setBanner("savelink", "warn", "No password here: your sign-in link is how you get back in. Save it somewhere safe.", "Save my link", saveLink);
   render(); schedulePoll();
 }
@@ -380,19 +381,176 @@ $("demoToggle").addEventListener("click", () => {
   $("demoToggle").setAttribute("aria-pressed", String(paused));
   $("demoToggle").textContent = paused ? "Play demo" : "Pause demo";
 });
+// ---- accounts: sign in with your email (a 6-digit code) or Google. Server: src/login.ts, src/google.ts.
+// What this server offers: open/invite joining, email sign-in, Google (client id). Fetched once.
+const joinInfo = fetch("/join").then((r) => r.json()).catch(() => ({ open: true }));
+const postJson = (path, body, auth) => fetch(path, { method: "POST", body: JSON.stringify(body),
+  headers: { "content-type": "application/json", ...(auth && token ? { Authorization: "Bearer " + token } : {}) } });
+let flow = { email: "", name: "", invite: "", signup: false }, resendAt = 0, resendTimer = null;
+function closeDlg(d) { if (d.open) d.close(); }
+function signedIn(t, created) {
+  token = t; store.set("stash_token", token); store.set("sk_was_in", "1"); store.del("stash_link_saved");
+  closeDlg($("authDlg")); document.body.classList.remove("site-visit"); start();
+  if (created === false && flow.signup) toast("Welcome back. That email already had an account, so you're signed in to it.");
+}
+// Show email sign-in only when it's on; until then the sign-in link box is the way in.
+function authModes(mode) {
+  const on = !!mode.email_login;
+  document.querySelectorAll('[data-on="email"]').forEach((el) => (el.hidden = !on));
+  document.querySelectorAll('[data-on="noemail"]').forEach((el) => (el.hidden = on));
+  if (!on) $("tokenAlt").open = true;
+  if (mode.google_client_id) loadGoogle(mode.google_client_id);
+}
+function step(which) { $("stepEmail").hidden = which !== "email"; $("stepCode").hidden = which !== "code"; }
+function openSignin(msg, at = "email") {
+  const d = $("authDlg");
+  joinInfo.then(authModes);
+  if (at === "email") { flow.signup = false; $("codeNameRow").hidden = true; }
+  step(at); $("authErr").textContent = msg || "";
+  if (at === "code") { $("codeTo").textContent = flow.email; $("codeIn").value = ""; cooldown(); }
+  else if (flow.email) $("signEmail").value = flow.email;
+  if (!d.open) d.showModal();
+  setTimeout(() => (at === "code" ? $("codeIn") : $("signEmail").offsetParent ? $("signEmail") : $("token")).focus(), 80);
+}
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-signin]")) { e.preventDefault(); tr("click", "signin"); openSignin(""); }
+});
+$("authDlg").addEventListener("click", (e) => {
+  if (e.target.closest("[data-close]") || e.target === $("authDlg")) closeDlg($("authDlg"));
+  else if (e.target.closest("[data-back]")) { step("email"); $("codeNameRow").hidden = true; $("authErr").textContent = ""; $("signEmail").focus(); }
+  else if (e.target.closest("[data-create]")) { closeDlg($("authDlg")); document.body.classList.remove("site-visit"); show("auth"); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 300); }
+});
+// "Send a new code" waits 30 s between sends.
+function cooldown() {
+  resendAt = Date.now() + 30_000; clearInterval(resendTimer);
+  const tick = () => { const s = Math.ceil((resendAt - Date.now()) / 1000), b = $("codeResend");
+    b.disabled = s > 0; b.textContent = s > 0 ? `Send a new code (${s}s)` : "Send a new code"; if (s <= 0) clearInterval(resendTimer); };
+  tick(); resendTimer = setInterval(tick, 1000);
+}
+async function sendCode() {
+  let r; try { r = await postJson("/auth/email/start", { email: flow.email, signup: flow.signup, invite: flow.invite }); }
+  catch { $("authErr").textContent = "Can't reach Skwirl. Check your connection and try again."; return false; }
+  const b = await r.json().catch(() => ({}));
+  if (!r.ok) { $("authErr").textContent = b.error || "Couldn't send a code. Try again."; return false; }
+  return true;
+}
+$("emailForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const btn = e.submitter || e.currentTarget.querySelector("button"); if (btn.disabled) return;
+  flow = { email: $("signEmail").value.trim(), name: "", invite: $("joinCode").value, signup: false };
+  btn.disabled = true; $("authErr").textContent = ""; const ok = await sendCode(); btn.disabled = false;
+  tr("signin_code_sent", ok ? "ok" : "err");
+  if (ok) openSignin("", "code");
+});
+$("codeResend").addEventListener("click", async () => {
+  if (Date.now() < resendAt) return;
+  $("authErr").textContent = "";
+  if (await sendCode()) { cooldown(); toast("New code sent. The old one no longer works."); }
+});
+$("codeForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const btn = e.submitter || e.currentTarget.querySelector("button"); if (btn.disabled) return;
+  const name = $("codeNameRow").hidden ? flow.name : $("codeName").value.trim();
+  if (!$("codeNameRow").hidden && !name) { $("authErr").textContent = "Add your first name."; $("codeName").focus(); return; }
+  btn.disabled = true; $("authErr").textContent = ""; $("authErr").className = "msg err";
+  let r; try { r = await postJson("/auth/email/verify", { email: flow.email, code: $("codeIn").value, name, invite: flow.invite }); }
+  catch { btn.disabled = false; $("authErr").textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
+  const b = await r.json().catch(() => ({})); btn.disabled = false;
+  if (r.status === 409 && b.needs_name) { $("codeNameRow").hidden = false; $("authErr").className = "msg info"; $("authErr").textContent = b.error; $("codeName").focus(); return; }
+  if (!r.ok) { tr("signin_code", "err"); $("authErr").textContent = b.error || "That didn't work. Try again."; if (b.left === 0) $("codeIn").value = ""; return; }
+  tr(b.created ? "join_ok" : "signin", b.created ? "email" : "email_ok");
+  signedIn(b.token, b.created);
+});
+// The code box takes "123 456", pasted text, or the whole email line; 6 digits submit on their own.
+for (const id of ["codeIn", "addCode"]) $(id).addEventListener("input", (e) => {
+  const d = (e.target.value.match(/\d/g) || []).join("").slice(0, 6);
+  if (e.target.value !== d) e.target.value = d;
+  if (d.length === 6) e.target.form.requestSubmit();
+});
+
+// Continue with Google (only when the server has a client id). Google's script draws its own button.
+let googleLoaded = false;
+function loadGoogle(clientId) {
+  if (googleLoaded) return; googleLoaded = true;
+  const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
+  s.onload = () => {
+    google.accounts.id.initialize({ client_id: clientId, callback: onGoogle, ux_mode: "popup", auto_select: false, context: "signin" });
+    for (const id of ["gJoin", "gDlg"]) {
+      const box = $(id); box.hidden = false;
+      google.accounts.id.renderButton(box.querySelector(".gbtn"), { theme: "outline", size: "large", shape: "pill", text: "continue_with", width: 300 });
+    }
+  };
+  document.head.appendChild(s);
+}
+async function onGoogle(resp) {
+  const err = $("authDlg").open ? $("authErr") : $("joinErr"); err.textContent = "";
+  let r; try { r = await postJson("/auth/google", { credential: resp.credential, name: $("joinName").value.trim(), invite: $("joinCode").value }); }
+  catch { err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
+  const b = await r.json().catch(() => ({}));
+  if (!r.ok) { tr("signin_google", "err"); err.textContent = b.error || "Google sign-in didn't work. Try your email instead."; return; }
+  tr(b.created ? "join_ok" : "signin", b.created ? "google" : "google_ok");
+  flow.signup = false; signedIn(b.token, b.created);
+}
+
+// ---- "Add your email": accounts from before email was required. Once with "Not now", then
+// required (no Not now), but never a lock-out: if the code doesn't come you can finish later.
+let emailAsked = false, addEmailAddr = "", addMode = "ask";
+function askEmail() {
+  const st = setupState; if (!st || !st.email_ask || emailAsked || $("emailDlg").open || $("plusDone").open) return;
+  emailAsked = true; addMode = st.email_ask;
+  $("addStep").hidden = false; $("addCodeStep").hidden = true; $("addErr").textContent = "";
+  $("addSkipRow").hidden = addMode !== "skippable"; $("addSkip").textContent = "Not now";
+  tr("card_shown", "add_email_" + addMode);
+  $("emailDlg").showModal(); setTimeout(() => $("addEmail").focus(), 50);
+}
+function addCodeStep(email, canLeave) {
+  addEmailAddr = email; $("addTo").textContent = email; $("addCode").value = ""; $("addErr").textContent = "";
+  $("addStep").hidden = true; $("addCodeStep").hidden = false; $("addLaterRow").hidden = !canLeave;
+  setTimeout(() => $("addCode").focus(), 50);
+}
+// Esc can't dismiss the required ask; "Finish later" (after a code went out) and "Not now" can.
+$("emailDlg").addEventListener("cancel", (e) => { if (addMode === "required" && $("addLaterRow").hidden && $("addSkipRow").hidden) e.preventDefault(); });
+// Required, but never a trap: if adding fails (offline, address taken, too many tries) a way out appears.
+function addFailed(msg) {
+  $("addErr").textContent = msg;
+  if (addMode === "required") { $("addSkip").textContent = "Finish later"; $("addSkipRow").hidden = false; $("addLaterRow").hidden = false; }
+}
+$("addSkip").addEventListener("click", () => { tr("click", "add_email_skip"); api("/v1/email/skip", { method: "POST" }).catch(() => {}); closeDlg($("emailDlg")); });
+$("addLater").addEventListener("click", () => { tr("click", "add_email_later"); closeDlg($("emailDlg")); });
+$("addChange").addEventListener("click", () => { $("addStep").hidden = false; $("addCodeStep").hidden = true; $("addErr").textContent = ""; $("addEmail").focus(); });
+async function startAdd(email) {
+  let r; try { r = await api("/v1/email/start", { method: "POST", body: JSON.stringify({ email }) }); } catch { addFailed("Can't reach Skwirl. Try again."); return false; }
+  const b = await r.json().catch(() => ({}));
+  if (!r.ok) { addFailed(b.error || "Couldn't add that email. Try again."); return false; }
+  if (b.saved) { tr("email_added", "unverified"); closeDlg($("emailDlg")); toast("Email added. You can sign in with it from now on."); refreshSetup(); return; }
+  tr("email_code_sent"); addCodeStep(b.email, true); return true;
+}
+$("addForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const btn = e.submitter || e.currentTarget.querySelector("button"); if (btn.disabled) return;
+  btn.disabled = true; $("addErr").textContent = ""; await startAdd($("addEmail").value.trim()); btn.disabled = false;
+});
+$("addResend").addEventListener("click", async () => { if (await startAdd(addEmailAddr)) toast("New code sent."); });
+$("addCodeForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const btn = e.submitter || e.currentTarget.querySelector("button"); if (btn.disabled) return;
+  btn.disabled = true; $("addErr").textContent = "";
+  let r; try { r = await api("/v1/email/verify", { method: "POST", body: JSON.stringify({ email: addEmailAddr, code: $("addCode").value }) }); }
+  catch { btn.disabled = false; addFailed("Can't reach Skwirl. Try again."); return; }
+  const b = await r.json().catch(() => ({})); btn.disabled = false;
+  if (!r.ok) { addFailed(b.error || "That didn't work. Try again."); return; }
+  tr("email_added", "verified"); closeDlg($("emailDlg")); toast("Email confirmed. You can sign in with it anywhere.");
+  await refreshSetup(); if ($("me").style.display !== "none") openMe();
+});
+
 // Landing: ask for an invite code only when joining isn't open (or a #code= link brought one).
 async function joinMode() {
   const code = $("joinCode");
   if (joinCodeFromLink) code.value = joinCodeFromLink;
-  let mode = { open: true };
-  try { mode = await (await fetch("/join")).json(); } catch {}
+  const mode = await joinInfo;
   const needCode = !mode.open || joinCodeFromLink;
   code.hidden = !needCode; code.required = !mode.open;
   if (!mode.open && !mode.invite) {
     $("joinForm").querySelectorAll("input,button").forEach((el) => (el.disabled = true));
     $("joinFine").textContent = "Skwirl is full for now. If someone sent you an invite link, open that instead.";
   } else if (!mode.open) $("joinFine").textContent = "Invite-only right now. Your invite has the code.";
-  $("lostMail").hidden = $("lostForm").hidden = !mode.email_login;
+  authModes(mode);
 }
 // Signing up inside Instagram's browser strands the account there. Offer the real browser first.
 if (inApp) {
@@ -402,32 +560,27 @@ if (inApp) {
     : "You're in Instagram's browser, which can forget you. Tap <b>•••</b> at the top, then <b>Open in external browser</b>.";
   $("inAppNote").hidden = false; tr("card_shown", "inapp");
 }
-$("lostForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const r = await fetch("/login/email", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: $("lostEmail").value }) }).catch(() => null);
-  const b = r ? await r.json().catch(() => ({})) : {};
-  $("lostMsg").textContent = r && r.ok ? "If that email is on a Skwirl account, a sign-in link is on its way. Check spam too." : b.error || "Couldn't send. Try again.";
-});
 document.querySelectorAll("#toTop, [data-totop]").forEach((el) => el.addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); }));
-document.querySelector(".lsign").addEventListener("click", () => { $("signin").open = true; });
-// The optional email shows up once someone starts on the name field, and goes away again if they
-// leave both fields without typing an email.
-{ const fields = [$("joinName"), $("joinEmail")];
-  $("joinName").addEventListener("focus", () => { $("joinMail").hidden = false; });
-  for (const el of fields) el.addEventListener("blur", () => setTimeout(() => {
-    if (!fields.includes(document.activeElement) && !$("joinEmail").value.trim()) $("joinMail").hidden = true; }, 150)); }
+// Create account: first name + email. With email sign-in on, we email a code and the account is
+// made when it comes back (so every address on file is real); without it, the account is made now.
 $("joinForm").addEventListener("submit", async (e) => {
   tr("join_submit");
   e.preventDefault(); const err = $("joinErr"), button = e.currentTarget.querySelector("button[type=submit]");
   if (button.disabled) return;
   button.disabled = true; err.textContent = "";
+  const name = $("joinName").value.trim(), email = $("joinEmail").value.trim(), invite = $("joinCode").value;
+  const mode = await joinInfo;
   let r;
-  try { r = await fetch("/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: $("joinName").value, code: $("joinCode").value, email: $("joinEmail").value }) }); }
-  catch { button.disabled = false; err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
+  try {
+    r = mode.email_login
+      ? await postJson("/auth/email/start", { email, signup: true, invite })
+      : await postJson("/join", { name, code: invite, email });
+  } catch { button.disabled = false; err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({})); button.disabled = false;
   if (!r.ok) { tr("join_err", r.status); err.textContent = body.error || "Couldn’t join. Try again."; return; }
-  tr("join_ok", $("joinEmail").value ? "with_email" : "no_email");
-  token = body.token; store.set("stash_token", token); store.del("stash_link_saved"); start();
+  if (mode.email_login) { tr("join_code_sent"); flow = { email, name, invite, signup: true }; openSignin("", "code"); return; }
+  tr("join_ok", "with_email");
+  signedIn(body.token);
 });
 // A pasted sign-in link works as well as a bare token.
 const tokenFrom = (text) => ((text || "").match(/(stk_[0-9a-f]{20,}|[\w-]{24,})/) || [])[1] || (text || "").trim();
@@ -437,7 +590,7 @@ async function signInWith(t) {
   try { r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } }); }
   catch { token = null; return "Can't reach Skwirl. Check your connection and try again."; }
   tr("signin", r.ok ? "ok" : r.status);
-  if (r.ok) { store.set("stash_token", token); start(); return ""; }
+  if (r.ok) { store.set("stash_token", token); store.set("sk_was_in", "1"); closeDlg($("authDlg")); start(); return ""; }
   token = null;
   return r.status === 401 ? "That didn't work. Copy the whole sign-in link (or the token, starting stk_) and try again." : "Skwirl had a problem. Try again in a minute.";
 }
@@ -446,7 +599,7 @@ if (standalone && !token) {
   $("pwaIn").hidden = false;
   $("pwaPaste").addEventListener("click", async () => {
     let text = ""; try { text = await navigator.clipboard.readText(); } catch {}
-    if (!text) { $("signin").open = true; $("token").focus(); $("pwaErr").textContent = "Couldn't read the clipboard. Paste the link in the box at the bottom."; return; }
+    if (!text) { openSignin("Couldn't read the clipboard. Paste the link here instead."); $("tokenAlt").open = true; $("token").focus(); return; }
     $("pwaErr").textContent = await signInWith(tokenFrom(text));
   });
 }
@@ -612,6 +765,8 @@ async function copy(text, label) {
 }
 async function refreshSetup() {
   try { setupState = await (await api("/v1/setup")).json(); } catch { return; }
+  askEmail();
+  if (setupState.has_email && setupState.email_login) clearBanner("savelink");
   const st = setupState, phone = ["shortcut", "pwa", "web"].some((k) => (st.saved_from || {})[k]);
   // A one-off note from the owner (user.owner_msg): shown until tapped, then cleared server-side.
   if (st.owner_msg && bannerKey !== "net") {  // beats every banner but a connection error
@@ -724,14 +879,14 @@ $("exportBtn").addEventListener("click", async () => {
   const a = document.createElement("a"); a.href = url; a.download = "skwirl-export.json"; a.click(); URL.revokeObjectURL(url);
 });
 $("signOutBtn").addEventListener("click", () => {
-  if (!store.get("stash_link_saved") && !confirm("You haven't saved your sign-in link. Without it you can't get back in. Sign out anyway?")) return;
+  if (!store.get("stash_link_saved") && !(setupState?.has_email && setupState?.email_login) && !confirm("You haven't saved your sign-in link. Without it you can't get back in. Sign out anyway?")) return;
   const waiting = outbox().length;
   if (waiting && !confirm(`${waiting} save${waiting > 1 ? "s haven't" : " hasn't"} reached Skwirl yet (it was offline). Signing out deletes ${waiting > 1 ? "them" : "it"}. Sign out anyway?`)) return;
   signOut();
 });
 
 async function start() {
-  show("lib");
+  show("lib"); store.set("sk_was_in", "1");
   // Android share sheet lands here as /?url=…&text=… (manifest share_target).
   const p = new URLSearchParams(location.search);
   const shared = p.get("url") || (p.get("text") || "").match(/https?:\/\/\S+/)?.[0];
@@ -752,9 +907,14 @@ const loginCode = (location.hash.match(/^#login=([0-9a-f]{32})/) || [])[1];
 if (loginCode) {
   history.replaceState(null, "", location.pathname + location.search);
   fetch("/login/redeem", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: loginCode }) })
-    .then(async (r) => { const b = await r.json().catch(() => ({})); tr("login_link", r.ok ? "ok" : "expired"); if (!r.ok) throw new Error(b.error); token = b.token; store.set("stash_token", token); store.del("stash_link_saved"); start(); })
-    .catch((e) => { show("auth"); joinMode(); $("signin").open = true; $("authErr").textContent = e.message || "That link didn't work. Ask for a new one."; });
-} else token ? start().catch(() => {}) : (show("auth"), joinMode(), plusSignedOut());
+    .then(async (r) => { const b = await r.json().catch(() => ({})); tr("login_link", r.ok ? "ok" : "expired"); if (!r.ok) throw new Error(b.error); signedIn(b.token); })
+    .catch((e) => { show("auth"); joinMode(); openSignin(e.message || "That link didn't work. Sign in with your email instead."); });
+} else if (token) start().catch(() => {});
+else {
+  show("auth"); joinMode(); plusSignedOut();
+  // Been signed in here before, the home-screen app, or a skwirl.app/#signin link: open sign-in.
+  if (store.get("sk_was_in") || standalone || location.hash === "#signin") openSignin("");
+}
 function plusSignedOut() {
   const p = new URLSearchParams(location.search);
   if (p.get("plus") !== "done") return;
@@ -1021,7 +1181,7 @@ const PRICES = { US: ["$", "4.99", "39"], IN: ["₹", "299", "2,499"], GB: ["£"
 const priceFor = (cc) => PRICES[cc] || (EU.includes(cc) ? PRICES.EU : PRICES.US);
 const plusPrice = (cc) => { const [c, m] = priceFor(cc); return c + m; };
 let plusCountry = null, plusOpen = false;
-fetch("/join").then((r) => r.json()).then((m) => {
+joinInfo.then((m) => {
   plusCountry = m.country; const [c, , y] = priceFor(m.country);
   document.querySelectorAll(".plusPrice").forEach((el) => (el.textContent = plusPrice(m.country)));
   document.querySelectorAll(".plusYear").forEach((el) => (el.textContent = c + y));
@@ -1186,13 +1346,13 @@ async function openMe() {
 }
 $("meBtn").addEventListener("click", openMe);
 $("meBack").addEventListener("click", () => { backTo("lib"); });
-$("meEmailIn").addEventListener("input", () => { const e = $("meEmailIn"); $("meConsentRow").hidden = !e.value.trim() || e.value.trim() === e.dataset.was; });
 $("meForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const r = await api("/v1/me", { method: "PUT", body: JSON.stringify({ name: $("meNameIn").value, email: $("meEmailIn").value, consent: $("meConsent").checked }) }).catch(() => null);
   const b = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok) { $("meMsg").className = "msg err"; $("meMsg").textContent = b.error || "Couldn't save. Try again."; return; }
   tr("profile_saved"); $("meMsg").className = "msg ok"; $("meMsg").textContent = "Saved.";
+  if (b.sent) { addCodeStep(b.email, true); if (!$("emailDlg").open) $("emailDlg").showModal(); return; }  // new email: confirm it with the code first
   await refreshSetup(); openMe();
 });
 $("mePushOn").addEventListener("click", () => enablePush($("mePushMsg"), openMe));
