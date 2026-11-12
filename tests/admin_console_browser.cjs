@@ -42,6 +42,21 @@ async function harness(browser, width, handler, run, signedIn = true) {
   finally { await context.close(); }
 }
 async function loaded(page) { await page.waitForFunction(() => !document.getElementById('console').hidden); }
+async function assertSessionCleared(page) {
+  assert.equal(await page.locator('#console').isVisible(), false, 'Console hides after session changes');
+  assert.equal(await page.locator('#userDrawer').evaluate(el => el.open), false, 'Private drawer closes');
+  for (const id of ['metrics', 'metricTable', 'funnelChart', 'userRows', 'queue', 'providers', 'failures', 'trafficChart', 'trafficTable', 'trafficBreakdowns', 'activityFeed', 'limitations', 'drawerBody']) {
+    assert.equal(await page.locator('#' + id).evaluate(el => el.childElementCount), 0, `${id} private DOM cleared`);
+    assert.equal(await page.locator('#' + id).textContent(), '', `${id} private text cleared`);
+  }
+}
+async function changeStoredToken(page, next, dispatch = true) {
+  await page.evaluate(({next,dispatch}) => {
+    const oldValue = localStorage.getItem('stash_token');
+    if (next === null) localStorage.removeItem('stash_token'); else localStorage.setItem('stash_token', next);
+    if (dispatch) window.dispatchEvent(new StorageEvent('storage', { key: 'stash_token', oldValue, newValue: next, storageArea: localStorage }));
+  }, {next,dispatch});
+}
 async function checkViewport(browser, width) {
   await harness(browser, width, null, async (page, requests) => {
     await loaded(page);
@@ -49,7 +64,7 @@ async function checkViewport(browser, width) {
     for (const id of ['funnelChart','userRows','queue','providers','failures','trafficChart','trafficBreakdowns','activityFeed']) assert.ok((await page.locator('#'+id).innerText()).length || await page.locator('#'+id+' svg').count(), `${id} rendered`);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${width}px body fits`);
     assert.equal(await page.locator('#trafficChart svg').evaluate(el => el.viewBox.baseVal.width >= el.clientWidth * 0.8), true, 'Traffic chart uses the available panel width');
-    await page.screenshot({ path: `/tmp/skwirl-console-preview-${width === 1440 ? 'desktop' : 'mobile'}.png`, fullPage: true });
+    if (!process.env.SKIP_SCREENSHOTS) await page.screenshot({ path: `/tmp/skwirl-console-preview-${width === 1440 ? 'desktop' : 'mobile'}.png`, fullPage: true });
     await page.locator('#userSearch').fill('jordan');
     assert.equal(await page.locator('#userRows tr[data-user]').count(), 1);
     assert.equal(await page.locator('#userRows tr').getAttribute('data-user'), 'fixture_jordan');
@@ -111,6 +126,55 @@ async function checkViewport(browser, width) {
       const response=page.waitForResponse(r=>r.url().includes('days=30'));const stale=clone(fixture);stale.kpis[0].value=999;await delayed.fulfill({json:stale});await response;await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.equal(await page.locator('.metric-value').first().innerText(),'1');assert.equal(await page.locator('#period').inputValue(),'1');
     });
     console.log('PASS stale period response does not overwrite newer selection');
+    await harness(browser,1440,null,async(page,requests)=>{
+      await loaded(page); await page.locator('[data-view="fixture_avery"]').first().click();
+      await page.locator('[data-drawer-action="message"]').click();
+      await page.locator('#actionText').fill('Never send after sign-out');
+      const oldForm = await page.locator('#actionForm').elementHandle();
+      const before = requests.filter(r=>r.path.startsWith('/v1/')).length;
+      await changeStoredToken(page,null);
+      await assertSessionCleared(page);
+      // A retained DOM reference must not turn a cross-tab sign-out into a stale action.
+      await oldForm.evaluate(form=>form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+      assert.equal(requests.filter(r=>r.path.startsWith('/v1/')).length,before,'Sign-out causes no further private requests');
+      assert.equal(requests.filter(r=>r.method==='POST').length,0);
+    });
+    console.log('PASS cross-tab sign-out clears private DOM, closes drawer and removes actions');
+    await harness(browser,390,async(route,url,request)=>{
+      if(url.pathname==='/v1/admin/console'&&request.headers().authorization==='Bearer stk_regular_fixture'){await route.fulfill({status:404,json:{error:'not found'}});return true;}
+    },async(page,requests)=>{
+      await loaded(page); await page.locator('[data-view="fixture_avery"]').first().click();
+      const response=page.waitForResponse(r=>r.url().includes('/v1/admin/console')&&r.status()===404);
+      await changeStoredToken(page,'stk_regular_fixture'); await response;
+      await page.waitForFunction(()=>document.getElementById('status').textContent.includes('Owner access is required'));
+      await assertSessionCleared(page);
+      assert.equal(requests.filter(r=>r.path==='/v1/admin/console').at(-1).authorization,'Bearer stk_regular_fixture','Replacement session is checked with its own token');
+      assert.equal(requests.filter(r=>r.method==='POST').length,0);
+    });
+    console.log('PASS cross-tab regular-user replacement rechecks auth and preserves no owner data');
+    await harness(browser,1440,null,async(page,requests)=>{
+      await loaded(page); await page.locator('[data-view="fixture_avery"]').first().click();
+      await page.locator('[data-drawer-action="message"]').click(); await page.locator('#actionText').fill('Never send with stale credentials');
+      // No storage event: api() must also re-read storage before a fetch.
+      await changeStoredToken(page,null,false); await page.locator('#actionForm button[type="submit"]').click();
+      await assertSessionCleared(page);
+      assert.equal(requests.filter(r=>r.method==='POST').length,0,'Pre-fetch guard blocks stale owner mutation');
+    });
+    console.log('PASS pre-fetch storage check blocks stale owner action even without storage event');
+    let sessionDelayed, sessionRequested;
+    const sessionIsRequested=new Promise(resolve=>{sessionRequested=resolve;});
+    await harness(browser,1440,async(route,url)=>{
+      if(url.pathname==='/v1/admin/console'&&url.searchParams.get('days')==='30'){sessionDelayed=route;sessionRequested();return true;}
+    },async page=>{
+      await loaded(page); await page.locator('[data-view="fixture_avery"]').first().click(); await page.keyboard.press('Escape');
+      await page.locator('#period').selectOption('30'); await sessionIsRequested;
+      // Token disappears while the owner response is in flight, without an event.
+      await changeStoredToken(page,null,false);
+      const response=page.waitForResponse(r=>r.url().includes('days=30')); await sessionDelayed.fulfill({json:clone(fixture)}); await response;
+      await page.waitForFunction(()=>document.getElementById('status').textContent.includes('Owner access is required'));
+      await assertSessionCleared(page);
+    });
+    console.log('PASS post-fetch storage check discards in-flight owner response after sign-out');
     const xss='<img src=x onerror="window.__xss=true">';
     await harness(browser,390,async(route,url)=>{if(url.pathname==='/v1/admin/console'){const unsafe=clone(fixture);unsafe.users[0].name=xss;unsafe.activity[0].name=xss;unsafe.traffic.sources[0].k=xss;unsafe.health.failures[0].examples[0].title=xss;await route.fulfill({json:unsafe});return true;}},async page=>{await loaded(page);assert.equal(await page.locator('#userRows img,#activityFeed img,#trafficBreakdowns img,#failures img').count(),0);assert.equal(await page.locator('[data-view="fixture_avery"]').first().innerText(),xss);await page.locator('[data-view="fixture_avery"]').first().click();assert.equal(await page.locator('#drawerName').innerText(),xss);assert.equal(await page.locator('#drawerName img').count(),0);assert.equal(await page.evaluate(()=>Boolean(window.__xss)),false);});
     console.log('PASS untrusted names, activity, traffic and failure examples render as text');
