@@ -10,11 +10,24 @@
 #   POSTDIR/SLUG.mp4  1080x1920 30 fps H.264 CRF 18, cover still on frame 0, loudnorm -14 LUFS / -1 dBTP, faststart
 #   POSTDIR/cover.png the cover still
 #   POSTDIR/qa/evidence/  probe.txt, loudness.txt (whole file), sheet-*.png (2 fps), cuts.txt, audio.wav (16 kHz for whisper)
+# After Whisper transcribes that extracted audio and the renderer exports actual word boxes:
+#   make-reel.sh --evidence POSTDIR SLUG
+# qa/transcript.json: {video_sha256,audio_sha256,words:[{text,start,end}]}
+# qa/rendered-evidence.json: {video_sha256,captions:{burned_in:true,words:[{text,start,end,bbox,lines}]},key_text_boxes:[{bbox}]}
+# These files must describe this exact render. No script-derived transcript or guessed boxes.
 set -eu
-[ $# -ge 4 ] || { sed -n 2,14p "$0"; exit 2; }
-ENTRY=$1; COMP=$2; POST=$3; SLUG=$4; COVER_FRAME=${5:-0}
+EVIDENCE_ONLY=0
+if [ "${1:-}" = --evidence ]; then
+  [ $# -eq 3 ] || { echo 'usage: make-reel.sh --evidence POSTDIR SLUG'; exit 2; }
+  EVIDENCE_ONLY=1; POST=$2; SLUG=$3
+else
+  [ $# -ge 4 ] || { sed -n 2,14p "$0"; exit 2; }
+  ENTRY=$1; COMP=$2; POST=$3; SLUG=$4; COVER_FRAME=${5:-0}
+fi
 PROMO=$(cd "$(dirname "$0")/../.." && pwd)
 mkdir -p "$POST/qa/evidence"; POST=$(cd "$POST" && pwd); EV="$POST/qa/evidence"
+OUT="$POST/$SLUG.mp4"
+if [ "$EVIDENCE_ONLY" = 0 ]; then
 RAW="$POST/raw-$SLUG.mp4"
 [ -e "$RAW.lock" ] && { echo "a render into $RAW is already running"; exit 1; }
 trap 'rm -f "$RAW.lock"' EXIT; : > "$RAW.lock"     # never two renders into one file
@@ -39,3 +52,42 @@ ffmpeg -y -v error -i "$OUT" -ar 16000 -ac 1 "$EV/audio.wav"
 printf 'Verdict: PENDING\n\nNew render. Run content-qa on qa/evidence (whisper on audio.wav, per-section ebur128, sheets, cuts on the 15-frame grid) and replace this file.\n' > "$POST/qa/report.md"
 cat "$EV/probe.txt"; grep -E "I:|Peak:" "$EV/loudness.txt" || true
 echo "rendered $OUT; QA pending"
+fi
+python3 - "$POST" "$SLUG" "$EVIDENCE_ONLY" <<'PYTHON'
+import hashlib, json, sys
+from pathlib import Path
+post, slug, evidence_only = Path(sys.argv[1]), sys.argv[2], sys.argv[3] == '1'
+qa = post / 'qa'
+video_hash = hashlib.sha256((post / f'{slug}.mp4').read_bytes()).hexdigest()
+audio = qa / 'evidence/audio.wav'
+audio_hash = hashlib.sha256(audio.read_bytes()).hexdigest()
+sheets = sorted(qa.glob('evidence/sheet-*.png'))
+manifest = {'viewer_files': [str(p.relative_to(post)) for p in sheets] + ['cover.png', 'qa/evidence/audio.wav'],
+            'key_text_boxes': [], 'video_sha256': video_hash, 'captions': {}, 'transcript': {}}
+missing = []
+for name, fields in (('transcript.json', ('words',)), ('rendered-evidence.json', ('captions', 'key_text_boxes'))):
+    try:
+        data = json.loads((qa / name).read_text())
+        if data.get('video_sha256') != video_hash:
+            raise ValueError('video hash mismatch')
+        if name == 'transcript.json' and data.get('audio_sha256') != audio_hash:
+            raise ValueError('extracted audio hash mismatch')
+        if not all(data.get(field) for field in fields):
+            raise ValueError('required evidence missing')
+        if name == 'transcript.json':
+            manifest['transcript'] = {'words': data['words']}
+        else:
+            manifest.update({field: data[field] for field in fields})
+        manifest['viewer_files'].append('qa/' + name)
+    except (OSError, ValueError, TypeError):
+        missing.append(name + ': missing or not bound to the actual rendered video/audio')
+if not sheets:
+    missing.append('no rendered contact sheets')
+manifest['pending'] = missing
+(qa / 'evidence.json').write_text(json.dumps(manifest, indent=2) + '\n')
+(qa / 'quality-report.json').unlink(missing_ok=True)
+(qa / 'report.md').write_text('Verdict: PENDING\n\nRender/evidence changed. Run independent content-qa and mandatory quality validation.\n')
+print('Maker evidence: ' + ('PENDING: ' + '; '.join(missing) if missing else 'collected; independent reviews still required'))
+if missing and evidence_only:
+    raise SystemExit(1)
+PYTHON

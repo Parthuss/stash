@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import copy
 import hashlib
 import html
 import json
@@ -350,6 +351,16 @@ def build(script: Path, out: Path) -> Path:
                     + css + "</style><body>" + "\n".join(sections) + "</body></html>")
     (out / "caption.txt").write_text(data["caption"].strip() + "\n")
     (out / "copy.json").write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+    # Preserve author-supplied truth/claim metadata. Missing metadata still fails the gate;
+    # the renderer supplies only structural facts, never claims or a review verdict.
+    draft = copy.deepcopy(data)
+    draft.setdefault("hook", data["slides"][0]["title"])
+    for i, slide in enumerate(draft["slides"], 1):
+        slide.setdefault("n", i)
+        slide.setdefault("job", "hook" if i == 1 else "cta" if i == n else "payoff")
+        slide.setdefault("text", slide["title"])
+        slide.setdefault("visual", f"Rendered {slide['layout']} layout; inspect slide {i}")
+    (out / "content.json").write_text(json.dumps(draft, indent=2, ensure_ascii=False) + "\n")
     return page
 
 

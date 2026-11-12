@@ -44,8 +44,8 @@
         {
           "path": "worker/src/v1.ts",
           "anchor": "export async function searchNotes",
-          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
-          "line": 258
+          "sha256": "61adffb0f92dfb5d6c9397c6398a516b6ae9f7dabceeb8762a293acadabd5787",
+          "line": 261
         }
       ],
       "name": "Meaning search",
@@ -126,8 +126,8 @@
         {
           "path": "worker/src/v1.ts",
           "anchor": "export async function listMentions",
-          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
-          "line": 126
+          "sha256": "61adffb0f92dfb5d6c9397c6398a516b6ae9f7dabceeb8762a293acadabd5787",
+          "line": 129
         }
       ],
       "name": "Lists",
@@ -207,8 +207,8 @@
         {
           "path": "worker/src/v1.ts",
           "anchor": "const take = missing.slice",
-          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
-          "line": 440
+          "sha256": "61adffb0f92dfb5d6c9397c6398a516b6ae9f7dabceeb8762a293acadabd5787",
+          "line": 482
         }
       ],
       "name": "Import",
@@ -272,7 +272,7 @@
         {
           "path": "worker/src/v1.ts",
           "anchor": "POST|DELETE /v1/notes/:id/share",
-          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
+          "sha256": "61adffb0f92dfb5d6c9397c6398a516b6ae9f7dabceeb8762a293acadabd5787",
           "line": 11
         },
         {
@@ -346,8 +346,8 @@
         {
           "path": "worker/src/v1.ts",
           "anchor": "SELECT ${NOTE_COLUMNS}, markdown FROM note WHERE user_id IS ? ORDER BY created_at",
-          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
-          "line": 713
+          "sha256": "61adffb0f92dfb5d6c9397c6398a516b6ae9f7dabceeb8762a293acadabd5787",
+          "line": 755
         }
       ],
       "schema_evidence": "worker/src/v1.ts NOTE_COLUMNS includes id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id, share_id and categories; export SELECT also includes markdown, wrapped as {exported_at, notes}."

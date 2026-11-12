@@ -24,6 +24,8 @@ async function main() {
     });
     const slides = page.locator('.slide');
     const errors = [];
+    const boxes = [];
+    const renderedCopy = [];
     const count = await slides.count();
     for (let i=0; i<count; i++) {
       const slide = slides.nth(i);
@@ -34,7 +36,7 @@ async function main() {
         // Copy stays inside the safe margin, never clips, and is big enough to read on a phone (IG shows 1080px at ~390pt).
         for (const t of el.querySelectorAll('[data-copy]')) {
           const r = t.getBoundingClientRect();
-          if (r.left < outer.left+48 || r.right > outer.right-48 || r.top < outer.top+48 || r.bottom > outer.bottom-40
+          if (r.left < outer.left+60 || r.right > outer.right-60 || r.top < outer.top+60 || r.bottom > outer.bottom-60
             || t.scrollWidth > t.clientWidth+1 || t.scrollHeight > t.clientHeight+1) bad.push(`overflow: ${t.innerText}`);
           const min = t.closest('.meta') ? 26 : 30;
           for (const n of [t, ...t.querySelectorAll('*')]) {
@@ -60,12 +62,29 @@ async function main() {
         return bad;
       });
       errors.push(...issues.map(x=>`slide ${i+1}: ${x}`));
+      const measured = await slide.evaluate(el => {
+        const outer = el.getBoundingClientRect();
+        return [...el.querySelectorAll('[data-copy]')].map(t => {
+          const r = t.getBoundingClientRect();
+          return {text:t.innerText.trim(), bbox:[r.left-outer.left,r.top-outer.top,r.width,r.height]};
+        }).filter(x => x.text);
+      });
+      for (const item of measured) {
+        boxes.push({slide:i+1, file:`${String(i+1).padStart(2,'0')}.png`, ...item});
+        renderedCopy.push({slide:i+1,text:item.text});
+      }
       await slide.screenshot({path:path.join(out,`${String(i+1).padStart(2,'0')}.png`)});
     }
     fs.copyFileSync(path.join(out,'01.png'),path.join(out,'cover.png'));
     fs.mkdirSync(path.join(out,'qa'),{recursive:true});
+    const evidencePath = path.join(out,'qa/evidence.json');
+    fs.writeFileSync(evidencePath, JSON.stringify({
+      viewer_files:[...Array.from({length:count},(_,i)=>`${String(i+1).padStart(2,'0')}.png`),'cover.png'],
+      key_text_boxes:boxes, rendered_copy:renderedCopy,
+      renderer:{name:'stills/playwright',width:1080,height:1350,slides:count},
+    },null,2)+'\n');
     const hashes = {};
-    for (const name of ['slides.html','copy.json','caption.txt','cover.png',...Array.from({length:count},(_,i)=>`${String(i+1).padStart(2,'0')}.png`)])
+    for (const name of ['slides.html','copy.json','content.json','caption.txt','cover.png','qa/evidence.json',...Array.from({length:count},(_,i)=>`${String(i+1).padStart(2,'0')}.png`)])
       hashes[name] = createHash('sha256').update(fs.readFileSync(path.join(out,name))).digest('hex');
     const checksPath = path.join(out,'qa/checks.json');
     const reportPath = path.join(out,'qa/report.md');

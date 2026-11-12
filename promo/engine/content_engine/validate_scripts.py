@@ -30,11 +30,12 @@ def validate_script(draft: dict) -> list[dict]:
             fail('Reel exceeds house 60-second ceiling')
         if rows and rows[0].get('on_screen') != draft.get('hook'):
             fail('Frame-zero text must contain the reviewed hook verbatim')
-    elif draft.get('kind') == 'carousel':
+    elif draft.get('kind') in ('carousel', 'static'):
         slides = draft.get('slides', [])
-        if not 2 <= len(slides) <= 20:
-            fail('Carousel must have 2-20 slide jobs')
-        if slides and (slides[0].get('job') != 'hook' or slides[-1].get('job') != 'cta'):
+        static = draft.get('kind') == 'static'
+        if (len(slides) != 1 if static else not 2 <= len(slides) <= 20):
+            fail('Static needs one slide; carousel must have 2-20 slide jobs')
+        if slides and not static and (slides[0].get('job') != 'hook' or slides[-1].get('job') != 'cta'):
             fail('Carousel must open with hook and end in CTA')
         for i, slide in enumerate(slides):
             if slide.get('n') != i+1 or not slide.get('job') or not slide.get('text') or not slide.get('visual'):
@@ -44,5 +45,5 @@ def validate_script(draft: dict) -> list[dict]:
         if slides and slides[0].get('text') != draft.get('hook'):
             fail('First slide text must match the reviewed hook')
     else:
-        fail('Structured drafts must be reel or carousel')
+        fail('Structured drafts must be reel, carousel or static')
     return errors

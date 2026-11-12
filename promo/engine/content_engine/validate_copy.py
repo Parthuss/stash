@@ -26,10 +26,30 @@ def public_units(draft: dict) -> list[dict]:
             out.append({'path': path, 'text': text.strip()})
     for key in ('hook', 'caption', 'cta'):
         add(key, draft.get(key))
-    for group, fields in [('beats', ('on_screen', 'vo')), ('slides', ('title', 'body', 'text', 'bridge'))]:
+    for group, fields in [('beats', ('on_screen', 'vo')), ('slides', ('title', 'body', 'text', 'bridge', 'kicker', 'label', 'card_title', 'card', 'pill', 'panel', 'from', 'to', 'stamp', 'tile_label', 'arrow_label'))]:
         for i, row in enumerate(draft.get(group, [])):
             for field in fields:
                 add(f'{group}.{i}.{field}', row.get(field))
+    # Renderer defaults and nested labels are audience-facing too. Inventory them
+    # explicitly so a label cannot bypass truth/slop checks or the editor packet.
+    for i, row in enumerate(draft.get('slides', [])):
+        for group in ('tiles', 'crops'):
+            for j, item in enumerate(row.get(group, [])):
+                if group == 'tiles' and item.get('gone'):
+                    add(f'slides.{i}.{group}.{j}.label', item.get('label', 'Reel unavailable'))
+                else:
+                    add(f'slides.{i}.{group}.{j}.label', item.get('label'))
+        if row.get('layout'):
+            if row['layout'] != 'cta':
+                add(f'slides.{i}.brand', 'Skwirl')
+                add(f'slides.{i}.count', f"{i+1}/{len(draft['slides'])}")
+            if row['layout'] == 'hook':
+                add(f'slides.{i}.panel', row.get('panel', 'Saved'))
+            if row['layout'] == 'statement':
+                for field, default in (('from', 'Your save'), ('to', 'Their post'), ('stamp', 'Deleted')):
+                    add(f'slides.{i}.{field}', row.get(field, default))
+            if row['layout'] == 'cta':
+                add(f'slides.{i}.label', row.get('label', 'skwirl.app'))
     return out
 
 

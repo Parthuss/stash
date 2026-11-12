@@ -75,7 +75,8 @@ def report_for(post: dict, directory: Path, draft: dict, history: list[dict],
                     final_strings = []
                     def inventory(value, key=''):
                         # Only renderer controls/asset references are non-public. Unknown text is copy.
-                        if key in ('id','kind','layout','template','image','image_path','art','art_path','src','font','color'):
+                        if key in ('id','kind','layout','template','image','image_path','art','art_path','src','font','color',
+                                   'bg','arrange','screen','tile','asset','label_at','job','visual','feature_ids'):
                             return
                         if isinstance(value,str) and value.strip():
                             final_strings.append(value.strip())
