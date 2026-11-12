@@ -1,0 +1,106 @@
+{
+  "week": "2026-11-17",
+  "tz": "Asia/Kolkata",
+  "posts": [
+    {
+      "id": "w17-01-pause-rewind",
+      "dir": "01-pause-rewind",
+      "cover": "cover.png",
+      "when": "2026-11-17 22:30",
+      "instagram": {
+        "caption": "Pause. Rewind. \"How much butter was that?\" Rewind again. 🧈\nShare the reel to Skwirl and it writes the recipe down: every ingredient in a checklist, every step numbered. Free to try, link in bio. Send this to the friend cooking from a reel tonight.\n\nMusic: \"Backbay Lounge\" by Kevin MacLeod (incompetech.com), CC BY 4.0\n#recipereels #cookinghacks #savedreels #recipeideas #pastarecipe"
+      },
+      "kind": "reel",
+      "media": [
+        "pause-rewind.mp4"
+      ],
+      "youtube": {
+        "title": "Cooking from a reel you saved? Pause, rewind, repeat",
+        "description": "Pause. Rewind. \"How much butter was that?\" Rewind again. 🧈\nShare the reel to Skwirl and it writes the recipe down: every ingredient in a checklist, every step numbered. Free to try, link in bio. Send this to the friend cooking from a reel tonight.\n\nMusic: \"Backbay Lounge\" by Kevin MacLeod (incompetech.com), CC BY 4.0\n\nskwirl.app\n#Shorts",
+        "tags": [
+          "recipereels",
+          "cookinghacks",
+          "savedreels",
+          "recipeideas",
+          "pastarecipe",
+          "skwirl",
+          "saved reels"
+        ]
+      }
+    },
+    {
+      "id": "w17-02-claude-code-later",
+      "dir": "02-claude-code-later",
+      "cover": "cover.png",
+      "when": "2026-11-19 22:30",
+      "instagram": {
+        "caption": "You saved it for later. Later came, and Claude Code remembered it for you.\nWith the Skwirl plugin, Claude Code checks your saved reels and posts on its own while you work, and brings back the ones that fit. Free to try, link in bio. Send this to the dev friend with hundreds of saved coding reels.\n\nMusic: \"Voltaic\" by Kevin MacLeod (incompetech.com), CC BY 4.0\n#claudecode #claudeai #webdev #codingtips #savedreels"
+      },
+      "kind": "reel",
+      "media": [
+        "claude-code-later.mp4"
+      ],
+      "youtube": {
+        "title": "Claude Code brought back a reel I saved in September",
+        "description": "You saved it for later. Later came, and Claude Code remembered it for you.\nWith the Skwirl plugin, Claude Code checks your saved reels and posts on its own while you work, and brings back the ones that fit. Free to try, link in bio. Send this to the dev friend with hundreds of saved coding reels.\n\nMusic: \"Voltaic\" by Kevin MacLeod (incompetech.com), CC BY 4.0\n\nskwirl.app\n#Shorts",
+        "tags": [
+          "claudecode",
+          "claudeai",
+          "webdev",
+          "codingtips",
+          "savedreels",
+          "skwirl",
+          "saved reels"
+        ]
+      }
+    },
+    {
+      "id": "w17-03-export-carousel",
+      "dir": "03-export-carousel",
+      "cover": "cover.png",
+      "when": "2026-11-20 22:30",
+      "instagram": {
+        "caption": "How to get the list of everything you ever saved on Instagram, and turn it back into notes. 📦\nSave this for when the export email lands, and send it to the friend whose Saved folder has no bottom. Skwirl is free to try, link in bio.\n\n#instagramtips #instagramhacks #savedposts #techtips #productivitytips"
+      },
+      "kind": "carousel",
+      "media": [
+        "01.png",
+        "02.png",
+        "03.png",
+        "04.png",
+        "05.png",
+        "06.png",
+        "07.png",
+        "08.png",
+        "09.png",
+        "10.png"
+      ]
+    },
+    {
+      "id": "w17-04-finally-tokyo",
+      "dir": "04-finally-tokyo",
+      "cover": "cover.png",
+      "when": "2026-11-22 22:30",
+      "instagram": {
+        "caption": "The ramen place was in your saves the whole time. 🍜\nSkwirl pulls the places out of the reels you share into one list, with the reel each one came from. Free to try, link in bio. Send this to whoever you're travelling with.\n\nMusic: \"Digital Lemonade\" by Kevin MacLeod (incompetech.com), CC BY 4.0\n#tokyotravel #japantravel #travelhacks #savedreels #tokyofood"
+      },
+      "kind": "reel",
+      "media": [
+        "finally-tokyo.mp4"
+      ],
+      "youtube": {
+        "title": "The ramen place was in your saves the whole time",
+        "description": "The ramen place was in your saves the whole time. 🍜\nSkwirl pulls the places out of the reels you share into one list, with the reel each one came from. Free to try, link in bio. Send this to whoever you're travelling with.\n\nMusic: \"Digital Lemonade\" by Kevin MacLeod (incompetech.com), CC BY 4.0\n\nskwirl.app\n#Shorts",
+        "tags": [
+          "tokyotravel",
+          "japantravel",
+          "travelhacks",
+          "savedreels",
+          "tokyofood",
+          "skwirl",
+          "saved reels"
+        ]
+      }
+    }
+  ]
+}
