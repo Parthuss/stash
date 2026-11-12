@@ -385,6 +385,12 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit .haveacct, bo
 .uses span { display: block; color: var(--muted); font-size: 15px; }
 .uses small { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 5px 12px; border-radius: 999px; background: var(--butter); font-size: 13px; font-weight: 500; }
 .uses li:nth-child(2) small { background: var(--mint); } .uses li:nth-child(3) small { background: var(--peach); }
+/* one user quote under #work: their words exactly, first name and job only */
+.voice { max-width: 640px; margin-left: auto; margin-right: auto; padding: 30px 26px 24px; background: rgb(255 255 255 / .85); border-radius: 28px; box-shadow: var(--lift-1); position: relative; }
+.voice::before { content: "\201C"; position: absolute; top: -18px; left: 22px; width: 44px; height: 44px; border-radius: 50%; background: var(--lavender); color: var(--ink); font: 800 34px/58px var(--display); font-variation-settings: "CASL" 1; text-align: center; }
+.voice blockquote { margin: 0; }
+.voice blockquote p { margin: 0; font-size: clamp(18px, 2.2vw, 20px); font-weight: 500; line-height: 1.55; color: var(--ink); text-wrap: pretty; }
+.voice figcaption { margin-top: 16px; font-size: 14px; font-weight: 600; color: var(--muted); }
 .work-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 26px; }
 .lsec > p.work-fine { font-size: 14px; margin: 16px auto 0; max-width: 34em; }
 /* #work plays once when scrolled into view: app.js adds .cc-anim (motion allowed), then .play on the
@@ -690,6 +696,11 @@ body.on-phone .phone-handoff { display: none; }
     <div class="work-cta"><a class="btn" href="#" data-totop>Start free</a><a class="btn soft" href="/guides/use-saved-reels-in-claude">How to set it up</a></div>
     <p class="fine work-fine">Claude Code checks your saves by itself. In ChatGPT or the Claude app, just say “check my Skwirl”.</p>
   </div>
+
+  <figure class="lsec voice reveal" aria-label="What a Skwirl user said">
+    <blockquote><p>A couple months back I’d started trying to write all the ideas down in a giant google doc spread sheet…but I only got like 5% of the way through before giving up. I’d been searching for an AI solution ever since and was mind blown when I found this…it’s literally perfect!! I can save posts and come back to them wayyyy easier now.</p></blockquote>
+    <figcaption>Jacinda, occupational therapist</figcaption>
+  </figure>
 
   <div class="lsec reveal">
     <h2>Your Saved folder is a graveyard.</h2>
