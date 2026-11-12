@@ -48,6 +48,7 @@ async function checkViewport(browser, width) {
     assert.equal(await page.locator('.metric').count(), 8);
     for (const id of ['funnelChart','userRows','queue','providers','failures','trafficChart','trafficBreakdowns','activityFeed']) assert.ok((await page.locator('#'+id).innerText()).length || await page.locator('#'+id+' svg').count(), `${id} rendered`);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${width}px body fits`);
+    assert.equal(await page.locator('#trafficChart svg').evaluate(el => el.viewBox.baseVal.width >= el.clientWidth * 0.8), true, 'Traffic chart uses the available panel width');
     await page.screenshot({ path: `/tmp/skwirl-console-preview-${width === 1440 ? 'desktop' : 'mobile'}.png`, fullPage: true });
     await page.locator('#userSearch').fill('jordan');
     assert.equal(await page.locator('#userRows tr[data-user]').count(), 1);
