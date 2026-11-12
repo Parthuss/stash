@@ -38,6 +38,9 @@ class Instagram:
     def create_carousel_item(self, image_url: str) -> str:
         return self._post(f"{self.uid}/media", image_url=image_url, is_carousel_item="true")["id"]
 
+    def create_image(self, image_url: str, caption: str) -> str:
+        return self._post(f"{self.uid}/media", image_url=image_url, caption=caption)["id"]
+
     def create_carousel(self, children: list[str], caption: str) -> str:
         return self._post(f"{self.uid}/media", media_type="CAROUSEL", children=",".join(children),
                           caption=caption)["id"]
@@ -100,7 +103,9 @@ class Instagram:
         out = {}
         for row in d.get("data", []):
             vals = row.get("values") or [{}]
-            out[row["name"]] = (row.get("total_value") or {}).get("value", vals[0].get("value"))
+            value = (row.get("total_value") or {}).get("value", vals[0].get("value"))
+            if value is not None:
+                out[row["name"]] = value
         return out
 
     # token

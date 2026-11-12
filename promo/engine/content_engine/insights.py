@@ -74,4 +74,4 @@ def summarize(posts: list[dict], now: datetime) -> dict:
             row["youtube"] = {"url": yt.get("url"), "h48": m.get("h48"), "d7": m.get("d7")}
         rows.append(row)
     return {"updated": now.isoformat(), "posts": rows,
-            "note": "shares_per_reach is the main signal (sends), then saves_per_reach and 3 s hold (1 - reels_skip_rate)."}
+            "note": "Compare shares/reach, then saves/reach. reels_skip_rate is raw API data; verify its scale before deriving 3 s hold."}

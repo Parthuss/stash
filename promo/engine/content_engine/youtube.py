@@ -32,24 +32,50 @@ class YouTube:
         return {"Authorization": f"Bearer {self.token()}", **extra}
 
     def upload(self, video: bytes, title: str, description: str, tags: list[str], privacy: str = "public",
-               category: str = "28") -> tuple[str, str]:
+               category: str = "28", session: str | None = None, on_session=None,
+               contains_synthetic_media: bool = False) -> tuple[str, str]:
         """Returns (video id, the privacy YouTube actually applied): channel defaults can force private."""
         meta = {
             "snippet": {"title": title[:100], "description": description[:5000], "tags": tags[:30],
                         "categoryId": category},
             "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False,
-                       "containsSyntheticMedia": False},
+                       "containsSyntheticMedia": contains_synthetic_media},
         }
-        r = self.http.request("POST", UPLOAD_URL, params={"uploadType": "resumable", "part": "snippet,status"},
+        start = 0
+        if session:
+            self.http.secrets.append(session)
+            # Probe the saved session before retrying bytes. Completed sessions return
+            # the original resource, including when the successful response was lost.
+            probe = self.http.request("PUT", session, headers=self._h(**{"Content-Range": f"bytes */{len(video)}"}),
+                                      content=b"")
+            if probe.status_code in (200, 201):
+                done = probe.json()
+                return done["id"], (done.get("status") or {}).get("privacyStatus", "")
+            if probe.status_code != 308:
+                raise ApiError("youtube", probe.status_code, "unexpected resumable status", False)
+            last = probe.headers.get("range", "")
+            start = int(last.rsplit("-", 1)[-1]) + 1 if last else 0
+            if start >= len(video):
+                raise ApiError("youtube", 308, "waiting for upload completion", True)
+        else:
+            r = self.http.request("POST", UPLOAD_URL, params={"uploadType": "resumable", "part": "snippet,status"},
                               headers=self._h(**{"Content-Type": "application/json; charset=UTF-8",
                                                  "X-Upload-Content-Type": "video/mp4",
                                                  "X-Upload-Content-Length": str(len(video))}),
-                              content=json.dumps(meta).encode())
-        session = r.headers.get("location")
-        if not session:
-            raise ApiError("youtube", r.status_code, "no upload session returned", True)
-        self.http.secrets.append(session)
-        done = self.http.json("PUT", session, headers=self._h(**{"Content-Type": "video/mp4"}), content=video)
+                                  content=json.dumps(meta).encode())
+            session = r.headers.get("location")
+            if not session:
+                raise ApiError("youtube", r.status_code, "no upload session returned", True)
+            self.http.secrets.append(session)
+            if on_session:
+                on_session(session)  # persist BEFORE sending media bytes
+        headers = self._h(**{"Content-Type": "video/mp4"})
+        if start:
+            headers["Content-Range"] = f"bytes {start}-{len(video)-1}/{len(video)}"
+        response = self.http.request("PUT", session, headers=headers, content=video[start:])
+        if response.status_code == 308:
+            raise ApiError("youtube", 308, "upload incomplete; resume next tick", True)
+        done = response.json()
         return done["id"], (done.get("status") or {}).get("privacyStatus", "")
 
     def recent_uploads(self, limit: int = 15) -> list[dict]:

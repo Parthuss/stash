@@ -223,6 +223,7 @@ def test_three_failures_mark_failed_and_tell_parth_without_leaking_tokens(make_c
     fake.fail["create"] = 5
     for _ in range(3):
         publisher.tick(ctx)
+        clock.t += timedelta(minutes=15)
     p = post(ctx, pid)
     assert p["results"]["instagram"]["state"] == "failed"
     assert p["status"] == "approved"  # YouTube is still waiting to be connected

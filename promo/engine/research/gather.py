@@ -14,6 +14,7 @@ Sources (each optional; a missing key just skips that section and says so):
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import os
 import re
@@ -43,7 +44,7 @@ REDDIT_QUERIES = [
 ]
 
 
-def saves() -> str:
+def saves_cli() -> str:
     py = MAIN / ".venv/bin/python"
     seen, out = set(), []
     for q in SAVE_QUERIES:
@@ -61,6 +62,35 @@ def saves() -> str:
             out.append(f"- **{it.get('title', '?')}** ({it.get('topic', '')}, {str(it.get('path', ''))[:10]}): "
                        f"{(it.get('summary') or '')[:240]}")
     return "\n".join(out) or "_no matching saves_"
+
+
+async def saves_mcp() -> str:
+    """Use the same local MCP surface as the connected stash tool, read-only.
+
+    MCP isn't exposed as a connected tool in every runner. Starting its stdio
+    server preserves its retrieval contract without needing an account token.
+    """
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    params = StdioServerParameters(command=str(MAIN / ".venv/bin/python"),
+                                  args=["-m", "stash.mcp_server"], cwd=str(MAIN))
+    chunks = []
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            for query in SAVE_QUERIES:
+                result = await session.call_tool("search_stash", {"query": query, "limit": 5})
+                if getattr(result, "is_error", getattr(result, "isError", False)):
+                    raise RuntimeError("stash MCP search failed")
+                chunks.append(f"### {query}\n" + "\n".join(getattr(c, "text", "") for c in result.content))
+    return "\n\n".join(chunks)
+
+
+def saves() -> str:
+    try:
+        return asyncio.run(saves_mcp())
+    except Exception:
+        return "_MCP unavailable; local CLI fallback._\n\n" + saves_cli()
 
 
 def performance() -> str:

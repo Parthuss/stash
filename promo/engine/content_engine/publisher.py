@@ -275,6 +275,8 @@ def publish_post(ctx: Ctx, p: dict, all_posts: list[dict]) -> None:
         r = results.setdefault(plat, {"state": "pending", "attempts": 0})
         if r["state"] in ("published", "failed"):
             continue
+        if r.get("retry_at") and now < datetime.fromisoformat(r["retry_at"]):
+            continue
         client = ctx.ig if plat == "instagram" else ctx.yt
         if client is None:
             if r.get("note") != "not connected":
@@ -298,7 +300,10 @@ def publish_post(ctx: Ctx, p: dict, all_posts: list[dict]) -> None:
             r["attempts"] = r.get("attempts", 0) + 1
             r["error"] = redact(f"{type(e).__name__}: {e}", cfg.secrets)[:300]
             ctx.say(f"{p['id']}: {plat} error (try {r['attempts']}): {r['error']}")
-            if r["attempts"] >= cfg.max_attempts:
+            if isinstance(e, ApiError) and e.retryable:
+                wait = max(e.retry_after, 60 * 2 ** min(r["attempts"], 8))
+                r["retry_at"] = (now + timedelta(seconds=wait)).isoformat()
+            if r["attempts"] >= cfg.max_attempts or isinstance(e, ApiError) and not e.retryable:
                 if plat == "instagram" and r.get("container_id") and _reconcile_instagram(ctx, p, r):
                     pass  # it did go out after all
                 else:
@@ -373,6 +378,8 @@ def publish_instagram(ctx: Ctx, p: dict, r: dict) -> None:
         if p["kind"] == "reel":
             cover = store.media_url(p["cover_key"]) if p.get("cover_key") else None
             cid = ig.create_reel(urls[0], caption, cover)
+        elif p["kind"] == "static":
+            cid = ig.create_image(urls[0], caption)
         else:
             children = []
             for u in urls:
@@ -406,7 +413,7 @@ def publish_instagram(ctx: Ctx, p: dict, r: dict) -> None:
 
 def publish_youtube(ctx: Ctx, p: dict, r: dict) -> None:
     yt, meta = ctx.yt, p["youtube"]
-    if r["state"] == "uploading" or r.get("attempts"):  # a previous upload may have landed
+    if not r.get("upload_session") and (r["state"] == "uploading" or r.get("attempts")):
         title = _norm(meta["title"][:100])
         hit = next((v for v in yt.recent_uploads()
                     if _norm(v["title"]) == title and _after(v.get("published_at"), r.get("started_at"))), None)
@@ -414,11 +421,24 @@ def publish_youtube(ctx: Ctx, p: dict, r: dict) -> None:
             r.update(state="published", video_id=hit["id"], url=f"https://youtube.com/shorts/{hit['id']}",
                      published_at=ctx.now().isoformat())
             return
-    r["state"] = "uploading"
+        if r["state"] == "uploading":
+            # Legacy record without a saved session: never guess that an absent,
+            # possibly not-yet-indexed recent upload means it is safe to re-upload.
+            raise ApiError("youtube", 0, "ambiguous legacy upload; check channel before creating a new post id", False)
+    r["state"] = "starting" if not r.get("upload_session") else "uploading"
     save(ctx.store, p)
     video = ctx.store.get_bytes(p["media_keys"][0])
+
+    def remember_session(session):
+        r["upload_session"] = session
+        r["state"] = "uploading"
+        ctx.add_secret(session)
+        save(ctx.store, p)
+
     vid, privacy = yt.upload(video, meta["title"], meta.get("description", ""), meta.get("tags", []),
-                             ctx.cfg.yt_privacy, ctx.cfg.yt_category)
+                             ctx.cfg.yt_privacy, ctx.cfg.yt_category, session=r.get("upload_session"),
+                             on_session=remember_session,
+                             contains_synthetic_media=bool(meta.get("contains_synthetic_media", False)))
     r.update(state="published", video_id=vid, url=f"https://youtube.com/shorts/{vid}", privacy=privacy,
              published_at=ctx.now().isoformat())
     if privacy and privacy != ctx.cfg.yt_privacy:

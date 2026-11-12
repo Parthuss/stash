@@ -17,10 +17,11 @@ Leave a platform out to skip it.
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 EM_DASH = "—"
 BANNED = [  # rules from CONTENT_HANDBOOK.md / Parth's standing rules; checked on every caption and title
@@ -50,7 +51,11 @@ def parse_when(when: str, tz: str) -> datetime:
         dt = datetime.fromisoformat(when)
     except ValueError as e:
         raise ScheduleError(f"bad time {when!r}: use 'YYYY-MM-DD HH:MM'") from e
-    return dt if dt.tzinfo else dt.replace(tzinfo=ZoneInfo(tz))
+    try:
+        zone = ZoneInfo(tz)
+    except (ZoneInfoNotFoundError, ValueError) as e:
+        raise ScheduleError(f"unknown timezone {tz!r}") from e
+    return dt if dt.tzinfo else dt.replace(tzinfo=zone)
 
 
 def load(week_dir: Path) -> dict:
@@ -74,6 +79,8 @@ def validate(sched: dict, week_dir: Path, require_qa: bool = True) -> list[str]:
             errs.append(f"{tag} duplicate id")
         seen.add(pid)
         d = week_dir / p.get("dir", "")
+        if week_dir.resolve() not in d.resolve().parents:
+            errs.append(f"{tag} post directory must be inside the week folder")
         kind = p.get("kind")
         media = p.get("media") or []
         if kind == "reel":
@@ -84,9 +91,17 @@ def validate(sched: dict, week_dir: Path, require_qa: bool = True) -> list[str]:
                 errs.append(f"{tag} a carousel needs 2-10 images")
             if p.get("youtube"):
                 errs.append(f"{tag} carousels can't go to YouTube")
+        elif kind == "static":
+            if len(media) != 1:
+                errs.append(f"{tag} a static needs exactly one image")
+            if p.get("youtube"):
+                errs.append(f"{tag} statics can't go to YouTube")
         else:
-            errs.append(f"{tag} kind must be 'reel' or 'carousel'")
+            errs.append(f"{tag} kind must be 'reel', 'carousel' or 'static'")
         for f in media + ([p["cover"]] if p.get("cover") else []):
+            if d.resolve() not in (d / f).resolve().parents:
+                errs.append(f"{tag} media path escapes post directory")
+                continue
             if not (d / f).exists():
                 errs.append(f"{tag} missing file {p.get('dir', '')}/{f}")
         try:
@@ -116,6 +131,26 @@ def validate(sched: dict, week_dir: Path, require_qa: bool = True) -> list[str]:
             verdict = qa_verdict(d)
             if verdict != "PASS":
                 errs.append(f"{tag} content-qa verdict is {verdict} (qa/report.md must say 'Verdict: PASS')")
+            checks_path = d / "qa/checks.json"
+            if (d / "copy.json").exists() and not checks_path.exists():
+                errs.append(f"{tag} generated stills need qa/checks.json")
+            if checks_path.exists():
+                checks = json.loads(checks_path.read_text())
+                if checks.get("mechanical") != "PASS":
+                    errs.append(f"{tag} still render mechanical checks did not pass")
+                hashes = checks.get("hashes", {})
+                for name in media + ["caption.txt", "copy.json"]:
+                    src = d / name
+                    if src.exists() and hashes.get(name) != hashlib.sha256(src.read_bytes()).hexdigest():
+                        errs.append(f"{tag} {name} changed after render QA; render and review again")
+                if (d / "caption.txt").exists() and ig and (d / "caption.txt").read_text().strip() != ig["caption"].strip():
+                    errs.append(f"{tag} schedule caption differs from reviewed caption.txt")
+            copy_path = d / "copy.json"
+            if copy_path.exists():
+                copy = json.loads(copy_path.read_text())
+                for slide in copy.get("slides", []):
+                    text = "\n".join(str(slide.get(k, "")) for k in ("kicker", "title", "body", "bridge", "label", "card_title", "card"))
+                    errs += [f"{tag} slide copy {w}" for w in text_problems(text)]
     if not sched.get("posts"):
         errs.append("no posts")
     return errs
@@ -154,7 +189,7 @@ def init_schedule(week_dir: Path, start: str, tz: str = "Asia/Kolkata", time: st
             post["youtube"] = {"title": _yt_title(first), "description": body + "\n\nskwirl.app\n#Shorts",
                                "tags": tags + ["skwirl", "saved reels"]}
         elif imgs:
-            post.update(kind="carousel", media=imgs)
+            post.update(kind="static" if len(imgs) == 1 else "carousel", media=imgs)
         else:
             continue
         posts.append(post)

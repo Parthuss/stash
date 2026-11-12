@@ -36,6 +36,8 @@ def to_jpeg(src: Path, dst: Path) -> Path:
 
 def stage(ctx: Ctx, week_dir: Path, restage: bool = False, require_qa: bool = True) -> list[str]:
     cfg: Config = ctx.cfg
+    if not require_qa and not cfg.local_store:
+        raise ScheduleError("--no-qa is for local mock runs only; remote staging always requires content-qa PASS")
     sched = load(week_dir)
     errs = validate(sched, week_dir, require_qa=require_qa)
     if errs:
@@ -49,14 +51,14 @@ def stage(ctx: Ctx, week_dir: Path, restage: bool = False, require_qa: bool = Tr
             key = f"posts/{pid}.json"
             old = ctx.store.get_json(key)
             started = old and any(r.get("state") not in (None, "pending") for r in (old.get("results") or {}).values())
-            if old and (old["status"] == "done" or started or (old["status"] != "awaiting_approval" and not restage)):
+            if old:
                 ctx.say(f"{pid}: already {old['status']}{' (publishing started)' if started else ''}, left alone")
                 continue
             d = week_dir / item.get("dir", "")
             media_keys = []
             for name in item["media"]:
                 src = d / name
-                if item["kind"] == "carousel" and src.suffix.lower() != ".jpg":
+                if item["kind"] in ("carousel", "static") and src.suffix.lower() != ".jpg":
                     src = to_jpeg(src, tmp / f"{pid}-{src.stem}.jpg")
                 k = f"media/{week}/{pid}/{src.name}"
                 ctx.store.put_file(k, src)
@@ -109,5 +111,7 @@ def _ask(ctx: Ctx, rec: dict, d: Path, item: dict) -> int:
         if item.get("cover"):
             return ctx.tg.send_media(d / item["cover"], body + "\n\n(video too big to preview here)", buttons)
         return ctx.tg.send(body, buttons)
+    if rec["kind"] == "static":
+        return ctx.tg.send_media(d / item["media"][0], body, buttons)
     ctx.tg.send_album([d / n for n in item["media"]])
     return ctx.tg.send(body, buttons)

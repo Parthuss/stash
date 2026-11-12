@@ -27,9 +27,10 @@ jobs:
     if: vars.ENGINE_ENABLED == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # tick and insights get separate groups, so a queued tick never replaces the daily insights run
+    # Both write post records. Serialize them; collect insights on every tick too, so a
+    # replaced pending daily run cannot lose the 48 h measurement.
     concurrency:
-      group: content-engine-${{ github.event.schedule == '41 3 * * *' && 'insights' || (inputs.command || 'tick') }}
+      group: content-engine-state
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
@@ -61,3 +62,4 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then cmd="${{ inputs.command }}";
           elif [ "${{ github.event.schedule }}" = "41 3 * * *" ]; then cmd=insights; else cmd=tick; fi
           python -m content_engine "$cmd"
+          if [ "$cmd" = tick ]; then python -m content_engine insights; fi
