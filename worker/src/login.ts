@@ -156,6 +156,45 @@ export async function mintDeviceToken(env: Env, userId: string): Promise<string>
   return token;
 }
 
+// ---- the owner's email -----------------------------------------------------------------------
+/** The owner (STASH_SECRET, no user row) can attach one verified email (owner_login). Signing in
+ *  with it mints an owner device token, "sto_...", kept as an HMAC keyed with STASH_SECRET so that
+ *  rotating the secret signs all of them out. Owner-only powers ride on these, so the owner address
+ *  gets tighter caps than everyone's (on top of the usual per-network/per-address ones): at most
+ *  OWNER_SENDS_DAY codes and OWNER_TRIES_DAY guesses a day from anywhere, i.e. ~10 guesses at a
+ *  6-digit code per day (<0.4% a year under nonstop attack, and every send lands in the owner's inbox). */
+export const OWNER_KEY = "__owner__";   // email_code.user_id for the owner's "add" codes (same as oauth.ts)
+export const OWNER_SENDS_DAY = 6, OWNER_TRIES_DAY = 10;
+async function secretMac(env: Env, text: string): Promise<string> {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.STASH_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(text));
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+const ownerTokenHash = (env: Env, token: string) => secretMac(env, "owner-token|" + token);
+/** The owner's address, bound to the current STASH_SECRET: rotating the secret (the owner's "someone
+ *  got in" reset) drops it too, so a stolen owner session can't park its own address to get back in. */
+export async function ownerEmail(env: Env): Promise<string | null> {
+  if (!env.STASH_SECRET) return null;
+  const r = await env.DB.prepare("SELECT email, secret_fp FROM owner_login WHERE k = 1").first<{ email: string; secret_fp: string }>();
+  return r && r.secret_fp === await secretMac(env, "owner-email|" + r.email) ? r.email : null;
+}
+export const isOwnerEmail = async (env: Env, email: string) => (await ownerEmail(env)) === email;
+export async function setOwnerEmail(env: Env, email: string): Promise<void> {
+  await env.DB.prepare("INSERT INTO owner_login (k, email, verified_at, secret_fp) VALUES (1, ?1, ?2, ?3) ON CONFLICT(k) DO UPDATE SET email = ?1, verified_at = ?2, secret_fp = ?3")
+    .bind(email, new Date().toISOString(), await secretMac(env, "owner-email|" + email)).run();
+}
+export async function mintOwnerToken(env: Env): Promise<string> {
+  const token = "sto_" + hex(24);
+  await env.DB.prepare("INSERT INTO owner_token (token_hash, created_at) VALUES (?, ?)").bind(await ownerTokenHash(env, token), new Date().toISOString()).run();
+  return token;
+}
+export async function isOwnerToken(env: Env, token: string): Promise<boolean> {
+  if (!env.STASH_SECRET || !/^sto_[0-9a-f]{48}$/.test(token)) return false;
+  return Boolean(await env.DB.prepare("SELECT 1 FROM owner_token WHERE token_hash = ?").bind(await ownerTokenHash(env, token)).first());
+}
+/** Gmail addresses are Google's own, so a Google sign-in proves them as well as a code does. */
+export const googleOwnsAddress = (email: string) => /@(gmail|googlemail)\.com$/.test(email);
+
 const escHtml = (s: string) => s.replace(/[<>&"]/g, "");
 /** The email with the code. Sign-in and sign-up get the same email apart from the greeting, so
  *  nothing in the page's answer says whether an address has an account. */

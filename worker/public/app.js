@@ -199,7 +199,9 @@ function welcomeCard(saved) {
       : "In Instagram, tap Share on a reel, then <em>Copy link</em>. Paste it here. A minute later it's a note you can search."}</p>
     ${saved ? "" : `<form class="field" data-wform><input name="u" type="url" inputmode="url" autocomplete="off" placeholder="Paste a reel link" aria-label="Reel link" required><button class="btn sm" type="submit">Save</button></form>`}
     <ol class="wsteps">${step(true, "Account made")}${step(saved, "Save your first reel")}${step(false, "Share straight from Instagram <button class=\"btn sm soft\" type=\"button\" data-howto>Set it up, 1 min</button>")}</ol>
-    ${inApp ? `<div class="note-box" style="text-align:left"><b>You're inside Instagram's browser.</b> It can forget you. Save your sign-in link now, then open it in ${/Android/.test(navigator.userAgent) ? "Chrome" : "Safari"}. <button class="btn sm" type="button" data-savelink>Save my sign-in link</button></div>` : ""}
+    ${!inApp ? "" : setupState && setupState.email_login && setupState.has_email
+      ? `<div class="note-box" style="text-align:left"><b>You're inside Instagram's browser.</b> It can forget you. Open skwirl.app in ${/Android/.test(navigator.userAgent) ? "Chrome" : "Safari"} and sign in with your email.</div>`
+      : `<div class="note-box" style="text-align:left"><b>You're inside Instagram's browser.</b> It can forget you. Save your sign-in link now, then open it in ${/Android/.test(navigator.userAgent) ? "Chrome" : "Safari"}. <button class="btn sm" type="button" data-savelink>Save my sign-in link</button></div>`}
   </div>`;
 }
 let captures = [], loaded = false, known = null, pollTimer = null, importInfo = null;
@@ -226,8 +228,7 @@ async function load() {
   const slow = captures.some((c) => c.state === "processing" && Date.now() - Date.parse(c.at) > 15 * 60000);
   if (slow && bannerKey !== "owner") setBanner("busy", "info", "Saves are taking longer than usual. Yours are queued, not lost.", ...(setupState?.has_groq_key || !isEarly() ? [] : ["Add my own Groq key", () => openSetup(false)]));
   else clearBanner("busy");
-  if (!bannerKey && !store.get("stash_link_saved") && !(setupState && (setupState.owner || (setupState.has_email && setupState.email_login))))
-    setBanner("savelink", "warn", "No password here: your sign-in link is how you get back in. Save it somewhere safe.", "Save my link", saveLink);
+  signinBanner();
   render(); schedulePoll();
 }
 // Polling reads only the small captures list; the notes reload only when that list changes.
@@ -490,17 +491,36 @@ async function onGoogle(resp) {
   flow.signup = false; signedIn(b.token, b.created);
 }
 
+// How you get back in, said once we know (never before /v1/setup answers, or the owner would see a
+// stale "save your link" flash). Email sign-in on: an account with an email needs nothing; one without
+// gets "Add your email" (the dialog, then this banner if they skipped it). Email sign-in off: the
+// sign-in link is still the way back, except for the owner (STASH_SECRET).
+function signinBanner() {
+  const st = setupState; if (!st) return;
+  const need = st.email_login ? (st.has_email ? null : "addemail") : st.owner || store.get("stash_link_saved") ? null : "savelink";
+  for (const k of ["savelink", "addemail"]) if (k !== need) clearBanner(k);
+  if (!need || (bannerKey && bannerKey !== need) || $("emailDlg").open) return;
+  if (need === "addemail") setBanner("addemail", "warn", "Add your email so you can sign in on any device, or if you're ever signed out.", "Add email", () => openAddEmail());
+  else setBanner("savelink", "warn", "No password here: your sign-in link is how you get back in. Save it somewhere safe.", "Save my link", saveLink);
+}
+
 // ---- "Add your email": accounts from before email was required. Once with "Not now", then
 // required (no Not now), but never a lock-out: if the code doesn't come you can finish later.
 let emailAsked = false, addEmailAddr = "", addMode = "ask";
 function askEmail() {
   const st = setupState; if (!st || !st.email_ask || emailAsked || $("emailDlg").open || $("plusDone").open) return;
-  emailAsked = true; addMode = st.email_ask;
-  $("addStep").hidden = false; $("addCodeStep").hidden = true; $("addErr").textContent = "";
-  $("addSkipRow").hidden = addMode !== "skippable"; $("addSkip").textContent = "Not now";
+  emailAsked = true; showAddEmail(st.email_ask);
   tr("card_shown", "add_email_" + addMode);
+}
+// mode: "skippable" / "required" (asked by the server) or "manual" (opened from Profile or the banner).
+function showAddEmail(mode, change = false) {
+  addMode = mode;
+  $("addStep").hidden = false; $("addCodeStep").hidden = true; $("addErr").textContent = ""; $("addEmail").value = "";
+  $("emailDlgTitle").textContent = change ? "Change your email" : "Add your email";
+  $("addSkipRow").hidden = mode === "required"; $("addSkip").textContent = mode === "manual" ? "Cancel" : "Not now";
   $("emailDlg").showModal(); setTimeout(() => $("addEmail").focus(), 50);
 }
+function openAddEmail(change = false) { if (!$("emailDlg").open) { tr("click", change ? "change_email" : "add_email"); showAddEmail("manual", change); } }
 function addCodeStep(email, canLeave) {
   addEmailAddr = email; $("addTo").textContent = email; $("addCode").value = ""; $("addErr").textContent = "";
   $("addStep").hidden = true; $("addCodeStep").hidden = false; $("addLaterRow").hidden = !canLeave;
@@ -513,8 +533,11 @@ function addFailed(msg) {
   $("addErr").textContent = msg;
   if (addMode === "required") { $("addSkip").textContent = "Finish later"; $("addSkipRow").hidden = false; $("addLaterRow").hidden = false; }
 }
-$("addSkip").addEventListener("click", () => { tr("click", "add_email_skip"); api("/v1/email/skip", { method: "POST" }).catch(() => {}); closeDlg($("emailDlg")); });
-$("addLater").addEventListener("click", () => { tr("click", "add_email_later"); closeDlg($("emailDlg")); });
+$("addSkip").addEventListener("click", () => {
+  if (addMode !== "manual") { tr("click", "add_email_skip"); api("/v1/email/skip", { method: "POST" }).catch(() => {}); }
+  closeDlg($("emailDlg")); signinBanner();
+});
+$("addLater").addEventListener("click", () => { tr("click", "add_email_later"); closeDlg($("emailDlg")); signinBanner(); });
 $("addChange").addEventListener("click", () => { $("addStep").hidden = false; $("addCodeStep").hidden = true; $("addErr").textContent = ""; $("addEmail").focus(); });
 async function startAdd(email) {
   let r; try { r = await api("/v1/email/start", { method: "POST", body: JSON.stringify({ email }) }); } catch { addFailed("Can't reach Skwirl. Try again."); return false; }
@@ -765,8 +788,7 @@ async function copy(text, label) {
 }
 async function refreshSetup() {
   try { setupState = await (await api("/v1/setup")).json(); } catch { return; }
-  askEmail();
-  if (setupState.has_email && setupState.email_login) clearBanner("savelink");
+  askEmail(); signinBanner();
   const st = setupState, phone = ["shortcut", "pwa", "web"].some((k) => (st.saved_from || {})[k]);
   // A one-off note from the owner (user.owner_msg): shown until tapped, then cleared server-side.
   if (st.owner_msg && bannerKey !== "net") {  // beats every banner but a connection error
@@ -797,6 +819,7 @@ async function refreshSetup() {
   renderPlus();
   if (standalone || st.saved_from?.pwa) { $("bHome").textContent = "Done ✓"; $("bHome").className = "badge done"; }
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), and = /Android/.test(navigator.userAgent);
+  $("homeLinkStep").hidden = !!(setupState && setupState.email_login && setupState.has_email);  // they sign in with email instead
   $("homeIos").hidden = !ios && and; $("homeAnd").hidden = !and; $("homeDesk").hidden = ios || and;
   $("setupDot").hidden = phone;   // Claude is recommended, not required: don't nag forever
   $("ccBox").hidden = !!st.owner;
@@ -1328,6 +1351,12 @@ async function openMe() {
   const stat = (n, label) => `<div class="stat"><b>${esc(n)}</b><span>${esc(label)}</span></div>`;
   $("meStats").innerHTML = stat(me.saves, "saved") + stat(me.notes, "notes ready") + stat(me.used, "put to use");
   $("gProfile").hidden = me.owner;
+  $("meEmailVal").textContent = me.email || "Not added yet";
+  $("meEmailVal").classList.toggle("muted", !me.email);
+  $("meEmailNote").textContent = me.email ? (me.email_login ? "Sign in on any device with this email and a 6-digit code." : "")
+    : me.email_login ? "Add one so you can sign in on any device, or if you're ever signed out." : "";
+  $("meEmailBtn").textContent = me.email ? "Change" : "Add email";
+  $("meEmailBtn").hidden = me.owner && !me.email_login;  // the owner's address is only ever saved proven
   $("meNameIn").value = me.name; $("meEmailIn").value = me.email || ""; $("meEmailIn").dataset.was = me.email || "";
   $("meConsentRow").hidden = true; $("meMsg").textContent = "";
   // Notifications on this device
@@ -1345,6 +1374,7 @@ async function openMe() {
   $("contactNote").className = "msg";
 }
 $("meBtn").addEventListener("click", openMe);
+$("meEmailBtn").addEventListener("click", () => openAddEmail($("meEmailBtn").textContent === "Change"));
 $("meBack").addEventListener("click", () => { backTo("lib"); });
 $("meForm").addEventListener("submit", async (e) => {
   e.preventDefault();

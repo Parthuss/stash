@@ -203,7 +203,7 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   await call('legacy', '/v1/email/skip', {});
   assert.equal((await setup('legacy')).email_ask, 'required');
   assert.equal((await setup(samA)).email_ask, null);
-  assert.equal((await setup(null)).email_ask, null);  // the owner is never asked
+  assert.equal((await setup(null)).email_ask, 'skippable');  // the owner is asked too (never required; see the owner checks)
   r = await call('legacy', '/v1/email/start', { email: 'Jo@X.com' }); b = await r.json();
   assert.equal(b.sent, true); assert.match(mails.at(-1).text, /add this email/);
   const addCode = lastCode();
@@ -214,11 +214,10 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   assert.equal((await setup('legacy')).email_ask, null);
   // can't take an address another account has proven
   r = await call('legacy2', '/v1/email/start', { email: 'sam@example.com' }); assert.equal(r.status, 409);
-  assert.equal((await call(null, '/v1/email/start', { email: 'o@x.com' })).status, 400);
   // and the new address signs in to that account
   await post('/auth/email/start', { email: 'jo@x.com' });
   assert.equal(await whoIs((await (await post('/auth/email/verify', { email: 'jo@x.com', code: lastCode() })).json()).token), 'legacy');
-  ok('add-email prompt: skippable once, then required; confirmed by code; owner never asked');
+  ok('add-email prompt: skippable once, then required; confirmed by code');
 
   // 16. Profile: changing the email goes through a code; it can't be blanked
   r = await call(samA, '/v1/me', { name: 'Sam A', email: 'sam.new@example.com' }, 'PUT'); b = await r.json();
@@ -305,6 +304,80 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   assert.equal((await (await get('/join')).json()).google_client_id, null);
   env.GOOGLE_CLIENT_ID = cid;
   ok('/auth/google creates, re-finds by Google id, links by email once (no re-link); hidden without GOOGLE_CLIENT_ID');
+
+  // ---- the owner's email (owner = STASH_SECRET, no user row) ------------------------------------
+  env.OWNER_NAME = 'Parthus';
+  const oSetup = async (auth) => (await get('/v1/setup', auth)).json();
+  let st = await oSetup('admin-secret');
+  assert.equal(st.owner, true); assert.equal(st.has_email, false); assert.equal(st.email_ask, 'skippable');
+  // a code to an address someone else has proven is refused before anything is sent
+  r = await post('/v1/email/start', { email: 'sam@example.com' }, { auth: 'admin-secret' }); assert.equal(r.status, 409);
+  // skip once: no more dialog, still no email (the app shows a banner instead)
+  await post('/v1/email/skip', {}, { auth: 'admin-secret' });
+  st = await oSetup('admin-secret'); assert.equal(st.email_ask, null); assert.equal(st.has_email, false);
+  r = await post('/v1/email/start', { email: ' Boss@Gmail.com ' }, { auth: 'admin-secret' });
+  assert.deepEqual(await r.json(), { sent: true, email: 'boss@gmail.com' });
+  assert.match(mails.at(-1).text, /Hi Parthus,[\s\S]*add this email/);
+  const ownAdd = lastCode();
+  assert.equal(row('SELECT COUNT(*) n FROM owner_login').n, 0);  // nothing saved before the code
+  // the add-code is scoped to the owner: a user can't spend it on their own account
+  r = await call('legacy2', '/v1/email/verify', { email: 'boss@gmail.com', code: ownAdd }); assert.equal(r.status, 400);
+  r = await post('/v1/email/verify', { email: 'boss@gmail.com', code: ownAdd }, { auth: 'admin-secret' });
+  assert.deepEqual(await r.json(), { ok: true, email: 'boss@gmail.com' });
+  st = await oSetup('admin-secret'); assert.equal(st.has_email, true); assert.equal(st.email_verified, true); assert.equal(st.email_ask, null);
+  b = await (await get('/v1/me', 'admin-secret')).json(); assert.equal(b.email, 'boss@gmail.com'); assert.equal(b.owner, true);
+  ok('owner adds a verified email by code (scoped add-code, skip, setup + me show it)');
+
+  // sign in with it from a new device: an owner device token (sto_), owner powers, revoked by a secret rotation
+  r = await post('/auth/email/start', { email: 'BOSS@gmail.com' }); assert.equal(r.status, 200);
+  assert.match(mails.at(-1).text, /Hi Parthus,[\s\S]*sign in to Skwirl/);
+  const oc = lastCode();
+  r = await post('/auth/email/verify', { email: 'boss@gmail.com', code: oc, name: 'Mallory' }); b = await r.json();
+  assert.equal(r.status, 200); assert.equal(b.created, false); assert.equal(b.name, 'Parthus');
+  assert.match(b.token, /^sto_[0-9a-f]{48}$/);
+  assert.equal(await whoIs(b.token), null);  // null = the owner
+  assert.equal((await get('/v1/admin/overview', b.token)).status, 200);
+  assert.equal(row('SELECT COUNT(*) n FROM user WHERE email = ?', 'boss@gmail.com').n, 0);  // no user row was made
+  assert.ok(!sql.prepare('SELECT token_hash FROM owner_token').all().some((x) => x.token_hash.includes(b.token.slice(4))));  // hashed at rest
+  r = await post('/auth/email/verify', { email: 'boss@gmail.com', code: oc }); assert.equal(r.status, 400);  // single use
+  assert.equal(await whoIs('sto_' + '0'.repeat(48)), undefined);
+  // the owner X-Stash-Secret routes still need the secret itself
+  assert.equal((await worker.fetch(new Request('https://skwirl.app/pending', { headers: { 'X-Stash-Secret': b.token } }), env, ctx)).status, 401);
+  const ownerTok = b.token;
+  env.STASH_SECRET = 'rotated-secret'; assert.equal(await whoIs(ownerTok), undefined);
+  assert.equal(await login.ownerEmail(env), null);  // the address goes with the secret too (a stolen session can't park one)
+  env.STASH_SECRET = 'admin-secret'; assert.equal(await login.ownerEmail(env), 'boss@gmail.com');
+  assert.equal(await whoIs(ownerTok), null);
+  ok('owner email sign-in mints an sto_ owner token (single use, hashed, no user row, dies when STASH_SECRET rotates)');
+
+  // owner caps: 10 guesses a day from anywhere, 6 codes a day from anywhere (any network)
+  await post('/auth/email/start', { email: 'boss@gmail.com' });
+  for (let i = 0; i < 10; i++) {
+    const rr = await post('/auth/email/verify', { email: 'boss@gmail.com', code: '000000' }, { ip: `10.9.${i}.1` });
+    assert.notEqual(rr.status, 200);
+  }
+  r = await post('/auth/email/verify', { email: 'boss@gmail.com', code: lastCode() }, { ip: '10.9.99.1' });
+  assert.equal(r.status, 429);  // even the right code, once the day's guesses are gone
+  const tries = () => row("SELECT COUNT(*) n FROM join_attempt WHERE ip = 'otpown:try'").n;
+  assert.equal(tries(), 10);
+  sql.exec("DELETE FROM join_attempt WHERE ip LIKE 'otpm:%' OR ip LIKE 'otp:%'");
+  let sends = 0; for (let i = 0; i < 8; i++) if ((await post('/auth/email/start', { email: 'boss@gmail.com' }, { ip: `10.8.${i}.1` })).status === 200) sends++;
+  assert.equal(sends, 6 - 1);  // one sent already in this check (ok() clears the counters between checks)
+  ok('owner address: at most 10 code guesses and 6 codes a day, from any network');
+
+  // nobody else can take the owner's address
+  r = await call('legacy2', '/v1/email/start', { email: 'boss@gmail.com' }); assert.equal(r.status, 409);
+  r = await post('/auth/google', { credential: await jwt({ sub: 'g-boss', email: 'boss@gmail.com', given_name: 'Eve' }) }); b = await r.json();
+  assert.equal(r.status, 200); assert.equal(await whoIs(b.token), null);  // Gmail: Google vouches for it, it's the owner
+  assert.equal(row("SELECT COUNT(*) n FROM user WHERE google_sub = 'g-boss'").n, 0);
+  await login.setOwnerEmail(env, 'boss@corp.example');
+  r = await post('/auth/google', { credential: await jwt({ sub: 'g-corp', email: 'boss@corp.example' }) });
+  assert.equal(r.status, 409);  // a non-Gmail address on a Google account doesn't prove the owner
+  assert.equal(row("SELECT COUNT(*) n FROM user WHERE email = 'boss@corp.example'").n, 0);
+  // and the owner can't take an address an account already uses, even unproven (it would sign in ahead of it)
+  sql.prepare("INSERT INTO user (id, name, token_hash, created_at, email) VALUES ('typed', 'T', 'h-typed', '2026-10-01', 'typed@x.com')").run();
+  r = await post('/v1/email/start', { email: 'typed@x.com' }, { auth: 'admin-secret' }); assert.equal(r.status, 409);
+  ok('the owner address can\'t be added to another account (or vice versa); Google signs in as owner only for a Gmail address');
 
   // Nothing in the worker finds a user by name.
   const src = fs.readdirSync(path.join(__dirname, '../worker/src')).map((f) => fs.readFileSync(path.join(__dirname, '../worker/src', f), 'utf8')).join('\n');

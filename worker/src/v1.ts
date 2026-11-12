@@ -17,7 +17,7 @@ import { okEndpoint, sendPush, vapidPublic } from "./push";
 import { notifyOwner } from "./notify";
 import { cancelSubscription, isPlus, plusAvailable, plusRoute } from "./plus";
 import type { Env } from "./index";
-import { checkCode, codeEmail, emailEnabled, limited, newCode, normEmail, sendEmail } from "./login";
+import { OWNER_KEY, checkCode, codeEmail, emailEnabled, isOwnerToken, limited, newCode, normEmail, ownerEmail, sendEmail, setOwnerEmail } from "./login";
 import { fuse, semanticIds } from "./embed";
 import { ccKeyRoute } from "./recall";
 import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
@@ -207,6 +207,7 @@ export async function userFromToken(token: string, env: Env): Promise<string | n
     for (let i = 0; i < token.length; i++) diff |= token.charCodeAt(i) ^ env.STASH_SECRET.charCodeAt(i);
     if (diff === 0) return null;
   }
+  if (token.startsWith("sto_")) return (await isOwnerToken(env, token)) ? null : undefined;  // owner device (email sign-in)
   const hash = await sha256(token);
   const row = await env.DB.prepare("SELECT id FROM user WHERE token_hash = ?1 UNION ALL SELECT user_id FROM device_token WHERE token_hash = ?1 LIMIT 1")
     .bind(hash)
@@ -522,6 +523,9 @@ export async function handleV1(
       ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, email_verified, email_skip_at, found_via, owner_msg, plan, plan_until, created_at FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
     const plus = isPlus(u), tier = tierOf(u, userId);
+    // The owner's email lives in owner_login; asked once with "Not now" (then a banner), never required.
+    const oEmail = userId === null ? await ownerEmail(env) : null;
+    const oSkipped = userId === null && !oEmail && Boolean(await env.DB.prepare("SELECT 1 FROM alert_state WHERE key = 'owner_email_skip'").first());
     // Past the 250 fast-lane saves in a month the app says so; everything still gets read.
     const fast = plus ? (await env.DB.prepare("SELECT n FROM daily_counter WHERE key = ?")
       .bind(`pm:${userId}:${new Date().toISOString().slice(0, 7)}`).first<{ n: number }>())?.n ?? 0 : 0;
@@ -538,10 +542,11 @@ export async function handleV1(
       saved_from: counts,
       claude_connected: (u?.mcp_calls ?? 0) > 0,
       has_groq_key: Boolean(u?.groq_key_enc),
-      has_email: Boolean(u?.email),
-      email_verified: Boolean(u?.email_verified),
+      has_email: Boolean(u?.email || oEmail),
+      email_verified: Boolean(u?.email_verified || oEmail),
       // Accounts from before email was required: ask once with a "Not now", then without one.
-      email_ask: userId && !u?.email ? (u?.email_skip_at ? "required" : "skippable") : null,
+      email_ask: userId ? (!u?.email ? (u?.email_skip_at ? "required" : "skippable") : null)
+        : !oEmail && !oSkipped && emailEnabled(env) ? "skippable" : null,
       email_login: emailEnabled(env),
       name: u?.name ?? (userId === null ? env.OWNER_NAME ?? "Owner" : null),
       push_key: vapidPublic(env),
@@ -587,7 +592,8 @@ export async function handleV1(
               (SELECT COUNT(*) FROM note WHERE user_id IS ?1 AND status = 'used') used`,
     ).bind(userId).first<any>();
     const u = userId ? await env.DB.prepare("SELECT name, email, created_at FROM user WHERE id = ?").bind(userId).first<any>() : null;
-    return json({ owner: userId === null, name: u?.name ?? env.OWNER_NAME ?? "Owner", email: u?.email ?? null, joined: u?.created_at ?? null, ...counts });
+    const email = userId === null ? await ownerEmail(env) : u?.email ?? null;
+    return json({ owner: userId === null, name: u?.name ?? env.OWNER_NAME ?? "Owner", email, email_verified: userId === null ? Boolean(email) : Boolean(u?.email_verified), email_login: emailEnabled(env), joined: u?.created_at ?? null, ...counts });
   }
   if (path === "/v1/me" && request.method === "PUT") {
     if (userId === null) return json({ error: "The owner account has no profile to edit." }, 400);
@@ -611,20 +617,25 @@ export async function handleV1(
   // Add or change your sign-in email. With email sign-in on, we email a code and the address is
   // saved once it comes back (/v1/email/verify); without a sender it's saved straight away.
   if (path === "/v1/email/start" && request.method === "POST") {
-    if (userId === null) return json({ error: "The owner account signs in with its secret." }, 400);
     const email = normEmail(((await request.json().catch(() => null)) as any)?.email);
     if (!email) return json({ error: "That email doesn't look right." }, 400);
     return emailChange(env, userId, email);
   }
   if (path === "/v1/email/verify" && request.method === "POST") {
-    if (userId === null) return json({ error: "The owner account signs in with its secret." }, 400);
     const b = ((await request.json().catch(() => null)) ?? {}) as any;
     const email = normEmail(b.email);
     if (!email) return json({ error: "That email doesn't look right." }, 400);
-    if (await limited(env, "otpvu:" + userId, 20, 3600_000)) return json({ error: "Too many codes tried. Wait an hour." }, 429);
+    if (await limited(env, "otpvu:" + (userId ?? OWNER_KEY), 20, 3600_000)) return json({ error: "Too many codes tried. Wait an hour." }, 429);
     if (await takenByOther(env, email, userId)) return json({ error: "That email is already on another Skwirl account. Sign out and sign in with it instead." }, 409);
-    const spent = await checkCode(env, email, "add", b.code, true, userId);
+    const spent = await checkCode(env, email, "add", b.code, true, userId ?? OWNER_KEY);
     if (!spent.ok) return json({ error: spent.error, left: spent.left }, 400);
+    if (userId === null) {
+      const was = await ownerEmail(env);
+      await setOwnerEmail(env, email);
+      await logEvent(env, null, "api", "email_added");
+      await notifyOwner(env, "owner email changed", `The Skwirl owner account's sign-in email is now ${email}${was ? ` (was ${was})` : ""}.\n\nNot you? Rotate STASH_SECRET: that signs out every owner device and drops this address.`).catch(() => {});
+      return json({ ok: true, email });
+    }
     const saved = await env.DB.prepare("UPDATE user SET email = ?, email_verified = 1 WHERE id = ?").bind(email, userId).run().catch(() => null);
     if (!saved) return json({ error: "That email is already on another Skwirl account. Sign out and sign in with it instead." }, 409);
     await logEvent(env, userId, "api", "email_added");
@@ -632,6 +643,7 @@ export async function handleV1(
   }
   if (path === "/v1/email/skip" && request.method === "POST") {
     if (userId) await env.DB.prepare("UPDATE user SET email_skip_at = COALESCE(email_skip_at, ?) WHERE id = ?").bind(new Date().toISOString(), userId).run();
+    else await env.DB.prepare("INSERT OR IGNORE INTO alert_state (key, at) VALUES ('owner_email_skip', ?)").bind(new Date().toISOString()).run();
     return json({ ok: true });
   }
   if (path === "/v1/source" && request.method === "POST") {
@@ -777,25 +789,32 @@ export async function handleV1(
   return json({ error: "not found" }, 404);
 }
 
-/** Is this address already proven by a different account? */
-const takenByOther = async (env: Env, email: string, userId: string) =>
-  Boolean(await env.DB.prepare("SELECT 1 FROM user WHERE email = ? AND email_verified = 1 AND id != ?").bind(email, userId).first());
+/** Is this address already proven by a different account (the owner's address counts)? */
+const takenByOther = async (env: Env, email: string, userId: string | null) =>
+  Boolean(await env.DB.prepare("SELECT 1 FROM user WHERE email = ? AND email_verified = 1 AND id IS NOT ?").bind(email, userId).first())
+  || (userId !== null && (await ownerEmail(env)) === email)
+  // The owner's address signs in ahead of any account, so it can't be one an account already uses.
+  || (userId === null && Boolean(await env.DB.prepare("SELECT 1 FROM user WHERE email = ?").bind(email).first()));
 
 /** Start adding/changing a signed-in account's email: a code by email, or (no sender set up yet)
  *  saved unproven. A failed send saves nothing (else anyone could park an address they don't own
  *  by exhausting the sender); the app lets the person finish later instead. */
-async function emailChange(env: Env, userId: string, email: string): Promise<Response> {
+async function emailChange(env: Env, userId: string | null, email: string): Promise<Response> {
   if (await takenByOther(env, email, userId)) return json({ error: "That email is already on another Skwirl account. Sign out and sign in with it instead." }, 409);
+  // The owner's address is only ever stored proven: it signs in to the owner account.
+  if (userId === null && !emailEnabled(env)) return json({ error: "Email sign-in isn't switched on yet." }, 503);
   const saveUnproven = async () => {
     await env.DB.prepare("UPDATE user SET email = ?, email_verified = 0 WHERE id = ?").bind(email, userId).run();
     await logEvent(env, userId, "api", "email_added");
     return json({ saved: true, email });
   };
   if (!emailEnabled(env)) return saveUnproven();
-  if (await limited(env, "otpu:" + userId, 10, 3600_000)) return json({ error: "That's a lot of codes. Wait an hour and try again." }, 429);
-  const code = await newCode(env, email, "add", userId, "u:" + userId);
+  const key = userId ?? OWNER_KEY;
+  if (await limited(env, "otpu:" + key, 10, 3600_000)) return json({ error: "That's a lot of codes. Wait an hour and try again." }, 429);
+  const code = await newCode(env, email, "add", key, "u:" + key);
   if (!code) return json({ error: "We've sent a lot of codes to that email. Wait an hour, or check spam for one we sent." }, 429);
-  const name = (await env.DB.prepare("SELECT name FROM user WHERE id = ?").bind(userId).first<{ name: string }>())?.name ?? null;
+  const name = userId === null ? env.OWNER_NAME ?? null
+    : (await env.DB.prepare("SELECT name FROM user WHERE id = ?").bind(userId).first<{ name: string }>())?.name ?? null;
   try { await sendEmail(env, codeEmail(email, code, name, "add")); }
   catch (e) { console.log("add-email code failed", String(e)); return json({ error: "Couldn't send the email just now. Try again in a minute, or finish later." }, 502); }
   return json({ sent: true, email });
