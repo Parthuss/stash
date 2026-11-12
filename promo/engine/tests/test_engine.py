@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from datetime import timedelta
 
 import pytest
@@ -84,8 +85,8 @@ def test_stage_uploads_media_and_asks_on_telegram(make_ctx, week_dir, fake):
     assert reel["cover_key"].endswith("cover.jpg") and ctx.store.exists(reel["cover_key"])
     assert all(k.endswith(".jpg") for k in car["media_keys"])  # carousel PNGs became JPEG
     methods = [m["method"] for m in fake.sent]
-    assert methods == ["sendVideo", "sendMediaGroup", "sendMessage"]
-    assert f"ap:{reel['id']}" in fake.sent[0]["raw"] and f"sk:{reel['id']}" in fake.sent[0]["raw"]
+    assert methods == ["sendDocument", "sendVideo", "sendDocument", "sendMediaGroup", "sendMessage"]
+    assert f"ap:{reel['id']}" in fake.sent[1]["raw"] and f"sk:{reel['id']}" in fake.sent[1]["raw"]
     assert not any(m == "POST" and "graph.instagram.com" in u for m, u, _ in fake.calls)  # nothing published
 
 
@@ -253,6 +254,9 @@ def test_daily_cap(make_ctx, week_dir, fake, clock):
         p = post(ctx, pid)
         p["when"] = "2026-11-17 22:30"
         p.pop("youtube", None)
+        # This fixture deliberately changes timing/platforms; simulate reviewing the revised record.
+        from content_engine.quality_gate import bind_report
+        bind_report(ctx, p, ctx.store.get_json(p["quality_report_key"]), Path(p["dir"]))
         publisher.save(ctx.store, p)
         publisher.apply_action(ctx, p, "ap")
     clock.set("2026-11-17T22:31:00+05:30")
@@ -407,6 +411,9 @@ def test_one_broken_post_does_not_block_the_next(make_ctx, week_dir, fake, clock
         p = post(ctx, pid)
         p["when"] = "2026-11-17 22:30"
         p.pop("youtube", None)
+        # This fixture deliberately changes timing/platforms; simulate reviewing the revised record.
+        from content_engine.quality_gate import bind_report
+        bind_report(ctx, p, ctx.store.get_json(p["quality_report_key"]), Path(p["dir"]))
         publisher.save(ctx.store, p)
         publisher.apply_action(ctx, p, "ap")
     pa = post(ctx, a)
@@ -416,7 +423,8 @@ def test_one_broken_post_does_not_block_the_next(make_ctx, week_dir, fake, clock
     clock.set("2026-11-17T22:31:00+05:30")
     publisher.tick(ctx)
     assert post(ctx, b)["status"] == "done"
-    assert post(ctx, a)["results"]["instagram"]["attempts"] == 1
+    assert post(ctx, a)["status"] == "blocked_quality"
+    assert post(ctx, a)["results"] == {}
 
 
 def test_presigned_urls_are_redacted():

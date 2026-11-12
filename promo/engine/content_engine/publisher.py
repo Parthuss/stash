@@ -22,6 +22,7 @@ from .schedule import POST_ID, parse_when
 from .store import Store
 from .telegram import Telegram, late_buttons
 from .youtube import YouTube
+from .quality_gate import record_problems, require_record
 
 PLATFORMS = ("instagram", "youtube")
 TOKEN_REFRESH_DAYS = 7
@@ -114,6 +115,9 @@ def apply_action(ctx: Ctx, p: dict, action: str) -> str:
         p["status"] = "skipped"
         save(ctx.store, p)
         return f"Skipped {p['id']}. Nothing will be posted."
+    problems = record_problems(ctx, p)
+    if problems:
+        return "Quality gate blocked approval: " + "; ".join(problems)
     p["status"] = "approved"
     p["approved_at"] = ctx.now().isoformat()
     if action == "now" or st == "missed":
@@ -259,6 +263,13 @@ def _publish_if_due(ctx: Ctx, p: dict, posts: list[dict]) -> None:
     if now < due:
         return
     late_h = (now - due).total_seconds() / 3600
+    problems = record_problems(ctx, p)
+    if problems:
+        p['status'] = 'blocked_quality'
+        p['quality_error'] = '; '.join(problems)
+        save(ctx.store, p)
+        ctx.say(f"{p['id']}: quality gate blocked; restage under a new post id after review")
+        return
     if late_h > ctx.cfg.late_window_h and not p.get("force_now") and not _started(p):
         p["status"] = "missed"
         save(ctx.store, p)
@@ -269,6 +280,7 @@ def _publish_if_due(ctx: Ctx, p: dict, posts: list[dict]) -> None:
 
 
 def publish_post(ctx: Ctx, p: dict, all_posts: list[dict]) -> None:
+    require_record(ctx, p)
     cfg, now = ctx.cfg, ctx.now()
     results = p.setdefault("results", {})
     for plat in platforms(p):
@@ -361,6 +373,10 @@ def _reconcile_instagram(ctx: Ctx, p: dict, r: dict) -> bool:
 
 
 def publish_instagram(ctx: Ctx, p: dict, r: dict) -> None:
+    problems = record_problems(ctx, p)
+    if problems:
+        from .schedule import ScheduleError
+        raise ScheduleError('Quality gate: ' + '; '.join(problems))
     ig, store = ctx.ig, ctx.store
     caption = p["instagram"]["caption"]
     cid = r.get("container_id")
@@ -412,6 +428,10 @@ def publish_instagram(ctx: Ctx, p: dict, r: dict) -> None:
 
 
 def publish_youtube(ctx: Ctx, p: dict, r: dict) -> None:
+    problems = record_problems(ctx, p)
+    if problems:
+        from .schedule import ScheduleError
+        raise ScheduleError('Quality gate: ' + '; '.join(problems))
     yt, meta = ctx.yt, p["youtube"]
     if not r.get("upload_session") and (r["state"] == "uploading" or r.get("attempts")):
         title = _norm(meta["title"][:100])
@@ -494,6 +514,9 @@ def tick(ctx: Ctx) -> None:
     if ctx.cfg.auto_approve:
         for p in load_posts(ctx.store, ctx):
             if p.get("status") == "awaiting_approval":
+                if record_problems(ctx, p):
+                    ctx.say(f"{p['id']}: quality gate blocked auto-approval")
+                    continue
                 p.update(status="approved", approved_at=ctx.now().isoformat(), approval_method="AUTO_APPROVE")
                 save(ctx.store, p)
                 ctx.say(f"{p['id']}: auto-approved")
