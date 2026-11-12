@@ -8,8 +8,10 @@ const stamp = value => value ? new Date(value).toLocaleString(undefined, {day:'n
 const percent = (n, d) => d ? Math.round(100*n/d) + '%' : '—';
 function storedToken() { try { return localStorage.getItem('stash_token'); } catch { return null; } }
 let token = storedToken();
+let contentData = null, contentLoadId = 0, contentBlobUrls = [];
 let data = null, selectedUser = null, loadId = 0, journeyId = 0, opener = null, toastTimer;
 function clearOwnerSession() {
+  clearContent();
   token=storedToken(); data=null; selectedUser=null; ++loadId; ++journeyId;
   if($('userDrawer').open)$('userDrawer').close();
   $('drawerBody').replaceChildren(); $('console').hidden=true; $('toast').hidden=true;
@@ -23,7 +25,7 @@ async function api(path, options = {}) {
   const response = await fetch(path, {...options, cache:'no-store', headers:{'Content-Type':'application/json', Authorization:'Bearer ' + token, ...options.headers}});
   if(storedToken()!==credential) { clearOwnerSession(); throw new Error('owner-access'); }
   if (!response.ok) {
-    if (response.status === 401 || response.status === 404) throw new Error('owner-access');
+    if (response.status === 401 || response.status === 403 || (response.status === 404 && !path.startsWith('/v1/admin/content'))) throw new Error('owner-access');
     let body = null; try { body = await response.json(); } catch {}
     throw new Error(body?.error || 'Couldn’t complete that request. Try again.');
   }
@@ -121,6 +123,7 @@ async function load() {
     $('updated').textContent = 'Updated '+new Date(data.period.until).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
     $('limitations').innerHTML = data.limitations.map(l=>`<li>${esc(l)}</li>`).join('');
     $('status').textContent=''; $('console').hidden=false;
+    loadContent();
   } catch(error) {
     if(id!==loadId)return;
     $('status').className='error';
@@ -128,6 +131,113 @@ async function load() {
     else $('status').textContent = data ? 'Couldn’t refresh. The data below is from the last successful refresh. Try Refresh again.' : 'Couldn’t load the console. Check your connection and try Refresh.';
   } finally { if(id===loadId)$('refresh').disabled=false; }
 }
+// Content uses the same private owner session, including media requests.
+function clearContent() {
+  ++contentLoadId; contentData=null;
+  contentBlobUrls.forEach(url=>URL.revokeObjectURL(url)); contentBlobUrls=[];
+  for(const id of ['contentSetup','contentIdeas','contentDrafts','contentScheduled','contentPosted','contentNote','contentStatus','contentMode'])$(id).replaceChildren();
+  $('contentActions').hidden=true;
+}
+function contentUrl(value) {
+  if(typeof value!=='string')return '';
+  try {
+    const url=new URL(value,location.origin);
+    return url.origin===location.origin && (url.pathname==='/v1/admin/content/media' || url.pathname.startsWith('/content-samples/')) ? url.pathname+url.search : '';
+  } catch { return ''; }
+}
+function contentPreview(post) {
+  const preview=post.preview || {}, cover=contentUrl(preview.cover), video=contentUrl(preview.video);
+  const slides=(preview.slides || []).map(contentUrl).filter(Boolean);
+  const image=(url,alt)=>`<img data-content-media="${esc(url)}" alt="${esc(alt)}" loading="lazy">`;
+  if(video)return `<video data-content-media="${esc(video)}" controls preload="metadata" aria-label="${esc(post.title || 'Draft video')}"></video>${cover ? image(cover,'Cover for '+(post.title || 'draft')) : ''}`;
+  if(slides.length)return `<div class="content-slides" tabindex="0" aria-label="Carousel slides. Scroll to see each slide.">${slides.map((url,i)=>image(url,`Slide ${i+1} of ${slides.length}`)).join('')}</div><p class="provider-note">${slides.length} slides · Scroll to review every slide.</p>`;
+  return cover ? image(cover,post.title || 'Draft cover') : '<div class="content-preview-placeholder">Preview will appear when this draft’s media is available.</div>';
+}
+function contentGate(post) {
+  const gate=post.gate || {}, issues=gate.issues || [];
+  return `<div class="content-gate${gate.passed ? ' passed' : ''}"><p><strong>${gate.passed ? 'Quality gate passed' : 'Quality gate not passed'}</strong>${gate.summary ? ' · '+esc(gate.summary) : ''}</p>${issues.length ? `<details><summary>Review ${issues.length} gate finding${issues.length===1?'':'s'}</summary><ul>${issues.map(issue=>`<li>${esc(typeof issue==='string'?issue:issue.message || issue.detail || JSON.stringify(issue))}</li>`).join('')}</ul></details>` : ''}</div>`;
+}
+function contentMetric(value) {
+  if(value==null)return 'Not measured yet';
+  if(typeof value!=='object')return esc(value);
+  const entries=Object.entries(value).filter(([,v])=>v!=null);
+  return entries.length ? entries.map(([key,v])=>`${esc(key.replaceAll('_',' '))}: ${typeof v==='object'?contentMetric(v):esc(typeof v==='number'?num(v):v)}`).join(' · ') : 'Not measured yet';
+}
+function contentMetricWindow(post, window) {
+  const metrics=post.metrics || {}, key=window==='48h'?'h48':'d7';
+  const channels=Object.entries(metrics).filter(([name,value])=>value && typeof value==='object' && (name==='instagram' || name==='youtube'));
+  if(channels.length)return channels.map(([name,value])=>`${esc(name==='instagram'?'Instagram':'YouTube')} · ${contentMetric(value[key])}`).join('<br>');
+  return contentMetric(metrics[window] ?? post['metrics_'+window]);
+}
+function renderContent() {
+  const c=contentData, controls=c.controls || {};
+  $('contentMode').textContent=controls.paused ? 'Paused' : c.setup?.find(s=>s.key==='engine')?.connected ? 'Enabled' : 'Setup';
+  $('contentSetup').innerHTML=(c.setup || []).map(row=>`<li class="${row.connected?'connected':''}"><div><strong>${esc(row.label)}</strong><span class="content-state">${esc(row.status || (row.connected?'Connected':'Not connected'))}</span></div>${/^https:\/\/github\.com\/Parthuss\/stash\//.test(row.href || '') ? `<a href="${esc(row.href)}" target="_blank" rel="noopener">${row.connected?'Review':'Set up'}<span class="sr-only"> ${esc(row.label)}</span></a>` : ''}</li>`).join('');
+  $('contentActions').hidden=!controls.configured;
+  $('contentActions').querySelectorAll('button').forEach(button=>button.disabled=false);
+  $('contentPause').dataset.contentAction=controls.paused?'resume':'pause';
+  $('contentPause').textContent=controls.paused?'Resume engine':'Pause engine';
+  $('contentNote').textContent=c.note || 'Approvals apply to the reviewed content and its quality report. Changes require another review.';
+  const ideas=[...(c.ideas || [])].sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0));
+  $('contentIdeas').innerHTML=ideas.length ? `<table><caption class="sr-only">Ideas backlog ordered by score</caption><thead><tr><th>Hook</th><th>Format</th><th>Score</th></tr></thead><tbody>${ideas.map(idea=>`<tr><td class="content-hook">${esc(idea.hook || idea.title)}</td><td>${esc(idea.format || 'Not selected')}</td><td>${idea.score==null?'Not scored':esc(idea.score)}</td></tr>`).join('')}</tbody></table>` : '<p class="content-empty">No ideas yet. Run research after setup to build the backlog.</p>';
+  $('contentDrafts').innerHTML=(c.drafts || []).map(post=>{
+    const canDecide=controls.can_approve && !post.sample && !!post.content_hash;
+    return `<article class="panel content-draft"><div class="content-preview">${contentPreview(post)}</div><div><span class="plan">${esc(post.format || 'Draft')}${post.sample?' · Local sample':''}</span><h4>${esc(post.title || post.id)}</h4><p class="content-caption">${esc(post.caption || 'Caption not added yet.')}</p>${contentGate(post)}<div class="content-decision"><button type="button" class="primary" data-content-action="approve" data-content-id="${esc(post.id)}" ${canDecide && post.gate?.passed?'':'disabled'}>Approve</button><button type="button" data-content-action="skip" data-content-id="${esc(post.id)}" ${canDecide?'':'disabled'}>Skip</button></div>${post.sample ? '<p class="provider-note">Local sample for preview. Make and stage a gate-passing draft before approval.</p>' : !post.gate?.passed ? '<p class="provider-note">Approval is available after the quality gate passes for this exact draft.</p>' : ''}</div></article>`;
+  }).join('') || '<div class="panel"><p class="content-empty">No drafts awaiting approval this week. Run make after setup to prepare the next batch.</p></div>';
+  $('contentScheduled').innerHTML=(c.scheduled || []).length ? `<table><caption class="sr-only">Scheduled content, dates in UTC</caption><thead><tr><th>Content</th><th>Channel</th><th>Scheduled · UTC</th><th>Status</th></tr></thead><tbody>${c.scheduled.map(post=>`<tr><td class="content-table-title">${esc(post.title || post.id)}</td><td>${esc(post.platform || post.channel || post.format || 'Not selected')}</td><td>${esc(stamp(post.scheduled_at || post.publish_at))}</td><td>${esc(post.status || 'Scheduled')}</td></tr>`).join('')}</tbody></table>` : '<p class="content-empty">Nothing scheduled yet. Approved drafts will appear here with their publish dates.</p>';
+  $('contentPosted').innerHTML=(c.posted || []).length ? `<table><caption class="sr-only">Published content and measured results after 48 hours and 7 days</caption><thead><tr><th>Content</th><th>Posted · UTC</th><th>48 hours</th><th>7 days</th></tr></thead><tbody>${c.posted.map(post=>`<tr><td class="content-table-title">${esc(post.title || post.id)}<span class="content-table-note">${esc(post.platform || post.channel || '')}</span></td><td>${esc(stamp(post.posted_at || post.published_at))}</td><td class="content-metric">${contentMetricWindow(post,'48h')}</td><td class="content-metric">${contentMetricWindow(post,'7d')}</td></tr>`).join('')}</tbody></table>` : '<p class="content-empty">No engine posts yet. Results appear after each post’s 48-hour and 7-day measurement windows.</p>';
+}
+async function loadContentMedia(requestId) {
+  const credential=token;
+  await Promise.all([...$('contentDrafts').querySelectorAll('[data-content-media]')].map(async element=>{
+    const url=element.dataset.contentMedia;
+    if(url.startsWith('/content-samples/')) { if(requestId===contentLoadId)element.src=url; return; }
+    try {
+      const response=await fetch(url,{cache:'no-store',headers:{Authorization:'Bearer '+credential}});
+      if(storedToken()!==credential) { clearOwnerSession();return; }
+      if(requestId!==contentLoadId)return;
+      if(response.status===401) { clearOwnerSession(); return; }
+      if(!response.ok)throw new Error('preview');
+      const blob=await response.blob();
+      if(requestId!==contentLoadId)return;
+      const objectUrl=URL.createObjectURL(blob);contentBlobUrls.push(objectUrl);element.src=objectUrl;
+    } catch { if(requestId===contentLoadId && element.isConnected) { const note=document.createElement('p');note.className='provider-note';note.textContent='Preview unavailable. Refresh to try again.';element.replaceWith(note); } }
+  }));
+}
+async function loadContent() {
+  const id=++contentLoadId;
+  $('contentStatus').textContent='Refreshing content…';
+  try {
+    const next=await api('/v1/admin/content');
+    if(id!==contentLoadId)return;
+    contentBlobUrls.forEach(url=>URL.revokeObjectURL(url));contentBlobUrls=[];
+    contentData=next;renderContent();
+    $('contentStatus').textContent=next.updated_at?'Content updated '+stamp(next.updated_at):'';
+    loadContentMedia(id);
+  } catch(error) {
+    if(id!==contentLoadId)return;
+    if(error.message==='owner-access') { clearOwnerSession();return; }
+    $('contentStatus').textContent=contentData ? 'Couldn’t refresh content. Showing the last successful update; try Refresh again.' : 'Couldn’t load content. Check your connection and try Refresh.';
+  }
+}
+$('content').addEventListener('click',async event=>{
+  const button=event.target.closest('[data-content-action]');if(!button || button.disabled || !contentData)return;
+  const action=button.dataset.contentAction, post=(contentData.drafts || []).find(p=>p.id===button.dataset.contentId);
+  const payload={action};
+  if(post){payload.id=post.id;payload.content_hash=post.content_hash;}
+  const session=token, buttons=[...$('content').querySelectorAll('[data-content-action]')];
+  buttons.forEach(b=>b.disabled=true);$('contentStatus').textContent='Submitting content action…';
+  try {
+    const result=await api('/v1/admin/content/action',{method:'POST',body:JSON.stringify(payload)});
+    if(token!==session)return;
+    const message=result.message || (post?'Decision queued for the next engine tick.':'Workflow request accepted.');
+    await loadContent();
+    if(token===session){$('contentStatus').textContent=message;toast(message);}
+  } catch(error) {
+    if(error.message==='owner-access'){clearOwnerSession();return;}
+    if(token===session)$('contentStatus').textContent=error.message;
+  } finally { if(token===session && contentData) { contentBlobUrls.forEach(url=>URL.revokeObjectURL(url));contentBlobUrls=[];renderContent();loadContentMedia(contentLoadId); } }
+});
 function closeDrawer() { $('userDrawer').close(); }
 async function openUser(id, action) {
   const user = data.users.find(u=>u.id===id);

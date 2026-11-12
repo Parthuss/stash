@@ -23,6 +23,7 @@
     <a href="#users"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/></svg>Users</a>
     <a href="#processing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h5l3-8 4 16 3-8h5"/></svg>Processing</a>
     <a href="#traffic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 16V9M12 16V4M17 16v-5"/></svg>Traffic</a>
+    <a href="#content"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/></svg>Content</a>
     <a href="#activity"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity</a>
   </nav>
   <div class="rail-foot"><a href="/">← Back to saves</a><span>Private owner workspace</span></div>
@@ -58,6 +59,16 @@
       <div class="section-head"><div><h2>Traffic</h2><p>How people find their way here. Your own visits are excluded.</p></div><span class="tag">First-party analytics</span></div>
       <div class="panel padded"><div class="subhead"><h3>Visits over time</h3><span class="legend"><i></i>Visits · UTC</span></div><div id="trafficChart"></div><details class="data-view"><summary>View visits as a table</summary><div id="trafficTable" class="table-wrap"></div></details></div>
       <div class="traffic-grid" id="trafficBreakdowns"></div>
+    </section>
+
+    <section id="content" class="section">
+      <div class="section-head"><div><h2>Content</h2><p>Find the next idea, review the work, and keep track of what goes out.</p></div><span id="contentMode" class="tag">Setup</span></div>
+      <p id="contentStatus" class="content-status" role="status" aria-live="polite">Loading content…</p>
+      <div class="panel padded content-setup"><div class="subhead"><h3>Setup checklist</h3><a id="contentSetupLink" href="https://github.com/Parthuss/stash/blob/master/promo/engine/SETUP.md" target="_blank" rel="noopener">Setup guide</a></div><ul id="contentSetup" class="content-checklist"></ul><div id="contentActions" class="content-actions" hidden><button type="button" data-content-action="research">Run research now</button><button type="button" data-content-action="make">Run make now</button><button type="button" id="contentPause" data-content-action="pause">Pause engine</button></div><p id="contentNote" class="provider-note"></p></div>
+      <div class="content-block"><div class="subhead"><h3>Ideas backlog</h3><span class="muted">Highest scores first</span></div><div class="panel table-wrap" id="contentIdeas"></div></div>
+      <div class="content-block"><div class="subhead"><h3>This week’s drafts</h3><span class="muted">Awaiting your review</span></div><div id="contentDrafts" class="content-drafts"></div></div>
+      <div class="content-block"><div class="subhead"><h3>Scheduled queue</h3><span class="muted">Dates shown in UTC</span></div><div class="panel table-wrap" id="contentScheduled"></div></div>
+      <div class="content-block"><div class="subhead"><h3>Posted</h3><span class="muted">48-hour &amp; 7-day results</span></div><div class="panel table-wrap" id="contentPosted"></div></div>
     </section>
 
     <section id="activity" class="section">
