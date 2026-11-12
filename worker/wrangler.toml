@@ -41,3 +41,11 @@ database_id = "REPLACE_ME"
 # Workers AI (free tier): embeddings for meaning-based search. Optional; without it search is keyword-only.
 [ai]
 binding = "AI"
+
+# Optional owner Content console. Use the SAME PRIVATE bucket as the engine's R2_BUCKET.
+# Never attach a public bucket domain. No binding means setup and local samples only.
+# [[r2_buckets]]
+# binding = "CONTENT_ENGINE"
+# bucket_name = "skwirl-content-engine"
+# Set CONTENT_GH_TOKEN with `wrangler secret put CONTENT_GH_TOKEN` (Actions: write,
+# this repository only). Console workflow dispatches always request a dry run.

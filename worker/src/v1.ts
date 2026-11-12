@@ -14,7 +14,8 @@
 import { TIERS_FROM } from "./tiers";
 export { TIERS_FROM } from "./tiers";
 import { categoriesOf, setCategories, setNoteCategory } from "./categories";
-import { analyticsOverview, journey, ownerConsole } from "./analytics";
+import { analyticsOverview, journey, ownerConsole, contentOverview } from "./analytics";
+import { contentAction, contentMedia } from "./content";
 import { okEndpoint, sendPush, vapidPublic } from "./push";
 import { notifyOwner } from "./notify";
 import { cancelSubscription, isPlus, plusAvailable, plusRoute } from "./plus";
@@ -326,6 +327,14 @@ export async function handleV1(
   if (path.startsWith("/v1/plus/")) {
     const res = await plusRoute(request, env, path, userId);
     if (res) return res;
+  }
+
+  if (path === "/v1/admin/content" || path.startsWith("/v1/admin/content/")) {
+    if (userId !== null) return json({ error: "not found" }, 404);
+    if (path === "/v1/admin/content" && request.method === "GET") return json(await contentOverview(env));
+    if (path === "/v1/admin/content/action" && request.method === "POST") return contentAction(request, env);
+    if (path === "/v1/admin/content/media" && request.method === "GET") return contentMedia(request, env);
+    return json({ error: "not found" }, 404);
   }
 
   if (path === "/v1/admin/console" && request.method === "GET") {

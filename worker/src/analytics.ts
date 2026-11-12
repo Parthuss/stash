@@ -4,6 +4,7 @@
  * /owner. Never typed text, search words or note content. No third party, no IPs kept.
  */
 import type { Env } from "./index";
+export { contentOverview } from "./content";
 import { TIERS_FROM } from "./tiers";
 
 const json = (body: unknown, status = 200) =>

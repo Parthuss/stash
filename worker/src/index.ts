@@ -56,6 +56,8 @@ export interface Env {
   DB: D1Database;
   AI?: { run(model: string, input: unknown): Promise<unknown> }; // Workers AI, for meaning-based search
   MEDIA?: R2Bucket;
+  CONTENT_ENGINE?: R2Bucket; // same private bucket as promo/engine; never a public domain
+  CONTENT_GH_TOKEN?: string; // content-only GitHub Actions dispatch token, set later
   STASH_SECRET: string;
   IG_VERIFY_TOKEN?: string;
   IG_APP_SECRET?: string;
