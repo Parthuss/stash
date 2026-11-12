@@ -73,38 +73,92 @@ def test_rendered_stills_cannot_change_after_qa(week_dir):
     assert any('changed after render QA' in e for e in schedule.validate(sched, week_dir))
 
 
-def test_stills_require_art_and_check_all_copy(tmp_path):
+def _carousel(tmp_path, **over):
+    """A minimal script that meets the carousel standard; tests then break one rule at a time."""
+    for name in ('a.png', 'b.png', 'c.png'):
+        (tmp_path / name).write_bytes(b'x')
+    data = {'kind': 'carousel', 'caption': 'A note. Link in bio.',
+            'assets': {'a': {'type': 'ui', 'file': 'a.png', 'source': 'demo capture'},
+                       'b': {'type': 'ui', 'file': 'b.png', 'source': 'demo capture'},
+                       'c': {'type': 'thumb', 'file': 'c.png', 'source': 'covers'}},
+            'slides': [
+                {'layout': 'hook', 'bg': 'lilac', 'title': 'Hook', 'bridge': 'why', 'tiles': [{'asset': 'c'}, {'gone': True}]},
+                {'layout': 'phone', 'bg': 'lavender', 'title': 'Phone', 'bridge': 'why', 'screen': 'a', 'tile': 'c'},
+                {'layout': 'zoom', 'bg': 'mint', 'title': 'Zoom', 'bridge': 'why', 'crops': [{'asset': 'b', 'crop': [0, 0, 100, 50]}]},
+                {'layout': 'cta', 'bg': 'lavender', 'title': 'Try it', 'bridge': 'Link in bio'}]}
+    data.update(over)
     script = tmp_path / 'post.json'
-    script.write_text(json.dumps({'kind':'static','slides':[{'title':'Useful','bridge':'Try it'}]}))
-    with pytest.raises(ValueError, match='artwork'):
+    script.write_text(json.dumps(data))
+    return script, data
+
+
+def test_stills_require_visuals_and_check_all_copy(tmp_path):
+    script = tmp_path / 'post.json'
+    script.write_text(json.dumps({'kind':'static','slides':[{'layout':'promise','title':'Useful','bridge':'Try it'}]}))
+    with pytest.raises(ValueError, match='no visuals'):
         stills.read_script(script)
-    data = {'kind':'static','art':{'one':{'file':'one.png','prompt':'NO TEXT'}},
-            'slides':[{'title':'Useful','bridge':'Try it','card':'Unlimited saves'}]}
+    script, data = _carousel(tmp_path)
+    assert stills.read_script(script)['slides'][0]['layout'] == 'hook'
+    data['slides'][2]['body'] = 'Unlimited saves'
     script.write_text(json.dumps(data))
     with pytest.raises(ValueError, match='unlimited'):
         stills.read_script(script)
-    data['slides'][0]['card'] = 'A note'
+    data['slides'][2]['body'] = 'A note'
+    data['assets']['a']['file'] = 'missing.png'
     script.write_text(json.dumps(data))
-    with pytest.raises(ValueError, match='missing generated art'):
+    with pytest.raises(ValueError, match='missing asset'):
         stills.build(script, tmp_path / 'out')
 
 
-def test_weekly_runner_defaults_codex_and_accepts_override(tmp_path, monkeypatch):
+def test_carousel_standard_is_enforced(tmp_path):
+    script, data = _carousel(tmp_path)
+    data['slides'][2]['crops'] = [{'asset': 'a', 'crop': [0, 0, 390, 844]}]
+    data['slides'][1]['screen'] = 'a'
+    data['slides'][2] = {'layout': 'phone', 'bg': 'mint', 'title': 'Again', 'bridge': 'why', 'screen': 'a'}
+    script.write_text(json.dumps(data))
+    with pytest.raises(ValueError) as e:
+        stills.read_script(script)
+    assert 'repeats slide 2' in str(e.value) and 'same layout' in str(e.value)
+    script, data = _carousel(tmp_path)
+    data['assets']['a']['source'] = 'mockup'
+    data['slides'][3]['layout'] = 'promise'
+    data['slides'][0]['title'] = 'one two three four five six seven eight nine ten eleven'
+    script.write_text(json.dumps(data))
+    with pytest.raises(ValueError) as e:
+        stills.read_script(script)
+    msg = str(e.value)
+    assert 'real captures' in msg and 'cta layout' in msg and 'hook' in msg
+    script, data = _carousel(tmp_path)
+    data['assets'] = {k: v for k, v in data['assets'].items() if k == 'c'}
+    data['slides'][1] = {'layout': 'statement', 'bg': 'peach', 'title': 'S', 'bridge': 'why', 'asset': 'c'}
+    data['slides'][2] = {'layout': 'promise', 'bg': 'ink', 'title': 'P', 'bridge': 'why'}
+    script.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match='real product'):
+        stills.read_script(script)
+
+
+def test_weekly_runner_research_codex_make_claude_and_overrides(tmp_path, monkeypatch):
     source = Path(__file__).resolve().parents[1] / 'bin/weekly.py'
     spec = importlib.util.spec_from_file_location('weekly', source)
     weekly = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(weekly)
     monkeypatch.setattr(weekly, 'OUTPUT', tmp_path)
-    monkeypatch.setattr(sys, 'argv', ['weekly.py','research'])
-    monkeypatch.delenv('ENGINE_AGENT', raising=False)
+    for v in ('ENGINE_AGENT', 'ENGINE_RESEARCH_AGENT', 'ENGINE_MAKE_AGENT', 'ENGINE_EFFORT', 'ENGINE_MAKE_EFFORT'):
+        monkeypatch.delenv(v, raising=False)
     called = []
     monkeypatch.setitem(sys.modules,'crew',SimpleNamespace(start=lambda *a,**k: called.append((a,k)) or {'id':'fake'}))
-    assert weekly.main() == 0 and called[-1][0][0] == 'codex'
-    assert weekly.main() == 0 and len(called) == 1
+    monkeypatch.setattr(sys, 'argv', ['weekly.py','research'])
+    assert weekly.main() == 0 and called[-1][0][0] == 'codex' and called[-1][1]['effort'] == 'xhigh'
+    assert weekly.main() == 0 and len(called) == 1          # one task per job per day
+    monkeypatch.setattr(sys, 'argv', ['weekly.py','make'])
+    assert weekly.main() == 0 and called[-1][0][0] == 'claude-craveto' and called[-1][1]['effort'] == 'max'
     for marker in tmp_path.glob('.started-*'):
         marker.unlink()
-    monkeypatch.setenv('ENGINE_AGENT','claude-craveto')
-    assert weekly.main() == 0 and called[-1][0][0] == 'claude-craveto'
+    monkeypatch.setenv('ENGINE_AGENT', 'codex')             # fallback for both
+    monkeypatch.setenv('ENGINE_MAKE_AGENT', 'claude-main')  # job-specific wins
+    assert weekly.main() == 0 and called[-1][0][0] == 'claude-main'
+    monkeypatch.setattr(sys, 'argv', ['weekly.py','research'])
+    assert weekly.main() == 0 and called[-1][0][0] == 'codex'
 
 
 def test_youtube_session_saved_before_bytes_then_resumed_without_second_insert():

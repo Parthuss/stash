@@ -1,12 +1,13 @@
 #!/bin/sh
 # Fresh local Skwirl with the demo account "Maya", for screenshots and screen recordings.
 #   promo/tools/demo/demo.sh          -> worker on http://localhost:8799, token in promo/tools/demo/.demotok
-# Stop it with: pkill -f "wrangler dev"
+# Stop it with: lsof -ti tcp:8799 | xargs kill
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd); ROOT=$(cd "$HERE/../../.." && pwd)
 cd "$ROOT/worker"
 CONFIG=wrangler.toml; [ -f wrangler.local.toml ] && CONFIG=wrangler.local.toml
-pkill -f "wrangler dev" 2>/dev/null || true; sleep 1
+# Stop only whatever holds the demo port: other agents run their own wrangler dev on other ports.
+lsof -ti tcp:8799 | xargs kill 2>/dev/null || true; sleep 1
 rm -rf .wrangler/demo
 for f in migrations/*.sql; do npx wrangler d1 execute stash --local -c "$CONFIG" --persist-to .wrangler/demo --file "$f" >/dev/null 2>&1; done
 (npx wrangler dev -c "$CONFIG" --local --persist-to .wrangler/demo --port 8799 --var STASH_SECRET:adm --var OPEN_JOIN:1 > "$HERE/.dev.log" 2>&1 &)

@@ -1,65 +1,96 @@
 {
-  "id": "i01-disappearing",
+  "id": "i01-disappearing-v2",
   "kind": "carousel",
   "idea_id": "I-01",
   "caption": "The reel can disappear. Keep the useful part as a note with Skwirl before it does.\nSend this to your save-for-later friend. Free to try, link in bio.\n\n#savedreels #digitalorganisation #skwirl",
-  "art": {
-    "library": {
-      "file": "art/library.png",
-      "alt": "Illustration of a video card dissolving from a shelf",
-      "prompt": "Use case: illustration-story. Create a square editorial still-life illustration for Skwirl, a saved-reels-to-notes app. Scene: a small freestanding library of rounded translucent lavender cards with tiny embossed play triangles, one card in the foreground dissolving into a few paper-like fragments, leaving an obvious gap. Tangible handmade paper and soft ceramic materials, sophisticated restrained art direction, ink-dark edges, lavender #dcd8ff, peach #ffd8cb, mint #cdf3e1, background pale lilac #f8f7ff. Centered subject with generous clear space around it. Soft directional studio light and tactile grain, subtle shadows. This is a metaphor for a saved link disappearing. NO words, letters, numbers, logos, people, app interface, watermark or typography. Standalone cohesive art to be cropped into a carousel, no borders or multi-panel layout."
-    },
-    "note": {
-      "file": "art/note.png",
-      "alt": "Illustration of a written note beside a video tile",
-      "prompt": "Use case: illustration-story. Square editorial still-life illustration for Skwirl saved-reels-to-notes app. One substantial ivory paper note card standing upright on a lavender plinth, its surface completely blank except three small mint tick marks arranged vertically on the left and a small embossed peach bookmark at top. Behind it a translucent lavender glass video tile with a tiny play triangle, physically separate from the paper note. Metaphor: turn fleeting video into a useful durable written note. Tactile handmade paper and soft ceramic, ink-dark edges, restrained polished editorial illustration. Palette pale lilac #f8f7ff background, lavender #dcd8ff, peach #ffd8cb, mint #cdf3e1. Centered, ample negative space, soft directional studio light, subtle grain and shadows. Absolutely NO letters, words, numbers, logos, people, app screenshots, watermarks or multi-panel layout. Surface marks must be simple ticks, never pseudo writing."
-    }
+  "assets": {
+    "note": {"type": "ui", "file": "ui/note.png", "alt": "Skwirl note screen for Garlic butter pasta in 15 minutes", "source": "demo capture: promo/tools/demo/shots.cjs (SHOTS_DSF=3), demo account Maya"},
+    "note-full": {"type": "ui", "file": "ui/note-full.png", "alt": "The full Skwirl note with ingredients and numbered steps", "source": "demo capture: promo/tools/demo/shots.cjs (SHOTS_DSF=3), demo account Maya"},
+    "search": {"type": "ui", "file": "ui/search-pasta.png", "alt": "Skwirl search for that pasta thing finding the garlic butter pasta note", "source": "demo capture: promo/tools/demo/shots.cjs (SHOTS_DSF=3), demo account Maya"},
+    "pasta": {"type": "thumb", "file": "thumbs/pasta.jpg", "alt": "Pasta reel cover", "source": "promo/tools/demo/covers"},
+    "books": {"type": "thumb", "file": "thumbs/books.jpg", "alt": "Books reel cover", "source": "promo/tools/demo/covers"},
+    "tokyo": {"type": "thumb", "file": "thumbs/tokyo.jpg", "alt": "Tokyo reel cover", "source": "promo/tools/demo/covers"},
+    "movies": {"type": "thumb", "file": "thumbs/movies.jpg", "alt": "Movies reel cover", "source": "promo/tools/demo/covers"},
+    "budget": {"type": "thumb", "file": "thumbs/budget.jpg", "alt": "Budget reel cover", "source": "promo/tools/demo/covers"},
+    "mobility": {"type": "thumb", "file": "thumbs/mobility.jpg", "alt": "Mobility reel cover", "source": "promo/tools/demo/covers"}
   },
   "slides": [
     {
-      "kicker": "For your saved folder",
-      "title": "The reel you saved\ncan disappear.",
-      "body": "A bookmark still depends on the original post.",
-      "art": "library",
+      "layout": "hook",
+      "bg": "lilac",
+      "title": "The reel\nyou saved\ncan disappear.",
+      "body": "A save is only a link to someone else's post.",
+      "panel": "Saved",
+      "tiles": [
+        {"asset": "books"}, {"gone": true, "label": "Reel\nunavailable"}, {"asset": "tokyo"},
+        {"asset": "movies"}, {"asset": "budget"}, {"asset": "mobility"}
+      ],
       "bridge": "So what happens to the useful part?"
     },
     {
+      "layout": "statement",
+      "bg": "peach",
       "kicker": "The weak link",
       "title": "Deleted post.\nLost recipe.",
-      "body": "If the creator deletes it, a saved link cannot bring it back.",
-      "art": "library",
+      "body": "If the creator deletes it, your save can't bring it back.",
+      "from": "Your save",
+      "to": "Their post",
+      "stamp": "Deleted",
+      "asset": "pasta",
       "bridge": "Keep what you wanted to remember, before that happens."
     },
     {
-      "kicker": "Here is the switch",
+      "layout": "phone",
+      "bg": "lavender",
+      "kicker": "Here's the switch",
       "title": "Share it to Skwirl.\nGet a note.",
-      "body": "Skwirl reads the reel and turns it into something you can use.",
-      "art": "note",
+      "tile": "pasta",
+      "arrow_label": "Share",
+      "screen": "note",
       "bridge": "What does that note actually keep?"
     },
     {
+      "layout": "zoom",
+      "arrange": "collage",
+      "bg": "mint",
       "kicker": "The useful part",
-      "title": "The summary.\nThe next step.",
-      "body": "Plus the transcript. Recipes get ingredients and numbered steps.",
-      "art": "note",
+      "title": "The recipe,\nwritten down.",
+      "crops": [
+        {"asset": "note-full", "crop": [20, 862, 352, 270], "width": 600, "left": 0, "top": 0, "rotate": -2},
+        {"asset": "note-full", "crop": [20, 1270, 352, 290], "width": 600, "left": 320, "top": 250, "rotate": 2}
+      ],
       "bridge": "Once the note is made, it lives in your Skwirl library."
     },
     {
+      "layout": "zoom",
+      "arrange": "flow",
+      "bg": "lilac",
+      "kicker": "Weeks later",
+      "title": "Find it by what\nyou remember.",
+      "crops": [
+        {"asset": "search", "crop": [14, 68, 362, 72], "width": 860},
+        {"asset": "search", "crop": [12, 196, 186, 232], "width": 430, "label": "There it is"}
+      ],
+      "bridge": "One honest thing before you try it."
+    },
+    {
+      "layout": "promise",
+      "bg": "ink",
       "kicker": "Know the limit",
       "title": "It keeps the note.\nNot the video.",
-      "body": "Share the reel while it is still available.\nLet Skwirl finish processing it.",
+      "body": "Share the reel while it's still up, and let Skwirl finish the note.",
       "card_title": "The promise",
-      "card": "A useful note you can search later.\nNo promise to recover a deleted reel.",
-      "dark": true,
+      "card": "A useful note you can search later.\nNo promise to recover a reel that's already gone.",
       "bridge": "That is the part worth saving."
     },
     {
-      "kicker": "Your next useful save",
+      "layout": "cta",
+      "bg": "lavender",
       "title": "Save it for later.\nHave it for later.",
       "body": "Send this to the friend who saves every useful reel.",
-      "art": "note",
-      "bridge": "Skwirl. Free to try. Link in bio.",
-      "label": "skwirl.app"
+      "pill": "Free to try. Link in bio.",
+      "label": "skwirl.app",
+      "bridge": "Skwirl. Free to try. Link in bio."
     }
   ]
 }
