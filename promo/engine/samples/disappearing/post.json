@@ -1,0 +1,65 @@
+{
+  "id": "i01-disappearing",
+  "kind": "carousel",
+  "idea_id": "I-01",
+  "caption": "The reel can disappear. Keep the useful part as a note with Skwirl before it does.\nSend this to your save-for-later friend. Free to try, link in bio.\n\n#savedreels #digitalorganisation #skwirl",
+  "art": {
+    "library": {
+      "file": "art/library.png",
+      "alt": "Illustration of a video card dissolving from a shelf",
+      "prompt": "Use case: illustration-story. Create a square editorial still-life illustration for Skwirl, a saved-reels-to-notes app. Scene: a small freestanding library of rounded translucent lavender cards with tiny embossed play triangles, one card in the foreground dissolving into a few paper-like fragments, leaving an obvious gap. Tangible handmade paper and soft ceramic materials, sophisticated restrained art direction, ink-dark edges, lavender #dcd8ff, peach #ffd8cb, mint #cdf3e1, background pale lilac #f8f7ff. Centered subject with generous clear space around it. Soft directional studio light and tactile grain, subtle shadows. This is a metaphor for a saved link disappearing. NO words, letters, numbers, logos, people, app interface, watermark or typography. Standalone cohesive art to be cropped into a carousel, no borders or multi-panel layout."
+    },
+    "note": {
+      "file": "art/note.png",
+      "alt": "Illustration of a written note beside a video tile",
+      "prompt": "Use case: illustration-story. Square editorial still-life illustration for Skwirl saved-reels-to-notes app. One substantial ivory paper note card standing upright on a lavender plinth, its surface completely blank except three small mint tick marks arranged vertically on the left and a small embossed peach bookmark at top. Behind it a translucent lavender glass video tile with a tiny play triangle, physically separate from the paper note. Metaphor: turn fleeting video into a useful durable written note. Tactile handmade paper and soft ceramic, ink-dark edges, restrained polished editorial illustration. Palette pale lilac #f8f7ff background, lavender #dcd8ff, peach #ffd8cb, mint #cdf3e1. Centered, ample negative space, soft directional studio light, subtle grain and shadows. Absolutely NO letters, words, numbers, logos, people, app screenshots, watermarks or multi-panel layout. Surface marks must be simple ticks, never pseudo writing."
+    }
+  },
+  "slides": [
+    {
+      "kicker": "For your saved folder",
+      "title": "The reel you saved\ncan disappear.",
+      "body": "A bookmark still depends on the original post.",
+      "art": "library",
+      "bridge": "So what happens to the useful part?"
+    },
+    {
+      "kicker": "The weak link",
+      "title": "Deleted post.\nLost recipe.",
+      "body": "If the creator deletes it, a saved link cannot bring it back.",
+      "art": "library",
+      "bridge": "Keep what you wanted to remember, before that happens."
+    },
+    {
+      "kicker": "Here is the switch",
+      "title": "Share it to Skwirl.\nGet a note.",
+      "body": "Skwirl reads the reel and turns it into something you can use.",
+      "art": "note",
+      "bridge": "What does that note actually keep?"
+    },
+    {
+      "kicker": "The useful part",
+      "title": "The summary.\nThe next step.",
+      "body": "Plus the transcript. Recipes get ingredients and numbered steps.",
+      "art": "note",
+      "bridge": "Once the note is made, it lives in your Skwirl library."
+    },
+    {
+      "kicker": "Know the limit",
+      "title": "It keeps the note.\nNot the video.",
+      "body": "Share the reel while it is still available.\nLet Skwirl finish processing it.",
+      "card_title": "The promise",
+      "card": "A useful note you can search later.\nNo promise to recover a deleted reel.",
+      "dark": true,
+      "bridge": "That is the part worth saving."
+    },
+    {
+      "kicker": "Your next useful save",
+      "title": "Save it for later.\nHave it for later.",
+      "body": "Send this to the friend who saves every useful reel.",
+      "art": "note",
+      "bridge": "Skwirl. Free to try. Link in bio.",
+      "label": "skwirl.app"
+    }
+  ]
+}

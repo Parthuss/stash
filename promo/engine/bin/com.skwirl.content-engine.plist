@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Weekly content tasks: research on Friday 10:00, make on Saturday 10:00 (local time).
+     Install (after the engine is merged to master): see promo/engine/SETUP.md step 6. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.skwirl.content-engine</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>[ -f ~/.config/skwirl-engine/env ] &amp;&amp; set -a &amp;&amp; . ~/.config/skwirl-engine/env &amp;&amp; set +a; /opt/homebrew/bin/python3 ~/Work/Experiment/stash/promo/engine/bin/weekly.py auto</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Weekday</key><integer>6</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
+  <key>StandardOutPath</key><string>/tmp/skwirl-content-engine.log</string>
+  <key>StandardErrorPath</key><string>/tmp/skwirl-content-engine.log</string>
+</dict>
+</plist>
