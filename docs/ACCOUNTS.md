@@ -35,9 +35,10 @@ Written 12 Nov 2026 on branch `crew/1112-121225-d392`. Not merged or deployed. T
 The owner has no user row (STASH_SECRET is the owner token), so it had no email to sign in with. Now:
 
 - The owner adds an address from the dialog or Profile → Email → Add email. A code goes to it; the address is saved in `owner_login` (one row) only once the code comes back. An address another account has proven can't be added, and once it's the owner's, no account can add it.
-- Signing in with that address (code, or Google for a Gmail address only: Google vouches for its own addresses, not for others on a Google account) mints an owner device token `sto_…`. It's stored as an HMAC keyed with STASH_SECRET, so **rotating STASH_SECRET signs every owner device out**. It works for `/v1/*`, admin pages and `/mcp/<token>`, but not for the `X-Stash-Secret` routes (daemon, admin setup), which still need the secret itself.
+- Signing in with that address (code, or Google for a Gmail address only: Google vouches for its own addresses, not for others on a Google account) mints an owner device token `sto_…`. It's stored as an HMAC keyed with STASH_SECRET, so **rotating STASH_SECRET signs every owner device out**. The stored address is bound to the secret the same way (HMAC), so rotating also drops the owner email: a stolen owner session can't park its own address to get back in. Re-add the email after a rotation. Owner tokens don't expire on their own. It works for `/v1/*`, admin pages and `/mcp/<token>`, but not for the `X-Stash-Secret` routes (daemon, admin setup), which still need the secret itself.
 - Extra caps for the owner address on top of everyone's: 6 codes and 10 guesses a day from all networks together (about 0.4% a year to guess a code under nonstop attack, and every attempt mails the owner a code). Trade-off: someone can burn the day's tries, so email sign-in to the owner is blocked until tomorrow; the secret link and signed-in devices keep working.
-- Every owner sign-in pings the owner (Telegram/email via notifyOwner) with the country and IP.
+- The owner address can't be one any account already has on file (even unproven), since it signs in ahead of accounts.
+- Every owner sign-in, and every owner email change, pings the owner (Telegram/email via notifyOwner) with the country and IP.
 
 ### Before the email sender is set up (today)
 

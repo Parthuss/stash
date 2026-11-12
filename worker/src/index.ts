@@ -486,7 +486,7 @@ export default {
       const email = normEmail(b.email);
       if (!email) return json({ error: "That email doesn't look right." }, 400);
       if (await isOwnerEmail(env, email)) {
-        if (await limited(env, "otpown:try", OWNER_TRIES_DAY, 86_400_000)) return json({ error: "Too many codes tried for this email today. Try again tomorrow." }, 429);
+        if (await limited(env, "otpown:try", OWNER_TRIES_DAY, 86_400_000)) return json({ error: "Too many codes tried from this network. Wait an hour." }, 429);  // same words as everyone's: doesn't mark the owner's address
         const spent = await checkCode(env, email, "signin", b.code, true);
         if (!spent.ok) return json({ error: spent.error, left: spent.left }, 400);
         return ownerSignedIn("an email code");

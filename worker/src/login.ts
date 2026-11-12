@@ -165,13 +165,23 @@ export async function mintDeviceToken(env: Env, userId: string): Promise<string>
  *  6-digit code per day (<0.4% a year under nonstop attack, and every send lands in the owner's inbox). */
 export const OWNER_KEY = "__owner__";   // email_code.user_id for the owner's "add" codes (same as oauth.ts)
 export const OWNER_SENDS_DAY = 6, OWNER_TRIES_DAY = 10;
-export const ownerEmail = async (env: Env): Promise<string | null> =>
-  (await env.DB.prepare("SELECT email FROM owner_login WHERE k = 1").first<{ email: string }>())?.email ?? null;
-export const isOwnerEmail = async (env: Env, email: string) => (await ownerEmail(env)) === email;
-async function ownerTokenHash(env: Env, token: string): Promise<string> {
+async function secretMac(env: Env, text: string): Promise<string> {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.STASH_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode("owner-token|" + token));
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(text));
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+const ownerTokenHash = (env: Env, token: string) => secretMac(env, "owner-token|" + token);
+/** The owner's address, bound to the current STASH_SECRET: rotating the secret (the owner's "someone
+ *  got in" reset) drops it too, so a stolen owner session can't park its own address to get back in. */
+export async function ownerEmail(env: Env): Promise<string | null> {
+  if (!env.STASH_SECRET) return null;
+  const r = await env.DB.prepare("SELECT email, secret_fp FROM owner_login WHERE k = 1").first<{ email: string; secret_fp: string }>();
+  return r && r.secret_fp === await secretMac(env, "owner-email|" + r.email) ? r.email : null;
+}
+export const isOwnerEmail = async (env: Env, email: string) => (await ownerEmail(env)) === email;
+export async function setOwnerEmail(env: Env, email: string): Promise<void> {
+  await env.DB.prepare("INSERT INTO owner_login (k, email, verified_at, secret_fp) VALUES (1, ?1, ?2, ?3) ON CONFLICT(k) DO UPDATE SET email = ?1, verified_at = ?2, secret_fp = ?3")
+    .bind(email, new Date().toISOString(), await secretMac(env, "owner-email|" + email)).run();
 }
 export async function mintOwnerToken(env: Env): Promise<string> {
   const token = "sto_" + hex(24);

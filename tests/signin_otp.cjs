@@ -344,7 +344,9 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   // the owner X-Stash-Secret routes still need the secret itself
   assert.equal((await worker.fetch(new Request('https://skwirl.app/pending', { headers: { 'X-Stash-Secret': b.token } }), env, ctx)).status, 401);
   const ownerTok = b.token;
-  env.STASH_SECRET = 'rotated-secret'; assert.equal(await whoIs(ownerTok), undefined); env.STASH_SECRET = 'admin-secret';
+  env.STASH_SECRET = 'rotated-secret'; assert.equal(await whoIs(ownerTok), undefined);
+  assert.equal(await login.ownerEmail(env), null);  // the address goes with the secret too (a stolen session can't park one)
+  env.STASH_SECRET = 'admin-secret'; assert.equal(await login.ownerEmail(env), 'boss@gmail.com');
   assert.equal(await whoIs(ownerTok), null);
   ok('owner email sign-in mints an sto_ owner token (single use, hashed, no user row, dies when STASH_SECRET rotates)');
 
@@ -368,11 +370,14 @@ const ok = (label) => { checks++; console.log('ok', checks, label); sql.exec('DE
   r = await post('/auth/google', { credential: await jwt({ sub: 'g-boss', email: 'boss@gmail.com', given_name: 'Eve' }) }); b = await r.json();
   assert.equal(r.status, 200); assert.equal(await whoIs(b.token), null);  // Gmail: Google vouches for it, it's the owner
   assert.equal(row("SELECT COUNT(*) n FROM user WHERE google_sub = 'g-boss'").n, 0);
-  sql.prepare("UPDATE owner_login SET email = 'boss@corp.example'").run();
+  await login.setOwnerEmail(env, 'boss@corp.example');
   r = await post('/auth/google', { credential: await jwt({ sub: 'g-corp', email: 'boss@corp.example' }) });
   assert.equal(r.status, 409);  // a non-Gmail address on a Google account doesn't prove the owner
   assert.equal(row("SELECT COUNT(*) n FROM user WHERE email = 'boss@corp.example'").n, 0);
-  ok('the owner address can\'t be added to another account; Google signs in as owner only for a Gmail address');
+  // and the owner can't take an address an account already uses, even unproven (it would sign in ahead of it)
+  sql.prepare("INSERT INTO user (id, name, token_hash, created_at, email) VALUES ('typed', 'T', 'h-typed', '2026-10-01', 'typed@x.com')").run();
+  r = await post('/v1/email/start', { email: 'typed@x.com' }, { auth: 'admin-secret' }); assert.equal(r.status, 409);
+  ok('the owner address can\'t be added to another account (or vice versa); Google signs in as owner only for a Gmail address');
 
   // Nothing in the worker finds a user by name.
   const src = fs.readdirSync(path.join(__dirname, '../worker/src')).map((f) => fs.readFileSync(path.join(__dirname, '../worker/src', f), 'utf8')).join('\n');

@@ -17,7 +17,7 @@ import { okEndpoint, sendPush, vapidPublic } from "./push";
 import { notifyOwner } from "./notify";
 import { cancelSubscription, isPlus, plusAvailable, plusRoute } from "./plus";
 import type { Env } from "./index";
-import { OWNER_KEY, checkCode, codeEmail, emailEnabled, isOwnerToken, limited, newCode, normEmail, ownerEmail, sendEmail } from "./login";
+import { OWNER_KEY, checkCode, codeEmail, emailEnabled, isOwnerToken, limited, newCode, normEmail, ownerEmail, sendEmail, setOwnerEmail } from "./login";
 import { fuse, semanticIds } from "./embed";
 import { ccKeyRoute } from "./recall";
 import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
@@ -630,9 +630,10 @@ export async function handleV1(
     const spent = await checkCode(env, email, "add", b.code, true, userId ?? OWNER_KEY);
     if (!spent.ok) return json({ error: spent.error, left: spent.left }, 400);
     if (userId === null) {
-      await env.DB.prepare("INSERT INTO owner_login (k, email, verified_at) VALUES (1, ?1, ?2) ON CONFLICT(k) DO UPDATE SET email = ?1, verified_at = ?2")
-        .bind(email, new Date().toISOString()).run();
+      const was = await ownerEmail(env);
+      await setOwnerEmail(env, email);
       await logEvent(env, null, "api", "email_added");
+      await notifyOwner(env, "owner email changed", `The Skwirl owner account's sign-in email is now ${email}${was ? ` (was ${was})` : ""}.\n\nNot you? Rotate STASH_SECRET: that signs out every owner device and drops this address.`).catch(() => {});
       return json({ ok: true, email });
     }
     const saved = await env.DB.prepare("UPDATE user SET email = ?, email_verified = 1 WHERE id = ?").bind(email, userId).run().catch(() => null);
@@ -791,7 +792,9 @@ export async function handleV1(
 /** Is this address already proven by a different account (the owner's address counts)? */
 const takenByOther = async (env: Env, email: string, userId: string | null) =>
   Boolean(await env.DB.prepare("SELECT 1 FROM user WHERE email = ? AND email_verified = 1 AND id IS NOT ?").bind(email, userId).first())
-  || (userId !== null && (await ownerEmail(env)) === email);
+  || (userId !== null && (await ownerEmail(env)) === email)
+  // The owner's address signs in ahead of any account, so it can't be one an account already uses.
+  || (userId === null && Boolean(await env.DB.prepare("SELECT 1 FROM user WHERE email = ?").bind(email).first()));
 
 /** Start adding/changing a signed-in account's email: a code by email, or (no sender set up yet)
  *  saved unproven. A failed send saves nothing (else anyone could park an address they don't own
