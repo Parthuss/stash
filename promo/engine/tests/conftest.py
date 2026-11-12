@@ -63,7 +63,7 @@ class Fake:
             if method == "getUpdates":
                 ups, self.updates = self.updates, []
                 return httpx.Response(200, json={"ok": True, "result": ups})
-            if method in ("sendMessage", "sendVideo", "sendPhoto", "sendMediaGroup"):
+            if method in ("sendMessage", "sendVideo", "sendPhoto", "sendMediaGroup", "sendDocument"):
                 data = json.loads(body) if req.headers.get("content-type", "").startswith("application/json") else {}
                 self.sent.append({"method": method, **data, "raw": body[:4000]})
                 return httpx.Response(200, json={"ok": True, "result": {"message_id": len(self.sent)}})
@@ -193,3 +193,21 @@ def week_dir(tmp_path):
         write_png(car / f"{i:02d}.png", (i * 40, 80, 120))
     (car / "caption.txt").write_text("How to get the list of everything you ever saved on Instagram. 📦\n#instagramtips")
     return w
+
+
+@pytest.fixture(autouse=True)
+def stub_quality_for_legacy_publisher_fixtures(request, monkeypatch):
+    """Existing publisher tests use a fake MP4 and tiny images: stub ONLY the measured
+    quality boundary for those tests. Real hard gates have their own good/bad tests
+    in test_quality_validators.py and never use this stub.
+    """
+    if request.node.path.name not in ("test_engine.py", "test_extensions.py"):
+        return
+    import content_engine.stage as stage_module
+    from content_engine.validate import policy_digest, hashes
+    def reports(schedule, week_dir, now=None):
+        return {p["id"]: {"version": 1, "post_id": p["id"], "verdict": "PASS", "errors": [],
+                           "policy_digest": policy_digest(),
+                           "hashes": hashes(week_dir / p.get("dir", ""), p["media"] + ([p["cover"]] if p.get("cover") else []))}
+                for p in schedule["posts"]}
+    monkeypatch.setattr(stage_module, "stage_reports", reports)

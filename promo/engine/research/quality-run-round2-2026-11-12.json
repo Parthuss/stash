@@ -1,0 +1,1027 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-12T11:57:19.823878+00:00",
+  "mode": "llm-refined-grounded-templates",
+  "history_digest": "8cf85a088301f783ef9b669cfcc4d74370b7a9e7f56f38269d4c316492ea21ea",
+  "history_units": 211,
+  "drafts": [
+    {
+      "id": "quality-01",
+      "kind": "reel",
+      "audience": "DIY savers",
+      "question": "I saved a DIY tutorial, so what do I actually do first?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "pov-scene",
+      "feature_ids": [
+        "notes"
+      ],
+      "hook_candidates": [
+        {
+          "text": "The drill is out. Where are the instructions?",
+          "framework": "pov"
+        },
+        {
+          "text": "The shelf tutorial is saved. The shelf is not.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Wait. Which step do you start with?",
+          "framework": "pattern_interrupt"
+        },
+        {
+          "text": "Saving a tutorial is not step one.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "One reel. One summary. One next step.",
+          "framework": "specific_number"
+        },
+        {
+          "text": "POV: you saved a shelf video and have no plan.",
+          "framework": "pov"
+        },
+        {
+          "text": "Stop saving DIY reels with no first step.",
+          "framework": "stop_doing"
+        },
+        {
+          "text": "Share one shelf reel, get one next step.",
+          "framework": "demonstration"
+        },
+        {
+          "text": "What is the first thing to do with that DIY reel?",
+          "framework": "question"
+        },
+        {
+          "text": "A saved tutorial still needs a first move.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "POV: the saved shelf reel finally has a next step.",
+          "framework": "pov"
+        },
+        {
+          "text": "Watch a shelf tutorial turn into a next step.",
+          "framework": "demonstration"
+        }
+      ],
+      "hooks_top3": [
+        "The drill is out. Where are the instructions?",
+        "Share one shelf reel, get one next step.",
+        "Saving a tutorial is not step one."
+      ],
+      "hook": "The drill is out. Where are the instructions?",
+      "caption": "Turn a shared reel into a note with a summary and a next step.\nSend this to the friend with a DIY reel saved and a bare wall. Try Skwirl. Link in bio.\n#savedreels #diy #homeprojects #instagramtips",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Turn a shared reel into a note with a summary and a next step.",
+          "feature_id": "notes"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "The drill is out. Where are the instructions?",
+          "on_screen": "The drill is out. Where are the instructions?",
+          "shot": "Frame zero: drill and shelf brackets on a workbench, phone open on a labelled DIY demo reel. The missing instruction is the immediate problem. Hook text is large and inside safe zones.",
+          "feature_ids": []
+        },
+        {
+          "t_start": 3,
+          "t_end": 7,
+          "role": "re-hook",
+          "vo": "The save is there. The job is not started.",
+          "on_screen": "Saved. Not started.",
+          "shot": "Thumb taps the demo shelf reel, it plays a few seconds, then the thumb swipes away. Behind the phone, a bare wall (editorial, clearly a staged scene).",
+          "feature_ids": []
+        },
+        {
+          "t_start": 7,
+          "t_end": 10,
+          "role": "setup",
+          "vo": "Share it to Skwirl.",
+          "on_screen": "Share to Skwirl",
+          "shot": "Real screen capture of the share sheet with Skwirl chosen, on the seeded demo account, using the same demo shelf reel.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "t_start": 10,
+          "t_end": 18,
+          "role": "payoff",
+          "vo": "Turn a shared reel into a note with a summary and a next step.",
+          "on_screen": "Summary. Next step.",
+          "shot": "Real Skwirl note screen for the seeded demo shelf reel. Capture the summary and the Next step field together and hold long enough to read both. Seed the demo reel so its tutorial has a clear first action; show whatever the real note displays. Do not mock the UI.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "t_start": 18,
+          "t_end": 21,
+          "role": "detail",
+          "vo": "Start with that one step.",
+          "on_screen": "Start there.",
+          "shot": "Slow push-in on the Next step line of the same note. Nothing else is added on screen.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "t_start": 21,
+          "t_end": 25,
+          "role": "limit",
+          "vo": "Processing takes a little time.",
+          "on_screen": "Takes a little time",
+          "shot": "Real capture of the same demo save showing its processing state before the note opens, from the seeded account.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "t_start": 25,
+          "t_end": 28,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-02",
+      "kind": "carousel",
+      "audience": "parents",
+      "question": "How do I find a saved kids craft when I only remember what it was?",
+      "question_type": "retrieval",
+      "format_id": "do-dont",
+      "feature_ids": [
+        "search"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Rainy day. Where is that craft you saved?",
+          "framework": "question",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "How do I find a saved idea by what it was?",
+          "framework": "question",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: rain outside, kids inside, craft idea lost.",
+          "framework": "pov",
+          "score": 70,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.96,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "You remember the craft. Not who posted it.",
+          "framework": "curiosity",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pause. Do not scroll for that craft idea.",
+          "framework": "pattern_interrupt",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Scrolling harder will not find a saved craft.",
+          "framework": "contrarian",
+          "score": 99,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.96,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop scrolling every tile for a rainy day idea.",
+          "framework": "stop_doing",
+          "score": 65,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Two ways to find a saved craft. See both.",
+          "framework": "specific_number",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch plain words find a saved craft idea.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Typing paper plate craft to find a saved note.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you only remember the craft, not the account.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Your rainy day idea is saved somewhere. Where?",
+          "framework": "curiosity",
+          "score": 76,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.96,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "Rainy day. Where is that craft you saved?",
+        "Stop scrolling every tile for a rainy day idea.",
+        "Watch plain words find a saved craft idea."
+      ],
+      "hook": "Rainy day. Where is that craft you saved?",
+      "caption": "Search your saved notes by meaning.\nSend this to a parent who saves every craft idea. Try Skwirl. Link in bio.\n#savedreels #rainydayactivities #parenting #instagramtips",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Search your saved notes by meaning.",
+          "feature_id": "search"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "Rainy day. Where is that craft you saved?",
+          "bridge": "First, what not to do.",
+          "visual": "Hook as large type over a soft grey window with rain. One calm illustration, no real creator tiles.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "dont",
+          "text": "Don't: scroll every tile hoping to spot it.",
+          "bridge": "Here is why that gets old.",
+          "visual": "Red-cross card with a long grid of blank craft tiles",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "why",
+          "text": "You remember the craft, not the account.",
+          "bridge": "So start with what you remember.",
+          "visual": "Thought bubble with a paper plate shape, account name blurred out",
+          "feature_ids": []
+        },
+        {
+          "n": 4,
+          "job": "do",
+          "text": "Do: type what you remember, like paper plate craft.",
+          "bridge": "Here is what that finds.",
+          "visual": "Green-tick card with a search box holding those plain words (real Skwirl screen, seeded demo account)",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "payoff",
+          "text": "Search your saved notes by meaning.",
+          "bridge": "That is the whole move.",
+          "visual": "Real Skwirl search result on the seeded demo account: the matching craft note opens. Label it demo. Do not imply it always finds a match.",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "n": 6,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Wordmark on brand lavender background",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-03",
+      "kind": "reel",
+      "audience": "hobbyists with lots of saves",
+      "question": "How do I keep gift ideas apart from weekend plans?",
+      "question_type": "organise",
+      "format_id": "transformation",
+      "feature_ids": [
+        "categories"
+      ],
+      "hook_candidates": [
+        {
+          "text": "One pile of saves. Three groups I named.",
+          "framework": "specific_number",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "How do I keep gift ideas apart from weekend plans?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: your saves finally have names.",
+          "framework": "pov",
+          "score": 70,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.94,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "What if your saves had groups you chose?",
+          "framework": "curiosity",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Look at this pile. Now look at this.",
+          "framework": "pattern_interrupt",
+          "score": 48,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "A bigger Saved folder is not the answer.",
+          "framework": "contrarian",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop scrolling one giant pile for a gift idea.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch one pile become three named groups.",
+          "framework": "demonstration",
+          "score": 63,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.88,
+            "specificity": 0.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Gifts, Balcony, Weekend plans: filed in Skwirl.",
+          "framework": "demonstration",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.74,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: gift ideas and weekend plans, kept apart.",
+          "framework": "pov",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Three groups, named by me, for my saves.",
+          "framework": "specific_number",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "My saved ideas have names for their groups now.",
+          "framework": "curiosity",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "One pile of saves. Three groups I named.",
+        "Watch one pile become three named groups.",
+        "How do I keep gift ideas apart from weekend plans?"
+      ],
+      "hook": "One pile of saves. Three groups I named.",
+      "caption": "With Skwirl Plus, name your categories and file saved notes into them.\nSend this to a friend with a very mixed Saved folder. Try Skwirl. Link in bio.\n#savedreels #organisedlife #instagramtips #giftideas",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "With Skwirl Plus, name your categories and file saved notes into them.",
+          "feature_id": "categories"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "One pile of saves. Three groups I named.",
+          "on_screen": "One pile of saves. Three groups I named.",
+          "shot": "Frame zero: a crowded Saved grid on a demo account (no real creators, blur names), scrolled fast. Text hook over it.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 3,
+          "t_end": 6,
+          "role": "re-hook",
+          "vo": "Same saves. One change.",
+          "on_screen": "Same saves. One change.",
+          "shot": "Quick cut to a thumb opening the category picker on a seeded Skwirl Plus demo account.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 6,
+          "t_end": 10,
+          "role": "setup",
+          "vo": "I named a category. Then filed a note.",
+          "on_screen": "Name it. File it.",
+          "shot": "Real screen capture: typing the category name Gifts, then filing one seeded note into it. Repeat as a fast cut for Balcony and Weekend plans.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 10,
+          "t_end": 17,
+          "role": "payoff",
+          "vo": "With Skwirl Plus, name your categories and file saved notes into them.",
+          "on_screen": "Gifts. Balcony. Weekend plans.",
+          "shot": "Real Skwirl screen on the seeded Plus demo account showing exactly three named categories, each holding at least one note. Hold so all three names are readable.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 17,
+          "t_end": 20,
+          "role": "limit",
+          "vo": "This one is part of Plus.",
+          "on_screen": "Part of Skwirl Plus",
+          "shot": "Small text card over the category screen. No price, no free-for-all wording.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 20,
+          "t_end": 23,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark on clean lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-04",
+      "kind": "carousel",
+      "audience": "reel watchers who skim with the sound off",
+      "question": "What if the useful tip was typed on screen and never said out loud?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "hidden-details",
+      "feature_ids": [
+        "depth"
+      ],
+      "hook_candidates": [
+        {
+          "text": "The voice said one thing. The screen text said more.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Part of this plant tip is only on screen.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Did the voice say how much light?",
+          "framework": "question"
+        },
+        {
+          "text": "Mute this reel and you miss a detail.",
+          "framework": "pattern_interrupt"
+        },
+        {
+          "text": "Hearing a reel is not the whole reel.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "Two places hid this plant tip. One note has both.",
+          "framework": "specific_number"
+        },
+        {
+          "text": "POV: the tip was typed on screen, not said.",
+          "framework": "pov"
+        },
+        {
+          "text": "Stop trusting the voice to say everything.",
+          "framework": "stop_doing"
+        },
+        {
+          "text": "Watch a plant reel's voice and text become one note.",
+          "framework": "demonstration"
+        },
+        {
+          "text": "Where did the light tip go?",
+          "framework": "question"
+        },
+        {
+          "text": "POV: you only caught the audio.",
+          "framework": "pov"
+        },
+        {
+          "text": "See what the voice missed in a demo plant reel.",
+          "framework": "demonstration"
+        }
+      ],
+      "hooks_top3": [
+        "The voice said one thing. The screen text said more.",
+        "Part of this plant tip is only on screen.",
+        "Two places hid this plant tip. One note has both."
+      ],
+      "hook": "The voice said one thing. The screen text said more.",
+      "caption": "Skwirl reads audio, on-screen text, captions and available top comments.\nSend this to the friend who watches reels with the sound off. Try Skwirl. Link in bio.\n#savedreels #houseplants #instagramtips #notes",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Skwirl reads audio, on-screen text, captions and available top comments.",
+          "feature_id": "depth"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "The voice said one thing. The screen text said more.",
+          "bridge": "Here is the demo reel.",
+          "visual": "Hook as large type over a labelled demo plant reel frame (fictional, no real creator). One calm illustration style.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "setup",
+          "text": "In this demo plant reel, the voice only talks about water.",
+          "bridge": "Now look at the screen.",
+          "visual": "Demo reel frame with a sound-wave callout and the spoken line 'Water when the top soil is dry.' Clearly marked as a demo.",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "clue",
+          "text": "The light tip is typed on screen. The voice never says it.",
+          "bridge": "Now read both together.",
+          "visual": "Same demo frame with the on-screen text 'Bright, indirect light' highlighted and the sound-wave dimmed.",
+          "feature_ids": []
+        },
+        {
+          "n": 4,
+          "job": "payoff",
+          "text": "Skwirl reads audio, on-screen text, captions and available top comments.",
+          "bridge": "One honest note.",
+          "visual": "Real Skwirl note for the seeded demo plant reel, captured so both the water tip (spoken) and the light tip (on screen) are visible in one note. Do not mock the UI or edit the note text.",
+          "feature_ids": [
+            "depth"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "limit",
+          "text": "Comments or other inputs may be unavailable.",
+          "bridge": "Ready to try it?",
+          "visual": "Plain card with the line and a small tile of the demo note.",
+          "feature_ids": []
+        },
+        {
+          "n": 6,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Wordmark on brand lavender background.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-05",
+      "kind": "reel",
+      "audience": "people with idea backlogs",
+      "question": "Which of my saved ideas did I actually try?",
+      "question_type": "action",
+      "format_id": "pov-scene",
+      "feature_ids": [
+        "tried"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Saturday. Nothing planned. Pick one saved idea.",
+          "framework": "pov",
+          "score": 65,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.69,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Which saved idea did I already try?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you actually did the thing you saved.",
+          "framework": "pov",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Your saved ideas are missing one tiny thing.",
+          "framework": "curiosity",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pick one. Do it. Tick it.",
+          "framework": "pattern_interrupt",
+          "score": 48,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "A saved idea needs a finish line, not more saves.",
+          "framework": "contrarian",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop saving more ideas before you try one.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Five saved ideas. One Saturday. One tick.",
+          "framework": "specific_number",
+          "score": 70,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a saved idea turn into Tried.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Here is one saved idea, from note to Tried.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Saturday, nothing planned, and a long list of saves.",
+          "framework": "pov",
+          "score": 47,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 0.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "There is a small tick for finishing a saved idea.",
+          "framework": "curiosity",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "Saturday. Nothing planned. Pick one saved idea.",
+        "Five saved ideas. One Saturday. One tick.",
+        "Watch a saved idea turn into Tried."
+      ],
+      "hook": "Saturday. Nothing planned. Pick one saved idea.",
+      "caption": "Mark a note as Tried after you try it.\nSend this to a friend with a long ideas list. Try Skwirl. Link in bio.\n#savedreels #weekendideas #instagramtips #tryitlist",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Mark a note as Tried after you try it.",
+          "feature_id": "tried"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "Saturday. Nothing planned. Pick one saved idea.",
+          "on_screen": "Saturday. Nothing planned. Pick one saved idea.",
+          "shot": "Frame zero: first-person view on a sofa, phone in hand, the seeded Skwirl demo library open with exactly five notes visible (for example five easy home activities). Text hook over it.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 3,
+          "t_end": 6,
+          "role": "re-hook",
+          "vo": "Which ones did you already do?",
+          "on_screen": "Which ones did you already do?",
+          "shot": "Thumb scrolls the five notes slowly and pauses; nothing marks any of them as done yet.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 6,
+          "t_end": 10,
+          "role": "setup",
+          "vo": "Pick one note. Go do it.",
+          "on_screen": "Pick one. Do it.",
+          "shot": "Tap one seeded note and open it. Cut to a short labelled editorial b-roll of hands doing that small activity at a table.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 10,
+          "t_end": 15,
+          "role": "payoff",
+          "vo": "Mark a note as Tried after you try it.",
+          "on_screen": "Tried",
+          "shot": "Real Skwirl note screen on the seeded demo account: tap the I tried this action and show the note now marked Tried. Do not mock the UI.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 15,
+          "t_end": 19,
+          "role": "limit",
+          "vo": "It is a tick you add yourself.",
+          "on_screen": "You add the tick",
+          "shot": "Close-up of the Tried mark on the note. Plain text card, no tracking or completion claims.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 19,
+          "t_end": 22,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark over the calm sofa scene.",
+          "feature_ids": []
+        }
+      ]
+    }
+  ],
+  "template_skips": 32,
+  "status": "DRAFTS_ONLY_NOT_APPROVABLE",
+  "checks": [
+    {
+      "id": "quality-01",
+      "errors": [
+        {
+          "code": "duplicate.recency",
+          "detail": [
+            {
+              "id": "I-05",
+              "path": "promo/engine/ideas.md",
+              "similarity": 0.68,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            }
+          ]
+        }
+      ],
+      "copy_structure_pass": false
+    },
+    {
+      "id": "quality-02",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-03",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-04",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-05",
+      "errors": [],
+      "copy_structure_pass": true
+    }
+  ],
+  "revision": "Round 2: duplicate Lists and Claude angles replaced. Round 3 editorial change: shelf-demo hook opens on the tools-out moment, rather than the old next-step wording."
+}

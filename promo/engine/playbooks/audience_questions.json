@@ -1,0 +1,106 @@
+{
+  "note": "Editorial hypotheses from verified features and the quality run, not invented user interviews or measured demand. Existing audience reports remain in ideation.AUDIENCES.",
+  "audiences": [
+    {
+      "id": "sharing",
+      "label": "friends who swap tips and plans",
+      "thing": "saved notes",
+      "one": "a saved note",
+      "moment": "you are about to send a note link",
+      "pain": "you are about to send a note link",
+      "stop": "guessing what your note link reveals",
+      "send_to": "a friend who saves useful posts",
+      "questions": [
+        {
+          "text": "What does the public note page show to a reader who is signed out?",
+          "type": "editorial_hypothesis",
+          "feature_ids": [
+            "note_share"
+          ],
+          "source": "promo/engine/playbooks/features.json: note_share"
+        }
+      ]
+    },
+    {
+      "id": "sharing-control",
+      "label": "people who share notes by link",
+      "thing": "saved notes",
+      "one": "a saved note",
+      "moment": "you want to stop sharing an old note",
+      "pain": "you want to stop sharing an old note",
+      "stop": "leaving old note links active",
+      "send_to": "a friend who saves useful posts",
+      "questions": [
+        {
+          "text": "If you shared a note link, can you switch it off, and what can it not undo?",
+          "type": "editorial_hypothesis",
+          "feature_ids": [
+            "note_share",
+            "stop_sharing"
+          ],
+          "source": "promo/engine/playbooks/features.json: note_share,stop_sharing"
+        }
+      ]
+    },
+    {
+      "id": "ownership",
+      "label": "people who want a copy of their own notes",
+      "thing": "saved notes",
+      "one": "a saved note",
+      "moment": "you want a copy of your own notes",
+      "pain": "you want a copy of your own notes",
+      "stop": "copying saved notes one by one",
+      "send_to": "a friend who saves useful posts",
+      "questions": [
+        {
+          "text": "Can you take your own notes out of Skwirl, and what does the file look like?",
+          "type": "editorial_hypothesis",
+          "feature_ids": [
+            "export_notes"
+          ],
+          "source": "promo/engine/playbooks/features.json: export_notes"
+        }
+      ]
+    },
+    {
+      "id": "low-signal",
+      "label": "people who read saved notes while travelling or on weak signal",
+      "thing": "saved notes",
+      "one": "a saved note",
+      "moment": "your connection drops with a note open",
+      "pain": "your connection drops with a note open",
+      "stop": "expecting every note to be available without a connection",
+      "send_to": "a friend who saves useful posts",
+      "questions": [
+        {
+          "text": "If your signal drops, can you still read a note you were already looking at?",
+          "type": "editorial_hypothesis",
+          "feature_ids": [
+            "offline_notes"
+          ],
+          "source": "promo/engine/playbooks/features.json: offline_notes"
+        }
+      ]
+    },
+    {
+      "id": "organising",
+      "label": "Skwirl Plus users who organise their notes",
+      "thing": "saved notes",
+      "one": "a saved note",
+      "moment": "one demo note has the wrong category",
+      "pain": "one demo note has the wrong category",
+      "stop": "re-importing a note to change its category",
+      "send_to": "a friend who saves useful posts",
+      "questions": [
+        {
+          "text": "If a note is in the wrong category, can you fix it yourself in Skwirl Plus?",
+          "type": "editorial_hypothesis",
+          "feature_ids": [
+            "correct_category"
+          ],
+          "source": "promo/engine/playbooks/features.json: correct_category"
+        }
+      ]
+    }
+  ]
+}

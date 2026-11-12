@@ -1,0 +1,458 @@
+{
+  "version": 1,
+  "verified_on": "2026-11-12",
+  "base_commit": "49ae646ed77c4e554d668201b48c316b2667019f",
+  "features": [
+    {
+      "id": "notes",
+      "title": "Written notes",
+      "claim": "Turn a shared reel into a note with a summary and a next step.",
+      "approved_copy": [
+        "Turn a shared reel into a note with a summary and a next step."
+      ],
+      "limits": "Processing takes time. A note is not a video backup.",
+      "sources": [
+        {
+          "path": "stash/extract.py",
+          "anchor": "next_step",
+          "sha256": "10e37335490b2f72c4e4f6298df1c9d37519689e203a0c91c97cdee9a67c4520",
+          "line": 133
+        }
+      ],
+      "name": "Written notes",
+      "tags": [
+        "notes",
+        "retention",
+        "next-step"
+      ],
+      "claims": [
+        {
+          "text": "Turn a shared reel into a note with a summary and a next step.",
+          "feature_id": "notes"
+        }
+      ]
+    },
+    {
+      "id": "search",
+      "title": "Meaning search",
+      "claim": "Search your saved notes by meaning.",
+      "approved_copy": [
+        "Search your saved notes by meaning."
+      ],
+      "limits": "No perfect-recall or exact ranking guarantee.",
+      "sources": [
+        {
+          "path": "worker/src/v1.ts",
+          "anchor": "export async function searchNotes",
+          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
+          "line": 258
+        }
+      ],
+      "name": "Meaning search",
+      "tags": [
+        "search"
+      ],
+      "claims": [
+        {
+          "text": "Search your saved notes by meaning.",
+          "feature_id": "search"
+        }
+      ]
+    },
+    {
+      "id": "recipes",
+      "title": "Recipe notes",
+      "claim": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+      "approved_copy": [
+        "Recipe notes include ingredient checklists and numbered steps when the source provides them."
+      ],
+      "limits": "Do not invent quantities, nutrition, or shopping integration.",
+      "sources": [
+        {
+          "path": "stash/extract.py",
+          "anchor": "\"ingredients\"",
+          "sha256": "10e37335490b2f72c4e4f6298df1c9d37519689e203a0c91c97cdee9a67c4520",
+          "line": 146
+        }
+      ],
+      "name": "Recipe notes",
+      "tags": [
+        "extraction",
+        "notes"
+      ],
+      "claims": [
+        {
+          "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+          "feature_id": "recipes"
+        }
+      ]
+    },
+    {
+      "id": "depth",
+      "title": "Multiple inputs",
+      "claim": "Skwirl reads audio, on-screen text, captions and available top comments.",
+      "approved_copy": [
+        "Skwirl reads audio, on-screen text, captions and available top comments."
+      ],
+      "limits": "Comments or other inputs may be unavailable. No exhaustive or error-free claim.",
+      "sources": [
+        {
+          "path": "stash/extract.py",
+          "anchor": "if comments:",
+          "sha256": "10e37335490b2f72c4e4f6298df1c9d37519689e203a0c91c97cdee9a67c4520",
+          "line": 276
+        }
+      ],
+      "name": "Multiple inputs",
+      "tags": [
+        "extraction"
+      ],
+      "claims": [
+        {
+          "text": "Skwirl reads audio, on-screen text, captions and available top comments.",
+          "feature_id": "depth"
+        }
+      ]
+    },
+    {
+      "id": "lists",
+      "title": "Lists",
+      "claim": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+      "approved_copy": [
+        "Books, movies, shows, podcasts and places mentioned in saves collect into Lists."
+      ],
+      "limits": "No maps, reservations, recommendation engine or streaming availability.",
+      "sources": [
+        {
+          "path": "worker/src/v1.ts",
+          "anchor": "export async function listMentions",
+          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
+          "line": 126
+        }
+      ],
+      "name": "Lists",
+      "tags": [
+        "lists"
+      ],
+      "claims": [
+        {
+          "text": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+          "feature_id": "lists"
+        }
+      ]
+    },
+    {
+      "id": "tried",
+      "title": "To try and Tried",
+      "claim": "Mark a note as Tried after you try it.",
+      "approved_copy": [
+        "Mark a note as Tried after you try it."
+      ],
+      "limits": "A manual status tick, not measured completion.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "I tried this",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 314
+        }
+      ],
+      "name": "To try and Tried",
+      "tags": [
+        "next-step"
+      ],
+      "claims": [
+        {
+          "text": "Mark a note as Tried after you try it.",
+          "feature_id": "tried"
+        }
+      ]
+    },
+    {
+      "id": "categories",
+      "title": "Your categories",
+      "claim": "With Skwirl Plus, name your categories and file saved notes into them.",
+      "approved_copy": [
+        "With Skwirl Plus, name your categories and file saved notes into them."
+      ],
+      "limits": "Early accounts have different entitlements. Never imply free access for all.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "Comes with Skwirl Plus",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 1464
+        }
+      ],
+      "name": "Your categories",
+      "tags": [
+        "categories"
+      ],
+      "claims": [
+        {
+          "text": "With Skwirl Plus, name your categories and file saved notes into them.",
+          "feature_id": "categories"
+        }
+      ]
+    },
+    {
+      "id": "import",
+      "title": "Import",
+      "claim": "Import old Instagram saves from your Instagram data export.",
+      "approved_copy": [
+        "Import old Instagram saves from your Instagram data export."
+      ],
+      "limits": "No collection hierarchy, guaranteed completion time, or unlimited import.",
+      "sources": [
+        {
+          "path": "worker/src/v1.ts",
+          "anchor": "const take = missing.slice",
+          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
+          "line": 440
+        }
+      ],
+      "name": "Import",
+      "tags": [
+        "import"
+      ],
+      "claims": [
+        {
+          "text": "Import old Instagram saves from your Instagram data export.",
+          "feature_id": "import"
+        }
+      ]
+    },
+    {
+      "id": "connector",
+      "title": "Claude connector",
+      "claim": "Claude can search your saves through the Skwirl connector.",
+      "approved_copy": [
+        "Claude can search your saves through the Skwirl connector."
+      ],
+      "limits": "No automatic ChatGPT claim. End-to-end ChatGPT demonstration remains unconfirmed.",
+      "sources": [
+        {
+          "path": "worker/src/mcp.ts",
+          "anchor": "name: \"search_stash\"",
+          "sha256": "7f23819faf4fb607775024a4ce0cf0e6a536973292d8ee34e15d363b56f40d9a",
+          "line": 29
+        }
+      ],
+      "name": "Claude connector",
+      "tags": [
+        "search"
+      ],
+      "claims": [
+        {
+          "text": "Claude can search your saves through the Skwirl connector.",
+          "feature_id": "connector"
+        }
+      ]
+    },
+    {
+      "id": "note_share",
+      "title": "Public note link",
+      "name": "Public note link",
+      "claim": "Create a public link to a Skwirl note.",
+      "approved_copy": [
+        "Create a public link to a Skwirl note."
+      ],
+      "claims": [
+        {
+          "text": "Create a public link to a Skwirl note.",
+          "feature_id": "note_share"
+        }
+      ],
+      "tags": [
+        "notes",
+        "sharing"
+      ],
+      "limits": "Anyone with the link can read that shared note. Not a private chat or collaboration feature.",
+      "sources": [
+        {
+          "path": "worker/src/v1.ts",
+          "anchor": "POST|DELETE /v1/notes/:id/share",
+          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
+          "line": 11
+        },
+        {
+          "path": "worker/src/share.ts",
+          "anchor": "Public, read-only page for a note someone chose to share",
+          "sha256": "55e5a8e6b4e24595104d9c24f810983584bfd74330935456f3822c62d5373214",
+          "line": 2
+        }
+      ],
+      "implementation_evidence": "The GET /n/<share_id> page looks up title, summary, topic, permalink, markdown and thumb_id for the one matching share_id. It is a public read-only page."
+    },
+    {
+      "id": "stop_sharing",
+      "title": "Stop sharing",
+      "name": "Stop sharing",
+      "claim": "Stop sharing a Skwirl note so its old public link no longer works.",
+      "approved_copy": [
+        "Stop sharing a Skwirl note so its old public link no longer works."
+      ],
+      "claims": [
+        {
+          "text": "Stop sharing a Skwirl note so its old public link no longer works.",
+          "feature_id": "stop_sharing"
+        }
+      ],
+      "tags": [
+        "sharing",
+        "privacy"
+      ],
+      "limits": "Revokes the Skwirl link, not copies or screenshots someone already kept. Do not promise erasure from recipients.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "Stopped sharing. The old link no longer works.",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 802
+        }
+      ]
+    },
+    {
+      "id": "export_notes",
+      "title": "Export notes",
+      "name": "Export notes",
+      "claim": "Download your Skwirl notes as a JSON file.",
+      "approved_copy": [
+        "Download your Skwirl notes as a JSON file.",
+        "The JSON export contains your note titles, summaries and note text."
+      ],
+      "claims": [
+        {
+          "text": "Download your Skwirl notes as a JSON file.",
+          "feature_id": "export_notes"
+        },
+        {
+          "text": "The JSON export contains your note titles, summaries and note text.",
+          "feature_id": "export_notes"
+        }
+      ],
+      "tags": [
+        "export",
+        "notes"
+      ],
+      "limits": "JSON export, not PDF, Markdown, automatic backup, import into every tool or a video archive.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "a.download = \"skwirl-export.json\"",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 955
+        },
+        {
+          "path": "worker/src/v1.ts",
+          "anchor": "SELECT ${NOTE_COLUMNS}, markdown FROM note WHERE user_id IS ? ORDER BY created_at",
+          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
+          "line": 713
+        }
+      ],
+      "schema_evidence": "worker/src/v1.ts NOTE_COLUMNS includes id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id, share_id and categories; export SELECT also includes markdown, wrapped as {exported_at, notes}."
+    },
+    {
+      "id": "offline_notes",
+      "title": "Cached notes",
+      "name": "Cached notes",
+      "claim": "While Skwirl stays open, you can read notes already cached on this device if the connection drops.",
+      "approved_copy": [
+        "While Skwirl stays open, you can read notes already cached on this device if the connection drops."
+      ],
+      "claims": [
+        {
+          "text": "While Skwirl stays open, you can read notes already cached on this device if the connection drops.",
+          "feature_id": "offline_notes"
+        }
+      ],
+      "tags": [
+        "offline",
+        "notes"
+      ],
+      "limits": "Only already cached notes on this signed-in device, not your entire library. Keep the page open; do not promise loading the app from cold offline or new saves processing offline.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "else if ((!r || r.status >= 500) && kept.byId[id]) current = kept.byId[id];",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 306
+        }
+      ]
+    },
+    {
+      "id": "correct_category",
+      "title": "Correct a category",
+      "name": "Correct a category",
+      "claim": "With Skwirl Plus, tap a category on a note to add or remove it.",
+      "approved_copy": [
+        "With Skwirl Plus, tap a category on a note to add or remove it."
+      ],
+      "claims": [
+        {
+          "text": "With Skwirl Plus, tap a category on a note to add or remove it.",
+          "feature_id": "correct_category"
+        }
+      ],
+      "tags": [
+        "categories",
+        "notes"
+      ],
+      "limits": "Needs existing categories and Plus entitlement for new accounts. Manual correction, not guaranteed perfect categorisation.",
+      "sources": [
+        {
+          "path": "worker/public/app.js",
+          "anchor": "turnOn = !before.includes(name)",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 744
+        },
+        {
+          "path": "worker/public/app.js",
+          "anchor": "const r = await api(`/v1/notes/${encodeURIComponent(noteId)}/categories`",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 748
+        }
+      ],
+      "implementation_evidence": "The category chip handler toggles an existing category name, posts {name,on} to the note categories endpoint, rerenders note chips, and rolls back on failure. Early-account entitlements may differ; do not use Plus only."
+    },
+    {
+      "id": "claude_code",
+      "title": "Claude Code recall",
+      "claim": "Claude Code can automatically surface relevant saves while you work.",
+      "approved_copy": [
+        "Claude Code can automatically surface relevant saves while you work."
+      ],
+      "limits": "Only Claude Code may be described as automatic. Relevant matches are not guaranteed.",
+      "sources": [
+        {
+          "path": "plugin/hooks/hooks.json",
+          "anchor": "https://skwirl.app/v1/recall",
+          "sha256": "eebf8133864740fefc95350743e01598b01cc254f70ae30584cb649a7c6c5c6b",
+          "line": 21
+        }
+      ],
+      "name": "Claude Code recall",
+      "tags": [
+        "search"
+      ],
+      "claims": [
+        {
+          "text": "Claude Code can automatically surface relevant saves while you work.",
+          "feature_id": "claude_code"
+        }
+      ]
+    }
+  ],
+  "testimonial": {
+    "attribution": "Jacinda, occupational therapist",
+    "allowed_quotes": [
+      "It has revolutionised therapy planning for me.",
+      "Skwirl is honestly perfect - I couldn't believe how perfect it was when I found it haha! I'll definitely be letting my co-workers know about Skwirl, since it has revolutionised therapy planning for me."
+    ]
+  },
+  "policy": {
+    "licence": "FSL-1.1-MIT",
+    "automatic_subject": "Claude Code",
+    "no_invented_numbers": true
+  }
+}

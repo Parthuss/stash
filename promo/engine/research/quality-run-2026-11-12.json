@@ -1,0 +1,1300 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-12T11:57:19.823878+00:00",
+  "mode": "llm-refined-source-grounded",
+  "history_digest": "8cf85a088301f783ef9b669cfcc4d74370b7a9e7f56f38269d4c316492ea21ea",
+  "history_units": 211,
+  "drafts": [
+    {
+      "id": "quality-01",
+      "kind": "reel",
+      "audience": "friends who swap tips and plans",
+      "question": "What does the public note page show to a reader who is signed out?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "how-to",
+      "feature_ids": [
+        "note_share"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Sending a Skwirl note link? Check what the reader sees.",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Your note link opens this page.",
+          "framework": "demonstration",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Public link. What does that mean here?",
+          "framework": "curiosity",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Before you send it, check the reader's view.",
+          "framework": "pattern_interrupt",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "POV: opening your Skwirl link while signed out.",
+          "framework": "pov",
+          "score": 81,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.92,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Share a note. Then view it as a reader.",
+          "framework": "demonstration",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop guessing what a note link reveals.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "One public link. One note to read.",
+          "framework": "specific_number",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "That note link can travel beyond your chat.",
+          "framework": "curiosity",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Can a signed-out reader open your shared note?",
+          "framework": "question",
+          "score": 99,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.96,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Watch a shared note open in a private window.",
+          "framework": "demonstration",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Private message. Public note link. Know the difference.",
+          "framework": "contrarian",
+          "score": 75,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.62,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        }
+      ],
+      "hooks_top3": [
+        "Sending a Skwirl note link? Check what the reader sees.",
+        "Watch a shared note open in a private window.",
+        "Private message. Public note link. Know the difference."
+      ],
+      "hooks_top3_reasons": [
+        "A concrete question about the real public-page permission.",
+        "Shows the exact reader state instead of another search demo.",
+        "An honest distinction the demonstration will explain."
+      ],
+      "hook": "Sending a Skwirl note link? Check what the reader sees.",
+      "caption": "Create a public link to a Skwirl note. Anyone with the link can read that shared note.\nTry Skwirl. Link in bio.\n#Skwirl #savedreels #notes",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Create a public link to a Skwirl note.",
+          "feature_id": "note_share"
+        }
+      ],
+      "beats": [
+        {
+          "role": "hook",
+          "t_start": 0,
+          "t_end": 4,
+          "vo": "Sending a Skwirl note link? Check what the reader sees.",
+          "on_screen": "Sending a Skwirl note link? Check what the reader sees.",
+          "shot": "Real seeded demo note in the owner view, with the Share control visible. No private-window preview yet. Controlled demo, no chat reenactment.",
+          "feature_ids": [
+            "note_share"
+          ]
+        },
+        {
+          "role": "re-hook",
+          "t_start": 4,
+          "t_end": 9,
+          "vo": "Create a public link to a Skwirl note.",
+          "on_screen": "Create the public note link",
+          "shot": "Click the real Share control. Show the generated public note URL; keep sign-in tokens and connector URLs out of frame.",
+          "feature_ids": [
+            "note_share"
+          ]
+        },
+        {
+          "role": "payoff",
+          "t_start": 9,
+          "t_end": 15,
+          "vo": "Anyone with this link can read this note.",
+          "on_screen": "Anyone with this link can read it",
+          "shot": "Open that generated note URL in a signed-out private window. Show the actual public read-only note page and its content.",
+          "feature_ids": [
+            "note_share"
+          ]
+        },
+        {
+          "role": "limit",
+          "t_start": 15,
+          "t_end": 21,
+          "vo": "Keep that in mind before you send it. A link can be passed on.",
+          "on_screen": "Share the link on purpose",
+          "shot": "Stay on the real public note page. The permission warning is neutral, with no fictional leaked-data animation.",
+          "feature_ids": [
+            "note_share"
+          ]
+        },
+        {
+          "role": "cta",
+          "t_start": 21,
+          "t_end": 25,
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Wordmark.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-02",
+      "kind": "carousel",
+      "audience": "people who share notes by link",
+      "question": "If you shared a note link, can you switch it off, and what can it not undo?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "do-dont",
+      "feature_ids": [
+        "note_share",
+        "stop_sharing"
+      ],
+      "hook_candidates": [
+        {
+          "text": "You shared a note link. Can you take it back?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Two facts about stopping a shared note.",
+          "framework": "specific_number",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stopping a share is not the same as erasing it.",
+          "framework": "contrarian",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "What stopping a share does, and what it cannot do.",
+          "framework": "curiosity",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "What happens to a note link when you stop sharing?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Quick check: is that note link still live?",
+          "framework": "pattern_interrupt",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop leaving old note links live.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "POV: you sent a note link and want it gone.",
+          "framework": "pov",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "See what happens to an old note link.",
+          "framework": "demonstration",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop assuming a turned-off link erases copies.",
+          "framework": "stop_doing",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.69,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "POV: the link is off, but they may have the text.",
+          "framework": "pov",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "A switched-off link still has one limit.",
+          "framework": "curiosity",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        }
+      ],
+      "hooks_top3": [
+        "You shared a note link. Can you take it back?",
+        "Two facts about stopping a shared note.",
+        "Stopping a share is not the same as erasing it."
+      ],
+      "hooks_top3_reasons": [
+        "A real worry stated as a question, answered in slide 4 and qualified in slide 5.",
+        "The two facts are literally slide 4 and slide 5, so the number counts shown items.",
+        "States the limit up front, which is honest and makes people read on for the how."
+      ],
+      "hook": "You shared a note link. Can you take it back?",
+      "caption": "Stop sharing a Skwirl note so its old public link no longer works. Copies or screenshots someone already kept stay with them.\nTry Skwirl. Link in bio.\n#notetaking #sharing #savedreels",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Create a public link to a Skwirl note.",
+          "feature_id": "note_share"
+        },
+        {
+          "text": "Stop sharing a Skwirl note so its old public link no longer works.",
+          "feature_id": "stop_sharing"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "You shared a note link. Can you take it back?",
+          "bridge": "Yes for the link. Not for everything.",
+          "visual": "Bold type on calm lavender with a simple link icon.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "problem",
+          "text": "Create a public link to a Skwirl note. Anyone with the link can read it.",
+          "bridge": "So you need a way to turn it off.",
+          "visual": "Seeded demo note in its shared state, labelled demo, no real names.",
+          "feature_ids": [
+            "note_share"
+          ]
+        },
+        {
+          "n": 3,
+          "job": "action",
+          "text": "Open the note and stop sharing it.",
+          "bridge": "Here is the result.",
+          "visual": "Real capture of the seeded demo note as the stop sharing control is used, in the current UI.",
+          "feature_ids": [
+            "stop_sharing"
+          ]
+        },
+        {
+          "n": 4,
+          "job": "payoff",
+          "text": "Stop sharing a Skwirl note so its old public link no longer works.",
+          "bridge": "Now the honest part.",
+          "visual": "Real capture of the in-app message after stopping, then the old link opened in a browser. Show what the page truly displays.",
+          "feature_ids": [
+            "stop_sharing"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "limit",
+          "text": "The limit: it cannot reach copies or screenshots someone already kept. Share only what you are fine with them keeping.",
+          "bridge": "Use the link on purpose.",
+          "visual": "Editorial two-card illustration: link switched off, a copy still on a friend's phone.",
+          "feature_ids": [
+            "stop_sharing"
+          ]
+        },
+        {
+          "n": 6,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-03",
+      "kind": "reel",
+      "audience": "people who want a copy of their own notes",
+      "question": "Can you take your own notes out of Skwirl, and what does the file look like?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "how-to",
+      "feature_ids": [
+        "export_notes"
+      ],
+      "hook_candidates": [
+        {
+          "text": "This is what your Skwirl export file looks like.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Can you take your notes out of Skwirl?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "One download. One JSON file. Your notes.",
+          "framework": "specific_number",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "What is inside a Skwirl export? Let's open it.",
+          "framework": "curiosity",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Open this file. It is your notes.",
+          "framework": "pattern_interrupt",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Want a copy of your notes outside the app?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "POV: you download your notes and open the file.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Your notes do not have to stay inside the app.",
+          "framework": "contrarian",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop wondering if you can get your notes out.",
+          "framework": "stop_doing",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Watch a demo library download as a JSON file.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "We downloaded a demo library as one file.",
+          "framework": "curiosity",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop treating your saved notes like they are locked in.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        }
+      ],
+      "hooks_top3": [
+        "Can you take your notes out of Skwirl?",
+        "This is what your Skwirl export file looks like.",
+        "One download. One JSON file. Your notes."
+      ],
+      "hooks_top3_reasons": [
+        "Opens the actual ownership question that the JSON file answers.",
+        "A proof-led alternate for a technical audience.",
+        "Counts only the download and file actually demonstrated."
+      ],
+      "hook": "Can you take your notes out of Skwirl?",
+      "caption": "Download your Skwirl notes as a JSON file. Keep the downloaded JSON file. It contains notes, not videos.\nTry Skwirl. Link in bio.\n#notes #productivity #savedreels",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Download your Skwirl notes as a JSON file.",
+          "feature_id": "export_notes"
+        },
+        {
+          "text": "The JSON export contains your note titles, summaries and note text.",
+          "feature_id": "export_notes"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "Can you take your notes out of Skwirl?",
+          "on_screen": "Can you take your notes out of Skwirl?",
+          "shot": "Actual seeded Skwirl library in the signed-in account. Start at Me, with no personal data or sign-in links visible.",
+          "feature_ids": [
+            "export_notes"
+          ]
+        },
+        {
+          "t_start": 3,
+          "t_end": 7,
+          "role": "re-hook",
+          "vo": "No copy-paste. Use Export my notes.",
+          "on_screen": "Me > Account > Export my notes",
+          "shot": "Real screen capture: open Me, expand Account (gData), select Export my notes (exportBtn). Mask all private sign-in link and token controls.",
+          "feature_ids": [
+            "export_notes"
+          ]
+        },
+        {
+          "t_start": 7,
+          "t_end": 13,
+          "role": "payoff",
+          "vo": "Download your Skwirl notes as a JSON file.",
+          "on_screen": "JSON file",
+          "shot": "Click Export my notes in Account and show the real skwirl-export.json download. No simulated progress bar or invented app integration.",
+          "feature_ids": [
+            "export_notes"
+          ]
+        },
+        {
+          "t_start": 13,
+          "t_end": 19,
+          "role": "other",
+          "vo": "The JSON export contains your note titles, summaries and note text.",
+          "on_screen": "Title. Summary. Note text.",
+          "shot": "Open the actual JSON download in a text editor. Highlight title, summary and markdown on one controlled demo note. These are verified fields from worker/src/v1.ts NOTE_COLUMNS and export SELECT.",
+          "feature_ids": [
+            "export_notes"
+          ]
+        },
+        {
+          "t_start": 19,
+          "t_end": 25,
+          "role": "limit",
+          "vo": "Keep this file. It is a copy of your notes, not your videos.",
+          "on_screen": "A downloaded copy of your notes",
+          "shot": "Hold on the real JSON file. No PDF, video, scheduled backup or universal import icons.",
+          "feature_ids": [
+            "export_notes"
+          ]
+        },
+        {
+          "t_start": 25,
+          "t_end": 29,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-04",
+      "kind": "carousel",
+      "audience": "people who read saved notes while travelling or on weak signal",
+      "question": "If your signal drops, can you still read a note you were already looking at?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "myth-bust",
+      "feature_ids": [
+        "offline_notes"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Signal dropped. Can you still read your note?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop closing Skwirl when your signal drops.",
+          "framework": "stop_doing",
+          "score": 96,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.79,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "What can you read in Skwirl with no signal?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "No signal does not always mean no notes.",
+          "framework": "contrarian",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Two limits on reading notes without signal.",
+          "framework": "specific_number",
+          "score": 96,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.79,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Watch a cached note stay readable without signal.",
+          "framework": "demonstration",
+          "score": 96,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.79,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Your signal drops. Some notes can still be read.",
+          "framework": "curiosity",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "POV: your signal drops on the train. Skwirl stays open.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Airplane mode on. Is the note still readable?",
+          "framework": "pattern_interrupt",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "What happens to a note when your connection drops?",
+          "framework": "curiosity",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop assuming no signal means no notes.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "POV: the connection drops mid-note.",
+          "framework": "pov",
+          "score": 75,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.63,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        }
+      ],
+      "hooks_top3": [
+        "Signal dropped. Can you still read your note?",
+        "Stop closing Skwirl when your signal drops.",
+        "What can you read in Skwirl with no signal?"
+      ],
+      "hooks_top3_reasons": [
+        "Everyday moment as a question; slide 4 answers it and slides 5 and 6 limit it.",
+        "A practical tip that matches the claim, since it only applies while Skwirl stays open.",
+        "Invites the exact scope answer: notes already cached on this device, nothing more."
+      ],
+      "hook": "Signal dropped. Can you still read your note?",
+      "caption": "While Skwirl stays open, you can read notes already cached on this device if the connection drops. Do not expect it to start fresh with no signal, or new saves to process.\nTry Skwirl. Link in bio.\n#notes #savedreels #productivity",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "While Skwirl stays open, you can read notes already cached on this device if the connection drops.",
+          "feature_id": "offline_notes"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "Signal dropped. Can you still read your note?",
+          "bridge": "Sometimes. Here are the conditions.",
+          "visual": "Phone with one weak signal bar over a note, editorial illustration.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "belief",
+          "text": "The belief: no signal means no notes.",
+          "bridge": "Not always. Look at this case.",
+          "visual": "Bold type with the belief struck through.",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "condition",
+          "text": "It depends on whether the note is already on this device.",
+          "bridge": "Here is what that looks like.",
+          "visual": "Simple diagram: one note on a phone, other notes not stored on this device.",
+          "feature_ids": [
+            "offline_notes"
+          ]
+        },
+        {
+          "n": 4,
+          "job": "payoff",
+          "text": "While Skwirl stays open, you can read notes already cached on this device if the connection drops.",
+          "bridge": "Now the limits, in plain words.",
+          "visual": "Real capture on a seeded demo account: a note open, connection turned off, the cached note still readable. Show the real result only.",
+          "feature_ids": [
+            "offline_notes"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "scope limit",
+          "text": "Only notes already kept on this signed-in device. Not your whole library.",
+          "bridge": "And Skwirl has to stay open.",
+          "visual": "Card showing one note on the phone, other notes greyed out, labelled illustration.",
+          "feature_ids": [
+            "offline_notes"
+          ]
+        },
+        {
+          "n": 6,
+          "job": "open limit",
+          "text": "Do not count on it starting from scratch with no signal, or on new saves processing.",
+          "bridge": "That is the whole story.",
+          "visual": "Two small crossed icons: app closed, new save waiting.",
+          "feature_ids": [
+            "offline_notes"
+          ]
+        },
+        {
+          "n": 7,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-05",
+      "kind": "reel",
+      "audience": "Skwirl Plus users who organise their notes",
+      "question": "If a note is in the wrong category, can you fix it yourself in Skwirl Plus?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "do-dont",
+      "feature_ids": [
+        "correct_category"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Skwirl Plus demo: wrong category? Fix it on the note.",
+          "framework": "question",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Skwirl Plus: you get the last word on a note's category.",
+          "framework": "contrarian",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Skwirl Plus: remove one category, add one.",
+          "framework": "specific_number",
+          "score": 81,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.93,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Wrong category? Skwirl Plus lets you fix it by hand.",
+          "framework": "question",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop living with a wrong category. Skwirl Plus.",
+          "framework": "stop_doing",
+          "score": 98,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.92,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "A Skwirl Plus detail: you can fix a category yourself.",
+          "framework": "curiosity",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "POV: Skwirl Plus, and one note is in the wrong category.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Wrong category. Skwirl Plus lets you tap to fix it.",
+          "framework": "pattern_interrupt",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Can you change a category in Skwirl Plus? Yes.",
+          "framework": "question",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Watch a Skwirl Plus note change category.",
+          "framework": "demonstration",
+          "score": 98,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.88,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Skwirl Plus: how to move a note to the right category.",
+          "framework": "curiosity",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        },
+        {
+          "text": "Stop leaving notes under the wrong category. Skwirl Plus.",
+          "framework": "stop_doing",
+          "score": 95,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.76,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic ranking only, not an editorial PASS or popularity prediction",
+          "source": "sonnet"
+        }
+      ],
+      "hooks_top3": [
+        "Skwirl Plus demo: wrong category? Fix it on the note.",
+        "Skwirl Plus: you get the last word on a note's category.",
+        "Skwirl Plus: remove one category, add one."
+      ],
+      "hooks_top3_reasons": [
+        "A visible wrong tag poses the exact correction question; Plus entitlement is disclosed immediately.",
+        "Frames manual control as a benefit without promising sorting accuracy.",
+        "The count matches the two actions shown on screen: one removed, one added."
+      ],
+      "hook": "Skwirl Plus demo: wrong category? Fix it on the note.",
+      "caption": "With Skwirl Plus, tap a category on a note to add or remove it. It needs categories that already exist, and it is a manual fix.\nTry Skwirl. Link in bio.\n#skwirlplus #notes #organising",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "With Skwirl Plus, tap a category on a note to add or remove it.",
+          "feature_id": "correct_category"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "Skwirl Plus demo: wrong category? Fix it on the note.",
+          "on_screen": "Skwirl Plus demo: wrong category? Fix it on the note.",
+          "shot": "Frame zero: a controlled demo craft note with an intentionally assigned Food category, plainly labelled demo. Show the craft title and the mismatched category together. This is a staged example, not a claimed model error.",
+          "feature_ids": [
+            "correct_category"
+          ]
+        },
+        {
+          "t_start": 3,
+          "t_end": 7,
+          "role": "re-hook",
+          "vo": "Keep the note. Change the category.",
+          "on_screen": "With Skwirl Plus: change the category",
+          "shot": "Hold on the actual category chips of that demo note. Open only the existing category selector; do not delete or re-import the note.",
+          "feature_ids": [
+            "correct_category"
+          ]
+        },
+        {
+          "t_start": 7,
+          "t_end": 14,
+          "role": "payoff",
+          "vo": "With Skwirl Plus, tap a category on a note to add or remove it.",
+          "on_screen": "Skwirl Plus: tap to add or remove",
+          "shot": "Real capture: tap the wrong category to remove it, then tap the right existing category to add it. Two taps shown clearly, in the current UI.",
+          "feature_ids": [
+            "correct_category"
+          ]
+        },
+        {
+          "t_start": 14,
+          "t_end": 19,
+          "role": "other",
+          "vo": "Now the note carries the category you chose.",
+          "on_screen": "Skwirl Plus: your category",
+          "shot": "Stay on the actual note while the category chips update after a successful server response. Show Food removed and Crafts present. Do not promise a separate category view in this shot.",
+          "feature_ids": [
+            "correct_category"
+          ]
+        },
+        {
+          "t_start": 19,
+          "t_end": 25,
+          "role": "limit",
+          "vo": "With Skwirl Plus, choose from categories you already named. This is a manual fix.",
+          "on_screen": "With Skwirl Plus. Manual fix.",
+          "shot": "Simple card: existing categories, manual correction. Do not say Plus only; early accounts have different entitlements.",
+          "feature_ids": [
+            "correct_category"
+          ]
+        },
+        {
+          "t_start": 25,
+          "t_end": 29,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Wordmark and CTA. If mentioning access, say With Skwirl Plus, not Plus only.",
+          "feature_ids": []
+        }
+      ]
+    }
+  ],
+  "template_skips": 32,
+  "status": "DRAFTS_ONLY_NOT_APPROVABLE",
+  "checks": [
+    {
+      "id": "quality-01",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-02",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-03",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-04",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-05",
+      "errors": [],
+      "copy_structure_pass": true
+    }
+  ],
+  "revision": "New angles after independent editor rejected derivative scripts. Source review uncovered public sharing, revocation, JSON export, device-cached rereading and manual category correction.",
+  "provenance_notice": "Sonnet generated the candidate drafts; Codex made explicit editorial revisions to hooks, shot order, conditions and entitlement wording. Candidate source labels name the originating generation lane, not exclusive authorship. Final edited scripts were independently rejudged. Copy reviews precede refreshing the backlog; staging reruns them against current history and rendered evidence."
+}

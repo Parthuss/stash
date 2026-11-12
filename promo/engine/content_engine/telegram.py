@@ -39,6 +39,11 @@ class Telegram:
         with path.open("rb") as f:
             return self._call(method, data=data, files={field: (path.name, f)})["message_id"]
 
+    def send_document(self, path: Path, caption: str = "") -> int:
+        with path.open("rb") as handle:
+            return self._call("sendDocument", data={"chat_id": self.chat, "caption": caption[:1024]},
+                              files={"document": (path.name, handle, "application/json")})["message_id"]
+
     def send_album(self, paths: list[Path]) -> None:
         media, files = [], {}
         for i, p in enumerate(paths[:10]):

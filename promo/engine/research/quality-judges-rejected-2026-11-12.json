@@ -1,0 +1,577 @@
+{
+  "status": "COPY_REVIEW_ONLY_NO_MEDIA_APPROVAL",
+  "reviews": [
+    {
+      "id": "quality-01",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "\"The drill is out. Where are the instructions?\" is a concrete scene for DIY savers and opens an honest question. The payoff answers it with a Next step. The word 'instructions' slightly oversells what a summary plus one next step delivers.",
+          "clarity_2s": "Frame zero shows a drill, shelf brackets and a phone on a labelled demo reel, so the DIY problem reads quickly. Skwirl does not appear until about 7s, so the product subject is unclear in the first two seconds. That is acceptable for a POV opener but not exceptional.",
+          "payoff": "Beats 2-4 show the share sheet, then the real note with the summary and Next step held together, then a push-in on the Next step. This matches the notes feature and its approved copy. The payoff depends on a seeded reel that has a clear first action, and the shot brief says to show whatever the note displays, so the outcome is not independently evidenced. The processing limit is stated.",
+          "originality": "The core idea is a saved tutorial that needs a first step, and the payoff is the note's Next step field. That overlaps backlog idea I-05 (\"Before you save another reel, give it a next step\", Next step payoff, tutorial-saver audience). It also overlaps the posted graveyard piece (\"Saving feels like doing. It isn't.\") and the candidate hook \"Saving a tutorial is not step one.\" The POV-scene format and DIY setting are new, but the underlying angle is a reskin, so this is a lexical and format change more than a structural one.",
+          "brand_fit": "The voice is plain and calm, with a soft CTA and no hype. The processing limit is stated openly, and the staged scene is flagged as editorial in the shot notes. The public text does not label the scene as staged, but nothing in it claims otherwise."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Turn a shared reel into a note with a summary and a next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Matches the approved copy for notes (stash/extract.py next_step). The limit is respected: no video backup claim, and processing time is acknowledged in the video."
+          },
+          {
+            "path": "caption",
+            "text": "Send this to the friend with a DIY reel saved and a bare wall.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A send prompt about the audience's situation. It makes no product or outcome claim."
+          },
+          {
+            "path": "beats.3.vo",
+            "text": "Turn a shared reel into a note with a summary and a next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy."
+          },
+          {
+            "path": "beats.3.on_screen",
+            "text": "Summary. Next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Names the two note fields shown in the real UI capture."
+          },
+          {
+            "path": "beats.4.vo",
+            "text": "Start with that one step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Refers to the single Next step field. It implies the note yields a usable first action, which holds only for the seeded demo and not as a guarantee. The wording stays within the feature if it is shown as a demo."
+          },
+          {
+            "path": "beats.4.on_screen",
+            "text": "Start there.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "An instruction to the viewer, not a product guarantee. It depends on the same seeded Next step as beat 4."
+          },
+          {
+            "path": "beats.5.vo",
+            "text": "Processing takes a little time.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Matches the notes limit that processing takes time. The vague duration invents no number."
+          },
+          {
+            "path": "beats.5.on_screen",
+            "text": "Takes a little time",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Same as the beat 5 VO."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "Share it to Skwirl.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Consistent with the 'shared reel' flow in the notes feature. It is shown with a real share-sheet capture."
+          },
+          {
+            "path": "hook",
+            "text": "The drill is out. Where are the instructions?",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A scene-setting question with no product claim. Stated alone it does not imply that Skwirl delivers full instructions."
+          },
+          {
+            "path": "beats.1.vo",
+            "text": "The save is there. The job is not started.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A relatable framing with no product or outcome claim."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A plain CTA. It makes no pricing or free-access claim."
+          },
+          {
+            "path": "platforms.instagram.caption",
+            "text": "Turn a shared reel into a note with a summary and a next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Identical to the caption claim and the approved copy."
+          }
+        ],
+        "issues": [
+          "Originality is a 3: the idea substantially overlaps backlog I-05 (give a reel a next step, Next step payoff), the posted graveyard piece and the contrarian hook candidate. Only the format and setting are new. Find a distinct angle, such as a specific DIY failure moment, or defer this until I-05 has run.",
+          "The hook promises 'instructions' while the payoff delivers one Next step. Align the wording, for example 'Where do I start?'.",
+          "The payoff depends on seeding a demo reel with a clear first action. The brief says to 'show whatever the real note displays', so the demo is unverified. Confirm the real note output before staging.",
+          "Skwirl is not visible until about 7s, which weakens the two-second subject clarity."
+        ],
+        "input_digest": "9d8b9af98372f56fbb0810f1726ac4cd01e21518a6182e783e77ce8231f41408"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "originality must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "quality-02",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "'Rainy day. Where is that craft you saved?' names a specific audience moment (a parent, a rainy day, a lost saved craft) and opens a question the carousel answers with a search demo. It is concrete and honest, but the first-frame promise is a question and does not state the method.",
+          "clarity_2s": "Rainy day, craft and saved are readable at once, and the grey rain window visual supports them. The product is not named until the CTA, which is acceptable for a hook slide.",
+          "payoff": "The do/don't flow works: scrolling is the don't, typing what you remember is the do. Slide 4 shows a plain-words query and slide 5 shows the matching note opening in a labelled demo. The slide 5 text only repeats the approved feature line, so the payoff depends on the visual to show the result.",
+          "originality": "The core insight, 'you remember the craft, not the account', is a lexical variant of backlog I-03 ('You remember the idea. Not the creator.', search by what it was about). It also overlaps the posted/drafted 12-no-no-yes caption ('find it later by typing what you remember') and 11-zoom-in ('search by what you remember'). The do/don't structure and the parent/craft niche are somewhat new, but the argument is largely the same as existing material. A reword does not count as originality, so this is generic and unearned.",
+          "brand_fit": "The voice is plain and useful, with no hype and no invented numbers. The CTA is low-pressure, and the claim is the approved search copy."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Search your saved notes by meaning.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for the search feature (searchNotes). Limit: no perfect-recall or exact-ranking guarantee, and none is made."
+          },
+          {
+            "path": "slides.3.text",
+            "text": "Do: type what you remember, like paper plate craft.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Describes meaning search with a plain-words query. It does not claim a guaranteed match."
+          },
+          {
+            "path": "slides.3.bridge",
+            "text": "Here is what that finds.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Implies a successful result. This is acceptable only because the demo is on a seeded account, but the public text does not carry the 'demo' label that the visual note requires."
+          },
+          {
+            "path": "slides.4.text",
+            "text": "Search your saved notes by meaning.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for the search feature. The no-guarantee limit is respected as long as the demo label is shown."
+          },
+          {
+            "path": "slides.4.bridge",
+            "text": "That is the whole move.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "A simplicity framing with no measurable outcome. It is fine given that the feature is one search box."
+          },
+          {
+            "path": "hook",
+            "text": "Rainy day. Where is that craft you saved?",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A relatable question with no product claim."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A plain call to action with no price, free-tier or outcome claim."
+          }
+        ],
+        "issues": [
+          "Originality: the central line 'You remember the craft, not the account' and the 'search by what you remember' angle duplicate backlog I-03 and the 12-no-no-yes and 11-zoom-in captions. Rewrite around a distinct, evidenced angle, for example a concrete parent scenario that shows a different retrieval path.",
+          "Slide 4/5 public text implies a successful find without a visible 'demo' label. Add a 'Demo account' label to the slide text, or reword the bridge to avoid implying an always-found result.",
+          "Slide 5 text only repeats the caption's feature line. Replace it with the demonstrated result, such as the query and the matched note title, so the payoff is carried by the copy as well as the visual."
+        ],
+        "input_digest": "5518b417f58c859757caa8badca70069344e923bc5cba13923f1ccf55d677cb3"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "originality must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "quality-03",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 3,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "'One pile of saves. Three groups I named.' states a result, not an open question. It never mentions the audience problem in the draft's own question (gift ideas vs weekend plans), so the first frame promises tidiness without a reason to stay. The specific names (Gifts, Balcony, Weekend plans) only arrive at 10s. The stronger candidates 'How do I keep gift ideas apart from weekend plans?' and 'POV: gift ideas and weekend plans, kept apart.' were not used.",
+          "clarity_2s": "The subject (saves, grouped under names) is clear within two seconds, helped by a crowded Saved grid at frame zero. It is slightly unclear whether 'saves' means Instagram's folder or Skwirl notes.",
+          "payoff": "The payoff is demonstrated on a real Plus demo screen: typing a category name, filing a seeded note, then holding three readable named categories that each contain a note. It matches the approved categories copy and discloses the Plus limit at 17s. It answers 'apart' only loosely, since no search or retrieval moment shows gifts staying separate from weekend plans.",
+          "originality": "A messy pile turning into named groups is a generic organise-your-saves transformation. Nothing in it is distinct from the history's saved-folder/graveyard framing or from the I-10 categories idea beyond new wording and example names (Gifts, Balcony). It is not copied, but it adds no new angle or evidence.",
+          "brand_fit": "The voice is plain and useful. Skwirl Plus is labelled, there is no price, no outcome promise and no invented numbers. The CTA is modest. #instagramtips is only loosely on-brand."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "hook",
+            "text": "One pile of saves. Three groups I named.",
+            "feature_ids": [
+              "categories"
+            ],
+            "supported": true,
+            "reason": "Matches user-named categories. The demo shows exactly three. The hook does not mention Plus; the limit is disclosed at beat 4 and in the caption. The first-person 'I' is a demo narrator, not a testimonial."
+          },
+          {
+            "path": "caption",
+            "text": "With Skwirl Plus, name your categories and file saved notes into them.",
+            "feature_ids": [
+              "categories"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy that names the Plus limit."
+          },
+          {
+            "path": "caption",
+            "text": "Send this to a friend with a very mixed Saved folder.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A send prompt only. It makes no product claim."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A plain CTA. It makes no free-access or outcome claim."
+          },
+          {
+            "path": "beats.1.vo",
+            "text": "Same saves. One change.",
+            "feature_ids": [
+              "categories"
+            ],
+            "supported": true,
+            "reason": "Weakly supported. 'Saves' blurs Instagram saves with Skwirl notes, so the claim is accurate only if the visuals make clear that notes are being filed. The visuals do show the category picker."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "I named a category. Then filed a note.",
+            "feature_ids": [
+              "categories"
+            ],
+            "supported": true,
+            "reason": "Matches name and file categories. Demo only. The Plus limit follows at 17s."
+          },
+          {
+            "path": "beats.3.vo",
+            "text": "With Skwirl Plus, name your categories and file saved notes into them.",
+            "feature_ids": [
+              "categories"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy with Plus labelled."
+          },
+          {
+            "path": "beats.3.on_screen",
+            "text": "Gifts. Balcony. Weekend plans.",
+            "feature_ids": [
+              "categories"
+            ],
+            "supported": true,
+            "reason": "Example category names on seeded demo data. No outcome claim."
+          },
+          {
+            "path": "beats.4.vo",
+            "text": "This one is part of Plus.",
+            "feature_ids": [
+              "categories"
+            ],
+            "supported": true,
+            "reason": "Honest entitlement limit. It avoids implying free access for all."
+          }
+        ],
+        "issues": [
+          "Hook is a statement of result and does not open the audience question; the draft's own question (gift ideas vs weekend plans) is not in the first frame.",
+          "Originality is generic: a pile-to-groups transformation with no distinct angle compared with the history.",
+          "The saves/notes terminology blurs ('Same saves') and could suggest Instagram saves themselves are being regrouped.",
+          "Plus entitlement is disclosed late (17s) after unlabelled 'I named' beats.",
+          "Payoff shows naming and filing but not why gifts stay separate from weekend plans (no retrieval or contrast moment)."
+        ],
+        "input_digest": "b8a6555759fd5d6008710fbaf233ea5bf35309d92521d9b0046569de877ab511"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "hook_strength must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "quality-04",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 3,
+          "clarity_2s": 3,
+          "payoff": 3,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "\"The voice said one thing. The screen text said more.\" opens a real question, but the first frame names no subject (reel, plant, tip) and no audience problem. The reader cannot tell what the voice said or what the screen added until slide 2 or 3. It is intriguing but unearned at frame zero.",
+          "clarity_2s": "The hook alone does not say this is about a reel, a plant tip, or Skwirl. The demo plant frame in the visual helps, but the 2-second promise is abstract. The stated audience watches with the sound off, so they would see the on-screen text and miss the voice. The framing (\"the voice never says it\") is about the opposite gap, which muddies who is losing what.",
+          "payoff": "The payoff slide (4) restates the approved depth claim and promises a real note showing both the spoken water tip and the on-screen light tip, which does answer the hook. Three problems remain. It is a feature statement rather than a demonstrated moment. Captions and top comments are asserted but not shown. The sound-off audience logic does not resolve, since those viewers already see the screen text and miss the audio.",
+          "originality": "The history already holds I-08 (\"A useful reel has four places to hide the details\", a depth carousel that reveals one clue per input, then combines them into a note). The 12-no-no-yes caption already says Skwirl reads \"the audio, the text on screen, the caption\", and I-06 and the unposted zoom-in carousel use hidden-detail reveals. The voice-versus-screen-text structure is a narrow variation of I-08, not a distinct structure.",
+          "brand_fit": "Plain, calm, honest voice (\"One honest note.\"). The limit slide is present, the demo is labelled, the CTA is low-pressure, and there are no hype words or invented numbers."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Skwirl reads audio, on-screen text, captions and available top comments.",
+            "feature_ids": [
+              "depth"
+            ],
+            "supported": true,
+            "reason": "Exact approved copy for depth. The limit (comments or other inputs may be unavailable; no exhaustive or error-free claim) is respected and echoed on slide 5."
+          },
+          {
+            "path": "slides.3.text",
+            "text": "Skwirl reads audio, on-screen text, captions and available top comments.",
+            "feature_ids": [
+              "depth"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for depth, with the limit stated on the next slide."
+          },
+          {
+            "path": "slides.3.bridge",
+            "text": "One honest note.",
+            "feature_ids": [
+              "depth"
+            ],
+            "supported": true,
+            "reason": "Not a product claim. It frames the real captured note, which must show both tips unedited, as the slide visual specifies."
+          },
+          {
+            "path": "slides.2.text",
+            "text": "The light tip is typed on screen. The voice never says it.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Describes a labelled fictional demo reel, not Skwirl behaviour. No product or outcome claim; it is only supported if the demo is clearly marked, as the slide 2 text and visuals indicate."
+          },
+          {
+            "path": "slides.1.text",
+            "text": "In this demo plant reel, the voice only talks about water.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Scenario statement about a labelled demo, not a product claim."
+          },
+          {
+            "path": "slides.4.text",
+            "text": "Comments or other inputs may be unavailable.",
+            "feature_ids": [
+              "depth"
+            ],
+            "supported": true,
+            "reason": "Matches the depth limit exactly."
+          },
+          {
+            "path": "hook",
+            "text": "The voice said one thing. The screen text said more.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A scenario statement with no product, outcome or testimonial claim. It is only true of the demo."
+          },
+          {
+            "path": "slides.5.text",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A plain CTA with no outcome, pricing or access claim."
+          },
+          {
+            "path": "caption",
+            "text": "Send this to the friend who watches reels with the sound off.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A share prompt, not a product claim. It is logically at odds with the story, since sound-off viewers see the on-screen text."
+          }
+        ],
+        "issues": [
+          "Originality: heavily overlaps backlog idea I-08 (four hiding places, one clue per input, combined into a note) and the existing 12-no-no-yes caption wording. It is a lexical and framing variation, not a distinct structure.",
+          "Hook names no subject at frame zero; the reel, plant tip and Skwirl are not identifiable in 2 seconds.",
+          "Audience logic is inconsistent: viewers who watch with the sound off already see the on-screen text, so \"the voice never says it\" does not describe their problem. The send-to-friend CTA does not follow from the story.",
+          "Payoff only restates the feature sentence; it does not demonstrate captions or top comments or give a distinct reveal. It also depends on a real captured note that does not yet exist in the packet.",
+          "Tighten the first slide to name the subject (for example the plant reel) and reframe around a gap the audience actually has, such as the spoken detail they miss with the sound off, with a structure clearly different from I-08."
+        ],
+        "input_digest": "4e325f62f398577ab541fbda38079bbbfd0d9f06c46910c81089fae441a0b21d"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "hook_strength must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "quality-05",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 3,
+          "clarity_2s": 3,
+          "payoff": 3,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "'Saturday. Nothing planned. Pick one saved idea.' is an instruction with a scene, not an open question. The re-hook 'Which ones did you already do?' arrives at 3s and is never answered. Beat 1 shows 'nothing marks any of them as done yet', and the payoff only shows how to mark one Tried. The stated question ('Which of my saved ideas did I actually try?') therefore goes unresolved. The hook sets up a different promise from the one the video delivers.",
+          "clarity_2s": "At 0-2s the viewer sees a sofa, a phone and 'Pick one saved idea'. It is unclear what the product is, what kind of ideas these are (saved reels? notes?) and why they matter. The words 'reel', 'note' and 'Tried' do not appear until later. The subject is not clear in two seconds.",
+          "payoff": "The payoff is real and supported: a seeded note is marked Tried in the real UI, and the limit beat says 'You add the tick'. But it only demonstrates a manual status tick. It does not answer 'which ones did you already do?', and there is no view of tried versus untried notes. The viewer's gain is thin and partly unearned relative to the setup.",
+          "originality": "History contains I-11 'What was the last save you actually tried?' (To try -> Tried, action static, same feature and same question). This draft is the same idea reformatted as a POV reel, and the only change is the framing and format. It also overlaps the 'Name your last 3 saves' challenge. The POV-Saturday scene adds a little structure, but it is not distinct enough to clear a 4.",
+          "brand_fit": "The voice is plain, calm and short. The wording is honest about the manual tick, there is no hype, and the CTA is low-pressure. The b-roll is labelled editorial. The audience framing ('idea backlogs') is slightly generic for a product built around saved reels."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption / platforms.instagram.caption / beats.3.vo",
+            "text": "Mark a note as Tried after you try it.",
+            "feature_ids": [
+              "tried"
+            ],
+            "supported": true,
+            "reason": "Exact approved copy for 'tried'. Limit: manual status tick, not measured completion. The draft respects it."
+          },
+          {
+            "path": "beats.4.vo",
+            "text": "It is a tick you add yourself.",
+            "feature_ids": [
+              "tried"
+            ],
+            "supported": true,
+            "reason": "Matches the limit 'manual status tick'. It is an accurate disclosure and implies no tracking."
+          },
+          {
+            "path": "beats.4.on_screen",
+            "text": "You add the tick",
+            "feature_ids": [
+              "tried"
+            ],
+            "supported": true,
+            "reason": "Same as above; consistent with the limit."
+          },
+          {
+            "path": "beats.3.on_screen",
+            "text": "Tried",
+            "feature_ids": [
+              "tried"
+            ],
+            "supported": true,
+            "reason": "UI label for the feature ('I tried this' / Tried)."
+          },
+          {
+            "path": "beats.1.vo",
+            "text": "Which ones did you already do?",
+            "feature_ids": [
+              "tried"
+            ],
+            "supported": true,
+            "reason": "A viewer question, not a product claim. It slightly implies Skwirl can answer which were done, but the video never shows an overview, and the later beat says the tick is manual. Low risk, but it is a mismatch with the payoff."
+          },
+          {
+            "path": "hook",
+            "text": "Saturday. Nothing planned. Pick one saved idea.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Scene-setting instruction with no product or outcome claim."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A call to action only. It contains no pricing, free or outcome claims."
+          }
+        ],
+        "issues": [
+          "The hook and re-hook open a question ('Which ones did you already do?') that the payoff does not answer.",
+          "The subject and product are not clear in the first two seconds, and 'saved idea' is vague with no mention of reels or notes.",
+          "The idea substantially duplicates history item I-11 (To try -> Tried, 'What was the last save you actually tried?').",
+          "The payoff shows only a manual tick on a single note, not a view of what was tried versus untried.",
+          "The stated question_type 'action' and the audience 'people with idea backlogs' are weakly connected to the Skwirl reel-saving use case."
+        ],
+        "input_digest": "aac80c8cfa07d5f7568f14245cd8efbd33aee11e98d8bd5f2cf5ee880d1541d8"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "hook_strength must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    }
+  ]
+}
