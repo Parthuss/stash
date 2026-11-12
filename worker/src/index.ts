@@ -45,7 +45,8 @@ import { collect, pruneAnalytics } from "./analytics";
 import { notifyOwner } from "./notify";
 import { pushProgress, pushUser, sendPush, sendScheduled } from "./push";
 import { applyAiCategories, applySortResult, categoriesOf, claimSortBatch } from "./categories";
-import { emailEnabled, emailLogin, redeemLogin } from "./login";
+import { accountByEmail, checkCode, codeEmail, emailEnabled, limited, mintDeviceToken, newCode, normEmail, note, over, redeemLogin, sendEmail } from "./login";
+import { verifyGoogleIdToken } from "./google";
 import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
 import { dodoWebhook, isPlus } from "./plus";
@@ -71,7 +72,9 @@ export interface Env {
   // Optional, Workers Paid: [[send_email]] binding "EMAIL" + a sender on a domain onboarded to
   // Cloudflare Email Service. Turns on "email me a sign-in link".
   EMAIL?: { send(m: { to: string; from: { email: string; name: string }; subject: string; text: string; html: string }): Promise<unknown> };
-  EMAIL_FROM?: string;
+  EMAIL_FROM?: string; // sender for sign-in codes, e.g. signin@skwirl.app
+  RESEND_API_KEY?: string; // Resend (free plan): sends the codes with a plain fetch (src/login.ts)
+  GOOGLE_CLIENT_ID?: string; // "Continue with Google" shows only when set (src/google.ts)
   VAPID_JWK?: string; // P-256 private JWK for Web Push (src/push.ts)
   PUBLIC_URL?: string; // where links in Telegram messages point (default: the live site) // optional: owner alerts still reach Telegram when D1 is down
   // Optional: a fine-grained GitHub token (Actions: read & write, this repo only).
@@ -388,7 +391,7 @@ export default {
 
     // Tells the landing page whether to ask for an invite code.
     if (path === "/join" && request.method === "GET") {
-      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE), email_login: emailEnabled(env), country: request.headers.get("CF-IPCountry"), plus_open: env.PLUS_ACCESS === "*" });
+      return json({ open: env.OPEN_JOIN === "1", invite: Boolean(env.JOIN_CODE), email_login: emailEnabled(env), google_client_id: env.GOOGLE_CLIENT_ID || null, country: request.headers.get("CF-IPCountry"), plus_open: env.PLUS_ACCESS === "*" });
     }
 
     // Product analytics beacon (public: visitors aren't signed in). See src/analytics.ts.
@@ -414,63 +417,125 @@ export default {
       await env.DB.prepare("INSERT INTO waitlist (at, user_id, visitor, email, country, price, place) VALUES (?, ?, ?, ?, ?, ?, ?)")
         .bind(new Date().toISOString(), typeof userId === "string" ? userId : null, String(b.visitor ?? "").slice(0, 40) || null,
           email || null, country, String(b.price ?? "").slice(0, 20) || null, String(b.place ?? "").slice(0, 20) || null).run();
-      if (email && typeof userId === "string") await env.DB.prepare("UPDATE user SET email = COALESCE(email, ?) WHERE id = ?").bind(email, userId).run();
+      if (email && typeof userId === "string") await env.DB.prepare("UPDATE user SET email = COALESCE(email, ?) WHERE id = ?").bind(email.toLowerCase(), userId).run();
       ctx.waitUntil(notifyOwner(env, `someone wants Plus (${country ?? "?"}, ${b.price ?? "?"})`, `Someone joined the Skwirl Plus waitlist.\n\nCountry: ${country ?? "?"}\nPrice shown: ${b.price ?? "?"}\nWhere: ${b.place ?? "?"}\n${typeof userId === "string" ? "A signed-in user." : "A visitor."}${email ? `\nEmail: ${email}` : ""}\n\nAll of them: https://skwirl.app/analytics`));
       return json({ ok: true });
     }
 
-    // ---- lost link: email a one-time sign-in link, then trade it for a device token ----
-    if (path === "/login/email" && request.method === "POST") {
+    // ---- accounts: email + emailed code, or Google (src/login.ts, src/google.ts) ----------
+    const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
+    // Can a new account be made right now? null = yes, else the reason. The invite code and the
+    // /join cap apply to every way in; successful sign-ups count toward the per-network window.
+    const joinGate = async (invite: unknown): Promise<{ error: string; status: number } | null> => {
+      const open = env.OPEN_JOIN === "1";
+      if (!open && !env.JOIN_CODE) return { error: "Joining is closed right now.", status: 403 };
+      if (await over(env, ip, 8, 10 * 60_000)) return { error: "Too many tries. Wait a few minutes.", status: 429 };
+      if (await over(env, ip, 20, 86_400_000)) return { error: "Too many tries from this network today. Try tomorrow.", status: 429 };
+      if (!open && !safeEqual(String(invite ?? "").trim(), env.JOIN_CODE!)) {
+        await note(env, ip);
+        return { error: "That invite code isn't right.", status: 403 };
+      }
+      const joined = await env.DB.prepare("SELECT COUNT(*) n FROM user WHERE joined_via = 'invite'").first<{ n: number }>();
+      if ((joined?.n ?? 0) >= (Number(env.MAX_JOIN) || 50)) return { error: "We're full for now.", status: 403 };
+      return null;
+    };
+    const cleanName = (v: unknown) => (typeof v === "string" ? v : "").trim().slice(0, 40);
+    const makeAccount = async (name: string, email: string, verified: boolean, googleSub: string | null = null) => {
+      await note(env, ip);
+      const user = await createUser(env, name);
+      await env.DB.prepare("UPDATE user SET joined_via = 'invite', email = ?, email_verified = ?, google_sub = ? WHERE id = ?")
+        .bind(email, verified ? 1 : 0, googleSub, user.id).run();
+      await logEvent(env, user.id, "api", "join");
+      return user;
+    };
+    // An address just proved it belongs to whoever holds it: mark the account's copy verified.
+    const markVerified = (id: string) => env.DB.prepare("UPDATE user SET email_verified = 1 WHERE id = ?").bind(id).run().catch(() => {});
+
+    // Step 1: email me a code. Same answer whether or not the address has an account.
+    if (path === "/auth/email/start" && request.method === "POST") {
       if (!emailEnabled(env)) return json({ error: "Email sign-in isn't on yet." }, 503);
-      const ip = "login:" + (request.headers.get("CF-Connecting-IP") ?? "unknown");
-      const recent = await env.DB.prepare("SELECT COUNT(*) n FROM join_attempt WHERE ip = ? AND at > ?")
-        .bind(ip, new Date(Date.now() - 3600_000).toISOString()).first<{ n: number }>();
-      if ((recent?.n ?? 0) >= 5) return json({ error: "Too many tries. Wait an hour." }, 429);
-      await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
-      const email = String(((await request.json().catch(() => null)) as any)?.email ?? "").trim().slice(0, 120);
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right." }, 400);
-      // Same answer whether or not the address has an account, so this can't be used to probe.
-      await emailLogin(env, email, url.origin).catch((e) => console.log("login email failed", String(e)));
+      const b = ((await request.json().catch(() => null)) ?? {}) as any;
+      const email = normEmail(b.email);
+      if (!email) return json({ error: "That email doesn't look right." }, 400);
+      if (await limited(env, "otp:" + ip, 10, 3600_000)) return json({ error: "Too many codes from this network. Wait an hour." }, 429);
+      const acct = await accountByEmail(env, email);
+      // Creating an account: say now if joining is closed or the invite code is wrong, before an email goes out.
+      if (!acct && b.signup) { const no = await joinGate(b.invite); if (no) return json({ error: no.error }, no.status); }
+      const code = await newCode(env, email, "signin");
+      if (!code) return json({ error: "We've sent a lot of codes to that email. Wait an hour, or check spam for one we sent." }, 429);
+      try { await sendEmail(env, codeEmail(email, code, acct?.name ?? null, "signin")); }
+      catch (e) { console.log("code email failed", String(e)); return json({ error: "Couldn't send the email. Try again in a minute." }, 502); }
       return json({ ok: true });
     }
+
+    // Step 2: the code. Signs in to the account on that address, or makes one (needs a first name;
+    // without one the code is left unspent and the page asks for the name).
+    if (path === "/auth/email/verify" && request.method === "POST") {
+      if (await over(env, "otpbad:" + ip, 30, 3600_000)) return json({ error: "Too many wrong codes from this network. Wait an hour." }, 429);
+      const b = ((await request.json().catch(() => null)) ?? {}) as any;
+      const email = normEmail(b.email);
+      if (!email) return json({ error: "That email doesn't look right." }, 400);
+      const acct = await accountByEmail(env, email), name = cleanName(b.name);
+      if (!acct && !name) {
+        const peek = await checkCode(env, email, "signin", b.code, false);
+        if (!peek.ok) { await note(env, "otpbad:" + ip); return json({ error: peek.error, left: peek.left }, 400); }
+        return json({ needs_name: true, error: "No Skwirl account uses this email yet. Add your first name to create one." }, 409);
+      }
+      if (!acct) { const no = await joinGate(b.invite); if (no) return json({ error: no.error }, no.status); }
+      const spent = await checkCode(env, email, "signin", b.code, true);
+      if (!spent.ok) { await note(env, "otpbad:" + ip); return json({ error: spent.error, left: spent.left }, 400); }
+      if (acct) {
+        if (!acct.email_verified) await markVerified(acct.id);
+        await logEvent(env, acct.id, "api", "signin_email");
+        return json({ token: await mintDeviceToken(env, acct.id), name: acct.name, created: false });
+      }
+      const user = await makeAccount(name, email, true);
+      return json({ token: user.token, name, created: true }, 201);
+    }
+
+    // Continue with Google: a GIS ID token, checked against Google's keys. Finds the account by
+    // Google id, then by (verified) email, linking the two; otherwise makes one.
+    if (path === "/auth/google" && request.method === "POST") {
+      if (!env.GOOGLE_CLIENT_ID) return json({ error: "Google sign-in isn't on." }, 503);
+      if (await limited(env, "g:" + ip, 20, 10 * 60_000)) return json({ error: "Too many tries. Wait a few minutes." }, 429);
+      const b = ((await request.json().catch(() => null)) ?? {}) as any;
+      const g = await verifyGoogleIdToken(env, b.credential).catch((e) => { console.log("google verify", String(e)); return null; });
+      if (!g) return json({ error: "Google didn't confirm that sign-in. Try again." }, 401);
+      const email = normEmail(g.email);
+      const bySub = await env.DB.prepare("SELECT id, name FROM user WHERE google_sub = ?").bind(g.sub).first<{ id: string; name: string }>();
+      const acct = bySub ?? (email ? await accountByEmail(env, email) : null);
+      if (acct) {
+        if (!bySub) await env.DB.prepare("UPDATE user SET google_sub = ?, email_verified = 1 WHERE id = ?").bind(g.sub, acct.id).run();
+        await logEvent(env, acct.id, "api", "signin_google");
+        return json({ token: await mintDeviceToken(env, acct.id), name: acct.name, created: false });
+      }
+      if (!email) return json({ error: "Your Google account has no email we can use." }, 400);
+      const no = await joinGate(b.invite); if (no) return json({ error: no.error }, no.status);
+      const name = cleanName(b.name) || cleanName(g.given_name) || cleanName(g.name?.split(" ")[0]) || "there";
+      const user = await makeAccount(name, email, true, g.sub);
+      return json({ token: user.token, name, created: true }, 201);
+    }
+
+    // Telegram's one-time #login= links.
     if (path === "/login/redeem" && request.method === "POST") {
       const code = String(((await request.json().catch(() => null)) as any)?.code ?? "");
       const token = await redeemLogin(env, code);
       return token ? json({ token }) : json({ error: "That link has expired or was already used. Ask for a new one." }, 400);
     }
 
-    // ---- self-serve join: open, or with the shared invite code ---------
+    // ---- join without a code: only while no email sender is set up ------------------------
+    // (With one, sign-up goes through /auth/email so every address on file is proven.)
     if (path === "/join" && request.method === "POST") {
-      const open = env.OPEN_JOIN === "1";
-      if (!open && !env.JOIN_CODE) return json({ error: "Joining is closed right now." }, 403);
-      const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
-      const recent = await env.DB.prepare(
-        "SELECT COUNT(*) n FROM join_attempt WHERE ip = ? AND at > ?",
-      ).bind(ip, new Date(Date.now() - 10 * 60_000).toISOString()).first<{ n: number }>();
-      if ((recent?.n ?? 0) >= 8) return json({ error: "Too many tries. Wait a few minutes." }, 429);
-      const today = await env.DB.prepare("SELECT COUNT(*) n FROM join_attempt WHERE ip = ? AND at > ?")
-        .bind(ip, new Date(Date.now() - 86_400_000).toISOString()).first<{ n: number }>();
-      if ((today?.n ?? 0) >= 20) return json({ error: "Too many tries from this network today. Try tomorrow." }, 429);
-
       const body = (await request.json().catch(() => null)) as { name?: string; code?: string; email?: string } | null;
       if ([body?.name, body?.code, body?.email].some((v) => v != null && typeof v !== "string"))
         return json({ error: "Name, email and invite code must be text." }, 400);
-      const name = (body?.name ?? "").trim().slice(0, 40);
-      if (!name) return json({ error: "Tell us your name." }, 400);
-      const email = (body?.email ?? "").trim().slice(0, 120) || null;
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right. Fix it or leave it blank." }, 400);
-      if (!open && !safeEqual((body?.code ?? "").trim(), env.JOIN_CODE!)) {
-        await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
-        return json({ error: "That invite code isn't right." }, 403);
-      }
-      const joined = await env.DB.prepare("SELECT COUNT(*) n FROM user WHERE joined_via = 'invite'").first<{ n: number }>();
-      if ((joined?.n ?? 0) >= (Number(env.MAX_JOIN) || 50)) return json({ error: "We're full for now." }, 403);
-      // Successful joins count toward the same per-IP window, so open joining
-      // can't be scripted into hundreds of accounts.
-      await env.DB.prepare("INSERT INTO join_attempt (ip, at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run();
-      const user = await createUser(env, name);
-      await env.DB.prepare("UPDATE user SET joined_via = 'invite', email = ? WHERE id = ?").bind(email, user.id).run();
-      await logEvent(env, user.id, "api", "join");
+      if (emailEnabled(env)) return json({ error: "Reload the page: sign-up now emails you a code." }, 409);
+      const name = cleanName(body?.name);
+      if (!name) return json({ error: "Tell us your first name." }, 400);
+      const email = normEmail(body?.email);
+      if (!email) return json({ error: body?.email ? "That email doesn't look right." : "Add your email so you can sign in again later." }, 400);
+      const no = await joinGate(body?.code); if (no) return json({ error: no.error }, no.status);
+      const user = await makeAccount(name, email, false);
       return json({ token: user.token }, 201);
     }
 

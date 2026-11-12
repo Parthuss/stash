@@ -17,6 +17,7 @@ import { okEndpoint, sendPush, vapidPublic } from "./push";
 import { notifyOwner } from "./notify";
 import { cancelSubscription, isPlus, plusAvailable, plusRoute } from "./plus";
 import type { Env } from "./index";
+import { checkCode, codeEmail, emailEnabled, limited, newCode, normEmail, sendEmail } from "./login";
 import { fuse, semanticIds } from "./embed";
 import { ccKeyRoute } from "./recall";
 import { telegramConnected, telegramLink, unlinkTelegram } from "./telegram";
@@ -175,6 +176,7 @@ export async function deleteUser(env: Env, userId: string, origin: string): Prom
     env.DB.prepare("DELETE FROM device_token WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM cc_key WHERE user_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM login_code WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM email_code WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
     env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM note_vec WHERE user_key = ?").bind(userId),
@@ -401,6 +403,7 @@ export async function handleV1(
       env.DB.prepare("DELETE FROM oauth_code WHERE user_key = ?").bind(userId),
       env.DB.prepare("DELETE FROM telegram_link WHERE user_key = ?").bind(userId),
       env.DB.prepare("DELETE FROM login_code WHERE user_id = ?").bind(userId),
+      env.DB.prepare("DELETE FROM email_code WHERE user_id = ?").bind(userId),
     ]);
     await logEvent(env, userId, "api", "token_reset");
     return json({ token });  // shown once; the old token and any connector link stop working now
@@ -516,7 +519,7 @@ export async function handleV1(
     ).bind(userId).all<{ source: string; n: number }>();
     const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
     const u = userId
-      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, found_via, owner_msg, plan, plan_until, created_at FROM user WHERE id = ?").bind(userId).first<any>()
+      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, email_verified, email_skip_at, found_via, owner_msg, plan, plan_until, created_at FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
     const plus = isPlus(u), tier = tierOf(u, userId);
     // Past the 250 fast-lane saves in a month the app says so; everything still gets read.
@@ -536,6 +539,10 @@ export async function handleV1(
       claude_connected: (u?.mcp_calls ?? 0) > 0,
       has_groq_key: Boolean(u?.groq_key_enc),
       has_email: Boolean(u?.email),
+      email_verified: Boolean(u?.email_verified),
+      // Accounts from before email was required: ask once with a "Not now", then without one.
+      email_ask: userId && !u?.email ? (u?.email_skip_at ? "required" : "skippable") : null,
+      email_login: emailEnabled(env),
       name: u?.name ?? (userId === null ? env.OWNER_NAME ?? "Owner" : null),
       push_key: vapidPublic(env),
       asked_source: Boolean(u?.found_via) || userId === null,
@@ -551,9 +558,9 @@ export async function handleV1(
     if ([body?.message, body?.email].some((v) => v != null && typeof v !== "string") || (body?.consent != null && typeof body.consent !== "boolean"))
       return json({ error: "Message and email must be text, and consent must be true or false." }, 400);
     const message = (body?.message ?? "").trim().slice(0, 4000);
-    const email = (body?.email ?? "").trim().slice(0, 120);
+    const email = (body?.email ?? "").trim() ? normEmail(body?.email) : "";
+    if (email === null) return json({ error: "That email doesn't look right." }, 400);
     if (!message && !email) return json({ error: "Write something or leave an email." }, 400);
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right." }, 400);
     if (email && !body?.consent) return json({ error: "Tick the box so we're allowed to email you." }, 400);
     // Sign-up is open, so one account (or many) could flood the owner's inbox: 5 messages per
     // account per day, and at most 20 owner emails a day across everyone (the rest still saved). S07
@@ -562,7 +569,8 @@ export async function handleV1(
       "SELECT (SELECT COUNT(*) FROM feedback WHERE user_id = ? AND at > ?) AS mine, (SELECT COUNT(*) FROM feedback WHERE at > ?) AS everyone",
     ).bind(userId, dayAgo, dayAgo).first<{ mine: number; everyone: number }>();
     if (message && (sent?.mine ?? 0) >= 5) return json({ error: "That's a lot of messages for one day. Try again tomorrow." }, 429);
-    if (email) await env.DB.prepare("UPDATE user SET email = ? WHERE id = ?").bind(email, userId).run();
+    // A reply-to address only fills an empty slot: the sign-in email changes through a code (/v1/email).
+    if (email) await env.DB.prepare("UPDATE user SET email = COALESCE(email, ?) WHERE id = ?").bind(email, userId).run();
     if (message) await env.DB.prepare("INSERT INTO feedback (user_id, at, message) VALUES (?, ?, ?)").bind(userId, new Date().toISOString(), message).run();
     if (message && (sent?.everyone ?? 0) < 20) {
       const who = await env.DB.prepare("SELECT name, email FROM user WHERE id = ?").bind(userId).first<{ name: string; email: string | null }>();
@@ -586,13 +594,46 @@ export async function handleV1(
     if (userId === null) return json({ error: "The owner account has no profile to edit." }, 400);
     const b = (await request.json().catch(() => null)) as { name?: string; email?: string; consent?: boolean } | null;
     const name = String(b?.name ?? "").trim().slice(0, 40);
-    const email = String(b?.email ?? "").trim().slice(0, 120);
     if (!name) return json({ error: "Your name can't be empty." }, 400);
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "That email doesn't look right." }, 400);
     const had = await env.DB.prepare("SELECT email FROM user WHERE id = ?").bind(userId).first<{ email: string | null }>();
-    if (email && email !== had?.email && !b?.consent) return json({ error: "Tick the box so we're allowed to email you." }, 400);
-    await env.DB.prepare("UPDATE user SET name = ?, email = ? WHERE id = ?").bind(name, email || null, userId).run();
+    const raw = String(b?.email ?? "").trim(), email = raw ? normEmail(raw) : null;
+    if (raw && !email) return json({ error: "That email doesn't look right." }, 400);
+    // Your email is how you sign in, so it can't be blanked, and a new one changes through a code.
+    if (!email && had?.email) return json({ error: "Your email is how you sign in, so it can't be empty." }, 400);
+    await env.DB.prepare("UPDATE user SET name = ? WHERE id = ?").bind(name, userId).run();
     await logEvent(env, userId, "api", "profile_saved");
+    if (email && email !== had?.email) {
+      const r = await emailChange(env, userId, email);
+      return r.status === 200 ? json({ ok: true, ...(await r.json() as object) }) : r;
+    }
+    return json({ ok: true });
+  }
+
+  // Add or change your sign-in email. With email sign-in on, we email a code and the address is
+  // saved once it comes back (/v1/email/verify); without a sender it's saved straight away.
+  if (path === "/v1/email/start" && request.method === "POST") {
+    if (userId === null) return json({ error: "The owner account signs in with its secret." }, 400);
+    const email = normEmail(((await request.json().catch(() => null)) as any)?.email);
+    if (!email) return json({ error: "That email doesn't look right." }, 400);
+    return emailChange(env, userId, email);
+  }
+  if (path === "/v1/email/verify" && request.method === "POST") {
+    if (userId === null) return json({ error: "The owner account signs in with its secret." }, 400);
+    const b = ((await request.json().catch(() => null)) ?? {}) as any;
+    const email = normEmail(b.email);
+    if (!email) return json({ error: "That email doesn't look right." }, 400);
+    const check = await checkCode(env, email, "add", b.code, false);
+    if (!check.ok) return json({ error: check.error, left: check.left }, 400);
+    if (check.userId !== userId) return json({ error: "That code was for a different account. Ask for a new one." }, 400);
+    if (await takenByOther(env, email, userId)) return json({ error: "That email is already on another Skwirl account. Sign out and sign in with it instead." }, 409);
+    const spent = await checkCode(env, email, "add", b.code, true);
+    if (!spent.ok) return json({ error: spent.error }, 400);
+    await env.DB.prepare("UPDATE user SET email = ?, email_verified = 1 WHERE id = ?").bind(email, userId).run();
+    await logEvent(env, userId, "api", "email_added");
+    return json({ ok: true, email });
+  }
+  if (path === "/v1/email/skip" && request.method === "POST") {
+    if (userId) await env.DB.prepare("UPDATE user SET email_skip_at = COALESCE(email_skip_at, ?) WHERE id = ?").bind(new Date().toISOString(), userId).run();
     return json({ ok: true });
   }
   if (path === "/v1/source" && request.method === "POST") {
@@ -736,4 +777,27 @@ export async function handleV1(
   }
 
   return json({ error: "not found" }, 404);
+}
+
+/** Is this address already proven by a different account? */
+const takenByOther = async (env: Env, email: string, userId: string) =>
+  Boolean(await env.DB.prepare("SELECT 1 FROM user WHERE email = ? AND email_verified = 1 AND id != ?").bind(email, userId).first());
+
+/** Start adding/changing a signed-in account's email: a code by email, or (no sender, or the send
+ *  failed) saved unproven so nobody is ever stuck behind an email that can't arrive. */
+async function emailChange(env: Env, userId: string, email: string): Promise<Response> {
+  if (await takenByOther(env, email, userId)) return json({ error: "That email is already on another Skwirl account. Sign out and sign in with it instead." }, 409);
+  const saveUnproven = async () => {
+    await env.DB.prepare("UPDATE user SET email = ?, email_verified = 0 WHERE id = ?").bind(email, userId).run();
+    await logEvent(env, userId, "api", "email_added");
+    return json({ saved: true, email });
+  };
+  if (!emailEnabled(env)) return saveUnproven();
+  if (await limited(env, "otpu:" + userId, 10, 3600_000)) return json({ error: "That's a lot of codes. Wait an hour and try again." }, 429);
+  const code = await newCode(env, email, "add", userId);
+  if (!code) return json({ error: "We've sent a lot of codes to that email. Wait an hour, or check spam for one we sent." }, 429);
+  const name = (await env.DB.prepare("SELECT name FROM user WHERE id = ?").bind(userId).first<{ name: string }>())?.name ?? null;
+  try { await sendEmail(env, codeEmail(email, code, name, "add")); }
+  catch (e) { console.log("add-email code failed", String(e)); return saveUnproven(); }
+  return json({ sent: true, email });
 }
