@@ -67,7 +67,10 @@ async function loaded(page) {await page.waitForFunction(()=>document.getElementB
   try {
     for(const width of [1440,390]) {
       await harness(browser,width,contentFixture(false),async(page,requests)=>{
-        await loaded(page);
+        await loaded(page);await page.locator('#content').scrollIntoViewIfNeeded();
+        assert.equal(await page.locator('#contentDrafts img').count(),1,'The local sample preview is present');
+        await page.locator('#contentDrafts img').scrollIntoViewIfNeeded();
+        await page.waitForFunction(()=>document.querySelector('#contentDrafts img').naturalWidth>0);
         assert.equal(await page.locator('#contentActions').isVisible(),false,'Workflow controls hidden before configured');
         assert.equal(await page.locator('#contentIdeas tbody tr').count(),2);
         assert.equal(await page.locator('#contentIdeas .table-note').textContent(),'Heuristic score, not predicted reach','Score definition is visible beside the table');
