@@ -491,5 +491,11 @@ def refresh_ig_token(ctx: Ctx) -> None:
 def tick(ctx: Ctx) -> None:
     handle_telegram(ctx)
     apply_intents(ctx)
+    if ctx.cfg.auto_approve:
+        for p in load_posts(ctx.store, ctx):
+            if p.get("status") == "awaiting_approval":
+                p.update(status="approved", approved_at=ctx.now().isoformat(), approval_method="AUTO_APPROVE")
+                save(ctx.store, p)
+                ctx.say(f"{p['id']}: auto-approved")
     refresh_ig_token(ctx)
     publish_due(ctx)

@@ -77,10 +77,13 @@ class LocalStore:
 
 
 class R2Store:
-    """Cloudflare R2 through its S3 API (boto3). The bucket stays private: media goes out as presigned URLs
-    that Instagram fetches once, unless MEDIA_PUBLIC_BASE points at a public custom domain."""
+    """Cloudflare R2 through its S3 API. The shared state/media bucket MUST stay private.
+    Only individual media keys receive expiring presigned URLs. Never attach a public domain.
+    """
 
     def __init__(self, account_id: str, access_key: str, secret_key: str, bucket: str, public_base: str = ""):
+        if public_base:
+            raise ValueError("MEDIA_PUBLIC_BASE is local-test only: the R2 bucket contains private state and tokens")
         import boto3  # only needed in CI / when staging
         from botocore.config import Config as BotoConfig
 
@@ -93,7 +96,6 @@ class R2Store:
             config=BotoConfig(signature_version="s3v4", retries={"max_attempts": 4, "mode": "standard"}),
         )
         self.bucket = bucket
-        self.public_base = public_base.rstrip("/")
 
     def get_json(self, key, default=None):
         try:
@@ -136,8 +138,6 @@ class R2Store:
             token = r["NextContinuationToken"]
 
     def media_url(self, key, expires=3600):
-        if self.public_base:
-            return f"{self.public_base}/{key}"
         return self.s3.generate_presigned_url("get_object", Params={"Bucket": self.bucket, "Key": key},
                                               ExpiresIn=expires)
 

@@ -80,6 +80,8 @@ def build(script: Path, out: Path) -> Path:
     art = {}
     for key, val in data["art"].items():
         path = (script.parent / val["file"]).resolve()
+        if script.parent.resolve() not in path.parents:
+            raise ValueError("art must live beside the script")
         if not path.is_file():
             raise ValueError(f"missing generated art {key}: run imagegen, then import-art")
         art[key] = _data_uri(path, "image/png")

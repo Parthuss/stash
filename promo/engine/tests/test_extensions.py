@@ -14,6 +14,7 @@ import pytest
 from content_engine import publisher, schedule, stage, stills
 from content_engine.http import ApiError, Http
 from content_engine.youtube import YouTube
+from content_engine.store import R2Store
 from test_engine import staged, post
 
 
@@ -167,3 +168,28 @@ def test_http_parses_retry_after_header():
     with pytest.raises(ApiError) as err:
         Http('test',[],client).request('GET','https://api.test')
     assert err.value.retry_after == 120 and err.value.retryable
+
+
+def test_r2_refuses_public_base_for_bucket_containing_tokens():
+    with pytest.raises(ValueError,match='private state'):
+        R2Store('account','access','secret','bucket',public_base='https://public.example')
+
+
+def test_actions_auto_approve_flag_applies_waiting_items_but_preserves_skips(make_ctx, week_dir):
+    ctx, sched = staged(make_ctx, week_dir)
+    publisher.apply_action(ctx, post(ctx,sched['posts'][1]['id']),'sk')
+    ctx.cfg.auto_approve = True
+    publisher.tick(ctx)
+    assert post(ctx,sched['posts'][0]['id'])['status'] == 'approved'
+    assert post(ctx,sched['posts'][1]['id'])['status'] == 'skipped'
+
+
+def test_connect_env_round_trips_shell_metacharacters_without_execution(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location('connect',Path(__file__).resolve().parents[1]/'bin/connect.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module,'ENV',tmp_path/'env')
+    value = "synthetic'quote $literal `literal`"
+    module.write_env(TEST=value)
+    assert module.read_env()['TEST'] == value
+    assert module.ENV.stat().st_mode & 0o777 == 0o600

@@ -44,7 +44,7 @@ class Config:
     r2_access_key_id: str = ""
     r2_secret_access_key: str = ""
     r2_bucket: str = ""
-    media_public_base: str = ""         # optional public base URL; otherwise media goes out as 1 h presigned URLs
+    media_public_base: str = ""         # local-test base only; R2 always uses presigned media URLs
 
     secrets: list[str] = field(default_factory=list)
 

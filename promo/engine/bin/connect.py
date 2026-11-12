@@ -18,6 +18,7 @@ import hashlib
 import http.server
 import os
 import secrets
+import shlex
 import subprocess
 import sys
 import threading
@@ -39,7 +40,8 @@ def read_env() -> dict[str, str]:
         for line in ENV.read_text().splitlines():
             if "=" in line and not line.lstrip().startswith("#"):
                 k, v = line.split("=", 1)
-                out[k.strip()] = v.strip().strip("'\"")
+                parts = shlex.split(v.strip())
+                out[k.strip()] = parts[0] if parts else ""
     return out
 
 
@@ -49,7 +51,7 @@ def write_env(**kv: str) -> None:
     ENV.parent.mkdir(parents=True, exist_ok=True)
     ENV.touch(mode=0o600)
     os.chmod(ENV, 0o600)
-    ENV.write_text("".join(f"{k}='{v}'\n" for k, v in sorted(env.items())))
+    ENV.write_text("".join(f"{k}={shlex.quote(v)}\n" for k, v in sorted(env.items())))
     print(f"saved {', '.join(k for k, v in kv.items() if v)} to {ENV}")
 
 
@@ -70,9 +72,16 @@ def telegram() -> None:
                json={"chat_id": chats[-1], "text": "Connected. Posts to approve will show up here."}, timeout=20)
 
 
-def instagram() -> None:
+def instagram(exchange: bool = False) -> None:
     print("Meta app dashboard > Instagram > API setup with Instagram login > Generate access tokens > your account.")
     token = getpass.getpass("Instagram access token (hidden): ").strip()
+    if exchange:
+        secret = getpass.getpass("Instagram app secret (hidden, not stored): ").strip()
+        result = httpx.get("https://graph.instagram.com/access_token", params={
+            "grant_type": "ig_exchange_token", "client_secret": secret, "access_token": token}, timeout=30)
+        if result.status_code != 200 or not result.json().get("access_token"):
+            sys.exit(f"Token exchange failed ({result.status_code}); check app secret and short-lived token in Meta.")
+        token = result.json()["access_token"]
     r = httpx.get("https://graph.instagram.com/me", params={"fields": "user_id,username,account_type",
                                                             "access_token": token}, timeout=20)
     if r.status_code != 200:
@@ -90,13 +99,15 @@ def youtube() -> None:
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
     state = secrets.token_urlsafe(16)
     got: dict[str, str] = {}
+    ready = threading.Event()
 
     class H(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
             q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(self.path).query))
             if q.get("state") == state:
                 got.update(q)
-            self.send_response(200)
+                ready.set()
+            self.send_response(200 if q.get("state") == state else 400)
             self.end_headers()
             self.wfile.write(b"Done. You can close this tab.")
 
@@ -111,9 +122,11 @@ def youtube() -> None:
         "scope": "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly"})
     print("Opening Google sign-in. Pick the Skwirl YouTube channel's account.")
     webbrowser.open(url)
-    t = threading.Thread(target=srv.handle_request)
+    t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
-    t.join(timeout=300)
+    ready.wait(timeout=300)
+    srv.shutdown()
+    srv.server_close()
     if "code" not in got:
         sys.exit("No sign-in came back (5 min timeout).")
     tok = httpx.post("https://oauth2.googleapis.com/token", data={
@@ -162,7 +175,8 @@ def status() -> None:
 
 
 if __name__ == "__main__":
-    cmds = {"telegram": telegram, "instagram": instagram, "youtube": youtube, "r2": r2,
+    cmds = {"telegram": telegram, "instagram": instagram, "instagram-exchange": lambda: instagram(exchange=True),
+            "youtube": youtube, "r2": r2,
             "push-secrets": push_secrets, "status": status}
     if len(sys.argv) < 2 or sys.argv[1] not in cmds:
         print(__doc__)
