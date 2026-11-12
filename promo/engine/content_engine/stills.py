@@ -222,7 +222,6 @@ h1{font:800 100px/1.08 Recursive;font-variation-settings:'CASL' 1;letter-spacing
 /* phone: reel tile -> real screen in a phone frame */
 .phone{position:absolute;right:0;top:0;width:520px;border:16px solid #1d1b2e;border-radius:76px;background:#1d1b2e;overflow:hidden;box-shadow:0 30px 80px rgba(29,27,46,.25)}
 .phone img{display:block;width:100%%;border-radius:60px}
-.phone .island{position:absolute;top:18px;left:50%%;transform:translateX(-50%%);width:150px;height:42px;border-radius:24px;background:#1d1b2e}
 .reel{position:absolute;left:0;top:40px;width:280px;height:400px;border-radius:32px;overflow:hidden;border:4px solid #1d1b2e;background:#fff}
 .reel img{width:100%%;height:100%%;object-fit:cover}
 .reel .pl{position:absolute;left:50%%;top:50%%;width:110px;height:110px;margin:-55px 0 0 -55px;background:rgba(29,27,46,.55);border-radius:50%%;padding:26px 22px 26px 30px}
@@ -316,7 +315,7 @@ def build(script: Path, out: Path) -> Path:
                         + (f'<span class="chip arrow-label" style="background:#fff;color:#1d1b2e;border:4px solid #1d1b2e" data-copy>{esc(sl["arrow_label"])}</span>' if sl.get("arrow_label") else ""))
             style = "" if sl.get("tile") else "left:50%;right:auto;transform:translateX(-50%);"
             vis = (f'<div class="vis" data-region>{tile}<div class="phone" style="{style}"><img alt="{alt[sl["screen"]]}" src="{uri[sl["screen"]]}">'
-                   '<span class="island"></span></div></div>')
+                   '</div></div>')
         elif layout == "zoom":
             if sl.get("arrange") == "flow":
                 parts = []

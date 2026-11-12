@@ -16,7 +16,7 @@ cd promo/engine
 .venv/bin/python -m pytest tests -q
 ```
 
-Node >=20 and Google Chrome are needed for HTML still renders. Reels use the existing promo Remotion + Kokoro + Whisper setup. The weekly agent needs access to its built-in imagegen tool. If unavailable, it must leave a clear Needs Parth item and stop at art prompts, never silently use stock art or an unapproved paid API. The sample already includes two generated images, so rerendering it does not require image generation.
+Node >=20 and Google Chrome are needed for HTML still renders. Reels use the existing promo Remotion + Kokoro + Whisper setup. Carousels use real app captures from the seeded demo app (`promo/tools/demo/demo.sh`, then `SHOTS_DSF=3 node promo/tools/demo/shots.cjs DIR`), so no image generation is needed. Generated art is optional: only an agent with a built-in image tool makes it; otherwise the make step uses an open-licence illustration or none, never stock art or an unapproved paid API. Rerendering the sample needs nothing but Chrome and playwright-core.
 
 Secrets go only into terminal hidden prompts in `bin/connect.py`, a local chmod-600 file at `~/.config/skwirl-engine/env`, and GitHub Actions secrets. Never paste them in chat, commit them, put them in a command-line argument, or screenshot them. Do not source a file from an unknown author.
 
@@ -105,11 +105,13 @@ Tick and insights share one concurrency group because both update post records. 
 Set these non-secret settings in your local engine env file:
 
 ```sh
-ENGINE_AGENT=codex
-ENGINE_EFFORT=xhigh
+# Defaults, only set these to change them:
+ENGINE_RESEARCH_AGENT=codex          # research: Codex, xhigh effort
+ENGINE_MAKE_AGENT=claude-craveto     # make (reels, carousels, statics): Claude on the Craveto account, max effort
+# ENGINE_RESEARCH_EFFORT / ENGINE_MAKE_EFFORT / ENGINE_EFFORT override effort; ENGINE_AGENT is a fallback for both jobs
 ```
 
-For the Craveto Claude account use `ENGINE_AGENT=claude-craveto` and `ENGINE_EFFORT=max`. The default agent is Codex; no Craveto usage is implied. The crew runner and the existing local stash MCP/vault must be available. If the main checkout is elsewhere set STASH_MAIN; if crew is elsewhere set CREW_DIR.
+Agent names are crew agents (`~/.crew/agents.json`: claude-craveto, claude-main, codex). The make step uses Craveto Claude quota every Saturday; claude-main stays locked unless Parth says otherwise. Don't set ENGINE_AGENT unless you want one agent for both jobs. The crew runner and the existing local stash MCP/vault must be available. If the main checkout is elsewhere set STASH_MAIN; if crew is elsewhere set CREW_DIR.
 
 Manual launch: `python3 bin/weekly.py research` or `python3 bin/weekly.py make`. The runner prevents repeat launches for a job/date using a marker under ENGINE_HOME; if a crew task failed, inspect its dashboard result and remove only that failed task's `.started-*` marker before retrying. A marker means started, never completed.
 

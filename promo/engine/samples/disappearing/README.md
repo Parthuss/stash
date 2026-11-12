@@ -1,23 +1,36 @@
-# One sample carousel: I-01
+# Sample: I-01 "The reel you saved can disappear." (carousel, v2)
 
-Draft only. Nothing uploaded, staged, messaged or posted. [Preview](preview.jpg), [QA](QA.md), [editable script and exact image prompts](post.json).
+The reference build for [CAROUSEL_STANDARD.md](../../CAROUSEL_STANDARD.md). Seven 1080x1350 slides, each
+with its own job and layout, built on real Skwirl screens from the seeded demo app.
 
-The two original PNGs in `art/` were generated with the built-in imagegen tool in this run. They contain no copy. The renderer composes actual self-hosted Skwirl fonts, checked brand colours and editable text over them. No API key was entered and there is no third-party image-generation fallback.
+| # | Job | Layout | Picture |
+|---|---|---|---|
+| 1 | Hook | `hook` (lilac) | A Saved grid with one reel gone ("Reel unavailable") |
+| 2 | Problem | `statement` (peach) | Diagram: your save points at their post, which is deleted |
+| 3 | The switch | `phone` (lavender) | The pasta reel, Share arrow, the real note screen in a phone frame |
+| 4 | Payoff | `zoom` collage (mint) | Zoom-ins on the real note's Ingredients and Steps |
+| 5 | Later | `zoom` flow (lilac) | Real search box "that pasta thing", arrow, the matching note card |
+| 6 | Honest limit | `promise` (ink) | Type only: it keeps the note, not the video |
+| 7 | CTA | `cta` (lavender) | Skwirl mark, send-to-a-friend line, Free to try. Link in bio. |
 
-From the repository root:
+The copy and story order are Codex's from v1 where they worked (hook line, "Deleted post. Lost recipe.",
+"Share it to Skwirl. Get a note.", the honest limit on slide 6, the CTA line, the caption). What changed:
+v1 used one template for every slide, generic 3D-clay art repeated across slides (1-2 and 3/4/6), small
+body text, and never showed the product.
+
+Assets (all beside `post.json`):
+- `ui/`: captures of the demo account "Maya" (`promo/tools/demo/demo.sh`, then
+  `SHOTS_DSF=3 node promo/tools/demo/shots.cjs DIR`), 1170 px wide. No real user data.
+- `thumbs/`: the demo reel covers from `promo/tools/demo/covers/`.
+- No generated or licensed illustration: the product, a diagram and type carry this story.
+
+Render and preview (needs Chrome and playwright-core; set PLAYWRIGHT_MODULE if it isn't installed here):
 
 ```sh
-python -m venv promo/engine/.venv
-promo/engine/.venv/bin/pip install -r promo/engine/requirements.txt
-npm ci --prefix promo/engine
-PYTHONPATH=promo/engine promo/engine/.venv/bin/python -m content_engine.stills render \
-  promo/engine/samples/disappearing/post.json --out promo/out/engine-sample/01-disappearing
+cd promo/engine
+python -m content_engine.stills render samples/disappearing/post.json --out ../out/engine/samples/i01-disappearing-v2
+python bin/contact-sheet.py ../out/engine/samples/i01-disappearing-v2
 ```
 
-Requires Node >=20 and installed Google Chrome. On Linux, set CHROME_PATH to Chrome's executable. The render writes editable `slides.html`, copy, caption, PNGs, cover and mechanical/hash checks. It deliberately does not write a content-qa PASS: a reviewer must inspect the render, check claims and write `qa/report.md`. This run's actual report is also saved as QA.md here. Review again after changing any copy or artwork.
-
-To make another static or carousel, write the same JSON shape (`kind: static` with one slide, or `carousel` with 2-10). Export `prompts`, generate each art prompt using the agent's built-in imagegen tool, then use `import-art SCRIPT --art-id ID --source PATH`. It refuses to overwrite artwork. Call `render` after all images exist. If the runner lacks imagegen access, stop with the prompts and a Needs Parth note; never replace the art with placeholders or silently call a paid API.
-
-Script evaluation: frame-zero hook under 15 words; one idea; each slide sets up the next; useful-note payoff appears before CTA; no user names, counts or unverified feature; written note distinct from video; no em dash; no invented UI; original artwork. Stills have no VO/music/motion, while the reel pipeline retains the full audio/motion requirements.
-
-Current local outputs: `promo/out/engine-sample/01-disappearing/01.png` through `06.png`, cover.png, caption.txt, slides.html and qa/. The week-level schedule is `promo/out/engine-sample/schedule.json`, a suggestion for 23 Nov at 22:30 IST. Outputs are gitignored; script, art, preview and this run's QA are committed for reproducibility.
+`preview.jpg` here is the contact sheet of the reviewed render. QA record: [QA.md](QA.md).
+Status: made, QA passed (see QA.md), not staged, not approved, not posted.

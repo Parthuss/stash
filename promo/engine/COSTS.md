@@ -4,8 +4,9 @@ Planning baseline: five posts, for example three Reels and two carousels. Qualit
 
 | Item | Weekly expectation / known cost |
 |---|---|
-| Research + make agent | Two crew tasks at maximum supported effort, plus their QA work. Default is Codex; Craveto usage is **zero unless ENGINE_AGENT=claude-craveto**. Craveto subscription quota consumption cannot be converted into dollars from this repo. This run used Codex, not Craveto, and no Craveto quota was measured. |
-| Built-in imagegen | Usage of the selected account's image allowance. This run generated two assets for one carousel. No separately configured image API was charged by engine code. Actual subscription allowance and marginal image price are not exposed here; do not describe image generation as unconditionally free. |
+| Research agent | One weekly Codex crew task at xhigh effort (ENGINE_RESEARCH_AGENT). Codex subscription usage only. |
+| Make agent | One weekly **claude-craveto** crew task at max effort (ENGINE_MAKE_AGENT): five posts with scripts, VO, renders and content-qa rounds. This is the largest cost: it uses the Craveto Claude subscription quota every week (subagents on haiku/sonnet for mechanical checks and frame review keep it down). Quota use cannot be converted into dollars from this repo; record the session usage from the crew dashboard after the first full week. Set ENGINE_MAKE_AGENT=codex to move it off Craveto. |
+| Illustrations | Carousels are built on real app captures (local demo app, no cost). Generated art is optional and only made by an agent with a built-in image tool (that account's allowance); open-licence art (Fluent Emoji, MIT) is free. No image API is called by engine code. |
 | Kokoro + Remotion rendering | Local CPU/GPU time and electricity; no per-voice-line or per-render API charge from this engine. Verify Remotion licence eligibility for the organisation before expanding the team. |
 | Instagram Content Publishing / insights | No per-post fee specified by the API integration; account/permission access and limits still apply. |
 | YouTube uploads / statistics | Quota-limited API calls, with no per-upload fee charged by this engine. Three Reel uploads per week stay far below the documented current upload-call allowance. [Google quota documentation](https://developers.google.com/youtube/v3/determine_quota_cost) |
