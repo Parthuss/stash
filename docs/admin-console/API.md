@@ -17,14 +17,14 @@
 
 ## Response objects
 
-- `funnel: {steps:[{key,label,value}],note}`: site visitors, signups, first save, 5+ saves, Plus. Downstream counts follow accounts created during the chosen interval; imports count as saves. Visitors are separate reach, not an attributed signup conversion. Cross-device users and blocked tracking cannot be linked reliably.
+- `funnel: {steps:[{key,label,value}],note}`: site visitors, signups, first save, 5+ saves, Plus. Downstream counts follow accounts created during the chosen interval; imports count as saves. Visitors are separate reach, not an attributed signup conversion. Cross-device users and blocked tracking cannot be linked reliably. These are current cohort milestones, not a verified chronological purchase path; subscription start times are not stored.
 - `users`: newest 500 accounts, each `{id,name,created_at,last_seen,email,has_email,plan,plan_until,found_via,own_key,owner_msg,total,done,pending,failed,push_devices}`. Email is already exposed by the previous owner overview. No password hashes, device tokens, provider keys or subscription/customer IDs are returned. `users_total` exposes truncation.
 - `health.states: [{state,n}]`: `pending`, `processing`, `done`, `failed`; absent states may have no row.
 - `health.failures: [{reason,n,examples:[{id,title}]}]`: static error categories, up to three recent example save titles. Raw provider errors are withheld because they can contain credential-bearing URLs.
 - `health.providers: {groq_keys,own_keys,usage,openrouter_credit:null,note}`: `usage` rows contain `{provider,model,action,calls,prompt_tokens,completion_tokens,audio_seconds,billed_audio_seconds}` (grouped by provider/model/action). Groq pool size is configured runner capacity, not measured key health. `openrouter:` model prefixes distinguish recorded paid-provider calls; runner credentials/credit are not available in the Worker.
 - `health.cost: {estimated_usd,priced_calls,unpriced_calls,rates_as_of,note}`: list-price estimate for recognized recorded model calls; null when none can be priced. Coverage and assumptions are explicit, and this is not actual spend or an invoice. See pricing basis below.
 - `traffic: {daily,sources,countries,landing,devices}`: daily `{day,visits,visitors}`, dimensions `{k,n}` (distinct browser visitors; up to 12 groups each). Groups may overlap when a visitor uses multiple dimensions. Daily counts are calendar UTC days clipped to the selected interval; sparse days may have no row.
-- `activity: [{at,kind,action,name,user_id}]`: at most 40 recorded usage events in the interval. No typed search text, note content or raw errors.
+- `activity: [{at,kind,action,name,user_id}]`: at most 40 recorded user API actions in the interval. Provider calls are excluded so processing chatter cannot bury user behavior. No typed search text, note content or raw errors.
 - `limitations: string[]`: explains current snapshots, absent revenue, coverage/retention and any user-table bound.
 
 `GET /v1/admin/journey?user=<id>` remains available with its existing owner gate for the user drawer.

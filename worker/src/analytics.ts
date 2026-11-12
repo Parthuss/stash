@@ -299,7 +299,7 @@ export async function ownerConsole(env: Env, days: number, now = Date.now()) {
     ...["COALESCE(NULLIF(utm_source,''),NULLIF(referrer,''),'Direct / unknown')", "COALESCE(country,'Unknown')", "COALESCE(landing,'Unknown')", "COALESCE(device,'Unknown')"].map(d =>
       all(`SELECT ${d} k, COUNT(DISTINCT visitor) n FROM visit v WHERE started_at >= ? AND started_at < ? AND ${NOT_OWNER} GROUP BY k ORDER BY n DESC LIMIT 12`, since, until)),
     all(`SELECT e.at, e.kind, e.action, COALESCE(u.name,'Owner') name, e.user_id FROM usage_event e
-      LEFT JOIN user u ON u.id = e.user_id WHERE e.at >= ? AND e.at < ? ORDER BY e.at DESC LIMIT 40`, since, until),
+      LEFT JOIN user u ON u.id = e.user_id WHERE e.kind = 'api' AND e.at >= ? AND e.at < ? ORDER BY e.at DESC LIMIT 40`, since, until),
   ];
   const [metrics, states, userTotals, cohort, users, failures, examples, providerUsage, ownKeys,
     daily, sources, countries, landing, devices, activity] = await Promise.all(statements);
@@ -325,7 +325,7 @@ export async function ownerConsole(env: Env, days: number, now = Date.now()) {
     funnel: { steps: [ { key: 'visitors', label: 'Site visitors', value: visitors },
       { key: 'signups', label: 'Signups', value: cohort.joined ?? 0 }, { key: 'first', label: 'First save', value: cohort.first_save ?? 0 },
       { key: 'five', label: '5+ saves', value: cohort.five_saves ?? 0 }, { key: 'plus', label: 'Plus', value: cohort.plus ?? 0 } ],
-      note: 'Signups → Plus follows accounts joined in this period, including imports. Site visitors is separate reach, not an attributed signup conversion; cross-device and blocked tracking are not linked.' },
+      note: 'Signups → Plus follows accounts joined in this period, including imports. Site visitors is separate reach, not an attributed signup conversion; cross-device and blocked tracking are not linked. Downstream milestones use current saves and plan; purchase order is not recorded.' },
     users, users_total: userTotals?.total ?? 0,
     health: { states, failures: failures.map((f: any) => ({...f, examples: examples.filter((e: any) => e.reason === f.reason).slice(0,3).map(({id,title}: any) => ({id,title}))})),
       providers: { groq_keys: Math.max(1, Number(env.SHARED_KEYS) || 1), own_keys: ownKeys?.n ?? 0,

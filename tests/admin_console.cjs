@@ -46,7 +46,9 @@ let checks=0;const ok=t=>console.log('ok',++checks,t);
   visit('n1','new-browser','new','2026-11-12T01:00:00.000Z');visit('n2','new-browser','new','2026-11-12T02:00:00.000Z');visit('p','prev-browser','previous','2026-11-11T01:00:00.000Z');
   visit('g','gap-browser','gap','2026-11-11T19:00:00.000Z');visit('owner-early','owner-browser',null,'2026-11-12T01:00:00.000Z');visit('owner-authed','owner-browser',null,'2026-11-12T02:00:00.000Z',1);
   ins("INSERT INTO usage_event(at,user_id,kind,action,model,key_type,prompt_tokens,completion_tokens) VALUES('2026-11-12T02:00:00.000Z','new','groq','chat','openrouter:qwen/qwen3.8-27b','shared',8000,1000)");
+  ins("INSERT INTO usage_event(at,user_id,kind,action) VALUES('2026-11-12T02:30:00.000Z','new','api','open')");
   const data=await ownerConsole(env,1,now), consoleQueries=queries.slice(), k=key=>data.kpis.find(k=>k.key===key);
+  assert.equal(data.activity.length,1);assert.equal(data.activity[0].action,'open');assert.ok(data.activity.every(e=>e.kind==='api'));
   // Native SQLite's default compound limit is much higher than D1's. Prepare the actual
   // emitted SQL against SQLite with D1's limit of five, not a source-text approximation.
   const limited = require('node:child_process').spawnSync('python3', ['-c', `

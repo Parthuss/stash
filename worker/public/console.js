@@ -102,9 +102,10 @@ function traffic() {
   $('trafficTable').innerHTML = `<table><caption class="sr-only">Visits by day in the selected period, including zero-visit days</caption><thead><tr><th>Day · UTC</th><th>Visits</th><th>Visitors</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.day)}</td><td>${num(r.visits)}</td><td>${num(r.visitors)}</td></tr>`).join('')}</tbody></table><p>The first and last day may be partial. Visitors are distinct per day; they can appear on multiple days.</p>`;
   $('trafficBreakdowns').innerHTML = breakdown('Sources & referrers',data.traffic.sources)+breakdown('Countries',data.traffic.countries)+breakdown('Landing pages',data.traffic.landing)+breakdown('Devices',data.traffic.devices);
 }
-const actionLabels = {ingest:'added a save',import:'imported saves',open:'opened a note',search:'searched their saves',signin:'signed in',join:'joined Skwirl',token_reset:'reset their sign-in token'};
+const describeAction = action => actionLabels[action] || (String(action || '').startsWith('mcp:') ? 'used an AI tool: ' + action.slice(4).replaceAll('_',' ') : action || 'was active');
+const actionLabels = {ingest:'added a save',import:'imported saves',open:'opened a note',search:'searched their saves',signin:'signed in',join:'joined Skwirl',token_reset:'reset their sign-in token',email_added:'added an email',profile_saved:'updated their profile',recall_hit:'recalled a save',push_on:'enabled notifications',share:'shared a note',categories:'updated categories'};
 function activity() {
-  $('activityFeed').innerHTML = data.activity.length ? data.activity.map(e=>`<div class="activity-row"><span class="activity-dot"></span><div><p>${e.user_id ? `<button class="activity-user" data-view="${esc(e.user_id)}">${esc(e.name)}</button>` : `<b>${esc(e.name)}</b>`} ${esc(actionLabels[e.action] || e.action || 'was active')}</p><small>${esc(e.kind)}</small></div><time datetime="${esc(e.at)}">${esc(stamp(e.at))}</time></div>`).join('') : '<p class="empty">No activity recorded in this period.</p>';
+  $('activityFeed').innerHTML = data.activity.length ? data.activity.map(e=>`<div class="activity-row"><span class="activity-dot"></span><div><p>${e.user_id ? `<button class="activity-user" data-view="${esc(e.user_id)}">${esc(e.name)}</button>` : `<b>${esc(e.name)}</b>`} ${esc(describeAction(e.action))}</p><small>${esc(e.kind)}</small></div><time datetime="${esc(e.at)}">${esc(stamp(e.at))}</time></div>`).join('') : '<p class="empty">No activity recorded in this period.</p>';
 }
 async function load() {
   const id = ++loadId;
