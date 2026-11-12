@@ -141,6 +141,16 @@ Traffic uses one purple line, a single numeric axis, UTC date labels, point hove
 
 Loading and refresh messages use a polite status region. A refresh failure keeps the last successful data visible with an explicit stale-data message. Missing/expired owner access clears private content and presents a sign-in link. Empty tables, traffic, failures, and journeys use specific text rather than blank surfaces.
 
+### Content
+
+Content joins the same scrollable document between Traffic and Activity, with a matching rail link. It retains the console's fonts, flat white panels, borders, controls, spacing and focus treatment. The setup checklist uses two columns on desktop and one on phone. It names Instagram, YouTube, private R2 storage, Telegram, engine enablement and dry-run state, with links to the corresponding setup steps.
+
+The ideas table orders hooks, formats and numeric scores from highest to lowest. A shared score definition supplied by the API appears beneath the table; differing definitions appear beside their scores. Scores must not imply measured reach. Draft panels pair a media preview with the caption, quality-gate result, expandable findings and Approve/Skip buttons. Desktop uses preview and review columns; phone stacks them. Carousel previews scroll horizontally with slide-count text. Native video controls preserve familiar playback. Scheduled and posted items use scrollable tables, UTC dates, per-channel results and explicit “Not measured yet” states for pending 48-hour or 7-day snapshots.
+
+Before connections exist, the section shows the setup checklist, backlog and a labeled local sample. Sample approval and skip controls are disabled. Run research, Run make and Pause/Resume controls stay hidden until the dedicated workflow token and content bucket are configured. Submissions disable controls while pending and announce the server's result. An approval request is a queued decision bound to the displayed content hash; the engine checks the gate and media evidence again before applying it. Safe console workflow requests use dry run; Resume does not enable live publishing.
+
+Live previews remain private: the browser fetches media with the current owner credential and displays temporary blob URLs. Content requests use the same owner authentication as the rest of the console. Session changes clear the section and revoke preview URLs. Refresh failures retain the last content with an explicit stale-data message; a missing content integration leaves the rest of the console usable. Committed sample media illustrates a draft and carries no approval or publication claim.
+
 ## Do's and Don'ts
 
 - **Do** keep definitions, time boundaries, cohort limits, unavailable states, and chart tables close to the data they qualify.
