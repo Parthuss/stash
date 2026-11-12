@@ -277,11 +277,11 @@ def test_pause_and_dry_run(make_ctx, week_dir, fake, clock):
     ctx, s = staged(make_ctx, week_dir)
     pid = s["posts"][0]["id"]
     publisher.apply_action(ctx, post(ctx, pid), "ap")
-    fake.updates.append({"update_id": 5, "message": {"chat": {"id": int(OWNER)}, "text": "/pause"}})
+    fake.updates.append({"update_id": 5, "message": {"chat": {"id": int(OWNER)}, "from": {"id": int(OWNER)}, "text": "/pause"}})
     clock.set("2026-11-17T22:31:00+05:30")
     publisher.tick(ctx)
     assert fake.count("POST", "/media") == 0
-    fake.updates.append({"update_id": 6, "message": {"chat": {"id": int(OWNER)}, "text": "/resume"}})
+    fake.updates.append({"update_id": 6, "message": {"chat": {"id": int(OWNER)}, "from": {"id": int(OWNER)}, "text": "/resume"}})
     ctx.cfg.dry_run = True
     publisher.tick(ctx)
     assert fake.count("POST", "/media") == 0 and any("DRY RUN" in l for l in ctx.lines)
@@ -342,3 +342,90 @@ def test_insights_snapshots_at_48h_and_writes_performance(make_ctx, week_dir, fa
     assert row["id"] == pid and row["instagram"]["shares_per_reach"] == 1.0
     assert row["hook"].startswith("Pause. Rewind.")
     assert ctx.store.get_json("performance.json")["posts"][0]["id"] == pid
+
+
+# ---------- review fixes ----------
+
+def test_stale_tap_answer_failure_does_not_block_publishing(make_ctx, week_dir, fake, clock):
+    ctx, s = staged(make_ctx, week_dir)
+    pid = s["posts"][0]["id"]
+    fake.answer_fails = True  # Telegram: "query is too old"
+    tap(fake, f"ap:{pid}")
+    clock.set("2026-11-17T22:31:00+05:30")
+    publisher.tick(ctx)
+    assert post(ctx, pid)["status"] == "done"
+    assert ctx.store.get_json("state/tg_offset.json")["offset"] > 0  # the tap isn't replayed forever
+
+
+def test_stale_buttons_cannot_revive_a_skipped_post(make_ctx, week_dir, fake, clock):
+    ctx, s = staged(make_ctx, week_dir)
+    pid = s["posts"][0]["id"]
+    tap(fake, f"sk:{pid}")
+    tap(fake, f"ap:{pid}")
+    clock.set("2026-11-17T22:31:00+05:30")
+    publisher.tick(ctx)
+    assert post(ctx, pid)["status"] == "skipped" and fake.count("POST", "/media") == 0
+
+
+def test_group_chat_needs_the_owner_user(make_ctx, week_dir, fake):
+    ctx, s = staged(make_ctx, week_dir)
+    ctx.cfg.tg_chat, ctx.cfg.tg_owner_user = "-100123", OWNER
+    pid = s["posts"][0]["id"]
+    tap(fake, f"ap:{pid}", chat="-100123", sender="555")
+    publisher.tick(ctx)
+    assert post(ctx, pid)["status"] == "awaiting_approval"
+    tap(fake, f"ap:{pid}", chat="-100123", sender=OWNER)
+    publisher.tick(ctx)
+    assert post(ctx, pid)["status"] == "approved"
+
+
+def test_restage_never_touches_a_post_that_started_publishing(make_ctx, week_dir, fake, clock):
+    ctx, s = staged(make_ctx, week_dir)
+    pid = s["posts"][0]["id"]
+    p = post(ctx, pid)
+    p["status"] = "approved"
+    p["results"] = {"instagram": {"state": "container", "container_id": "c9", "attempts": 0}}
+    publisher.save(ctx.store, p)
+    stage.stage(ctx, week_dir, restage=True)
+    assert post(ctx, pid)["results"]["instagram"]["container_id"] == "c9"
+
+
+def test_mac_intents_are_applied_by_the_tick(make_ctx, week_dir):
+    ctx, s = staged(make_ctx, week_dir)
+    pid = s["posts"][0]["id"]
+    ctx.store.put_json(f"state/intents/20261116T120000-{pid}.json", {"id": pid, "action": "ap"})
+    publisher.tick(ctx)
+    assert post(ctx, pid)["status"] == "approved" and ctx.store.list("state/intents/") == []
+
+
+def test_one_broken_post_does_not_block_the_next(make_ctx, week_dir, fake, clock):
+    ctx, s = staged(make_ctx, week_dir)
+    ctx.yt = None
+    a, b = s["posts"][0]["id"], s["posts"][1]["id"]
+    for pid in (a, b):
+        p = post(ctx, pid)
+        p["when"] = "2026-11-17 22:30"
+        p.pop("youtube", None)
+        publisher.save(ctx.store, p)
+        publisher.apply_action(ctx, p, "ap")
+    pa = post(ctx, a)
+    del pa["media_keys"]  # a malformed record (KeyError inside the publish)
+    publisher.save(ctx.store, pa)
+    (ctx.store.root / "posts" / "zz-corrupt.json").write_text("{not json")
+    clock.set("2026-11-17T22:31:00+05:30")
+    publisher.tick(ctx)
+    assert post(ctx, b)["status"] == "done"
+    assert post(ctx, a)["results"]["instagram"]["attempts"] == 1
+
+
+def test_presigned_urls_are_redacted():
+    url = "https://acct.r2.cloudflarestorage.com/b/k.mp4?X-Amz-Credential=AKIA%2Fx&X-Amz-Signature=abcdef123"
+    out = redact(f"error fetching {url}", [])
+    assert "abcdef123" not in out and "AKIA" not in out and "X-Amz-Signature=***" in out
+
+
+def test_insights_drops_the_metric_meta_names_by_index(make_ctx, week_dir, fake, clock):
+    ctx, s = staged(make_ctx, week_dir)
+    fake.metric_reject = {"ig_reels_avg_watch_time"}
+    m = ctx.ig.insights("m1", "reel")
+    assert "ig_reels_avg_watch_time" not in m and m["reach"] == 10 and m["reels_skip_rate"] == 10

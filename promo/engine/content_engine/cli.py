@@ -101,7 +101,14 @@ def main(argv: list[str] | None = None) -> int:
         if not p:
             print(f"no post {a.id}")
             return 1
-        print(publisher.apply_action(ctx, p, "ap" if a.cmd == "approve" else "sk"))
+        action = "ap" if a.cmd == "approve" else "sk"
+        if cfg.local_store:  # local dry runs: apply straight away
+            print(publisher.apply_action(ctx, p, action))
+        else:  # the cron applies it on its next tick, so the Mac never races a publish in progress
+            from datetime import datetime, timezone
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+            ctx.store.put_json(f"state/intents/{stamp}-{a.id}.json", {"id": a.id, "action": action})
+            print(f"queued: {a.cmd} {a.id} (applied within ~15 min)")
     elif a.cmd == "pull-perf":
         perf = ctx.store.get_json("performance.json") or {"posts": []}
         a.out.write_text(json.dumps(perf, indent=2, ensure_ascii=False) + "\n")

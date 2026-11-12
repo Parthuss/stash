@@ -38,6 +38,7 @@ class Fake:
         self.yt_uploads: dict[str, str] = {}
         self.yt_privacy = "public"
         self.metric_reject: set[str] = set()
+        self.answer_fails = False
 
     def _id(self, p):
         self.n += 1
@@ -66,6 +67,8 @@ class Fake:
                 data = json.loads(body) if req.headers.get("content-type", "").startswith("application/json") else {}
                 self.sent.append({"method": method, **data, "raw": body[:4000]})
                 return httpx.Response(200, json={"ok": True, "result": {"message_id": len(self.sent)}})
+            if method == "answerCallbackQuery" and self.answer_fails:
+                return httpx.Response(400, json={"ok": False, "description": "Bad Request: query is too old"})
             return httpx.Response(200, json={"ok": True, "result": True})
 
         if host == "graph.instagram.com":
@@ -90,9 +93,10 @@ class Fake:
                 return httpx.Response(200, json={"data": [{"quota_usage": 1, "config": {"quota_total": 100}}]})
             if parts[-1] == "insights":
                 metrics = params["metric"].split(",")
-                bad = next((m for m in metrics if m in self.metric_reject), None)
-                if bad:
-                    return httpx.Response(400, json={"error": {"message": f"(#100) metric[{bad}] must be one of ..."}})
+                bad = next((i for i, m in enumerate(metrics) if m in self.metric_reject), None)
+                if bad is not None:  # Meta's style: names the index, then lists valid names (which contain others)
+                    return httpx.Response(400, json={"error": {"message":
+                        f"(#100) metric[{bad}] must be one of the following values: reach, saved, views, shares, likes"}})
                 return httpx.Response(200, json={"data": [{"name": m, "values": [{"value": 10}]} for m in metrics]})
             if params.get("fields") == "status_code":
                 s = self.container_status.pop(0) if self.container_status else "FINISHED"

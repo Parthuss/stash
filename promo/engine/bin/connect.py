@@ -29,7 +29,7 @@ import httpx
 
 ENV = Path.home() / ".config/skwirl-engine/env"
 SECRET_NAMES = ["IG_USER_ID", "IG_ACCESS_TOKEN", "YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN",
-                "TG_ENGINE_BOT_TOKEN", "TG_OWNER_CHAT_ID", "R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID",
+                "TG_ENGINE_BOT_TOKEN", "TG_OWNER_CHAT_ID", "TG_OWNER_USER_ID", "R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID",
                 "R2_SECRET_ACCESS_KEY", "R2_BUCKET"]
 
 

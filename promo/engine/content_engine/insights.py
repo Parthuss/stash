@@ -35,6 +35,9 @@ def collect(ctx: Ctx) -> dict:
                 except ApiError as e:
                     ctx.say(f"{p['id']}: {plat} insights failed: {e}")
                     continue
+                if not m:  # nothing came back: try again tomorrow rather than store an empty snapshot
+                    ctx.say(f"{p['id']}: {plat} {snap} returned no metrics, retrying next run")
+                    continue
                 metrics[snap] = {**m, "at": now.isoformat()}
                 changed = True
                 ctx.say(f"{p['id']}: {plat} {snap} snapshot saved")

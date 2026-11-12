@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 
-from .http import Http
+from .http import ApiError, Http
 
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 UPLOAD_URL = "https://www.googleapis.com/upload/youtube/v3/videos"
@@ -45,21 +45,25 @@ class YouTube:
                                                  "X-Upload-Content-Type": "video/mp4",
                                                  "X-Upload-Content-Length": str(len(video))}),
                               content=json.dumps(meta).encode())
-        session = r.headers["location"]
+        session = r.headers.get("location")
+        if not session:
+            raise ApiError("youtube", r.status_code, "no upload session returned", True)
+        self.http.secrets.append(session)
         done = self.http.json("PUT", session, headers=self._h(**{"Content-Type": "video/mp4"}), content=video)
         return done["id"], (done.get("status") or {}).get("privacyStatus", "")
 
-    def recent_upload_titles(self, limit: int = 10) -> dict[str, str]:
-        """title -> video id for the channel's latest uploads (1 quota unit each call), to avoid double uploads."""
+    def recent_uploads(self, limit: int = 15) -> list[dict]:
+        """The channel's latest uploads as {id, title, published_at} (2 quota units), to avoid double uploads."""
         ch = self.http.json("GET", f"{API}/channels", params={"part": "contentDetails", "mine": "true"},
                             headers=self._h())
         items = ch.get("items") or []
         if not items:
-            return {}
+            return []
         pl = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
         d = self.http.json("GET", f"{API}/playlistItems",
                            params={"part": "snippet", "playlistId": pl, "maxResults": limit}, headers=self._h())
-        return {i["snippet"]["title"]: i["snippet"]["resourceId"]["videoId"] for i in d.get("items", [])}
+        return [{"id": i["snippet"]["resourceId"]["videoId"], "title": i["snippet"].get("title", ""),
+                 "published_at": i["snippet"].get("publishedAt")} for i in d.get("items", [])]
 
     def stats(self, video_id: str) -> dict:
         d = self.http.json("GET", f"{API}/videos", params={"part": "statistics", "id": video_id}, headers=self._h())

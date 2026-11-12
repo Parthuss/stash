@@ -22,6 +22,7 @@ class Store(Protocol):
     def put_file(self, key: str, path: Path) -> None: ...
     def get_bytes(self, key: str) -> bytes: ...
     def exists(self, key: str) -> bool: ...
+    def delete(self, key: str) -> None: ...
     def list(self, prefix: str) -> list[str]: ...
     def media_url(self, key: str, expires: int = 3600) -> str: ...
 
@@ -61,6 +62,9 @@ class LocalStore:
 
     def exists(self, key):
         return self._p(key).exists()
+
+    def delete(self, key):
+        self._p(key).unlink(missing_ok=True)
 
     def list(self, prefix):
         base = self._p(prefix) if prefix else self.root
@@ -115,6 +119,9 @@ class R2Store:
             return True
         except Exception:
             return False
+
+    def delete(self, key):
+        self.s3.delete_object(Bucket=self.bucket, Key=key)
 
     def list(self, prefix):
         keys, token = [], None

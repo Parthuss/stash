@@ -32,7 +32,12 @@ class Http:
 
     def json(self, method: str, url: str, **kw: Any) -> dict:
         r = self.request(method, url, **kw)
-        return r.json() if r.content else {}
+        if not r.content:
+            return {}
+        try:
+            return r.json()
+        except ValueError:
+            raise ApiError(self.service, r.status_code, "response wasn't JSON", True) from None
 
 
 def _error_text(r: httpx.Response) -> str:

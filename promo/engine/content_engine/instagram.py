@@ -6,6 +6,7 @@ crash resumes instead of creating a second post.
 """
 from __future__ import annotations
 
+import re
 import time
 from typing import Callable
 
@@ -66,31 +67,47 @@ class Instagram:
 
     def publishing_quota(self) -> tuple[int, int]:
         """(used in the last 24 h, allowed)."""
-        d = self._get(f"{self.uid}/content_publishing_limit", fields="quota_usage,config").get("data", [{}])[0]
+        d = (self._get(f"{self.uid}/content_publishing_limit", fields="quota_usage,config").get("data") or [{}])[0]
         return int(d.get("quota_usage", 0)), int((d.get("config") or {}).get("quota_total", 100))
 
     # insights
     def insights(self, media_id: str, kind: str) -> dict:
+        """Ask for all metrics at once; if Meta rejects one (it retires names now and then), drop the one its error
+        points at (metric[N]), or fall back to asking one metric at a time."""
         metrics = list(REEL_METRICS if kind == "reel" else CAROUSEL_METRICS)
         while metrics:
             try:
-                d = self._get(f"{media_id}/insights", metric=",".join(metrics))
-            except ApiError as e:  # Meta retires metric names now and then: drop the one it names and retry
-                bad = next((m for m in metrics if m in str(e)), None)
-                if e.status == 400 and bad:
-                    metrics.remove(bad)
+                return self._parse(self._get(f"{media_id}/insights", metric=",".join(metrics)))
+            except ApiError as e:
+                if e.status != 400:
+                    raise
+                m = re.search(r"metric\[(\d+)\]", str(e))
+                if m and int(m.group(1)) < len(metrics):
+                    metrics.pop(int(m.group(1)))
                     continue
-                raise
-            out = {}
-            for row in d.get("data", []):
-                vals = row.get("values") or [{}]
-                out[row["name"]] = row.get("total_value", {}).get("value", vals[0].get("value"))
-            return out
+                out = {}
+                for name in metrics:
+                    try:
+                        out.update(self._parse(self._get(f"{media_id}/insights", metric=name)))
+                    except ApiError as e2:
+                        if e2.status != 400:
+                            raise
+                return out
         return {}
 
+    @staticmethod
+    def _parse(d: dict) -> dict:
+        out = {}
+        for row in d.get("data", []):
+            vals = row.get("values") or [{}]
+            out[row["name"]] = (row.get("total_value") or {}).get("value", vals[0].get("value"))
+        return out
+
     # token
-    def refresh_token(self) -> str:
+    def refresh_token(self, on_new=None) -> str:
         d = self.http.json("GET", "https://graph.instagram.com/refresh_access_token",
                            params={"grant_type": "ig_refresh_token", "access_token": self.token})
         self.token = d["access_token"]
+        if on_new:
+            on_new(self.token)
         return self.token

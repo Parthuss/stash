@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 
 
@@ -35,6 +36,7 @@ class Config:
     # Telegram (a dedicated bot, not the stash worker's bot: that one uses a webhook)
     tg_token: str = ""
     tg_chat: str = ""
+    tg_owner_user: str = ""             # your Telegram user id if tg_chat is a group; defaults to tg_chat
 
     # State + media store
     local_store: str = ""               # ENGINE_LOCAL_STORE=/path: use a folder (tests, dry runs)
@@ -66,6 +68,7 @@ class Config:
             yt_category=e("YT_CATEGORY", "28"),
             tg_token=e("TG_ENGINE_BOT_TOKEN", ""),
             tg_chat=e("TG_OWNER_CHAT_ID", ""),
+            tg_owner_user=e("TG_OWNER_USER_ID", ""),
             local_store=e("ENGINE_LOCAL_STORE", ""),
             r2_account_id=e("R2_ACCOUNT_ID", ""),
             r2_access_key_id=e("R2_ACCESS_KEY_ID", ""),
@@ -90,8 +93,12 @@ class Config:
         return bool(self.tg_token and self.tg_chat)
 
 
+_SIGNED = re.compile(r"(X-Amz-(?:Signature|Credential|Security-Token)|upload_id|access_token)=[^&\s\"']+", re.I)
+
+
 def redact(text: str, secrets: list[str]) -> str:
     """Strip every secret from a string before it reaches a log (the repo is public, so are Actions logs)."""
+    text = _SIGNED.sub(lambda m: m.group(1) + "=***", text)
     for s in secrets:
         if s and len(s) >= 6:
             text = text.replace(s, "***")

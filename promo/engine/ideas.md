@@ -45,7 +45,7 @@ week away from week-17's "Pause. Rewind." (both recipe).
 | I-08 | Major cheat code in life: | Reel (text trend) | Trend | Share a reel, get a note | 3 | 4 | 5 | 2 | 21 |
 | I-09 | Some bills are non-negotiable. | Reel (text trend) | Trend / Plus | Skwirl Plus | 4 | 3 | 5 | 2 | 21 |
 | I-10 | A therapist's saved reels, from this to this. | Reel (transformation) | Work library | Categories + search, Jacinda's quote | 4 | 5 | 2 | 0 | 20 |
-| I-11 | Name your last 3 saves. No peeking. | Reel (challenge) | Relatable | Each save as a one-line note | 4 | 4 | 4 | 0 | 20 |
+| I-11 | Name your last 3 saves. No peeking. | Reel (challenge) | Relatable | Each save as a titled note | 4 | 4 | 4 | 0 | 20 |
 | I-12 | I asked Claude what I saved about sleep. | Reel (screen) | Claude | Claude connector | 4 | 5 | 2 | 0 | 20 |
 | I-13 | Every movie a reel told you to watch. | Reel | Lists | Lists with Watched? ticks | 3 | 5 | 3 | 0 | 19 |
 | I-14 | The process vs. the product: planning a trip from reels | Reel (transformation) | Trend / places | Places list, Been? tick | 3 | 4 | 3 | 2 | 19 |
@@ -56,7 +56,7 @@ week away from week-17's "Pause. Rewind." (both recipe).
 ### I-01 "The reel you saved can disappear." (Reel, ~22 s) [TOP 5]
 - **Beats:** a Saved grid; one tile (a stretching routine) flickers to "This reel is unavailable" (drawn in our style, no
   real creator); "The creator deleted it. Or went private." Turn on the drop: the same save in Skwirl, as a note: title,
-  summary, the steps, the transcript, still there. End: "Save the note, not just the link."
+  summary, the next step, the transcript, still there. End: "Save the note, not just the link."
 - **Signal:** saved items are links that vanish when the creator deletes or goes private (guides in signals section 2);
   "people feel their library is rented" (signals section 4). No competitor content leads with it.
 - **Send trigger:** the friend who saves workout routines. **CTA:** free to try, link in bio.
@@ -75,7 +75,7 @@ week away from week-17's "Pause. Rewind." (both recipe).
 
 ### I-03 "Instagram Saved: looks organised. But..." (Reel, ~15 s, "Yes... but" split screen) [TOP 5]
 - **Beats:** top half: a beautiful Saved grid, collections with neat covers ("Yes."). Bottom half on the beat: a search
-  bar that does nothing; "you can't search a single word of it" ("But."). Third beat: Skwirl search finds "that
+  bar that isn't there; "Saved has no search" ("But.", sourced: signals section 2). Third beat: Skwirl search finds "that
   breathing exercise" from what was said in the reel. End card.
 - **Signal:** "Yes... but" is a live text trend (SocialBee, 7 Oct; text formats last 3-4 weeks, so build this first).
   Instagram has no search inside Saved today (signals section 2).
@@ -86,6 +86,7 @@ week away from week-17's "Pause. Rewind." (both recipe).
 - **Beats:** "Life never handed me lemons." / "It handed me 400 saved pasta reels and no way to find one." (kinetic
   text over a scrolling Saved grid). Turn: share one to Skwirl, the checklist pops in ingredient by ingredient, "lemon"
   is one of them (the callback lands the joke). End card.
+- **Numbers:** "400" (here) and "500" (I-05) are the narrator's own joke, never a claim about users.
 - **Signal:** current text trend (SocialBee, 5 Nov). Cheapest build: kit + existing recipe demo note.
 - **Truth:** "400" is the narrator's own joke, not a statistic about anyone; no user numbers. Keep a week from 01.
 
@@ -101,15 +102,16 @@ week away from week-17's "Pause. Rewind." (both recipe).
 ### I-06 "The recipe isn't in the video." (Reel, ~20 s)
 - Reel shows a recipe reel with no amounts spoken; the real amounts sit in the caption and a pinned comment. Skwirl's
   note has them all in the checklist, each line tagged with where it came from. Payoff = depth (audio + on-screen text +
-  caption + top comments), the differentiator against bookmark apps. Signal: TasteBuddy HN thread, recipes in captions /
+  caption + top comments), the differentiator against bookmark apps. The "tagged with where it came from" beat is NOT
+  a known feature: drop it unless the note UI really shows sources. Signal: TasteBuddy HN thread, recipes in captions /
   comments (signals sections 1 and 3). Effort 3: needs a demo note whose ingredients come from caption and comments.
   **Truth:** check that the note UI can show where a line came from before scripting that beat; if not, drop the tags.
 
 ### I-07 "Deleting Instagram? Take your saves with you." (Reel or carousel)
 - Digital-detox angle; best scheduled late Dec / early Jan (resolutions). Export (pick All time), import into Skwirl,
   saves become searchable notes outside Instagram. Signal: Privacy Guides "How do I download all my saves" question.
-  **Truth:** free brings in your 25 latest saves, Plus your whole Saved folder (up to the Plus import cap); imports run a
-  batch a day, no speed promise. Different angle from week-17's export carousel; keep them a month apart.
+  **Truth:** free brings in 25 old saves, Plus up to 2,000 (check worker/public/index.html for the current wording
+  before scripting); imports run a batch a day, no speed promise. Different angle from week-17's export carousel; keep them a month apart.
 
 ### I-08 "Major cheat code in life:" (Reel, ~8 s loop)
 - "Major cheat code in life: share the reel to Skwirl before you hit save." One share, one note. Text trend (5 Nov).
@@ -128,7 +130,7 @@ week away from week-17's "Pause. Rewind." (both recipe).
 
 ### I-11 "Name your last 3 saves. No peeking." (Reel, challenge)
 - Comment-bait with a genuine payoff: the narrator fails, then Skwirl's library shows each save as a one-line note.
-  Engagement first, product second.
+  Engagement first, product second. Notes show a title, summary and next step; don't call them "one line".
 
 ### I-12 "I asked Claude what I saved about sleep." (Reel, screen recording)
 - INSTAGRAM_PLAN piece 4. Needs a real Claude app recording on the demo account. Keep a week from 02 and piece 13

@@ -48,8 +48,9 @@ def stage(ctx: Ctx, week_dir: Path, restage: bool = False, require_qa: bool = Tr
             pid = item["id"]
             key = f"posts/{pid}.json"
             old = ctx.store.get_json(key)
-            if old and (old["status"] == "done" or (old["status"] != "awaiting_approval" and not restage)):
-                ctx.say(f"{pid}: already {old['status']}, left alone")
+            started = old and any(r.get("state") not in (None, "pending") for r in (old.get("results") or {}).values())
+            if old and (old["status"] == "done" or started or (old["status"] != "awaiting_approval" and not restage)):
+                ctx.say(f"{pid}: already {old['status']}{' (publishing started)' if started else ''}, left alone")
                 continue
             d = week_dir / item.get("dir", "")
             media_keys = []

@@ -44,7 +44,7 @@ Setup: [SETUP.md](SETUP.md).
 ```
 content_engine/   config, store (R2 / local), http (redacting), instagram, youtube, telegram,
                   schedule (schedule.json + rule checks), stage, publisher (tick), insights, cli
-tests/            27 tests against a fake Instagram + YouTube + Telegram (httpx.MockTransport)
+tests/            35 tests against a fake Instagram + YouTube + Telegram (httpx.MockTransport)
 research/         gather.py, repos.md (repo survey), api-facts.md (checked 12 Nov 2026), signals for run 1
 prompts/          research.md, make.md (the weekly crew task prompts)
 bin/              connect.py (accounts), weekly.py + launchd plist (weekly tasks)

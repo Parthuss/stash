@@ -18,7 +18,8 @@ A new bot just for approvals. The Skwirl bot can't be reused: it has a webhook, 
 
 1. Telegram > @BotFather > `/newbot` > name "Skwirl Posts" (any username). Copy the token.
 2. `../../.venv/bin/python bin/connect.py telegram` > paste the token at the hidden prompt > send `/start` to the new bot > Enter.
-   You get "Connected." in Telegram.
+   You get "Connected." in Telegram. Only taps and commands from you count. (Using a group instead of the private chat?
+   Also add a `TG_OWNER_USER_ID='<your user id>'` line to the env file so only you can approve.)
 
 ## 2. Instagram (Creator account, Instagram API with Instagram Login) (15 min)
 
