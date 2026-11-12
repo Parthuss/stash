@@ -1,0 +1,21 @@
+{
+  "origin": "https://skwirl.app",
+  "checked_at": "2026-11-12T11:33:39.304Z",
+  "mode": "read-only; no messages, push notifications or requeues sent",
+  "screenshots": "Live metrics; customer names masked and private text fields removed before capture",
+  "checks": [
+    "/analytics redirects to /owner",
+    "/analytics.html redirects to /owner",
+    "/admin redirects to /owner",
+    "/admin.html redirects to /owner",
+    "/owner public shell is available",
+    "missing credentials denied",
+    "invalid credentials denied",
+    "owner API period 1 returns valid private no-store data",
+    "owner API period 7 returns valid private no-store data",
+    "owner API period 30 returns valid private no-store data",
+    "1440px live screenshot, no page errors or horizontal overflow; customer names masked",
+    "390px live screenshot, no page errors or horizontal overflow; customer names masked",
+    "live signed-in Skwirl menu opens Pricing and returns to saves with the session preserved"
+  ]
+}

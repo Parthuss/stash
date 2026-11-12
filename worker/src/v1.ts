@@ -11,8 +11,10 @@
  *   POST|DELETE /v1/notes/:id/share     public read-only link at /n/<share_id>
  *   GET  /v1/search        ?q=               FTS5 (hybrid/vector comes later)
  */
+import { TIERS_FROM } from "./tiers";
+export { TIERS_FROM } from "./tiers";
 import { categoriesOf, setCategories, setNoteCategory } from "./categories";
-import { analyticsOverview, journey } from "./analytics";
+import { analyticsOverview, journey, ownerConsole } from "./analytics";
 import { okEndpoint, sendPush, vapidPublic } from "./push";
 import { notifyOwner } from "./notify";
 import { cancelSubscription, isPlus, plusAvailable, plusRoute } from "./plus";
@@ -288,7 +290,6 @@ export const IMPORT_SHARED = 100, IMPORT_OWN_KEY = 1000;
 // Tiers (11 Nov 2026). Free: FREE_MONTHLY new saves a month, FREE_IMPORT old saves once, no own Groq key,
 // no own categories. Plus: up to PLUS_IMPORT old saves, categories, its 250 a month read first.
 // Accounts made before TIERS_FROM ("early") keep the old free rules: 30 a day, own key, categories.
-export const TIERS_FROM = "2026-11-11T12:00:00.000Z";
 export const FREE_MONTHLY = 10, FREE_IMPORT = 25, PLUS_IMPORT = 2000;
 type Tier = "owner" | "plus" | "early" | "free";
 const tierOf = (u: { plan?: string | null; plan_until?: string | null; created_at?: string | null } | null, userId: string | null): Tier =>
@@ -325,6 +326,38 @@ export async function handleV1(
   if (path.startsWith("/v1/plus/")) {
     const res = await plusRoute(request, env, path, userId);
     if (res) return res;
+  }
+
+  if (path === "/v1/admin/console" && request.method === "GET") {
+    if (userId !== null) return json({ error: "not found" }, 404);
+    return json(await ownerConsole(env, Number(url.searchParams.get("days")) || 7));
+  }
+  const ownerUserAction = path.match(/^\/v1\/admin\/users\/([a-zA-Z0-9_-]{1,80})\/(message|requeue|push)$/);
+  if (ownerUserAction && request.method === "POST") {
+    if (userId !== null) return json({ error: "not found" }, 404);
+    const target = ownerUserAction[1], action = ownerUserAction[2];
+    if (!await env.DB.prepare("SELECT id FROM user WHERE id = ?").bind(target).first()) return json({ error: "not found" }, 404);
+    if (action === "requeue") {
+      const r = await env.DB.prepare("UPDATE capture SET status = 'pending', attempts = 0, error = NULL, claimed_at = NULL, lease = NULL WHERE user_id = ? AND (status = 'failed' OR (status != 'done' AND attempts >= 3))").bind(target).run();
+      return json({ requeued: r.meta.changes });
+    }
+    const body = await request.json().catch(() => null) as { message?: unknown; body?: unknown; title?: unknown } | null;
+    if (action === "message") {
+      if (typeof body?.message !== "string" || body.message.length > 500) return json({ error: "Message must be 500 characters or fewer." }, 400);
+      // Leading '#' is app navigation markup in older owner messages. Prefix plain messages so
+      // owner input is displayed verbatim, never interpreted as a selector by the signed-in app.
+      const message = body.message.trim();
+      await env.DB.prepare("UPDATE user SET owner_msg = ? WHERE id = ?").bind(message ? "#gSave " + message : null, target).run();
+      return json({ ok: true });
+    }
+    if (typeof body?.body !== "string" || !body.body.trim() || body.body.length > 240 || (body.title != null && (typeof body.title !== "string" || body.title.length > 60)))
+      return json({ error: "Push body must be 1–240 characters; title at most 60." }, 400);
+    if (!env.VAPID_JWK) return json({ error: "Push is not configured." }, 409);
+    const { results: subs } = await env.DB.prepare("SELECT endpoint, p256dh, auth FROM push_sub WHERE user_id = ? LIMIT 50").bind(target).all<{endpoint: string; p256dh: string; auth: string}>();
+    const statuses = [];
+    for (const sub of subs ?? []) statuses.push(await sendPush(env, sub, {title: typeof body.title === "string" && body.title.trim() ? body.title.trim() : "Skwirl", body: body.body.trim(), url: "/", tag: "owner-note"}).catch(() => 0));
+    const sent = statuses.filter(s => s >= 200 && s < 300).length;
+    return json({ devices: statuses.length, sent, failed: statuses.length - sent });
   }
 
   if (path === "/v1/admin/analytics" && request.method === "GET") {

@@ -67,14 +67,85 @@ function goTo(el) { const y = scrollY; el.scrollIntoView({ behavior: "smooth" })
 // Signed in, looking at the website (pricing, how it works) without signing out.
 function visitSite() { document.body.classList.add("site-visit"); show("auth"); renderPlus(); scrollTo(0, 0); }
 document.addEventListener("click", (e) => {
-  if (e.target.closest("[data-site]")) { e.preventDefault(); tr("click", "visit_site"); visitSite(); }
+  if (e.target.closest("[data-site]")) {
+    e.preventDefault(); tr("click", "visit_site"); visitSite();
+    const target = e.target.closest("[data-site]").dataset.site;
+    if (target && $(target)) goTo($(target));
+  }
   else if (e.target.closest("[data-backapp]") && token) { e.preventDefault(); show("lib"); }
 });
+// A familiar app menu keeps the website and account actions one tap from your saves.
+function installAppNavigation() {
+  const style = document.createElement("style");
+  style.textContent = `
+    .app-menu { flex:1; min-width:0; position:relative; }
+    .app-menu .brand { margin:0; }
+    .app-menu-trigger { display:inline-flex; align-items:center; gap:.22em; min-height:44px; padding:0; border:0; background:transparent; color:var(--ink); font:inherit; letter-spacing:inherit; cursor:pointer; }
+    .app-menu-trigger svg { width:15px; height:15px; margin-left:2px; flex:none; }
+    .app-menu-trigger:focus-visible, .app-menu-panel a:focus-visible, .app-menu-panel button:focus-visible, .site-row:focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
+    .app-menu-panel { position:absolute; top:calc(100% + 8px); left:0; z-index:8; width:224px; padding:6px; border:1px solid var(--line); border-radius:14px; background:#fff; box-shadow:0 12px 32px rgb(29 27 46 / .14); }
+    .app-menu-panel a, .app-menu-panel button { display:flex; align-items:center; gap:12px; width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:8px; background:transparent; color:var(--ink); font:500 15px var(--ui); text-decoration:none; text-align:left; cursor:pointer; }
+    .app-menu-panel a:hover, .app-menu-panel button:hover { background:var(--bg); }
+    .app-menu-panel svg, .site-row > svg { width:20px; height:20px; flex:none; }
+    .app-menu-panel button { margin-top:4px; border-top:1px solid var(--line); border-radius:0 0 8px 8px; }
+    .site-links { margin:20px 0; border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+    .site-row { display:flex; align-items:center; gap:14px; min-height:62px; padding:13px 16px; color:var(--ink); text-decoration:none; background:rgb(255 255 255 / .85); }
+    .site-row + .site-row { border-top:1px solid var(--line); }
+    .site-row span { flex:1; min-width:0; }
+    .site-row b { display:block; font-size:15px; font-weight:600; }
+    .site-row small { display:block; font-size:13px; color:var(--muted); margin-top:2px; }
+    .site-row:hover { background:#fff; }
+    @media(max-width:379px) { .app-menu-trigger { gap:.12em; } .app-menu-trigger svg { width:12px; margin-left:0; } }
+  `;
+  document.head.appendChild(style);
+  const icon = (path) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+  const chevron = icon('<path d="m9 5 7 7-7 7"/>');
+  const about = icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/>');
+  const pricing = icon('<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18m-14 5h3"/>');
+  const help = icon('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3h.01"/>');
+  const menu = document.createElement("div"); menu.className = "app-menu";
+  const brand = document.querySelector("#lib header .brand");
+  brand.before(menu); menu.appendChild(brand);
+  brand.innerHTML = `<button class="app-menu-trigger" id="appMenuToggle" type="button" aria-expanded="false" aria-controls="appMenuPanel" aria-label="Skwirl menu"><img src="/mark.svg" alt="">Skwirl${icon('<path d="m7 10 5 5 5-5"/>')}</button>`;
+  menu.insertAdjacentHTML("beforeend", `<nav class="app-menu-panel" id="appMenuPanel" aria-label="Skwirl" hidden>
+    <a href="/" data-site>${about}About Skwirl</a>
+    <a href="/#pricing" data-site="pricing">${pricing}Pricing</a>
+    <a href="#gHelp" data-app-help>${help}Help</a>
+    <a href="/owner" data-owner-console hidden>${icon('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>')}Owner console</a>
+    <button type="button" data-app-signout>${icon('<path d="M9 5H5v14h4m5-12 5 5-5 5m5-5H9"/>')}Sign out</button>
+  </nav>`);
+  const toggle = $("appMenuToggle"), panel = $("appMenuPanel");
+  const close = () => { panel.hidden = true; toggle.setAttribute("aria-expanded", "false"); };
+  toggle.addEventListener("click", () => { panel.hidden = !panel.hidden; toggle.setAttribute("aria-expanded", String(!panel.hidden)); });
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) || e.target.closest("#appMenuPanel a, #appMenuPanel button")) close();
+    if (e.target.closest("[data-app-help]")) { e.preventDefault(); openSetup(false); $("gHelp").open = true; goTo($("gHelp")); }
+    if (e.target.closest("[data-app-signout]")) $("signOutBtn").click();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) { close(); toggle.focus(); } });
+  menu.addEventListener("focusout", (e) => { if (!menu.contains(e.relatedTarget)) close(); });
+  // Replace the old isolated pill with rows that read like the rest of account settings.
+  const old = document.querySelector("#me [data-site]")?.parentElement;
+  if (old) {
+    const links = document.createElement("nav"); links.className = "site-links"; links.setAttribute("aria-label", "Skwirl website");
+    links.innerHTML = `<a class="site-row" href="/" data-site>${about}<span><b>About Skwirl</b><small>How Skwirl works</small></span>${chevron}</a><a class="site-row" href="/#pricing" data-site="pricing">${pricing}<span><b>Plans and pricing</b><small>Free and Skwirl Plus</small></span>${chevron}</a>`;
+    old.replaceWith(links);
+  }
+  $("adminBtn").textContent = "Owner console";
+  $("admin").replaceChildren(); // The owner interface now lives only at /owner.
+}
+installAppNavigation();
+function ownerConsoleFromHash() {
+  if (token && location.hash === "#admin") location.replace("/owner");
+}
+window.addEventListener("hashchange", ownerConsoleFromHash);
+ownerConsoleFromHash();
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => (t.hidden = true), 2600); }
 let activeView = null, viewVersion = 0, historyPosition = 0;
 let navigationId = Math.random().toString(36).slice(2), viewScroll = {};
 function viewState(which) { return { skwirlView: which, position: historyPosition, navigationId, noteId: which === "note" ? current?.id : null, from: which === "note" ? returnTo : null }; }
 function show(which, record = true) {
+  if (which === "admin") { location.assign("/owner"); return; }
   if (which !== "auth") document.body.classList.remove("site-visit");
   const changed = activeView !== which;
   if (changed) {
@@ -881,6 +952,7 @@ async function refreshSetup() {
   $("gTelegram").hidden = !st.telegram;
   if (st.telegram) { set("bTelegram", st.telegram.connected, "Optional"); if (!st.telegram.connected) $("bTelegram").className = "badge opt"; $("tgOff").hidden = !st.telegram.connected; }
   $("adminBtn").hidden = !st.owner;
+  document.querySelector("[data-owner-console]").hidden = !st.owner;
   showFeedback(); showImport(); refreshAvatar(); if (loaded && !notes.length) render();
   $("groqBody").hidden = !!st.owner; $("groqOwnerMsg").hidden = !st.owner;
   if (st.has_groq_key && !st.owner) $("groqMsg").textContent = "A key is saved and in use. Paste a new one to replace it.", $("groqMsg").className = "msg ok";
@@ -1027,34 +1099,8 @@ const ago = (iso) => {
   if (!iso) return "never"; const m = Math.max(0, (Date.now() - Date.parse(iso)) / 60000);
   return m < 2 ? "just now" : m < 90 ? Math.round(m) + " min ago" : m < 2880 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago";
 };
-async function openAdmin() {
-  show("admin"); scrollTo(0, 0);
-  $("adminHealth").textContent = "Loading…"; $("adminStats").innerHTML = ""; $("adminUsers").innerHTML = skeleton();
-  const r = await api("/v1/admin/overview"); if (!r.ok) { $("adminHealth").textContent = "Couldn't load admin. Go back and try again."; $("adminUsers").innerHTML = ""; return; }
-  const { overview: o, users } = await r.json();
-  const stuck = o.oldest_waiting && Date.now() - Date.parse(o.oldest_waiting) > 3600000;
-  const bits = [stuck ? "Queue looks stuck" : "", o.failed ? `${o.failed} failed` : ""].filter(Boolean);
-  $("adminHealth").innerHTML = bits.length ? `<span class="badge bad">${esc(bits.join(" · "))}</span>` : `<span class="badge done">Healthy</span>`;
-  const stat = (n, label) => `<div class="stat"><b>${esc(n)}</b><span>${esc(label)}</span></div>`;
-  $("adminStats").innerHTML = stat(o.users, "people") + stat(o.saves_24h, "saves, last 24h")
-    + stat(`${o.notes_24h} / ~25`, "processed today (free Groq cap)") + stat(o.waiting, "waiting now")
-    + stat(o.failed, "gave up") + stat(ago(o.last_note), "last note finished");
-  $("adminUsers").innerHTML = users.map((u) => {
-    const active = u.saves_7d > 0 && u.last_seen && Date.now() - Date.parse(u.last_seen) < 3 * 864e5;
-    const chip = u.name === "owner" ? ["you", "opt"] : !u.saves ? ["no saves yet", ""] : active ? ["active", "done"] : ["quiet", "opt"];
-    const pct = u.notes ? Math.round((100 * u.opened) / u.notes) + "%" : "n/a";
-    return `<div class="ucard"><header><h3>${esc(u.name === "owner" ? (setupState && setupState.name) || "You" : u.name)}</h3><span class="badge ${chip[1]}">${chip[0]}</span></header>
-      <dl><div><dt>Joined</dt><dd>${esc(ago(u.created_at))}</dd></div><div><dt>Last active</dt><dd>${esc(ago(u.last_seen || u.last_save))}</dd></div>
-      <div><dt>Saves (7d)</dt><dd>${u.saves_7d}</dd></div><div><dt>Notes</dt><dd>${u.notes}</dd></div>
-      <div><dt>Reopened</dt><dd>${pct}</dd></div><div><dt>Used</dt><dd>${u.used}</dd></div>
-      <div><dt>Claude</dt><dd>${u.mcp_calls ? "connected" : "no"}</dd></div><div><dt>Own key</dt><dd>${u.own_key ? "yes" : "no"}</dd></div>
-      <div><dt>Waiting / failed</dt><dd>${u.waiting} / ${u.failed}</dd></div>
-      ${u.feedback ? `<div style="grid-column:1/-1"><dt>Feedback</dt><dd>${esc(u.feedback)}</dd></div>` : ""}
-      ${u.email ? `<div><dt>Email</dt><dd><a href="mailto:${esc(u.email)}">${esc(u.email)}</a></dd></div>` : ""}</dl></div>`;
-  }).join("");
-}
+function openAdmin() { location.assign("/owner"); }
 $("adminBtn").addEventListener("click", openAdmin);
-$("adminBack").addEventListener("click", () => { backTo("lib"); load(); });
 
 // Anything unhandled becomes a plain message, not a silent dead button.
 window.addEventListener("unhandledrejection", (e) => {

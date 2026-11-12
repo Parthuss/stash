@@ -1,9 +1,10 @@
 /**
  * First-party product analytics: who visits, where from, what they look at and tap, how long
  * they stay, where they stop. public/track.js sends batches to POST /e; the owner reads them on
- * /analytics. Never typed text, search words or note content. No third party, no IPs kept.
+ * /owner. Never typed text, search words or note content. No third party, no IPs kept.
  */
 import type { Env } from "./index";
+import { TIERS_FROM } from "./tiers";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -84,7 +85,7 @@ export async function collect(request: Request, env: Env, userId: string | null 
 
 const NOT_OWNER = "v.visitor NOT IN (SELECT visitor FROM visit WHERE owner = 1)";
 
-/** Everything the /analytics page shows, for the last `days` days. Owner only. */
+/** Legacy analytics API compatibility, for the last `days` days. Owner only. */
 export async function analyticsOverview(env: Env, days: number) {
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
   const all = async (sql: string, ...args: unknown[]) => (await env.DB.prepare(sql).bind(...args).all<any>()).results ?? [];
@@ -187,4 +188,153 @@ export async function pruneAnalytics(env: Env): Promise<void> {
     env.DB.prepare("DELETE FROM visit WHERE last_at < ?").bind(cut),
     env.DB.prepare("DELETE FROM daily_counter WHERE key < ?").bind("analytics:" + new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10)),
   ]);
+}
+
+/** One explicit period for every owner-console chart; today compares the same elapsed UTC hours. */
+export function consolePeriod(days: number, now = Date.now()) {
+  days = [1, 7, 30].includes(days) ? days : 7;
+  const until = new Date(now).toISOString();
+  const start = days === 1 ? Date.parse(until.slice(0, 10) + 'T00:00:00.000Z') : now - days * 86_400_000;
+  return { days, since: new Date(start).toISOString(), until,
+    previous_since: new Date(days === 1 ? start - 86_400_000 : start - (now - start)).toISOString(),
+    previous_until: new Date(days === 1 ? now - 86_400_000 : start).toISOString(),
+    bucket: days === 1 ? 'hour' : 'day', timezone: 'UTC' };
+}
+
+// The UI gets categories and existing save titles, never raw provider error strings (which may
+// contain credential-bearing URLs). Keep the same terminal-failure rule in counts and actions.
+const FAILED = "(status = 'failed' OR (status != 'done' AND attempts >= 3))";
+const FAILURE_REASON = `CASE
+  WHEN lower(COALESCE(error,'')) LIKE '%429%' OR lower(COALESCE(error,'')) LIKE '%rate%limit%' THEN 'Rate limited'
+  WHEN lower(COALESCE(error,'')) LIKE '%401%' OR lower(COALESCE(error,'')) LIKE '%403%' OR lower(COALESCE(error,'')) LIKE '%api key%' THEN 'Provider authentication'
+  WHEN lower(COALESCE(error,'')) LIKE '%download%' OR lower(COALESCE(error,'')) LIKE '%private%' OR lower(COALESCE(error,'')) LIKE '%not found%' OR lower(COALESCE(error,'')) LIKE '%404%' THEN 'Media unavailable'
+  WHEN lower(COALESCE(error,'')) LIKE '%timeout%' OR lower(COALESCE(error,'')) LIKE '%timed out%' THEN 'Timed out'
+  WHEN lower(COALESCE(error,'')) LIKE '%transcri%' OR lower(COALESCE(error,'')) LIKE '%whisper%' THEN 'Transcription'
+  WHEN lower(COALESCE(error,'')) LIKE '%extract%' OR lower(COALESCE(error,'')) LIKE '%json%' THEN 'Note extraction'
+  ELSE 'Other / not recorded' END`;
+
+/** List-price planning estimate, never actual spending. Rates verified against official provider
+ * docs/endpoints 2026-11-12; the API docs retain the sources and routing assumptions. */
+export function estimateUsageCost(rows: {model?: string; action?: string; calls: number; prompt_tokens: number; completion_tokens: number; audio_seconds: number; billed_audio_seconds?: number}[]) {
+  let estimated = 0, priced = 0, unpriced = 0;
+  for (const r of rows) {
+    const model = (r.model ?? '').toLowerCase(), openrouter = model.startsWith('openrouter:');
+    const name = model.replace(/^openrouter:/, '');
+    const tokens = r.action === 'chat' && name === 'qwen/qwen3.8-27b'
+      ? (r.prompt_tokens * (openrouter ? 0.45 : 0.80) + r.completion_tokens * (openrouter ? 3 : 4)) / 1_000_000 : null;
+    const audio = r.action === 'whisper' && ['whisper-large-v3', 'whisper-large-v3-turbo', 'openai/whisper-large-v3'].includes(name)
+      ? (openrouter && name !== 'whisper-large-v3-turbo' ? r.audio_seconds * 0.0000075
+        : !openrouter ? (r.billed_audio_seconds ?? r.audio_seconds) * (name.endsWith('turbo') ? 0.04 : 0.111) / 3600 : null) : null;
+    const cost = tokens ?? audio;
+    if (cost === null) unpriced += r.calls;
+    else { estimated += Math.max(0,cost); priced += r.calls; }
+  }
+  return { estimated_usd: priced ? Math.round(estimated * 1_000_000) / 1_000_000 : null,
+    priced_calls: priced, unpriced_calls: unpriced, rates_as_of: '2026-11-12',
+    note: `List-price estimate for ${priced} recorded calls; ${unpriced} unpriced. Assumes Groq Qwen $0.80/$4 per 1M tokens, Whisper v3 $0.111/h (turbo $0.04/h, 10s minimum); OpenRouter Qwen primary Nebius $0.45/$3 per 1M, Whisper DeepInfra $0.0000075/s. Routing, caching, free tiers and credits change actual charges; this is not a bill.` };
+}
+
+/** Bounded owner-only read model. No new collection, personal fields, secrets or billing guesses. */
+export async function ownerConsole(env: Env, days: number, now = Date.now()) {
+  const period = consolePeriod(days, now);
+  const { since, until, previous_since, previous_until } = period;
+  const bucketMs = period.bucket === 'hour' ? 3_600_000 : 86_400_000;
+  const all = async (sql: string, ...args: (string | number | null)[]) =>
+    (await env.DB.prepare(sql).bind(...args).all<any>()).results ?? [];
+  const first = async (sql: string, ...args: (string | number | null)[]) =>
+    await env.DB.prepare(sql).bind(...args).first<any>();
+  // D1 allows at most five terms in one compound SELECT. Keep metric streams separate;
+  // active-user sources still aggregate together so one person is never counted three times.
+  const metricStreams = [
+    ['signups', "SELECT created_at at, id identity FROM user WHERE created_at >= ?1 AND created_at < ?3"],
+    ['saves', "SELECT captured_at at, id identity FROM capture WHERE captured_at >= ?1 AND captured_at < ?3"],
+    ['processed', "SELECT processed_at at, id identity FROM capture WHERE status = 'done' AND processed_at >= ?1 AND processed_at < ?3"],
+    ['visitors', `SELECT started_at at, visitor identity FROM visit v WHERE started_at >= ?1 AND started_at < ?3 AND ${NOT_OWNER}`],
+    ['active', `SELECT started_at at, user_id identity FROM visit v WHERE started_at >= ?1 AND started_at < ?3 AND user_id IS NOT NULL AND ${NOT_OWNER}
+      UNION ALL SELECT at, user_id FROM usage_event WHERE at >= ?1 AND at < ?3 AND kind = 'api' AND user_id IS NOT NULL
+      UNION ALL SELECT captured_at, user_id FROM capture WHERE captured_at >= ?1 AND captured_at < ?3 AND user_id IS NOT NULL`],
+  ];
+  const metricReads = metricStreams.map(async ([key, stream]) => {
+    const rows = await all(`WITH stream AS (${stream}), intervals AS (
+      SELECT identity, CASE WHEN at >= ?2 THEN 0 ELSE 1 END period,
+        CAST((julianday(at) - julianday(CASE WHEN at >= ?2 THEN ?2 ELSE ?1 END)) * 86400000.0 / ?4 + 0.000001 AS INTEGER) bucket FROM stream WHERE at >= ?2 OR at < ?5
+      ) SELECT period, -1 bucket, COUNT(DISTINCT identity) value FROM intervals GROUP BY period
+        UNION ALL SELECT period, bucket, COUNT(DISTINCT identity) value FROM intervals GROUP BY period, bucket`,
+      previous_since, since, until, bucketMs, previous_until);
+    return rows.map(row => ({...row,key}));
+  });
+  const statements = [
+    Promise.all(metricReads).then(rows => rows.flat()),
+    all(`SELECT CASE WHEN ${FAILED} THEN 'failed' WHEN status = 'done' THEN 'done'
+      WHEN status = 'claimed' THEN 'processing' ELSE 'pending' END state, COUNT(*) n FROM capture GROUP BY state`),
+    first(`SELECT COUNT(*) total, COALESCE(SUM(plan = 'plus' AND plan_until > ?),0) plus FROM user`, until),
+    // Cohort downstream steps share a denominator; anonymous visits remain a separate reach
+    // measure, because device visitors cannot reliably be joined to all account signups.
+    first(`WITH cohort AS (SELECT id, plan, plan_until FROM user WHERE created_at >= ?1 AND created_at < ?2),
+      saves AS (SELECT c.user_id, COUNT(*) n FROM capture c JOIN cohort u ON u.id = c.user_id WHERE c.captured_at < ?2 GROUP BY c.user_id)
+      SELECT COUNT(*) joined, COALESCE(SUM(COALESCE(s.n,0) >= 1),0) first_save,
+      COALESCE(SUM(COALESCE(s.n,0) >= 5),0) five_saves,
+      COALESCE(SUM(u.plan = 'plus' AND u.plan_until > ?2),0) plus FROM cohort u LEFT JOIN saves s ON s.user_id = u.id`, since, until),
+    // Aggregate once per table rather than execute per-user correlated counts. Limit transport;
+    // users_total makes that bound visible rather than silently hiding accounts.
+    all(`WITH counts AS (SELECT user_id, COUNT(*) total, SUM(status = 'done') done,
+      SUM(NOT ${FAILED} AND status != 'done') pending, SUM(${FAILED}) failed FROM capture GROUP BY user_id),
+      devices AS (SELECT user_id, COUNT(*) n FROM push_sub GROUP BY user_id)
+      SELECT u.id, u.name, u.created_at, u.last_seen, u.email, u.email IS NOT NULL has_email,
+      CASE WHEN u.plan = 'plus' AND u.plan_until > ? THEN 'plus' WHEN u.created_at < ? THEN 'early' ELSE 'free' END plan, u.plan_until,
+      u.found_via, u.groq_key_enc IS NOT NULL own_key, u.owner_msg,
+      COALESCE(c.total,0) total, COALESCE(c.done,0) done, COALESCE(c.pending,0) pending,
+      COALESCE(c.failed,0) failed, COALESCE(p.n,0) push_devices
+      FROM user u LEFT JOIN counts c ON c.user_id = u.id LEFT JOIN devices p ON p.user_id = u.id
+      ORDER BY u.created_at DESC LIMIT 500`, until, TIERS_FROM),
+    all(`SELECT ${FAILURE_REASON} reason, COUNT(*) n FROM capture WHERE ${FAILED} GROUP BY reason ORDER BY n DESC`),
+    all(`SELECT id, title, ${FAILURE_REASON} reason FROM capture WHERE ${FAILED} ORDER BY captured_at DESC LIMIT 36`),
+    all(`SELECT CASE WHEN model LIKE 'openrouter:%' THEN 'OpenRouter' WHEN key_type = 'own' THEN 'Groq · user keys' ELSE 'Groq · shared pool' END provider,
+      model, action, COUNT(*) calls, COALESCE(SUM(prompt_tokens),0) prompt_tokens, COALESCE(SUM(completion_tokens),0) completion_tokens,
+      COALESCE(SUM(seconds),0) audio_seconds, COALESCE(SUM(CASE WHEN action = 'whisper' THEN MAX(seconds,10) ELSE 0 END),0) billed_audio_seconds
+      FROM usage_event WHERE kind = 'groq' AND at >= ? AND at < ? GROUP BY provider, model, action`, since, until),
+    first("SELECT COUNT(*) n FROM user WHERE groq_key_enc IS NOT NULL"),
+    all(`SELECT substr(started_at,1,10) day, COUNT(*) visits, COUNT(DISTINCT visitor) visitors
+      FROM visit v WHERE started_at >= ? AND started_at < ? AND ${NOT_OWNER} GROUP BY day ORDER BY day`, since, until),
+    ...["COALESCE(NULLIF(utm_source,''),NULLIF(referrer,''),'Direct / unknown')", "COALESCE(country,'Unknown')", "COALESCE(landing,'Unknown')", "COALESCE(device,'Unknown')"].map(d =>
+      all(`SELECT ${d} k, COUNT(DISTINCT visitor) n FROM visit v WHERE started_at >= ? AND started_at < ? AND ${NOT_OWNER} GROUP BY k ORDER BY n DESC LIMIT 12`, since, until)),
+    all(`SELECT e.at, e.kind, e.action, COALESCE(u.name,'Owner') name, e.user_id FROM usage_event e
+      LEFT JOIN user u ON u.id = e.user_id WHERE e.kind = 'api' AND e.at >= ? AND e.at < ? ORDER BY e.at DESC LIMIT 40`, since, until),
+  ];
+  const [metrics, states, userTotals, cohort, users, failures, examples, providerUsage, ownKeys,
+    daily, sources, countries, landing, devices, activity] = await Promise.all(statements);
+  const definitions = [
+    ['signups', 'Signups', 'New accounts'], ['active', 'Active users', 'Recorded app, API or save activity; owner excluded'],
+    ['saves', 'Saves made', 'All saves and imports, including owner'], ['processed', 'Saves processed', 'Completed saves, including owner'],
+    ['queue', 'Queue left', 'Pending and processing now, including imports and owner'],
+    ['plus', 'Plus subscribers', 'Active subscriptions now'], ['visitors', 'Site visitors', 'Distinct browser visitors; owner excluded'],
+  ];
+  const slots = Math.max(1, Math.ceil((Date.parse(until) - Date.parse(since)) / bucketMs));
+  const kpis = definitions.map(([key, label, note]) => {
+    const historical = key !== 'queue' && key !== 'plus';
+    return { key, label, note, historical,
+      value: key === 'queue' ? states.filter((s: any) => ['pending','processing'].includes(s.state)).reduce((n: number,s: any) => n+s.n,0)
+        : key === 'plus' ? userTotals?.plus ?? 0 : metrics.find((m: any) => m.key === key && m.period === 0 && m.bucket === -1)?.value ?? 0,
+      previous: historical ? metrics.find((m: any) => m.key === key && m.period === 1 && m.bucket === -1)?.value ?? 0 : null,
+      series: historical ? Array.from({length: slots}, (_, i) => ({ at: new Date(Date.parse(since) + i*bucketMs).toISOString(),
+        value: metrics.find((m: any) => m.key === key && m.period === 0 && m.bucket === i)?.value ?? 0 })) : [],
+    };
+  });
+  const visitors = kpis.find(k => k.key === 'visitors')!.value;
+  return { period, kpis,
+    funnel: { steps: [ { key: 'visitors', label: 'Site visitors', value: visitors },
+      { key: 'signups', label: 'Signups', value: cohort.joined ?? 0 }, { key: 'first', label: 'First save', value: cohort.first_save ?? 0 },
+      { key: 'five', label: '5+ saves', value: cohort.five_saves ?? 0 }, { key: 'plus', label: 'Plus', value: cohort.plus ?? 0 } ],
+      note: 'Signups → Plus follows accounts joined in this period, including imports. Site visitors is separate reach, not an attributed signup conversion; cross-device and blocked tracking are not linked. Downstream milestones use current saves and plan; purchase order is not recorded.' },
+    users, users_total: userTotals?.total ?? 0,
+    health: { states, failures: failures.map((f: any) => ({...f, examples: examples.filter((e: any) => e.reason === f.reason).slice(0,3).map(({id,title}: any) => ({id,title}))})),
+      providers: { groq_keys: Math.max(1, Number(env.SHARED_KEYS) || 1), own_keys: ownKeys?.n ?? 0,
+        usage: providerUsage, openrouter_credit: null,
+        note: 'Pool size is runner configuration, not key health. OpenRouter credit is not available to this Worker; runner credentials are never exposed.' },
+      cost: estimateUsageCost(providerUsage) },
+    traffic: { daily, sources, countries, landing, devices }, activity,
+    limitations: ['Queue and Plus are current snapshots; historical comparisons and sparklines are unavailable.',
+      'Revenue is unavailable: no payment amount/currency ledger is stored.',
+      'Traffic is first-party browser analytics, retained 180 days; blockers and cross-device use affect coverage.',
+      ...(userTotals?.total > 500 ? ['Users table shows the newest 500 accounts.'] : [])] };
 }
