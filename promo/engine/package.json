@@ -1,0 +1,6 @@
+{
+  "name": "skwirl-content-engine-stills",
+  "private": true,
+  "scripts": {"render-stills": "node bin/render-stills.cjs"},
+  "devDependencies": {"playwright-core": "1.65.0"}
+}
