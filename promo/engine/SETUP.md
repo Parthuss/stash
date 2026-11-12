@@ -1,107 +1,144 @@
-# Content engine setup (Parth, about 45 minutes once)
+# Content engine setup for Parth
 
-Everything secret goes through `bin/connect.py` in your own terminal: hidden prompts, saved to
-`~/.config/skwirl-engine/env` (chmod 600), pushed to GitHub with `gh secret set` reading stdin. **Never paste a token
-into a Claude chat.** No `wrangler secret put` is needed: publishing runs on GitHub Actions, and the product worker is
-untouched.
+Nothing is enabled or connected by this branch. No developer account, Meta/Google app, OAuth grant, bot or bucket was created in this run. No credentials were entered. Merge/deployment is a separate decision. Work on branch `crew/1112-162347-e589` is committed only.
 
-All commands run from `~/Work/Experiment/stash` after this branch is merged. Python = `.venv/bin/python`.
+The engine has two runtimes: weekly research/make through a configurable crew agent on a machine with the production tools; approved publishing and 48 h / 7 d measurement in GitHub Actions, with no Mac dependency once staged. Default approval is one tap. Reddit stays manual comments only.
 
-```
-.venv/bin/pip install boto3 pillow      # once: staging uploads to R2 and converts slides to JPEG
+## 0. Install locally after review
+
+From the repo root, use its existing Python environment or a dedicated engine environment:
+
+```sh
+python3 -m venv promo/engine/.venv
+promo/engine/.venv/bin/pip install -r promo/engine/requirements.txt
+npm ci --prefix promo/engine
 cd promo/engine
+.venv/bin/python -m pytest tests -q
 ```
 
-## 1. Telegram approvals bot (5 min)
+Node >=20 and Google Chrome are needed for HTML still renders. Reels use the existing promo Remotion + Kokoro + Whisper setup. The weekly agent needs access to its built-in imagegen tool. If unavailable, it must leave a clear Needs Parth item and stop at art prompts, never silently use stock art or an unapproved paid API. The sample already includes two generated images, so rerendering it does not require image generation.
 
-A new bot just for approvals. The Skwirl bot can't be reused: it has a webhook, and Telegram blocks polling while one is set.
+Secrets go only into terminal hidden prompts in `bin/connect.py`, a local chmod-600 file at `~/.config/skwirl-engine/env`, and GitHub Actions secrets. Never paste them in chat, commit them, put them in a command-line argument, or screenshot them. Do not source a file from an unknown author.
 
-1. Telegram > @BotFather > `/newbot` > name "Skwirl Posts" (any username). Copy the token.
-2. `../../.venv/bin/python bin/connect.py telegram` > paste the token at the hidden prompt > send `/start` to the new bot > Enter.
-   You get "Connected." in Telegram. Only taps and commands from you count. (Using a group instead of the private chat?
-   Also add a `TG_OWNER_USER_ID='<your user id>'` line to the env file so only you can approve.)
+## 1. Instagram Creator account: Instagram API with Instagram Login
 
-## 2. Instagram (Creator account, Instagram API with Instagram Login) (15 min)
+1. In [Meta's developer dashboard](https://developers.facebook.com/apps/), create your own app for managing Instagram content. Use the Instagram business-login/API use case, and Business app type if asked. Dashboard labels change; choose **Instagram API with Instagram Login**, not the Facebook Login/Page flow. A linked Facebook Page is not required for this path.
+2. In the app's Instagram API setup, add:
+   - `instagram_business_basic`
+   - `instagram_business_content_publish`
+   - `instagram_business_manage_insights`
+3. Add the Skwirl Creator account to the app's owned/test accounts. If the dashboard asks for an Instagram tester role, accept the invitation from that Instagram account under its Apps and websites / tester-invite settings.
+4. Generate an access token for that account, with all three permissions granted. Standard Access is intended for owned/managed accounts added to the app; broader use needs the access/review level Meta requests. Verify the permissions in your dashboard. Do not request unrelated messaging/comment permissions.
+5. If the dashboard provides a long-lived token, run `.venv/bin/python bin/connect.py instagram` and enter it at the hidden prompt. The helper reads `/me`, stores `IG_USER_ID` and `IG_ACCESS_TOKEN` locally, and prints only account identity.
+6. If it supplies a short-lived token instead, run `.venv/bin/python bin/connect.py instagram-exchange`. Enter that token and the app secret at hidden prompts. The helper exchanges it server-side at `graph.instagram.com/access_token` using `ig_exchange_token`; it does not store the app secret. Then it checks `/me` and stores the long-lived result.
+7. Long-lived tokens normally last 60 days. The publisher refreshes an unexpired token after seven days, using `ig_refresh_token`; tokens must be at least 24 hours old to refresh. The new token stays in private R2 state. Reauthorise after expiry or revocation. Re-running the helper and pushing a different bootstrap secret replaces the cached token on the next tick.
+8. Default Graph API version is `v27.0`. Confirm the supported version in the app dashboard; `gh variable set IG_API_VERSION --body v27.0` selects it for Actions. Metrics unsupported by the granted account/API are omitted, never invented. A raw reels skip metric is not automatically a 0-1 hold rate.
 
-1. https://developers.facebook.com/apps > **Create app** > use case **"Manage messaging & content on Instagram"**
-   (type Business). Name it "Skwirl Publisher". No Facebook Page needed.
-2. In the app: **Instagram > API setup with Instagram login**.
-   - **Add the permissions** (step 1 on that page): `instagram_business_basic`, `instagram_business_content_publish`,
-     `instagram_business_manage_insights`.
-   - **Generate access tokens** > **Add account** > log in as the Skwirl Instagram account > allow. Copy the token it
-     shows (long-lived, 60 days).
-   - If it asks for a role: App roles > Roles > add the Instagram account as an **Instagram tester**, accept the invite in
-     Instagram (Settings > Website permissions > Apps and websites > Tester invites), then generate again.
-3. `../../.venv/bin/python bin/connect.py instagram` > paste at the hidden prompt. It checks the token and saves
-   `IG_USER_ID` too.
-4. You don't need App Review: Standard Access covers accounts you own. Leave the app in Development mode.
+Official references: [login/token lifecycle](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login), [publishing](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/content-publishing), [insights](https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights). Meta returned 429/unavailable on rechecking these pages in this run; the recovered API notes are implementation references, and the exact dashboard labels/version/permission availability still need confirming during your connection. No live Meta contract test has been run.
 
-**Token refresh is automatic.** The cron job refreshes it every 7 days (it must be at least 24 h old; it lasts 60 days)
-and keeps the fresh copy in the private R2 bucket. If refreshes keep failing you get a Telegram message ~10 days before
-it expires; then repeat step 2.2 and 2.3 and `push-secrets` (a new token in the secret always wins).
+## 2. Google project + YouTube OAuth refresh token
 
-## 3. YouTube (Shorts) (15 min)
+1. Open [Google Cloud Console](https://console.cloud.google.com/), create a project, and enable **YouTube Data API v3** in APIs & Services > Library.
+2. Configure Google Auth Platform / OAuth consent screen: External, app name, your support email, and your channel-owning account as a test user. Request the full scope URLs `https://www.googleapis.com/auth/youtube.upload` and `https://www.googleapis.com/auth/youtube.readonly`.
+3. For ongoing unattended use, set the consent app's Audience / publishing status to **In production**. External apps in Testing with these scopes get seven-day refresh tokens. For your personal account, follow Google's unverified-app flow where allowed; comply with any verification the console actually requires.
+4. Create an OAuth client, type **Desktop app**. Keep the client ID and secret private.
+5. Run `.venv/bin/python bin/connect.py youtube`. Supply ID/secret in your terminal; it opens the Google sign-in page using loopback OAuth with state and PKCE. Select the account/channel that owns Skwirl's YouTube channel. The helper requests offline access and stores `YT_REFRESH_TOKEN`, `YT_CLIENT_ID`, `YT_CLIENT_SECRET`; it prints the channel name.
+6. Google now documents public uploads from unverified projects as allowed. The publisher explicitly requests public and checks the returned privacy value. A private response is reported; it is never represented as a public success. Verify actual channel behaviour during a separately authorised live test.
 
-1. https://console.cloud.google.com > new project "Skwirl Publisher".
-2. **APIs & Services > Library** > enable **YouTube Data API v3**.
-3. **OAuth consent screen** (Google Auth Platform): External, app name "Skwirl Publisher", your email. Scopes:
-   `youtube.upload`, `youtube.readonly`. Test users: the Google account that owns the Skwirl channel.
-4. **Publish the app: Audience > Publish app > In production.** Important: in Testing mode the refresh token dies after
-   7 days. Unverified production is fine for your own account (you'll click "Advanced > Go to Skwirl Publisher").
-5. **Credentials > Create credentials > OAuth client ID > Desktop app**. Keep the client ID and secret open.
-6. `../../.venv/bin/python bin/connect.py youtube` > client ID, then the secret at the hidden prompt > a browser opens >
-   pick the channel's account > allow. It prints the channel name.
+References: [upload privacy and fields](https://developers.google.com/youtube/v3/docs/videos/insert), [resumable upload recovery](https://developers.google.com/youtube/v3/guides/using_resumable_upload_protocol), [OAuth token expiry](https://developers.google.com/identity/protocols/oauth2). A Short is classified by YouTube from duration/aspect; `#Shorts` is not an API guarantee. The Make task must produce eligible vertical videos.
 
-Notes: per Google's revision history (2 Nov 2026) uploads from unverified API projects are no longer forced to private,
-so no audit is needed. The engine reads back the privacy YouTube actually applied and messages you if it isn't public.
-In YouTube Studio > Settings > Upload defaults, make sure visibility isn't set to Private.
+## 3. Private R2 storage
 
-## 4. Cloudflare R2 (private media + queue bucket) (5 min)
+1. In Cloudflare > R2, enable R2 billing/subscription if needed; create a **Standard** bucket such as `skwirl-content`.
+2. **Keep public access OFF. Do not attach a public custom domain or r2.dev endpoint.** This same bucket holds private approval state and refreshed access tokens. Only individual media objects are shared through one-hour S3 presigned URLs, which Meta can fetch without a login. The code rejects MEDIA_PUBLIC_BASE for R2.
+3. Create an R2 S3 API token scoped to Object Read & Write for this bucket. Note the account ID, access key ID and secret key.
+4. Run `.venv/bin/python bin/connect.py r2`; enter the values in your terminal. It tests write and presigned read. It stores `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`.
+5. Keep media available until container processing has finished. URL fetchability is an authenticated account integration check still pending. Restrict bucket credentials and keep the state objects after any media cleanup.
 
-1. Cloudflare dashboard > **R2** > (first time: subscribe to R2; it's free up to 10 GB, Cloudflare may ask for a card)
-   > **Create bucket** `skwirl-content`. Leave public access **off**: Instagram gets 1-hour presigned links.
-2. R2 > **Manage API tokens > Create API token**: permission **Object Read & Write**, only bucket `skwirl-content`.
-   Copy the Access Key ID and Secret Access Key. Your account ID is on the R2 overview page.
-3. `../../.venv/bin/python bin/connect.py r2` > it writes a test object and checks a presigned link loads.
+## 4. One-tap approval
 
-## 5. Turn on the cron (2 min)
+The product's current Telegram bot has a webhook. Telegram disallows getUpdates polling while that webhook is active. This engine uses a separate approval bot so it can avoid changing the claimed product worker or taking over the existing bot.
 
+1. Manually ask @BotFather for a new bot and enter its token into `.venv/bin/python bin/connect.py telegram` at the hidden prompt.
+2. Send `/start` to the bot from your private owner account, then continue the helper. It stores `TG_ENGINE_BOT_TOKEN` and `TG_OWNER_CHAT_ID`. In a group, also set `TG_OWNER_USER_ID` to your actual sender ID. A private owner chat is simpler.
+3. Each staged post arrives with a preview and **Approve / Skip**. Commands: `/queue`, `/pause`, `/resume`. Cron polling can take about 15 minutes. Old callback answers may expire, but valid owner approvals are still processed and acknowledged by a message.
+4. Staged post IDs are immutable. To change a caption or asset, use a new post ID and fresh approval. Re-running stage cannot replace what an existing approval refers to.
+
+This bot must be created by you. No Telegram message was sent by this run. If you prefer the existing product bot, integration must later be built into its webhook explicitly; do not delete that webhook.
+
+## 5. Secrets and GitHub Actions
+
+After connecting the four services in your own terminal:
+
+```sh
+.venv/bin/python bin/connect.py status
+.venv/bin/python bin/connect.py push-secrets
 ```
-../../.venv/bin/python bin/connect.py status          # all "set"?
-../../.venv/bin/python bin/connect.py push-secrets    # gh secret set, values via stdin
-gh variable set ENGINE_DRY_RUN --body 1               # first day: dry run, nothing posts
+
+`push-secrets` uses `gh secret set NAME` with each value on stdin, never on the command line. It sets the following Actions secrets in this repository:
+
+| Service | Secrets |
+|---|---|
+| Instagram | IG_USER_ID, IG_ACCESS_TOKEN |
+| YouTube | YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN |
+| Approval | TG_ENGINE_BOT_TOKEN, TG_OWNER_CHAT_ID, TG_OWNER_USER_ID (group only) |
+| R2 | R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY |
+
+There are **no `wrangler secret put` steps** in this design. No worker is deployed and no product-worker secrets are reused. Putting publishing tokens in the existing worker would not connect this GitHub runner.
+
+Keep publishing disabled while reviewing. After merge to the default branch, to inspect without posting:
+
+```sh
+gh variable set ENGINE_DRY_RUN --body 1
 gh variable set ENGINE_ENABLED --body 1
-gh workflow run content-engine -f command=queue       # Actions tab should show a green run
+gh workflow run content-engine -f command=queue
 ```
-When a dry-run tick looks right (Actions log: "DRY RUN, would publish ..."), `gh variable delete ENGINE_DRY_RUN`.
 
-Optional later: `gh variable set AUTO_APPROVE --body 1` makes staged posts go out without asking (you still get each
-one on Telegram and can `/pause`). Default is one-tap approval.
+Run a tick dry-run only after you have deliberately staged test drafts. Dry run prevents publishing API calls, but can read Telegram, process approval intents, refresh tokens and write state. It is not a read-only simulation. `queue` is the inspection command.
 
-## 6. Weekly research + make tasks on your Mac (2 min)
+When you separately authorise live posting, delete ENGINE_DRY_RUN. Do not do that during this task. Default `AUTO_APPROVE` is unset. Weeks later, `gh variable set AUTO_APPROVE --body 1` approves awaiting items on the next tick as well as newly staged items. Skipped, missed and failed items stay untouched; review the queue before switching it on. Disable all jobs with `gh variable set ENGINE_ENABLED --body 0`.
 
+Tick and insights share one concurrency group because both update post records. GitHub cron is best effort, can be delayed/dropped, runs only on the default branch, and public-repo schedules can be disabled after 60 days of inactivity. 22:30 IST means eligible at that time, typically processed on the next cron, not an exact delivery guarantee. Keep /pause as the immediate queue control.
+
+## 6. Weekly research and production
+
+Set these non-secret settings in your local engine env file:
+
+```sh
+ENGINE_AGENT=codex
+ENGINE_EFFORT=xhigh
 ```
+
+For the Craveto Claude account use `ENGINE_AGENT=claude-craveto` and `ENGINE_EFFORT=max`. The default agent is Codex; no Craveto usage is implied. The crew runner and the existing local stash MCP/vault must be available. If the main checkout is elsewhere set STASH_MAIN; if crew is elsewhere set CREW_DIR.
+
+Manual launch: `python3 bin/weekly.py research` or `python3 bin/weekly.py make`. The runner prevents repeat launches for a job/date using a marker under ENGINE_HOME; if a crew task failed, inspect its dashboard result and remove only that failed task's `.started-*` marker before retrying. A marker means started, never completed.
+
+Optional Mac schedule, **only after review**:
+
+```sh
 cp bin/com.skwirl.content-engine.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.skwirl.content-engine.plist
 ```
-Fri 10:00: research task (crew, Craveto account) rewrites the backlog. Sat 10:00: make task builds the top 5, runs
-content-qa, stages them, and you get each on Telegram. Asleep Mac: runs on wake. Stop: `launchctl unload` the same path.
 
-Optional research keys (add as lines to `~/.config/skwirl-engine/env`, not GitHub):
-- `YT_API_KEY=...` Google Cloud > Credentials > API key (restrict to YouTube Data API v3): top Shorts per niche.
-- `REDDIT_CLIENT_ID=...` / `REDDIT_CLIENT_SECRET=...` https://www.reddit.com/prefs/apps > "script" app: real questions.
-  Read-only; Reddit replies stay by hand.
+The supplied schedule is Friday/Saturday at 10:00 in the Mac's local timezone. Research and production need a running/waking machine. They are not cloud jobs in this version. The publishing/learning cron needs only staged R2 objects and credentials.
 
-## Day to day
+Optional research keys live locally, not in Actions: YT_API_KEY restricted to YouTube Data API v3; REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET only if you already have permitted API access. Reddit's access/approval terms can change; no developer account or app was created for research here. Without them, the agent uses public web sources and records the gap. `gather.py` is read-only on Reddit.
 
-- Telegram: each staged post arrives with the video (or slides) and **Approve / Skip**. Approved posts go out at their
-  slot (default 22:30 IST), within ~15 min. Missed by more than 12 h: it asks again with **Post now / Skip**.
-- Commands to the bot: `/queue`, `/pause`, `/resume`.
-- You get "Posted ..." with links, and a message if anything fails after 3 tries.
-- From the Mac: `python -m content_engine queue | approve ID | skip ID` (with the env file sourced).
+## 7. Batch commands and first live check
 
-## Limits respected
-Instagram: 100 API posts per 24 h (checked via `content_publishing_limit` before each post); the engine also caps itself
-at 2 posts per platform per day. YouTube: max 3 uploads a day. Telegram polling every 15 min. GitHub Actions: free on a
-public repo; the repo is public, so its Actions logs are public: the engine prints only post ids and states, never
-captions, URLs or tokens.
+```sh
+# From promo/engine, after making and reviewing a batch
+.venv/bin/python -m content_engine init-schedule ../out/week-23nov --start 2026-11-23 --every 1
+.venv/bin/python -m content_engine validate ../out/week-23nov
+set -a
+. ~/.config/skwirl-engine/env
+set +a
+# This uploads media AND sends approval messages, so run only when deliberately ready:
+.venv/bin/python -m content_engine stage ../out/week-23nov
+```
+
+Make produces platform captions/titles, cover, schedule and QA. Only approved due posts publish. More than 12 hours late without starting: ask again. Max two posts per platform per local day, plus Instagram's reported API quota. Retry-After and exponential retry delay are respected; three failures stop an item and notify. YouTube session URIs are persisted and resumed; expired/ambiguous sessions stop for inspection rather than blindly duplicating an upload. A lost container-create response can leave an unpublished orphan container; no exact-once remote API guarantee is claimed.
+
+48 h and 7 d snapshots go to private R2 performance.json. `python -m content_engine pull-perf --out "$ENGINE_HOME/performance.json"` refreshes the research copy; set ENGINE_HOME first. Unsupported/null metrics are left missing. Late collection records its actual timestamp. No signup attribution is inferred from views.
+
+Before enabling live, separately review one real Reel on both accounts and one carousel/static on Instagram: token refresh, presigned fetch, actual public visibility, approval ownership and returned insights. These account-specific checks cannot be completed with mocks. Cost and usage boundaries: [COSTS.md](COSTS.md).

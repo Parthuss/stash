@@ -1,157 +1,80 @@
 # Skwirl ideas backlog
 
-Research run 1, 12 Nov 2026. Next run: the weekly research task (Fri). Inputs: `research/2026-11-12-signals.md`
-(trends, platform changes, forum questions), Parth's own saves about content (stash vault, via `research/gather.py`),
-what's already made (CONTENT_HANDBOOK section 2 + week-17nov batch), `research/repos.md`. No post performance yet
-(nothing has gone out through the engine), so this run is judgement plus outside signals; from run 3 on,
-`performance.json` decides what to repeat.
+Research run: 12 Nov 2026, refreshed from the recovered branch. See [signals and sources](research/2026-11-12-signals.md), [repo survey](research/repos.md). The local stash MCP was queried for real; raw private input stays in ignored `promo/out/engine/inputs/`. No posts were published and no performance is available. These are editorial hypotheses, not predictions of virality.
 
-**Gaps in this run:** Reddit blocks anonymous reads, so there are no real Reddit questions here (set
-`REDDIT_CLIENT_ID/SECRET`, see SETUP.md). No YouTube top-Shorts numbers (set `YT_API_KEY`). Teacher/therapist creator
-formats are unresearched.
+Learning: zero measured posts, so there is nothing to call a winner. After connecting accounts, compare shares/reach, saves/reach and actual watch metrics at comparable ages. Do not derive hold from an unverified skip-rate scale.
 
-## How ideas are scored
+Scores: Hook 1-5, feature Fit 1-5, Ease 1-5 (5 is easiest, equivalent to inverse effort), Fresh 0-2. Total = 2H + 2F + Ease + Fresh, max 27. Fresh is zero throughout: no current trend was validated with creator performance. Quality is never reduced to improve Ease. The top five balance audiences and avoid last week's topics, rather than blindly sorting totals.
 
-- **Hook** 1-5: stops the scroll in 2 s with frame-0 text, under 15 words (curiosity, relatability, loss).
-- **Fit** 1-5: the payoff is a real Skwirl feature on the truth list (CONTENT_HANDBOOK section 1), shown not told.
-- **Effort** 1-5, 5 = cheapest: reuses the kit, demo account and existing screens; 1 = needs Parth (face, recording).
-- **Fresh** 0-2: rides a format that is live right now (text formats last about 3-4 weeks).
-- **Score = 2 x Hook + 2 x Fit + Effort + Fresh** (max 27).
+## Top five recommended: week beginning Monday 23 November
 
-## Top 5 for the week of 24 Nov (recommended)
+All slots are drafts at **22:30 Asia/Kolkata**, never approvals. The earlier attempt incorrectly called 24 Nov a Monday.
 
-| Rank | Idea | Format | Score | Why now |
-|---|---|---|---|---|
-| 1 | I-01 "The reel you saved can disappear." | Reel ~22 s | 24 | Loss beats curiosity; nobody in the space says it; pays off with the note itself |
-| 2 | I-02 "Send me that pasta reel?" | Reel ~20 s, iMessage chat | 23 | The send trigger is the story; search by meaning is the payoff |
-| 3 | I-03 "Yes... but" Saved folder | Reel ~15 s, split screen | 23 | Live text trend (from 7 Oct, fading by early Dec): build first |
-| 4 | I-04 "Life never handed me lemons." | Reel ~12 s, text trend | 23 | Freshest trend on the list (5 Nov), cheapest build, recipe pillar without repeating 01 |
-| 5 | I-05 "Things I'd tell myself before I saved 500 reels" | Carousel, 8 slides | 22 | Current carousel format; teach pillar; saveable and sendable |
+| Rank | Idea and frame-zero hook | Format | Score | Suggested slot | Reason |
+|---|---|---|---|---|---|
+| 1 | I-01: The reel you saved can disappear. | 6-slide carousel | 24 | Mon 23 Nov | Concrete loss, then the written-note payoff. Sample built and QA reviewed this run; not staged. |
+| 2 | I-02: Send me that pasta reel? | Reel, about 22 s | 23 | Wed 25 Nov | A friend's request makes retrieval useful, rather than another app tour. |
+| 3 | I-05: Before you save another reel, give it a next step. | Carousel, 6 slides | 22 | Thu 26 Nov | A useful habit first, then the product's Next step field. |
+| 4 | I-13: What was that movie the reel recommended? | Reel, about 22 s | 22 | Fri 27 Nov | Lists, a strong feature payoff outside the recipe niche. |
+| 5 | I-14: You saved the place. Now remember its name. | Reel, about 22 s | 21 | Sun 29 Nov | Places extracted into Lists. At least a week after the week-17 Tokyo draft. |
 
-Suggested slots (22:30 IST): Mon 24 I-03, Wed 26 I-01, Thu 27 I-05, Sat 29 I-02, Sun 30 I-04. Keep I-04 at least a
-week away from week-17's "Pause. Rewind." (both recipe).
+Before producing a week: confirm what Parth actually posted from the existing batch. Move slots if those drafts went out later. Recipe posts are separated by over five days from the previous recipe draft. Do not publish the same creative as both a static and a carousel.
 
-## All ideas
+## Fifteen live ideas
 
-| ID | Hook (frame 0) | Format | Pillar | Payoff feature | H | F | E | Fr | Score |
-|---|---|---|---|---|---|---|---|---|---|
-| I-01 | The reel you saved can disappear. | Reel | Relatable / depth | The note keeps title, summary, transcript | 5 | 5 | 4 | 0 | 24 |
-| I-02 | "Send me that pasta reel?" | Reel (chat) | Everyday / search | Search by meaning | 5 | 5 | 3 | 0 | 23 |
-| I-03 | Instagram Saved: looks organised. But... | Reel (split) | Trend / search | Search by meaning | 4 | 5 | 4 | 1 | 23 |
-| I-04 | Life never handed me lemons. | Reel (text trend) | Trend / recipes | Recipe checklist | 4 | 4 | 5 | 2 | 23 |
-| I-05 | Things I'd tell myself before I saved 500 reels | Carousel | Teach | Notes, search, Lists, next step | 4 | 4 | 4 | 2 | 22 |
-| I-06 | The recipe isn't in the video. | Reel | Depth | Reads caption + top comments | 4 | 5 | 3 | 0 | 21 |
-| I-07 | Deleting Instagram? Take your saves with you. | Reel or carousel | Teach / import | Import from the data export | 4 | 5 | 3 | 0 | 21 |
-| I-08 | Major cheat code in life: | Reel (text trend) | Trend | Share a reel, get a note | 3 | 4 | 5 | 2 | 21 |
-| I-09 | Some bills are non-negotiable. | Reel (text trend) | Trend / Plus | Skwirl Plus | 4 | 3 | 5 | 2 | 21 |
-| I-10 | A therapist's saved reels, from this to this. | Reel (transformation) | Work library | Categories + search, Jacinda's quote | 4 | 5 | 2 | 0 | 20 |
-| I-11 | Name your last 3 saves. No peeking. | Reel (challenge) | Relatable | Each save as a titled note | 4 | 4 | 4 | 0 | 20 |
-| I-12 | I asked Claude what I saved about sleep. | Reel (screen) | Claude | Claude connector | 4 | 5 | 2 | 0 | 20 |
-| I-13 | Every movie a reel told you to watch. | Reel | Lists | Lists with Watched? ticks | 3 | 5 | 3 | 0 | 19 |
-| I-14 | The process vs. the product: planning a trip from reels | Reel (transformation) | Trend / places | Places list, Been? tick | 3 | 4 | 3 | 2 | 19 |
-| I-15 | Your Instagram export is set to "Last year". Change it. | Reel (tip, ~10 s) | Teach | Import | 3 | 4 | 5 | 0 | 19 |
+| ID | One-line hook | Format | Payoff | H | F | Ease | Fresh | Total |
+|---|---|---|---|---|---|---|---|---|
+| I-01 | The reel you saved can disappear. | Carousel | Processed note retained in library | 5 | 5 | 4 | 0 | 24 |
+| I-02 | Send me that pasta reel? | Reel | Search by meaning | 5 | 5 | 3 | 0 | 23 |
+| I-03 | You remember the idea. Not the creator. | Reel | Find a note by what it was about | 4 | 5 | 3 | 0 | 21 |
+| I-04 | Saved dinner. Still don't know what to buy? | Static | Ingredient checklist | 4 | 5 | 3 | 0 | 21 |
+| I-05 | Before you save another reel, give it a next step. | Carousel | Note's Next step | 4 | 5 | 4 | 0 | 22 |
+| I-06 | The recipe wasn't in the video. | Reel | Caption and top-comment reading | 4 | 5 | 3 | 0 | 21 |
+| I-07 | Your old saves deserve more than another folder. | Carousel | Export import into notes | 4 | 5 | 3 | 0 | 21 |
+| I-08 | A useful reel has four places to hide the details. | Carousel | Audio, on-screen text, caption, top comments | 4 | 5 | 3 | 0 | 21 |
+| I-09 | A faster lane for the saves you want to use. | Static | Plus processing priority | 3 | 4 | 4 | 0 | 18 |
+| I-10 | Your saved activities could be a work library. | Reel | Categories + meaning search | 4 | 5 | 2 | 0 | 20 |
+| I-11 | What was the last save you actually tried? | Static | To try -> Tried | 4 | 5 | 3 | 0 | 21 |
+| I-12 | Claude Code found a save I had forgotten. | Reel | Recall hook and connector | 4 | 5 | 2 | 0 | 20 |
+| I-13 | What was that movie the reel recommended? | Reel | Movies List, Watched? | 4 | 5 | 4 | 0 | 22 |
+| I-14 | You saved the place. Now remember its name. | Reel | Places List, Been? | 4 | 5 | 3 | 0 | 21 |
+| I-15 | A screenshot remembers the frame. What about the explanation? | Carousel | Transcript alongside summary | 4 | 5 | 3 | 0 | 21 |
 
-## The ideas
+## Production briefs
 
-### I-01 "The reel you saved can disappear." (Reel, ~22 s) [TOP 5]
-- **Beats:** a Saved grid; one tile (a stretching routine) flickers to "This reel is unavailable" (drawn in our style, no
-  real creator); "The creator deleted it. Or went private." Turn on the drop: the same save in Skwirl, as a note: title,
-  summary, the next step, the transcript, still there. End: "Save the note, not just the link."
-- **Signal:** saved items are links that vanish when the creator deletes or goes private (guides in signals section 2);
-  "people feel their library is rented" (signals section 4). No competitor content leads with it.
-- **Send trigger:** the friend who saves workout routines. **CTA:** free to try, link in bio.
-- **Truth:** say "note", never "copy of the video" or "backup". Only true for saves Skwirl already processed: VO says
-  "once it's in Skwirl". No statistic about how often reels vanish.
+**I-01, relatable loss / depth.** Start with a saved tile disappearing, explain the bookmark dependency, introduce sharing to Skwirl, show what the note contains, state the limit, CTA. Signal: deletion is already a competitor angle, not a unique discovery; the native collection is a bookmark. Send trigger: a friend with useful saved reels. Truth: only a completed written note, no video backup or recovery after deletion. Source: signals' product-storage check and competitive source. **Built sample:** `samples/disappearing/post.json`, two generated artwork assets; rendered PNGs and QA under `promo/out/engine-sample/01-disappearing/`. Status is made, not approved or published.
 
-### I-02 "Send me that pasta reel?" (Reel, ~20 s, iMessage-style chat) [TOP 5]
-- **Beats:** a chat bubble pops on frame 0: "send me that pasta reel you made last week??" Reply: "which one 😭". Thumb
-  scrolls the Saved grid, faster and faster (riser). Cut: Skwirl search, types "creamy pasta, no cream", the note comes up,
-  share sheet, link sent. Last bubble: "omg THANK YOU". End card.
-- **Signal:** search by meaning is the most-asked thing in forum threads ("that breathing exercise video", signals
-  section 3); fake-text and forwarded-message formats are proven organic-looking formats (Parth's save "8 Static Ad
-  Formats", 21 Sep). The chat IS the send trigger.
-- **Truth:** search by meaning is live; demo data only; no real usernames in the chat (use "Priya" style first names or
-  no names, never a real user).
+**I-02, everyday search.** A message asks for the pasta reel. The person remembers the dish but not the account. Search the same words in a seeded Skwirl library, open the note, send the original link if still available. Signal: [friend-sharing retrieval question](https://www.reddit.com/r/Instagram/comments/1sempu1/instagram_should_make_it_easier_to_access_your/), plus the saved curiosity-gap framework. Send trigger is literally the plot. Truth: this is a scripted demo, not a genuine customer conversation; do not invent native messaging or a share feature without checking current UI.
 
-### I-03 "Instagram Saved: looks organised. But..." (Reel, ~15 s, "Yes... but" split screen) [TOP 5]
-- **Beats:** top half: a beautiful Saved grid, collections with neat covers ("Yes."). Bottom half on the beat: a search
-  bar that isn't there; "Saved has no search" ("But.", sourced: signals section 2). Third beat: Skwirl search finds "that
-  breathing exercise" from what was said in the reel. End card.
-- **Signal:** "Yes... but" is a live text trend (SocialBee, 7 Oct; text formats last 3-4 weeks, so build this first).
-  Instagram has no search inside Saved today (signals section 2).
-- **Risk:** Mosseri said a team is experimenting with saved search (secondary report, Aug 2026). If Instagram ships it,
-  retire this idea. Don't claim Instagram "will never" add search.
+**I-03, meaning search.** Ask for a saved DIY idea by what it does, not its creator. Payoff must be a real matching note. Signal: [November old-save retrieval question](https://www.reddit.com/r/Instagram/comments/1xpt1qy/does_anyone_else_wish_the_saved_section_had_a/). Send to the friend who remembers fragments. Truth: no promised date filter, OCR search UI, perfect recall or guaranteed match. Alternative to I-02 in a later week, not alongside it.
 
-### I-04 "Life never handed me lemons." (Reel, ~12 s, text trend) [TOP 5]
-- **Beats:** "Life never handed me lemons." / "It handed me 400 saved pasta reels and no way to find one." (kinetic
-  text over a scrolling Saved grid). Turn: share one to Skwirl, the checklist pops in ingredient by ingredient, "lemon"
-  is one of them (the callback lands the joke). End card.
-- **Numbers:** "400" (here) and "500" (I-05) are the narrator's own joke, never a claim about users.
-- **Signal:** current text trend (SocialBee, 5 Nov). Cheapest build: kit + existing recipe demo note.
-- **Truth:** "400" is the narrator's own joke, not a statistic about anyone; no user numbers. Keep a week from 01.
+**I-04, recipes static.** Generated food still life + editable headline, then a real demo ingredient checklist inset. Signal: week-17 recipe brief and Parth's saved static-ad formats. Send to the cooking friend. Truth: quantities come from a real seeded note; no invented nutrition or shopping-list integration. Hold until five days after any recipe post.
 
-### I-05 "Things I'd tell myself before I saved 500 reels" (Carousel, 8 slides) [TOP 5]
-- **Story:** 1 hook. 2 "Saving isn't keeping: a save is a link, it can vanish." 3 "You won't remember why you saved
-  it: write one line." 4 "Collections need you to file things. You won't." 5 "The recipe is often in the caption or
-  comments, not the video." 6 "Search what it was about, not who posted it." 7 the turn: "Or let Skwirl do 2-6 for
-  you" (note, next step, search, Lists, one screen each, demo account). 8 CTA: "Save this. Send it to the friend with the
-  bottomless Saved folder." Each slide sets up the next (handbook lesson from piece 11).
-- **Signal:** "Things I'd tell my younger self" is the current carousel format (SocialBee, 14 Oct); carousels are getting
-  the most attention in Nov 2026 (Metricool, indicative).
+**I-05, useful habit.** Sequence: what did you want from the reel? -> name one action -> keep the context -> turn the shared reel into a note -> find the Next step -> try one thing. Signal: Parth's saved four content buckets and current product note schema. Send to the friend who keeps saving tutorials. Truth: no claim that saving alone completes the action; no invented personal count like "500".
 
-### I-06 "The recipe isn't in the video." (Reel, ~20 s)
-- Reel shows a recipe reel with no amounts spoken; the real amounts sit in the caption and a pinned comment. Skwirl's
-  note has them all in the checklist, each line tagged with where it came from. Payoff = depth (audio + on-screen text +
-  caption + top comments), the differentiator against bookmark apps. The "tagged with where it came from" beat is NOT
-  a known feature: drop it unless the note UI really shows sources. Signal: TasteBuddy HN thread, recipes in captions /
-  comments (signals sections 1 and 3). Effort 3: needs a demo note whose ingredients come from caption and comments.
-  **Truth:** check that the note UI can show where a line came from before scripting that beat; if not, drop the tags.
+**I-06, depth.** A visually simple recipe clip, then the missing detail in its caption or top comment, then the matching note. Signal: current extraction pipeline; this is a feature story rather than measured creator success. Send to the recipe friend. Truth: use licensed/demo source material with the detail actually present. Do not imply Skwirl reads every comment or guarantees correctness.
 
-### I-07 "Deleting Instagram? Take your saves with you." (Reel or carousel)
-- Digital-detox angle; best scheduled late Dec / early Jan (resolutions). Export (pick All time), import into Skwirl,
-  saves become searchable notes outside Instagram. Signal: Privacy Guides "How do I download all my saves" question.
-  **Truth:** free brings in 25 old saves, Plus up to 2,000 (check worker/public/index.html for the current wording
-  before scripting); imports run a batch a day, no speed promise. Different angle from week-17's export carousel; keep them a month apart.
+**I-07, import.** A folder is still a list of links; Instagram export can be brought into Skwirl for processing. Signal: existing site export guide and week-17 batch. Send to the friend organising old saves. Truth: **defer**, since a full export tutorial is already built. If revisited, verify current menus and free/Plus limits; do not claim saved-collection hierarchy import or a completion time.
 
-### I-08 "Major cheat code in life:" (Reel, ~8 s loop)
-- "Major cheat code in life: share the reel to Skwirl before you hit save." One share, one note. Text trend (5 Nov).
-  Low effort, low depth: use as a filler slot, not a pillar piece.
+**I-08, depth carousel.** Set a small task, reveal one clue from each input, then show how they combine into a note. Signal: Parth's saved transformation hooks plus extraction code. Send to someone who misses instructions buried in captions. Truth: use a controlled example, label it as a demo; no promise of exhaustive comments or perfect transcription.
 
-### I-09 "Some bills are non-negotiable." (Reel, ~10 s)
-- "Some bills are non-negotiable: rent, wifi, and the $4.99 that finds the reel I saved in March." Freshest trend
-  (11 Nov). First Plus-aware piece; Plus checkout is live. **Truth:** price in local currency on the site; say what Plus
-  actually adds (faster lane, bigger import, your own categories), never "unlimited". Ask Parth before the first
-  Plus-selling post.
+**I-09, Plus static.** A calm brand post about processing priority, with generated still art and exact editable copy. Signal: current HANDOFF.md and Plus implementation, not the handbook's older waitlist wording. Truth: **hold until current public tier and limits are rechecked**; never imply unlimited or instant. No pricing in the proposed hook.
 
-### I-10 "A therapist's saved reels, from this to this." (Reel, transformation)
-- The professional "work library" angle with Jacinda's exact quote ("It has revolutionised therapy planning for me.",
-  attributed "Jacinda, occupational therapist"). Needs an OT-flavoured demo account with categories. **Parked by Parth
-  (9 Nov) until there's traction.** Note: own categories are Plus for new users.
+**I-10, professional library.** Activities filed by goal, then a search task. Signal: handbook's real professional-use feedback. Truth: keep the professional campaign parked until Parth reopens it. If using the authorised quote, attribute only "Jacinda, occupational therapist" and reproduce exactly: "It has revolutionised therapy planning for me." No import count, user data or clinical outcome. Send trigger: a colleague, without invented participation by teachers or trainers.
 
-### I-11 "Name your last 3 saves. No peeking." (Reel, challenge)
-- Comment-bait with a genuine payoff: the narrator fails, then Skwirl's library shows each save as a one-line note.
-  Engagement first, product second. Notes show a title, summary and next step; don't call them "one line".
+**I-11, action static.** One To try card becomes Tried after the person does the activity. Signal: actual product state and the saved concrete-task hook framework. Send to a friend with a project backlog. Truth: this is a status tick, not activity tracking or proof of completion; use current UI wording.
 
-### I-12 "I asked Claude what I saved about sleep." (Reel, screen recording)
-- INSTAGRAM_PLAN piece 4. Needs a real Claude app recording on the demo account. Keep a week from 02 and piece 13
-  (both Claude Code). The second-brain / AI-tools crowd is the audience (signals section 1).
+**I-12, Claude Code.** Reuse the proven recall sequence only after confirming original evidence. Signal: real 9 Nov trace cited in week-17 script. Truth: only Claude Code may act automatically. No automatic ChatGPT promise. **Defer** because two existing drafts overlap this story; do not repeat next week.
 
-### I-13 "Every movie a reel told you to watch." (Reel)
-- The book Reel (07) for movies and shows, Watched? ticks. Proven structure, new list. Medium priority.
+**I-13, Lists.** Someone recognises the movie scene but not the title; share a controlled reel mentioning the movie; show the extracted Movies List, then Watched?. Signal: current Lists feature and saved tutorial/comparison frameworks. Send to your movie-night friend. Truth: use licensed/demo footage, exact mentioned title, no streaming availability claim or movie recommendation engine.
 
-### I-14 "The process vs. the product" (Reel)
-- Process: an evening rewatching travel reels and typing places into notes. Product: one places list, Been? ticks.
-  Live trend (29 Oct). Overlaps Tokyo (04): only after 04 shows how places do.
+**I-14, places.** A travel buddy asks for the cafe name; several place mentions become one list with links to source notes; Been? closes the story. Signal: real Places feature and week-17 travel format as a reference. Truth: no maps, live opening hours, reservations, route optimisation or itinerary generator. Delay if the Tokyo draft is posted late.
 
-### I-15 "Your Instagram export is set to 'Last year'. Change it." (Reel, ~10 s tip)
-- Micro-tip: the export defaults to "Last year"; pick "All time". Useful to anyone, so it gets saved. **Truth:** verify the
-  default in Instagram's own Help Center before building (signals source is a third-party guide).
+**I-15, context.** Compare a screenshot of one instruction with the explanation that made it useful; the note contains both a short summary and transcript. Signal: Parth's saved comparison and myth-bust hooks, actual note fields. Send to someone saving tutorials as screenshots. Truth: compare only what the controlled example shows; do not assert screenshots are always useless or sell a feature for importing arbitrary screenshots.
 
-## Craft rules taken from Parth's saves (apply to every script)
-- "Duh test": a hook that states a truism ("Saving reels is easy") fails; rewrite it into a gap with a specific contrast.
-- Rotate the seven hook structures (tutorial, comparison, myth-bust, do/don't, tip, transformation, challenge); this
-  backlog covers all seven.
-- Keep the 4-bucket mix over a month: problem, educational, brand, relatable.
+## Gaps to fill next run
 
-## Done / retired
-(none yet; the Make task moves ideas here with the post id once they're scheduled)
+- Authenticate own IG Insights and YouTube stats, then collect 48 h snapshots. performance.json is deliberately empty now.
+- Optional read-only YouTube key for candidates; short-duration search is not proof that a video is a Short. Optional Reddit app credentials need current Reddit approval/access conditions checked by Parth. Public web research remains a fallback.
+- Watch recent niche creators directly and record evidence of a format working; do not describe an unmeasured format as trending.
+- Confirm posted versus merely rendered items before producing the next batch.

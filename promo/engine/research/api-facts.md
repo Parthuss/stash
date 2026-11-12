@@ -1,4 +1,11 @@
-# API facts for the publisher (checked 12 Nov 2026)
+# Recovered API research notes
+
+Recovered from the earlier committed attempt, not a fresh account integration test.
+Use SETUP.md for the current build's steps and caveats. This run rechecked Google's
+upload privacy/quota/resumable documentation, Cloudflare pricing and GitHub billing;
+Meta's pages returned 429/unavailable. The Meta-specific notes below remain
+implementation hypotheses to confirm with Parth's app/account, including version,
+permission availability, carousel insights and presigned URL fetch behaviour.
 
 Method: fetched official doc pages; fetched text is summarised by a tool, so quote-level exactness is not guaranteed. Items not seen in the fetched text are marked UNVERIFIED.
 

@@ -7,7 +7,7 @@ Sources (each optional; a missing key just skips that section and says so):
   1. Parth's own saves (local stash vault via `python -m stash search --json`): content, marketing, hooks.
   2. Our own post performance (ENGINE_HOME/performance.json, written by `content_engine pull-perf`).
   3. What's already been made (CONTENT_HANDBOOK section 2 + every promo/out/week-*/README.md), so ideas don't repeat.
-  4. YouTube Shorts doing well in the niche right now (YT_API_KEY, search.list: 100 units a query).
+  4. Short-duration YouTube candidates (YT_API_KEY; verify vertical/Shorts classification separately).
   5. Reddit questions (REDDIT_CLIENT_ID + REDDIT_CLIENT_SECRET, app-only read access). Reading only: Reddit
      posting and commenting stay by hand, never automated.
 """
@@ -143,7 +143,7 @@ def shorts() -> str:
             out.append(f"**{q}** (last 30 days, by views)")
             for it in v.get("items", []):
                 out.append(f"- {int(it['statistics'].get('viewCount', 0)):,} views: {it['snippet']['title'][:90]} "
-                           f"(https://youtube.com/shorts/{it['id']})")
+                           f"(https://youtube.com/watch?v={it['id']}; Shorts classification unverified)")
     return "\n".join(out) or "_no results_"
 
 
@@ -177,7 +177,7 @@ def main():
     out = a.out or ENGINE_HOME / "inputs" / f"{today}.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     sections = [("Parth's saves about content and growth", saves), ("Our post performance", performance),
-                ("Already made (don't repeat)", made), ("Top Shorts in the niche, last 30 days", shorts),
+                ("Already made (don't repeat)", made), ("Short-duration candidates, last 30 days", shorts),
                 ("Reddit questions", reddit)]
     parts = [f"# Research inputs, {today}\n"]
     for title, fn in sections:
