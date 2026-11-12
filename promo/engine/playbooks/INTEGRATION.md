@@ -18,7 +18,7 @@ These commands never stage, send or publish. `ideate --model` and `judge` use an
 
 Clean functions the MAKE step can call:
 
-- `ideation.load_formats(root)`, `read_history(root, exclude_ids=...)`, `find_duplicates(texts, history, weeks=6, now=...)`.
+- `ideation.load_formats(root)`, `load_audiences(root)`, `read_history(root, exclude_ids=...)`, `find_duplicates(texts, history, weeks=6, now=...)`.
 - `ideation.generate_ideas(features, formats, audiences=..., history=..., n=5, llm=optional_callable)`.
 - `hooks.generate_hook_candidates(normalised_feature, audience, question)` and `select_top3(candidates)`.
 - `scripts.build_reel(format, feature, audience, question, hook)` / `build_carousel(...)`.

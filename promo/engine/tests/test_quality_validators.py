@@ -267,6 +267,12 @@ def test_full_good_carousel_report_and_mutation(tmp_path):
     viewer=good_viewer(provisional['viewer_input_digest'])
     report=validate.report_for(p,tmp_path,d,history,judge,viewer,evidence)
     assert report['verdict']=='PASS',report['errors']
+    copy['slides'][0]['footer']='An invented customer outcome'
+    (tmp_path/'copy.json').write_text(json.dumps(copy))
+    bad=validate.report_for(p,tmp_path,d,history,judge,viewer,evidence)
+    assert 'copy.unreviewed' in codes(bad['errors'])
+    del copy['slides'][0]['footer']
+    (tmp_path/'copy.json').write_text(json.dumps(copy))
     (tmp_path/'01.png').write_bytes(b'broken after review')
     report=validate.report_for(p,tmp_path,d,history,judge,viewer,evidence)
     assert report['verdict']=='FAIL' and 'quality.viewer' in codes(report['errors'])
@@ -278,3 +284,29 @@ def test_heading_idea_exclusion_keeps_other_history(tmp_path):
     (tmp_path/'promo/engine/ideas.md').write_text('### quality-01\nThe drill is out. Where are the instructions?\n### quality-02\nA different rainy day story.\n')
     history=read_history(tmp_path,exclude_ids=['quality-01'])
     assert history and {h['id'] for h in history}=={'quality-02'}
+
+
+
+def test_judge_allows_a_grounded_extended_claim_span():
+    d,h=good_draft(),good_history();platforms={'instagram':{'caption':d['caption']}}
+    review=good_judge(d,h,platforms)
+    review['claim_audit'][0].update(path='caption',text=d['claims'][0]['text']+' '+d['cta'])
+    assert quality_judge.validate_judge(review,quality_judge.judge_packet(d,h,platforms))==[]
+    review['claim_audit'][0]['text']=d['cta']
+    assert quality_judge.validate_judge(review,quality_judge.judge_packet(d,h,platforms))
+
+
+def test_dedupe_does_not_match_only_common_product_nouns():
+    from content_engine.ideation import similarity
+    assert similarity('Can you take your notes out of Skwirl?', 'Share a reel to Skwirl. Read your note.') < .55
+    assert similarity('Send me that pasta reel?', 'send me that pasta reel') == 1
+    assert similarity('Stop scrolling your Saved folder for one reel', 'Stop scrolling your Saved folder for one reel') == 1
+
+
+def test_feature_specific_question_bank_stays_grounded():
+    from content_engine.ideation import load_audiences,load_formats,generate_ideas
+    root=Path(__file__).resolve().parents[3]
+    bank=[a for a in load_audiences(root) if a['id']=='ownership']
+    assert bank and bank[0]['questions'][0]['type']=='editorial_hypothesis'
+    result=generate_ideas(validate_copy.catalogue(),load_formats(root),audiences=bank,n=1)
+    assert result['drafts'] and result['drafts'][0]['feature_ids']==['export_notes']

@@ -46,7 +46,10 @@ Return ONLY JSON: {"model":"actual model name", "reviewer":"independent editor",
 "reasons":{"hook_strength":"specific evidence", "clarity_2s":"...","payoff":"...","originality":"...","brand_fit":"..."},
 "claims_complete":true,"unsupported_claims":[],"claim_audit":[{"path":"public unit path OR platforms.youtube.title",
 "text":"exact claim span", "feature_ids":["search"],"supported":true,"reason":"evidence and limitation"}],
-"issues":[]}. Be strict: every dimension >=4 and no issues is required. A 3 is a rejection.
+"issues":[]}. claim_audit must contain ONLY product/capability/outcome/testimonial assertions.
+Do not put plain CTAs, transitions or non-claims in claim_audit; never emit an empty feature_ids list.
+An audit span may cover multiple clauses, but it must include each declared claim verbatim.
+Be strict: every dimension >=4 and no issues is required. A 3 is a rejection.
 DATA:\n''' + json.dumps(packet, ensure_ascii=False, default=lambda x:x.isoformat())
 
 
@@ -94,7 +97,7 @@ def validate_judge(review: dict | None, packet: dict) -> list[dict]:
         if not audit.get('feature_ids') or not set(audit['feature_ids']) <= ids or not audit.get('reason'):
             return err('Audit needs known feature ids and grounding reason')
     for claim in packet['draft'].get('claims', []):
-        if not any(claim['text'] == a.get('text') and claim['feature_id'] in a.get('feature_ids', []) for a in audits):
+        if not any(claim['text'] in a.get('text','') and claim['feature_id'] in a.get('feature_ids', []) for a in audits):
             return err('Declared claim missing from independent audit')
     return []
 

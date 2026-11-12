@@ -274,8 +274,15 @@
           "anchor": "POST|DELETE /v1/notes/:id/share",
           "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
           "line": 11
+        },
+        {
+          "path": "worker/src/share.ts",
+          "anchor": "Public, read-only page for a note someone chose to share",
+          "sha256": "55e5a8e6b4e24595104d9c24f810983584bfd74330935456f3822c62d5373214",
+          "line": 2
         }
-      ]
+      ],
+      "implementation_evidence": "The GET /n/<share_id> page looks up title, summary, topic, permalink, markdown and thumb_id for the one matching share_id. It is a public read-only page."
     },
     {
       "id": "stop_sharing",
@@ -311,11 +318,16 @@
       "name": "Export notes",
       "claim": "Download your Skwirl notes as a JSON file.",
       "approved_copy": [
-        "Download your Skwirl notes as a JSON file."
+        "Download your Skwirl notes as a JSON file.",
+        "The JSON export contains your note titles, summaries and note text."
       ],
       "claims": [
         {
           "text": "Download your Skwirl notes as a JSON file.",
+          "feature_id": "export_notes"
+        },
+        {
+          "text": "The JSON export contains your note titles, summaries and note text.",
           "feature_id": "export_notes"
         }
       ],
@@ -330,8 +342,15 @@
           "anchor": "a.download = \"skwirl-export.json\"",
           "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
           "line": 955
+        },
+        {
+          "path": "worker/src/v1.ts",
+          "anchor": "SELECT ${NOTE_COLUMNS}, markdown FROM note WHERE user_id IS ? ORDER BY created_at",
+          "sha256": "0210a127f87fbc326ffbc504ace4e38f666a0aaf85841fad107ca6e0328a6f41",
+          "line": 713
         }
-      ]
+      ],
+      "schema_evidence": "worker/src/v1.ts NOTE_COLUMNS includes id, title, summary, topic, tools, permalink, status, created_at, used_at, thumb_id, share_id and categories; export SELECT also includes markdown, wrapped as {exported_at, notes}."
     },
     {
       "id": "offline_notes",
@@ -386,8 +405,15 @@
           "anchor": "turnOn = !before.includes(name)",
           "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
           "line": 744
+        },
+        {
+          "path": "worker/public/app.js",
+          "anchor": "const r = await api(`/v1/notes/${encodeURIComponent(noteId)}/categories`",
+          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
+          "line": 748
         }
-      ]
+      ],
+      "implementation_evidence": "The category chip handler toggles an existing category name, posts {name,on} to the note categories endpoint, rerenders note chips, and rolls back on failure. Early-account entitlements may differ; do not use Plus only."
     },
     {
       "id": "claude_code",

@@ -1,0 +1,154 @@
+{
+  "generated": "2026-11-12",
+  "method": "GitHub REST API metadata (repos/{owner}/{repo}, /license, /commits/HEAD) and gh search, read-only. No source code was copied, vendored, or installed. SHA is the default-branch HEAD at query time.",
+  "repos": [
+    {
+      "name": "yt-dlp",
+      "url": "https://github.com/yt-dlp/yt-dlp",
+      "license_url": "https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE",
+      "head_sha": "412e7f0a4b0588fe884a02b344ac66a06538475b",
+      "spdx": "Unlicense",
+      "archived": false,
+      "pushed_at": "2026-11-04",
+      "decision": "do-not-embed",
+      "reason": "Permissive, but its use case is downloading media from platforms, which sits against our official-API rule and platform ToS. Use only for manual research on public files if ever needed."
+    },
+    {
+      "name": "instaloader",
+      "url": "https://github.com/instaloader/instaloader",
+      "license_url": "https://github.com/instaloader/instaloader/blob/master/LICENSE",
+      "head_sha": "7acd1b6a75d9964b6e7bf91c0769e172e2a64359",
+      "spdx": "MIT",
+      "archived": false,
+      "pushed_at": "2026-11-01",
+      "decision": "do-not-adopt",
+      "reason": "MIT, but it uses Instagram's unofficial private API. High account-suspension risk and against ToS. Reuse the idea of our own saves ingestion only through the stash vault."
+    },
+    {
+      "name": "praw",
+      "url": "https://github.com/praw-dev/praw",
+      "license_url": "https://github.com/praw-dev/praw/blob/main/LICENSE.txt",
+      "head_sha": "4590cb5b0ad2f9afbab983d60d792fc3c74d1f45",
+      "spdx": "BSD-2-Clause",
+      "archived": false,
+      "pushed_at": "2026-11-09",
+      "decision": "optional-dependency",
+      "reason": "Clean license and maintained. Only needed if Reddit read-only research is wanted; the existing gather.py already reads Reddit over plain HTTP with app-only auth, so praw is not required. Reading only, no automated posting."
+    },
+    {
+      "name": "snscrape (JustAnotherArchivist fork, found via gh search)",
+      "url": "https://github.com/JustAnotherArchivist/snscrape",
+      "license_url": null,
+      "head_sha": null,
+      "spdx": "GPL-3.0",
+      "archived": null,
+      "pushed_at": null,
+      "decision": "do-not-adopt",
+      "reason": "GPL-3.0 copyleft, scraping-based, and not reliably maintained. Not worth the license or ToS risk. The original owner path JustinCSmith/snscrape returned 404."
+    },
+    {
+      "name": "n8n",
+      "url": "https://github.com/n8n-io/n8n",
+      "license_url": "https://github.com/n8n-io/n8n/blob/master/LICENSE.md",
+      "head_sha": "1f3a0fecfbd796c7c2e876a8bb92c6a42cd252ec",
+      "spdx": "NOASSERTION",
+      "archived": false,
+      "pushed_at": "2026-11-12",
+      "decision": "do-not-embed; evaluate as service only if needed",
+      "reason": "Source-available 'Other' license, not OSI open source. Use as a hosted or self-hosted tool under its terms, never embed code. Approval-loop templates are useful as reference only. Our current engine does not need it."
+    },
+    {
+      "name": "promptfoo",
+      "url": "https://github.com/promptfoo/promptfoo",
+      "license_url": "https://github.com/promptfoo/promptfoo/blob/main/LICENSE",
+      "head_sha": "e4ecd0e48b08aedebe186b2ee868b0f31c62e3fe",
+      "spdx": "MIT",
+      "archived": false,
+      "pushed_at": "2026-11-12",
+      "decision": "reuse-candidate (dev-only)",
+      "reason": "MIT and active. Good fit for regression-testing hook and script prompt quality as a dev tool. Keep out of the runtime. Adopt only if the existing pytest + validate gates prove insufficient."
+    },
+    {
+      "name": "deepeval",
+      "url": "https://github.com/confident-ai/deepeval",
+      "license_url": "https://github.com/confident-ai/deepeval/blob/main/LICENSE.md",
+      "head_sha": "debe7955c0029add96f8340e38932ae62a77907c",
+      "spdx": "Apache-2.0",
+      "archived": false,
+      "pushed_at": "2026-11-12",
+      "decision": "reuse-candidate (dev-only), lower priority than promptfoo",
+      "reason": "Apache-2.0 and active. Pytest-style LLM evals. Overlaps promptfoo; pick one, not both. Adds a dependency tree, so only if we need metric-based grading."
+    },
+    {
+      "name": "Baserow",
+      "url": "https://github.com/baserow/baserow",
+      "license_url": "https://github.com/baserow/baserow/blob/develop/LICENSE",
+      "head_sha": "ae1232fad83be270bfac92b635d88fe9e22e30e2",
+      "spdx": "NOASSERTION",
+      "archived": false,
+      "pushed_at": "2026-11-12",
+      "decision": "do-not-embed; optional hosted tool",
+      "reason": "Mixed/'Other' license (MIT core with premium parts under separate terms, per GitHub's NOASSERTION). Only consider as a hosted content-calendar database if a spreadsheet stops working. Not needed for the engine."
+    },
+    {
+      "name": "Postiz",
+      "url": "https://github.com/gitroomhq/postiz-app",
+      "license_url": "https://github.com/gitroomhq/postiz-app/blob/main/LICENSE",
+      "head_sha": "6d1a5be25784b9df6bd8a1363149a6d7a5d46b81",
+      "spdx": "AGPL-3.0",
+      "archived": false,
+      "pushed_at": "2026-11-12",
+      "decision": "idea-only",
+      "reason": "AGPL-3.0 network copyleft. Do not copy code or host it inside our product. Matches existing repos.md decision: reuse the approval/scheduling separation idea only."
+    },
+    {
+      "name": "short-video-maker",
+      "url": "https://github.com/gyoridavid/short-video-maker",
+      "license_url": null,
+      "head_sha": null,
+      "spdx": "MIT",
+      "archived": false,
+      "pushed_at": "2025-06-21",
+      "decision": "idea-only",
+      "reason": "MIT but stale (last push June 2025). Its Remotion + Kokoro + caption pipeline matches what we already run. Keep the staged script/audio/render separation as a checklist. Consistent with repos.md."
+    },
+    {
+      "name": "hook generator (Peter365-star/short-video-hook-generator)",
+      "url": "https://github.com/Peter365-star/short-video-hook-generator",
+      "license_url": null,
+      "head_sha": null,
+      "spdx": null,
+      "archived": null,
+      "pushed_at": "2026-07-07",
+      "decision": "do-not-reuse",
+      "reason": "No license (all rights reserved by default), 0 stars, no evidence of quality. Read as an idea reference only; do not copy prompts or code."
+    },
+    {
+      "name": "script generation search (gh search 'reels script generator llm')",
+      "url": null,
+      "license_url": null,
+      "head_sha": null,
+      "spdx": null,
+      "archived": null,
+      "pushed_at": null,
+      "decision": "no-candidate",
+      "reason": "Search returned zero repositories. Nothing to evaluate."
+    },
+    {
+      "name": "Instagram caption generator (singhsourav0/Instagram-captions-generator)",
+      "url": "https://github.com/singhsourav0/Instagram-captions-generator",
+      "license_url": null,
+      "head_sha": null,
+      "spdx": "MIT",
+      "archived": false,
+      "pushed_at": "2025-06-27",
+      "decision": "do-not-adopt",
+      "reason": "MIT but tiny (4 stars) and stale. Other caption-generator hits were unlicensed. Our captions come from the existing prompt pipeline."
+    }
+  ],
+  "gaps": [
+    "SHAs for snscrape, short-video-maker, and the hook/caption repos were not captured; their URLs and metadata came from gh search only.",
+    "LICENSE text was not read in full; SPDX comes from the GitHub license API, which is what is recorded here. Re-check before any copy.",
+    "NOASSERTION on n8n and Baserow means GitHub could not classify the license; the decision is based on the LICENSE file names and the project's own stated model."
+  ]
+}

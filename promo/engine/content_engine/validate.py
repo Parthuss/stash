@@ -28,7 +28,7 @@ def policy_digest() -> str:
     # A code/policy change invalidates old reports at approval/publish too.
     paths = [PLAYBOOKS / name for name in ('features.json', 'style.json')]
     paths += [Path(__file__).with_name(name) for name in
-              ('validate.py', 'validate_copy.py', 'validate_media.py', 'quality_judge.py', 'quality_gate.py', 'validate_scripts.py')]
+              ('validate.py', 'validate_copy.py', 'validate_media.py', 'quality_judge.py', 'quality_gate.py', 'validate_scripts.py', 'ideation.py', 'hooks.py')]
     return digest({p.name: p.read_text() for p in paths})
 
 

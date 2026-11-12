@@ -49,6 +49,13 @@ def load_formats(repo_root) -> list[dict]:
     return json.loads((Path(repo_root) / "promo/engine/playbooks/formats.json").read_text())["formats"]
 
 
+def load_audiences(repo_root) -> list[dict]:
+    """Existing sourced questions plus explicitly labelled editorial hypotheses."""
+    bank = Path(repo_root) / 'promo/engine/playbooks/audience_questions.json'
+    extra = json.loads(bank.read_text())['audiences'] if bank.exists() else []
+    return AUDIENCES + extra
+
+
 # ---------------------------------------------------------------- history / dedupe
 
 _MONTHS = {m: i + 1 for i, m in enumerate("jan feb mar apr may jun jul aug sep oct nov dec".split())}
@@ -130,7 +137,7 @@ def read_history(repo_root, exclude_ids=(), today: datetime | None = None) -> li
                 current_idea = heading[1]
             elif line.startswith('## '):
                 current_idea = None
-            m = re.match(r"\|\s*(I-\d+)\s*\|(.*)\|", line) or re.match(r"\*\*(I-\d+)\b(.*)", line)
+            m = re.match(r"\|\s*(I-\d+|quality-\d+)\s*\|(.*)\|", line) or re.match(r"\*\*(I-\d+)\b(.*)", line)
             if m:
                 units.append(_unit(m[1], "promo/engine/ideas.md", m[2].replace("|", " ")))
             elif len(line.split()) >= 3:
@@ -150,9 +157,16 @@ def read_history(repo_root, exclude_ids=(), today: datetime | None = None) -> li
 
 
 def similarity(a: str, b: str) -> float:
-    """0-1 token similarity: max(Jaccard, 0.85 x containment of the shorter side when it has >=3 tokens)."""
-    ta, tb = set(tokens(a)), set(tokens(b))
-    if not ta or not tb:
+    """Compare distinctive words, rather than ubiquitous product nouns.
+
+    Exact copies still match. Fewer than two distinctive words cannot establish
+    a lexical duplicate; the independent editor checks generic/semantic overlap.
+    """
+    if re.sub(r"\W+", " ", a.casefold()).strip() == re.sub(r"\W+", " ", b.casefold()).strip():
+        return 1.0 if a.strip() else 0.0
+    common = {'skwirl', 'note', 'notes', 'reel', 'reels', 'sav', 'save', 'saved'}
+    ta, tb = set(tokens(a)) - common, set(tokens(b)) - common
+    if min(len(ta), len(tb)) < 2:
         return 0.0
     inter = len(ta & tb)
     score = inter / len(ta | tb)
@@ -225,6 +239,8 @@ def generate_ideas(features, formats: list[dict], audiences: list[dict] | None =
         for aud in auds:
             for q in aud["questions"]:
                 for feat in feats:
+                    if q.get('feature_ids') and feat['id'] not in q['feature_ids']:
+                        continue
                     aff = _eligible(fmt, aud, feat)
                     if aff is None:
                         continue

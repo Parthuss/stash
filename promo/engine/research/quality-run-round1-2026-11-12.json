@@ -1,0 +1,1241 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-12T11:57:19.823878+00:00",
+  "mode": "llm-refined-grounded-templates",
+  "history_digest": "8cf85a088301f783ef9b669cfcc4d74370b7a9e7f56f38269d4c316492ea21ea",
+  "history_units": 211,
+  "drafts": [
+    {
+      "id": "quality-01",
+      "kind": "reel",
+      "audience": "podcast listeners",
+      "question": "Which podcast did that reel mention?",
+      "question_type": "retrieval",
+      "format_id": "list-payoff",
+      "feature_ids": [
+        "lists"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Which podcast did that reel mention?",
+          "framework": "question",
+          "score": 97,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.83,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Where did I hear about that podcast?",
+          "framework": "question",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you finally remember the podcast name.",
+          "framework": "pov",
+          "score": 56,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.83,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "The podcast name was in the reel. Where did it go?",
+          "framework": "curiosity",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Wait. What was that podcast called?",
+          "framework": "pattern_interrupt",
+          "score": 76,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.94,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Your Saved tab is a bad place for a podcast name.",
+          "framework": "contrarian",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop pausing reels to write down podcast names.",
+          "framework": "stop_doing",
+          "score": 86,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.88,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "One reel. One podcast name. One list.",
+          "framework": "specific_number",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a podcast name land in a list.",
+          "framework": "demonstration",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Share one reel and see the podcast it named.",
+          "framework": "demonstration",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: someone asks for that podcast and you know it.",
+          "framework": "pov",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Podcasts named in reels have a place to go.",
+          "framework": "curiosity",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "Which podcast did that reel mention?",
+        "Watch a podcast name land in a list.",
+        "One reel. One podcast name. One list."
+      ],
+      "hook": "Which podcast did that reel mention?",
+      "caption": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.\nSend this to the friend who always says \"you have to hear this podcast\". Try Skwirl. Link in bio.\n#savedreels #podcasts #instagramtips #listening",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+          "feature_id": "lists"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "Which podcast did that reel mention?",
+          "on_screen": "Which podcast did that reel mention?",
+          "shot": "Frame zero: a phone paused on a labelled demo reel (fictional host, no real creator) with a speech caption that has just named a podcast. Text hook large over it.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "t_start": 3,
+          "t_end": 7,
+          "role": "re-hook",
+          "vo": "You caught the name once. Then the reel moved on.",
+          "on_screen": "Heard once. Gone.",
+          "shot": "The demo reel keeps playing and the podcast name scrolls off the caption. A thumb swipes to the next reel.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "t_start": 7,
+          "t_end": 10,
+          "role": "setup",
+          "vo": "Share that reel to Skwirl.",
+          "on_screen": "Share to Skwirl",
+          "shot": "Real screen capture of the share sheet with Skwirl chosen, using the seeded demo account and the same demo reel.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "t_start": 10,
+          "t_end": 17,
+          "role": "payoff",
+          "vo": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+          "on_screen": "Lists",
+          "shot": "Real Skwirl Lists screen on the seeded demo account, showing the podcast from the demo reel as a list item. Hold on it long enough to read. Do not mock the UI.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "t_start": 17,
+          "t_end": 21,
+          "role": "detail",
+          "vo": "There is the podcast, in a list.",
+          "on_screen": "The podcast, in a list",
+          "shot": "Slow push-in on that single list item. Nothing else on screen is added.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "t_start": 21,
+          "t_end": 24,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-02",
+      "kind": "carousel",
+      "audience": "parents",
+      "question": "How do I find a saved kids craft when I only remember what it was?",
+      "question_type": "retrieval",
+      "format_id": "do-dont",
+      "feature_ids": [
+        "search"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Rainy day. Where is that craft you saved?",
+          "framework": "question",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "How do I find a saved idea by what it was?",
+          "framework": "question",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: rain outside, kids inside, craft idea lost.",
+          "framework": "pov",
+          "score": 70,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.96,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "You remember the craft. Not who posted it.",
+          "framework": "curiosity",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pause. Do not scroll for that craft idea.",
+          "framework": "pattern_interrupt",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Scrolling harder will not find a saved craft.",
+          "framework": "contrarian",
+          "score": 99,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.96,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop scrolling every tile for a rainy day idea.",
+          "framework": "stop_doing",
+          "score": 65,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Two ways to find a saved craft. See both.",
+          "framework": "specific_number",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch plain words find a saved craft idea.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Typing paper plate craft to find a saved note.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you only remember the craft, not the account.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Your rainy day idea is saved somewhere. Where?",
+          "framework": "curiosity",
+          "score": 76,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.96,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "Rainy day. Where is that craft you saved?",
+        "Stop scrolling every tile for a rainy day idea.",
+        "Watch plain words find a saved craft idea."
+      ],
+      "hook": "Rainy day. Where is that craft you saved?",
+      "caption": "Search your saved notes by meaning.\nSend this to a parent who saves every craft idea. Try Skwirl. Link in bio.\n#savedreels #rainydayactivities #parenting #instagramtips",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Search your saved notes by meaning.",
+          "feature_id": "search"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "Rainy day. Where is that craft you saved?",
+          "bridge": "First, what not to do.",
+          "visual": "Hook as large type over a soft grey window with rain. One calm illustration, no real creator tiles.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "dont",
+          "text": "Don't: scroll every tile hoping to spot it.",
+          "bridge": "Here is why that gets old.",
+          "visual": "Red-cross card with a long grid of blank craft tiles",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "why",
+          "text": "You remember the craft, not the account.",
+          "bridge": "So start with what you remember.",
+          "visual": "Thought bubble with a paper plate shape, account name blurred out",
+          "feature_ids": []
+        },
+        {
+          "n": 4,
+          "job": "do",
+          "text": "Do: type what you remember, like paper plate craft.",
+          "bridge": "Here is what that finds.",
+          "visual": "Green-tick card with a search box holding those plain words (real Skwirl screen, seeded demo account)",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "payoff",
+          "text": "Search your saved notes by meaning.",
+          "bridge": "That is the whole move.",
+          "visual": "Real Skwirl search result on the seeded demo account: the matching craft note opens. Label it demo. Do not imply it always finds a match.",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "n": 6,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Wordmark on brand lavender background",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-03",
+      "kind": "reel",
+      "audience": "hobbyists with lots of saves",
+      "question": "How do I keep gift ideas apart from weekend plans?",
+      "question_type": "organise",
+      "format_id": "transformation",
+      "feature_ids": [
+        "categories"
+      ],
+      "hook_candidates": [
+        {
+          "text": "One pile of saves. Three groups I named.",
+          "framework": "specific_number",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "How do I keep gift ideas apart from weekend plans?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: your saves finally have names.",
+          "framework": "pov",
+          "score": 70,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.94,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "What if your saves had groups you chose?",
+          "framework": "curiosity",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Look at this pile. Now look at this.",
+          "framework": "pattern_interrupt",
+          "score": 48,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "A bigger Saved folder is not the answer.",
+          "framework": "contrarian",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop scrolling one giant pile for a gift idea.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch one pile become three named groups.",
+          "framework": "demonstration",
+          "score": 63,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.88,
+            "specificity": 0.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Gifts, Balcony, Weekend plans: filed in Skwirl.",
+          "framework": "demonstration",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.74,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: gift ideas and weekend plans, kept apart.",
+          "framework": "pov",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Three groups, named by me, for my saves.",
+          "framework": "specific_number",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "My saved ideas have names for their groups now.",
+          "framework": "curiosity",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "One pile of saves. Three groups I named.",
+        "Watch one pile become three named groups.",
+        "How do I keep gift ideas apart from weekend plans?"
+      ],
+      "hook": "One pile of saves. Three groups I named.",
+      "caption": "With Skwirl Plus, name your categories and file saved notes into them.\nSend this to a friend with a very mixed Saved folder. Try Skwirl. Link in bio.\n#savedreels #organisedlife #instagramtips #giftideas",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "With Skwirl Plus, name your categories and file saved notes into them.",
+          "feature_id": "categories"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "One pile of saves. Three groups I named.",
+          "on_screen": "One pile of saves. Three groups I named.",
+          "shot": "Frame zero: a crowded Saved grid on a demo account (no real creators, blur names), scrolled fast. Text hook over it.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 3,
+          "t_end": 6,
+          "role": "re-hook",
+          "vo": "Same saves. One change.",
+          "on_screen": "Same saves. One change.",
+          "shot": "Quick cut to a thumb opening the category picker on a seeded Skwirl Plus demo account.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 6,
+          "t_end": 10,
+          "role": "setup",
+          "vo": "I named a category. Then filed a note.",
+          "on_screen": "Name it. File it.",
+          "shot": "Real screen capture: typing the category name Gifts, then filing one seeded note into it. Repeat as a fast cut for Balcony and Weekend plans.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 10,
+          "t_end": 17,
+          "role": "payoff",
+          "vo": "With Skwirl Plus, name your categories and file saved notes into them.",
+          "on_screen": "Gifts. Balcony. Weekend plans.",
+          "shot": "Real Skwirl screen on the seeded Plus demo account showing exactly three named categories, each holding at least one note. Hold so all three names are readable.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 17,
+          "t_end": 20,
+          "role": "limit",
+          "vo": "This one is part of Plus.",
+          "on_screen": "Part of Skwirl Plus",
+          "shot": "Small text card over the category screen. No price, no free-for-all wording.",
+          "feature_ids": [
+            "categories"
+          ]
+        },
+        {
+          "t_start": 20,
+          "t_end": 23,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark on clean lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-04",
+      "kind": "carousel",
+      "audience": "AI tool users",
+      "question": "Can I ask Claude about the reels I saved?",
+      "question_type": "ai_workflow",
+      "format_id": "how-to",
+      "feature_ids": [
+        "connector"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Ask Claude what you saved, in plain words.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Can I ask Claude about my saved reels?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you ask Claude instead of scrolling Saved.",
+          "framework": "pov",
+          "score": 98,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.92,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Claude can do something with your saves. Look.",
+          "framework": "curiosity",
+          "score": 70,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.96,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Open Claude. Ask it about your saves.",
+          "framework": "pattern_interrupt",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Your saves do not have to stay stuck in one app.",
+          "framework": "contrarian",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop scrolling Saved. Ask Claude instead.",
+          "framework": "stop_doing",
+          "score": 92,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.61,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Two steps, then Claude searches your saves.",
+          "framework": "specific_number",
+          "score": 79,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.83,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch Claude search a demo library of saves.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "What did I save about stretching? Ask Claude.",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: a question to Claude brings back a saved reel.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "The reel you saved a while ago is one question away.",
+          "framework": "curiosity",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "Ask Claude what you saved, in plain words.",
+        "Two steps, then Claude searches your saves.",
+        "Watch Claude search a demo library of saves."
+      ],
+      "hook": "Ask Claude what you saved, in plain words.",
+      "caption": "Claude can search your saves through the Skwirl connector.\nSend this to the friend who lives in Claude all day. Try Skwirl. Link in bio.\n#savedreels #claude #secondbrain #instagramtips",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Claude can search your saves through the Skwirl connector.",
+          "feature_id": "connector"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "Ask Claude what you saved, in plain words.",
+          "bridge": "Two steps, then the good part.",
+          "visual": "Hook as large type beside a simple chat bubble. One calm illustration.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "step",
+          "text": "Step 1: share a few reels to Skwirl.",
+          "bridge": "Next, your question.",
+          "visual": "Real share sheet with Skwirl chosen, seeded demo account",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "step",
+          "text": "Step 2: ask Claude in plain words.",
+          "bridge": "Here is what happens.",
+          "visual": "Real Claude chat screen on a demo account with the question \"What did I save about stretching?\" typed. The connector is already linked in the demo account; show nothing about setup.",
+          "feature_ids": []
+        },
+        {
+          "n": 4,
+          "job": "payoff",
+          "text": "Claude can search your saves through the Skwirl connector.",
+          "bridge": "One honest note.",
+          "visual": "Real capture of Claude searching the seeded library and replying from demo notes, with the tool call visible. Do not fake the chat or the answer.",
+          "feature_ids": [
+            "connector"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "limit",
+          "text": "What it finds depends on what you saved.",
+          "bridge": "Ready to try it?",
+          "visual": "Plain card with the line and a small tile of three demo notes",
+          "feature_ids": []
+        },
+        {
+          "n": 6,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Wordmark on brand lavender background",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-05",
+      "kind": "reel",
+      "audience": "people with idea backlogs",
+      "question": "Which of my saved ideas did I actually try?",
+      "question_type": "action",
+      "format_id": "pov-scene",
+      "feature_ids": [
+        "tried"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Saturday. Nothing planned. Pick one saved idea.",
+          "framework": "pov",
+          "score": 65,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.69,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Which saved idea did I already try?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you actually did the thing you saved.",
+          "framework": "pov",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Your saved ideas are missing one tiny thing.",
+          "framework": "curiosity",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pick one. Do it. Tick it.",
+          "framework": "pattern_interrupt",
+          "score": 48,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "A saved idea needs a finish line, not more saves.",
+          "framework": "contrarian",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop saving more ideas before you try one.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Five saved ideas. One Saturday. One tick.",
+          "framework": "specific_number",
+          "score": 70,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a saved idea turn into Tried.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Here is one saved idea, from note to Tried.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Saturday, nothing planned, and a long list of saves.",
+          "framework": "pov",
+          "score": 47,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 0.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "There is a small tick for finishing a saved idea.",
+          "framework": "curiosity",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "Saturday. Nothing planned. Pick one saved idea.",
+        "Five saved ideas. One Saturday. One tick.",
+        "Watch a saved idea turn into Tried."
+      ],
+      "hook": "Saturday. Nothing planned. Pick one saved idea.",
+      "caption": "Mark a note as Tried after you try it.\nSend this to a friend with a long ideas list. Try Skwirl. Link in bio.\n#savedreels #weekendideas #instagramtips #tryitlist",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Mark a note as Tried after you try it.",
+          "feature_id": "tried"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "Saturday. Nothing planned. Pick one saved idea.",
+          "on_screen": "Saturday. Nothing planned. Pick one saved idea.",
+          "shot": "Frame zero: first-person view on a sofa, phone in hand, the seeded Skwirl demo library open with exactly five notes visible (for example five easy home activities). Text hook over it.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 3,
+          "t_end": 6,
+          "role": "re-hook",
+          "vo": "Which ones did you already do?",
+          "on_screen": "Which ones did you already do?",
+          "shot": "Thumb scrolls the five notes slowly and pauses; nothing marks any of them as done yet.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 6,
+          "t_end": 10,
+          "role": "setup",
+          "vo": "Pick one note. Go do it.",
+          "on_screen": "Pick one. Do it.",
+          "shot": "Tap one seeded note and open it. Cut to a short labelled editorial b-roll of hands doing that small activity at a table.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 10,
+          "t_end": 15,
+          "role": "payoff",
+          "vo": "Mark a note as Tried after you try it.",
+          "on_screen": "Tried",
+          "shot": "Real Skwirl note screen on the seeded demo account: tap the I tried this action and show the note now marked Tried. Do not mock the UI.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 15,
+          "t_end": 19,
+          "role": "limit",
+          "vo": "It is a tick you add yourself.",
+          "on_screen": "You add the tick",
+          "shot": "Close-up of the Tried mark on the note. Plain text card, no tracking or completion claims.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "t_start": 19,
+          "t_end": 22,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark over the calm sofa scene.",
+          "feature_ids": []
+        }
+      ]
+    }
+  ],
+  "template_skips": 32,
+  "status": "DRAFTS_ONLY_NOT_APPROVABLE",
+  "checks": [
+    {
+      "id": "quality-01",
+      "errors": [
+        {
+          "code": "duplicate.recency",
+          "detail": [
+            {
+              "id": "I-13",
+              "path": "promo/engine/ideas.md",
+              "similarity": 0.567,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            },
+            {
+              "id": "promo/out/instagram/07-books/caption.txt#L3",
+              "path": "promo/out/instagram/07-books/caption.txt",
+              "similarity": 0.567,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            }
+          ]
+        }
+      ],
+      "copy_structure_pass": false
+    },
+    {
+      "id": "quality-02",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-03",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-04",
+      "errors": [
+        {
+          "code": "duplicate.recency",
+          "detail": [
+            {
+              "id": "promo/out/engine/ideas.md#L49",
+              "path": "promo/out/engine/ideas.md",
+              "similarity": 0.637,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            },
+            {
+              "id": "promo/out/engine/ideas.md#L135",
+              "path": "promo/out/engine/ideas.md",
+              "similarity": 0.637,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            }
+          ]
+        }
+      ],
+      "copy_structure_pass": false
+    },
+    {
+      "id": "quality-05",
+      "errors": [],
+      "copy_structure_pass": true
+    }
+  ]
+}

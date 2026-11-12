@@ -1,26 +1,197 @@
 # Skwirl ideas backlog
 
-Research run: 12 Nov 2026, refreshed from the recovered branch. See [signals and sources](research/2026-11-12-signals.md), [repo survey](research/repos.md). The local stash MCP was queried for real; raw private input stays in ignored `promo/out/engine/inputs/`. No posts were published and no performance is available. These are editorial hypotheses, not predictions of virality.
+Refreshed 12 November 2026 from a real ideation, twelve-hook-per-idea, structured-script and independent-editor run. Sources, ten takeaways and repo decisions: [quality playbook](research/2026-11-12-quality-playbook.md). Machine drafts: [quality-run](research/quality-run-2026-11-12.json). [Independent editor reports](research/quality-judges-2026-11-12.json). Maker contract: [INTEGRATION.md](playbooks/INTEGRATION.md).
 
-Learning: zero measured posts, so there is nothing to call a winner. After connecting accounts, compare shares/reach, saves/reach and actual watch metrics at comparable ages. Do not derive hold from an unverified skip-rate scale.
+These are **draft plans, not approved or posted content**. Five pass copy/style/structure/lexical recency; the separate Sonnet editor scored each at least4/5 on hook strength, two-second clarity, payoff, originality and brand fit. No video or carousel was rendered. No media/viewer PASS is claimed. Before staging, the Maker must capture the real controlled demo and pass the complete quality gate. No performance data supports calling any of these a winner.
 
-Scores: Hook 1-5, feature Fit 1-5, Ease 1-5 (5 is easiest, equivalent to inverse effort), Fresh 0-2. Total = 2H + 2F + Ease + Fresh, max 27. Fresh is zero throughout: no current trend was validated with creator performance. Quality is never reduced to improve Ease. The top five balance audiences and avoid last week's topics, rather than blindly sorting totals.
+The first generated set was rejected as derivative. Source review then uncovered underused features: public note links, revocation, JSON export, cached-note rereading and manual category correction. Earlier drafts and failed reviews remain in research for audit. Audience questions below are editorial hypotheses, not invented user interviews.
 
-## Top five recommended: week beginning Monday 23 November
+## Current top five
 
-All slots are drafts at **22:30 Asia/Kolkata**, never approvals. The earlier attempt incorrectly called 24 Nov a Monday.
+The ranking balances distinct questions and useful demonstrations, not predicted reach. No slots are scheduled. The two public-link pieces should run in different weeks. Keep professional campaigns parked. Use the draft id as schedule.json's idea_id so the recency reader can exclude its own brief while retaining other drafts/posts.
 
-| Rank | Idea and frame-zero hook | Format | Score | Suggested slot | Reason |
-|---|---|---|---|---|---|
-| 1 | I-01: The reel you saved can disappear. | 6-slide carousel | 24 | Mon 23 Nov | Concrete loss, then the written-note payoff. Sample built and QA reviewed this run; not staged. |
-| 2 | I-02: Send me that pasta reel? | Reel, about 22 s | 23 | Wed 25 Nov | A friend's request makes retrieval useful, rather than another app tour. |
-| 3 | I-05: Before you save another reel, give it a next step. | Carousel, 6 slides | 22 | Thu 26 Nov | A useful habit first, then the product's Next step field. |
-| 4 | I-13: What was that movie the reel recommended? | Reel, about 22 s | 22 | Fri 27 Nov | Lists, a strong feature payoff outside the recipe niche. |
-| 5 | I-14: You saved the place. Now remember its name. | Reel, about 22 s | 21 | Sun 29 Nov | Places extracted into Lists. At least a week after the week-17 Tokyo draft. |
+| ID | Rank | Best hook | Format | Grounded payoff |
+|---|---|---|---|---|
+| quality-01 | 1 | Sending a Skwirl note link? Check what the reader sees. | Reel, 25s | Actual public read-only note page, viewed signed out |
+| quality-02 | 2 | You shared a note link. Can you take it back? | Carousel, 6 slides | Revoke the public link; copies already kept remain |
+| quality-03 | 3 | Can you take your notes out of Skwirl? | Reel, 29s | Me > Account > Export my notes produces JSON |
+| quality-04 | 4 | Signal dropped. Can you still read your note? | Carousel, 7 slides | Only notes cached on this device, with Skwirl kept open |
+| quality-05 | 5 | Skwirl Plus demo: wrong category? Fix it on the note. | Reel, 29s | Manually correct existing category chips, with Plus |
 
-Before producing a week: confirm what Parth actually posted from the existing batch. Move slots if those drafts went out later. Recipe posts are separated by over five days from the previous recipe draft. Do not publish the same creative as both a static and a carousel.
+### quality-01
 
-## Fifteen live ideas
+**Audience:** friends who swap tips and plans. **Question (editorial hypothesis):** What does the public note page show to a reader who is signed out?
+
+**Format:** `how-to`. **Claims:** `note_share`. Code paths, exact copy and limits are in [features.json](playbooks/features.json).
+
+**Top three hooks** (selected editorially; candidate scores in the JSON are heuristic ranks):
+
+- Sending a Skwirl note link? Check what the reader sees.
+- Watch a shared note open in a private window.
+- Private message. Public note link. Know the difference.
+
+All twelve distinct candidates and their framework/heuristic scores are retained in the machine draft. These are alternates; changing the selected hook requires new review.
+
+| Seconds | Beat | Voiceover | On-screen text | Shot / proof to capture |
+|---|---|---|---|---|
+| 0-4 | hook | Sending a Skwirl note link? Check what the reader sees. | Sending a Skwirl note link? Check what the reader sees. | Real seeded demo note in the owner view, with the Share control visible. No private-window preview yet. Controlled demo, no chat reenactment. |
+| 4-9 | re-hook | Create a public link to a Skwirl note. | Create the public note link | Click the real Share control. Show the generated public note URL; keep sign-in tokens and connector URLs out of frame. |
+| 9-15 | payoff | Anyone with this link can read this note. | Anyone with this link can read it | Open that generated note URL in a signed-out private window. Show the actual public read-only note page and its content. |
+| 15-21 | limit | Keep that in mind before you send it. A link can be passed on. | Share the link on purpose | Stay on the real public note page. The permission warning is neutral, with no fictional leaked-data animation. |
+| 21-25 | cta | Try Skwirl. Link in bio. | Try Skwirl. Link in bio. | Wordmark. |
+
+**Caption**
+
+```text
+Create a public link to a Skwirl note. Anyone with the link can read that shared note.
+Try Skwirl. Link in bio.
+#Skwirl #savedreels #notes
+```
+
+**Gate status:** copy/style/structure/lexical recency PASS at generation; independent editor 4/5 on every dimension, no outstanding editorial issues. Final media/viewer gates pending. The editor reviews the next actual Maker artifact again at staging.
+
+
+### quality-02
+
+**Audience:** people who share notes by link. **Question (editorial hypothesis):** If you shared a note link, can you switch it off, and what can it not undo?
+
+**Format:** `do-dont`. **Claims:** `note_share`, `stop_sharing`. Code paths, exact copy and limits are in [features.json](playbooks/features.json).
+
+**Top three hooks** (selected editorially; candidate scores in the JSON are heuristic ranks):
+
+- You shared a note link. Can you take it back?
+- Two facts about stopping a shared note.
+- Stopping a share is not the same as erasing it.
+
+All twelve distinct candidates and their framework/heuristic scores are retained in the machine draft. These are alternates; changing the selected hook requires new review.
+
+| Slide | Job | Exact text | Bridge to next slide | Visual / proof to capture |
+|---|---|---|---|---|
+| 1 | hook | You shared a note link. Can you take it back? | Yes for the link. Not for everything. | Bold type on calm lavender with a simple link icon. |
+| 2 | problem | Create a public link to a Skwirl note. Anyone with the link can read it. | So you need a way to turn it off. | Seeded demo note in its shared state, labelled demo, no real names. |
+| 3 | action | Open the note and stop sharing it. | Here is the result. | Real capture of the seeded demo note as the stop sharing control is used, in the current UI. |
+| 4 | payoff | Stop sharing a Skwirl note so its old public link no longer works. | Now the honest part. | Real capture of the in-app message after stopping, then the old link opened in a browser. Show what the page truly displays. |
+| 5 | limit | The limit: it cannot reach copies or screenshots someone already kept. Share only what you are fine with them keeping. | Use the link on purpose. | Editorial two-card illustration: link switched off, a copy still on a friend's phone. |
+| 6 | cta | Try Skwirl. Link in bio. |  | Skwirl wordmark on calm lavender. |
+
+**Caption**
+
+```text
+Stop sharing a Skwirl note so its old public link no longer works. Copies or screenshots someone already kept stay with them.
+Try Skwirl. Link in bio.
+#notetaking #sharing #savedreels
+```
+
+**Gate status:** copy/style/structure/lexical recency PASS at generation; independent editor 4/5 on every dimension, no outstanding editorial issues. Final media/viewer gates pending. The editor reviews the next actual Maker artifact again at staging.
+
+
+### quality-03
+
+**Audience:** people who want a copy of their own notes. **Question (editorial hypothesis):** Can you take your own notes out of Skwirl, and what does the file look like?
+
+**Format:** `how-to`. **Claims:** `export_notes`. Code paths, exact copy and limits are in [features.json](playbooks/features.json).
+
+**Top three hooks** (selected editorially; candidate scores in the JSON are heuristic ranks):
+
+- Can you take your notes out of Skwirl?
+- This is what your Skwirl export file looks like.
+- One download. One JSON file. Your notes.
+
+All twelve distinct candidates and their framework/heuristic scores are retained in the machine draft. These are alternates; changing the selected hook requires new review.
+
+| Seconds | Beat | Voiceover | On-screen text | Shot / proof to capture |
+|---|---|---|---|---|
+| 0-3 | hook | Can you take your notes out of Skwirl? | Can you take your notes out of Skwirl? | Actual seeded Skwirl library in the signed-in account. Start at Me, with no personal data or sign-in links visible. |
+| 3-7 | re-hook | No copy-paste. Use Export my notes. | Me > Account > Export my notes | Real screen capture: open Me, expand Account (gData), select Export my notes (exportBtn). Mask all private sign-in link and token controls. |
+| 7-13 | payoff | Download your Skwirl notes as a JSON file. | JSON file | Click Export my notes in Account and show the real skwirl-export.json download. No simulated progress bar or invented app integration. |
+| 13-19 | other | The JSON export contains your note titles, summaries and note text. | Title. Summary. Note text. | Open the actual JSON download in a text editor. Highlight title, summary and markdown on one controlled demo note. These are verified fields from worker/src/v1.ts NOTE_COLUMNS and export SELECT. |
+| 19-25 | limit | Keep this file. It is a copy of your notes, not your videos. | A downloaded copy of your notes | Hold on the real JSON file. No PDF, video, scheduled backup or universal import icons. |
+| 25-29 | cta | Try Skwirl. Link in bio. | Try Skwirl. Link in bio. | Skwirl wordmark on calm lavender. |
+
+**Caption**
+
+```text
+Download your Skwirl notes as a JSON file. Keep the downloaded JSON file. It contains notes, not videos.
+Try Skwirl. Link in bio.
+#notes #productivity #savedreels
+```
+
+**Gate status:** copy/style/structure/lexical recency PASS at generation; independent editor 4/5 on every dimension, no outstanding editorial issues. Final media/viewer gates pending. The editor reviews the next actual Maker artifact again at staging.
+
+
+### quality-04
+
+**Audience:** people who read saved notes while travelling or on weak signal. **Question (editorial hypothesis):** If your signal drops, can you still read a note you were already looking at?
+
+**Format:** `myth-bust`. **Claims:** `offline_notes`. Code paths, exact copy and limits are in [features.json](playbooks/features.json).
+
+**Top three hooks** (selected editorially; candidate scores in the JSON are heuristic ranks):
+
+- Signal dropped. Can you still read your note?
+- Stop closing Skwirl when your signal drops.
+- What can you read in Skwirl with no signal?
+
+All twelve distinct candidates and their framework/heuristic scores are retained in the machine draft. These are alternates; changing the selected hook requires new review.
+
+| Slide | Job | Exact text | Bridge to next slide | Visual / proof to capture |
+|---|---|---|---|---|
+| 1 | hook | Signal dropped. Can you still read your note? | Sometimes. Here are the conditions. | Phone with one weak signal bar over a note, editorial illustration. |
+| 2 | belief | The belief: no signal means no notes. | Not always. Look at this case. | Bold type with the belief struck through. |
+| 3 | condition | It depends on whether the note is already on this device. | Here is what that looks like. | Simple diagram: one note on a phone, other notes not stored on this device. |
+| 4 | payoff | While Skwirl stays open, you can read notes already cached on this device if the connection drops. | Now the limits, in plain words. | Real capture on a seeded demo account: a note open, connection turned off, the cached note still readable. Show the real result only. |
+| 5 | scope limit | Only notes already kept on this signed-in device. Not your whole library. | And Skwirl has to stay open. | Card showing one note on the phone, other notes greyed out, labelled illustration. |
+| 6 | open limit | Do not count on it starting from scratch with no signal, or on new saves processing. | That is the whole story. | Two small crossed icons: app closed, new save waiting. |
+| 7 | cta | Try Skwirl. Link in bio. |  | Skwirl wordmark on calm lavender. |
+
+**Caption**
+
+```text
+While Skwirl stays open, you can read notes already cached on this device if the connection drops. Do not expect it to start fresh with no signal, or new saves to process.
+Try Skwirl. Link in bio.
+#notes #savedreels #productivity
+```
+
+**Gate status:** copy/style/structure/lexical recency PASS at generation; independent editor 4/5 on every dimension, no outstanding editorial issues. Final media/viewer gates pending. The editor reviews the next actual Maker artifact again at staging.
+
+
+### quality-05
+
+**Audience:** Skwirl Plus users who organise their notes. **Question (editorial hypothesis):** If a note is in the wrong category, can you fix it yourself in Skwirl Plus?
+
+**Format:** `do-dont`. **Claims:** `correct_category`. Code paths, exact copy and limits are in [features.json](playbooks/features.json).
+
+**Top three hooks** (selected editorially; candidate scores in the JSON are heuristic ranks):
+
+- Skwirl Plus demo: wrong category? Fix it on the note.
+- Skwirl Plus: you get the last word on a note's category.
+- Skwirl Plus: remove one category, add one.
+
+All twelve distinct candidates and their framework/heuristic scores are retained in the machine draft. These are alternates; changing the selected hook requires new review.
+
+| Seconds | Beat | Voiceover | On-screen text | Shot / proof to capture |
+|---|---|---|---|---|
+| 0-3 | hook | Skwirl Plus demo: wrong category? Fix it on the note. | Skwirl Plus demo: wrong category? Fix it on the note. | Frame zero: a controlled demo craft note with an intentionally assigned Food category, plainly labelled demo. Show the craft title and the mismatched category together. This is a staged example, not a claimed model error. |
+| 3-7 | re-hook | Keep the note. Change the category. | With Skwirl Plus: change the category | Hold on the actual category chips of that demo note. Open only the existing category selector; do not delete or re-import the note. |
+| 7-14 | payoff | With Skwirl Plus, tap a category on a note to add or remove it. | Skwirl Plus: tap to add or remove | Real capture: tap the wrong category to remove it, then tap the right existing category to add it. Two taps shown clearly, in the current UI. |
+| 14-19 | other | Now the note carries the category you chose. | Skwirl Plus: your category | Stay on the actual note while the category chips update after a successful server response. Show Food removed and Crafts present. Do not promise a separate category view in this shot. |
+| 19-25 | limit | With Skwirl Plus, choose from categories you already named. This is a manual fix. | With Skwirl Plus. Manual fix. | Simple card: existing categories, manual correction. Do not say Plus only; early accounts have different entitlements. |
+| 25-29 | cta | Try Skwirl. Link in bio. | Try Skwirl. Link in bio. | Wordmark and CTA. If mentioning access, say With Skwirl Plus, not Plus only. |
+
+**Caption**
+
+```text
+With Skwirl Plus, tap a category on a note to add or remove it. It needs categories that already exist, and it is a manual fix.
+Try Skwirl. Link in bio.
+#skwirlplus #notes #organising
+```
+
+**Gate status:** copy/style/structure/lexical recency PASS at generation; independent editor 4/5 on every dimension, no outstanding editorial issues. Final media/viewer gates pending. The editor reviews the next actual Maker artifact again at staging.
+
+## Retained prior work
+
+The following fifteen ideas remain as earlier drafts and history, with their existing holds and caveats. They are not the refreshed top five. Existing posts remain governed by the read-only handbook posted table.
+
+## Earlier backlog: I-01 to I-15 (retained, not the current top five)
 
 | ID | One-line hook | Format | Payoff | H | F | Ease | Fresh | Total |
 |---|---|---|---|---|---|---|---|---|

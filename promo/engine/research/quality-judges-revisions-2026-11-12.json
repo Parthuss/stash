@@ -1,0 +1,890 @@
+{
+  "status": "COPY_REVIEW_ONLY_NO_MEDIA_APPROVAL",
+  "reviews": [
+    {
+      "id": "quality-01",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "'Send a friend the whole note, not a screenshot.' names a specific, everyday habit and its replacement in one line. The first frame shows a friend asking for the desk stretch routine, so the question is honest and the share-and-open payoff answers it.",
+          "clarity_2s": "The subject (sharing a note with a friend instead of a screenshot) is readable from the on-screen text and the labelled demo chat in the first 3 seconds. The vo 'Send a friend the whole note.' matches the on-screen text.",
+          "payoff": "Beats 2-3 plan a real capture of creating the public link and then opening it logged out in a private window. That is filmable and matches the note_share source (POST /v1/notes/:id/share). The script says to show what is real if the page differs from the plan. The limit beat is stated plainly.",
+          "originality": "The history has no prior post on note sharing, but the structure is close to existing drafts. I-02 'Send me that pasta reel?' uses the same friend-request chat trigger, and I-15 and the 03-graveyard/11-zoom-in carousels use the same screenshot-versus-note framing. 'Screenshot vs the real thing' is a familiar format. The payoff here is a different feature (public link), but the structure is not distinct enough to earn a 4. The writer should differentiate it, for example by opening with the receiver's view, a concrete moment where a screenshot fails, or a more distinctive scene than a generic chat.",
+          "brand_fit": "The voice is plain and calm, the limit beat is honest, and the CTA is low-pressure. The demo is seeded with no real names."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "hook",
+            "text": "Send a friend the whole note, not a screenshot.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Implies a shared note shows the full note. note_share covers a public link to a Skwirl note. 'Whole note' is supported only if the shared page shows the full note, which the capture beat verifies. No guarantee or number is implied."
+          },
+          {
+            "path": "caption",
+            "text": "Create a public link to a Skwirl note. Anyone with the link can read it, so share on purpose.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Matches the approved copy and states the limit that anyone with the link can read the note."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Plain call to action with no product or outcome claim."
+          },
+          {
+            "path": "beats.0.on_screen",
+            "text": "Send a friend the whole note, not a screenshot.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Same as the hook."
+          },
+          {
+            "path": "beats.0.vo",
+            "text": "Send a friend the whole note.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Same as the hook, shortened."
+          },
+          {
+            "path": "beats.1.on_screen",
+            "text": "Or send a link",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Public link sharing is supported by note_share."
+          },
+          {
+            "path": "beats.1.vo",
+            "text": "Or send one link they can open.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "'They can open' is true for anyone with the link and matches the limit that no login or private chat is implied."
+          },
+          {
+            "path": "beats.2.on_screen",
+            "text": "Public link",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Label for the note_share feature."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "Create a public link to a Skwirl note.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Exact approved copy."
+          },
+          {
+            "path": "beats.3.on_screen",
+            "text": "Their view",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Label for the receiver page, which the real capture shows."
+          },
+          {
+            "path": "beats.3.vo",
+            "text": "Your friend opens it and reads the note.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Consistent with a public link that anyone can read. The shot requires a logged-out capture as evidence."
+          },
+          {
+            "path": "beats.4.on_screen",
+            "text": "Anyone with the link can read it",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Restates the approved limit."
+          },
+          {
+            "path": "beats.4.vo",
+            "text": "Heads up. Anyone with the link can read that note. So share it on purpose.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Restates the limit. It does not imply a private chat or collaboration feature."
+          },
+          {
+            "path": "beats.5.on_screen",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Plain call to action with no product claim."
+          },
+          {
+            "path": "beats.5.vo",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Plain call to action with no product claim."
+          },
+          {
+            "path": "platforms.instagram.caption",
+            "text": "Create a public link to a Skwirl note. Anyone with the link can read it, so share on purpose.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Same as the caption: approved copy plus the stated limit."
+          }
+        ],
+        "issues": [
+          "Originality scores 3: the friend-asks-in-chat setup overlaps with I-02 and the screenshot-versus-note framing overlaps with I-15 and the existing carousels. Differentiate the opening scene or the structure before resubmitting.",
+          "The hook line says 'the whole note, not a screenshot' but the screenshot is never shown failing, so the contrast is asserted rather than demonstrated. Add a beat that shows the screenshot limitation, or reword the hook to match what the demo shows.",
+          "Beat 1 on-screen text 'Or send a link' follows a hook that has already promised the replacement, so the re-hook adds little new information."
+        ],
+        "input_digest": "368586126153594895dfdee9a096fb82a609dcc342e22f94119bbb26307dc082"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "originality must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "quality-02",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 4,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "'You shared a note link. Can you take it back?' states a real worry for people who share notes by link. It opens a question the carousel answers: slide 4 shows the link stops working and slide 5 gives the limit. It is not a truism.",
+          "clarity_2s": "The subject (a shared note link) and the promise (can you undo it) are clear on the first slide. Slide 1's bridge, 'Yes for the link. Not for everything.', sets up the two-part answer.",
+          "payoff": "Slide 3 plans a real capture of the stop-sharing control on a seeded demo note. Slide 4 plans the in-app confirmation and the old link opened in a browser, which is filmable and matches the source anchor 'Stopped sharing. The old link no longer works.' Slide 5 states the honest limit (copies and screenshots) with practical advice. Slides 3 and 4 partly overlap, and slide 4 reuses the approved sentence verbatim, but the evidence-based demonstration still earns the payoff.",
+          "originality": "No history item covers sharing, revoking links or the limits of revocation. Existing drafts focus on saving, search, Lists, import and recall. The link-off-versus-copies-kept framing is a distinct angle on a different feature pair, not a lexical rewrite of anything in history.",
+          "brand_fit": "Plain, calm, honest voice. It states the limit up front rather than overselling privacy, and uses a seeded demo note with no real names. The CTA is low-pressure. The #savedreels hashtag is a slightly loose fit for a sharing post but harmless."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "hook",
+            "text": "Can you take it back?",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Implies the link can be revoked. stop_sharing supports revoking the Skwirl link. The limit is stated later in the carousel, so no erasure promise is made."
+          },
+          {
+            "path": "caption",
+            "text": "Stop sharing a Skwirl note so its old public link no longer works.",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for stop_sharing."
+          },
+          {
+            "path": "caption",
+            "text": "Copies or screenshots someone already kept stay with them.",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Restates the feature limit: it revokes the Skwirl link, not copies or screenshots. No erasure promise."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Generic call to action. No product or outcome claim, no pricing or free-access claim."
+          },
+          {
+            "path": "slides.0.text",
+            "text": "You shared a note link. Can you take it back?",
+            "feature_ids": [
+              "note_share",
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Question only. The answer is supported by the later slides."
+          },
+          {
+            "path": "slides.0.bridge",
+            "text": "Yes for the link. Not for everything.",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Matches the feature and its limit: the link is revoked, copies are not."
+          },
+          {
+            "path": "slides.1.text",
+            "text": "Create a public link to a Skwirl note. Anyone with the link can read it.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Approved copy plus the stated limit that anyone with the link can read the shared note."
+          },
+          {
+            "path": "slides.1.bridge",
+            "text": "So you need a way to turn it off.",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Transition only. It implies a stop-sharing control exists, which is supported."
+          },
+          {
+            "path": "slides.2.text",
+            "text": "Open the note and stop sharing it.",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Describes the stop-sharing action. The demonstration depends on a real capture in the current UI."
+          },
+          {
+            "path": "slides.2.bridge",
+            "text": "Here is the result.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "No claim."
+          },
+          {
+            "path": "slides.3.text",
+            "text": "Stop sharing a Skwirl note so its old public link no longer works.",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy, backed by the planned real capture of the in-app message and the old link."
+          },
+          {
+            "path": "slides.3.bridge",
+            "text": "Now the honest part.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "No claim."
+          },
+          {
+            "path": "slides.4.text",
+            "text": "The limit: it cannot reach copies or screenshots someone already kept. Share only what you are fine with them keeping.",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Matches the stop_sharing limit. The advice is conservative and adds no unsupported capability."
+          },
+          {
+            "path": "slides.4.bridge",
+            "text": "Use the link on purpose.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Advice only, no product claim."
+          },
+          {
+            "path": "slides.5.text",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Generic call to action with no claims."
+          },
+          {
+            "path": "platforms.instagram.caption",
+            "text": "Stop sharing a Skwirl note so its old public link no longer works. Copies or screenshots someone already kept stay with them.",
+            "feature_ids": [
+              "stop_sharing"
+            ],
+            "supported": true,
+            "reason": "Identical to the main caption: approved copy plus the stated limit."
+          }
+        ],
+        "issues": [],
+        "input_digest": "53d8594c3e90d23ac17f9ffc435bbbe80bbcdf77481c9a9fde00d8e900f49789"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "Audit needs known feature ids and grounding reason"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "quality-03",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 3,
+          "originality": 4,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "Frame zero shows the real export file and the line 'This is what your Skwirl export file looks like' opens an honest question that the script answers. The audience, people who want their own notes out, is specific. The 'How it got there' re-hook holds the viewer.",
+          "clarity_2s": "The subject is clear within two seconds: Skwirl, an export, a file open in a text editor. Hook text, VO and shot all say the same thing.",
+          "payoff": "The promise is 'what the file looks like', but the evidence only supports a download named skwirl-export.json (app.js line 955). Beat 3 asks to highlight 'one real note title and its summary' without any source showing the export contains those fields. Beat 0 says 'Show only fields that truly exist' but names none. The payoff therefore depends on unverified file contents and is not yet a supported, filmable demonstration. The 'Open it anywhere' beat also overreaches.",
+          "originality": "No history item covers export or download of notes. I-07 and the export-import carousel concern importing Instagram saves, which is a different feature and angle. The structure is a fairly standard how-to, but it is distinct from the prior posts.",
+          "brand_fit": "Plain, honest voice, with limits stated up front (not PDF, not backup, not videos) and no hype or invented numbers. The CTA is calm. Limits are stated in the caption as well."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [
+          "beats.3.on_screen: 'Open it anywhere'",
+          "beats.3.shot / payoff: export contains a note title and summary (unverified field set)"
+        ],
+        "claim_audit": [
+          {
+            "path": "hook",
+            "text": "This is what your Skwirl export file looks like.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Refers to the real skwirl-export.json. Supported only if the on-screen file is actually captured from the app."
+          },
+          {
+            "path": "caption",
+            "text": "Download your Skwirl notes as a JSON file.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Matches the approved copy."
+          },
+          {
+            "path": "caption",
+            "text": "It is a plain export, not a PDF, Markdown or an automatic backup.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Matches the limits: JSON only, not PDF, Markdown or an automatic backup."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Plain CTA with no product claim and no pricing or free claim."
+          },
+          {
+            "path": "beats.0.on_screen",
+            "text": "This is what your Skwirl export file looks like.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Same as the hook."
+          },
+          {
+            "path": "beats.0.vo",
+            "text": "This is your Skwirl export file.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Fine. 'Your' is slightly loose, since the demo is a seeded account, but it is not a material claim."
+          },
+          {
+            "path": "beats.1.vo",
+            "text": "Here is how it got there.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "No product claim."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "Download your Skwirl notes as a JSON file.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Exact approved copy."
+          },
+          {
+            "path": "beats.2.on_screen",
+            "text": "JSON file",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Matches the feature."
+          },
+          {
+            "path": "beats.3.vo",
+            "text": "It is a plain text file you can open on your computer.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "JSON is a text format and opens in a text editor. This goes beyond the approved copy, but is low risk."
+          },
+          {
+            "path": "beats.3.on_screen",
+            "text": "Open it anywhere",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": false,
+            "reason": "'Anywhere' implies universal compatibility. The limits say it is not importable into every tool, and the beats show only a text editor. Reword to 'Open it in a text editor'."
+          },
+          {
+            "path": "beats.4.vo",
+            "text": "It is JSON, not a PDF. Not an automatic backup. Not your videos.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Matches the limits: not PDF, not an automatic backup, not a video archive."
+          },
+          {
+            "path": "beats.4.on_screen",
+            "text": "JSON only",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Matches the limits."
+          },
+          {
+            "path": "beats.5.on_screen",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "CTA only."
+          },
+          {
+            "path": "platforms.instagram.caption",
+            "text": "Download your Skwirl notes as a JSON file. It is a plain export, not a PDF, Markdown or an automatic backup.",
+            "feature_ids": [
+              "export_notes"
+            ],
+            "supported": true,
+            "reason": "Same as the caption."
+          }
+        ],
+        "issues": [
+          "Payoff is unproven: no source confirms which fields skwirl-export.json contains, yet beat 3 promises to highlight a note title and its summary. Verify the export schema from the code and name only fields that exist in the shot, or drop the title and summary highlight.",
+          "'Open it anywhere' overstates compatibility. Use 'Open it in a text editor'.",
+          "The question 'what does the file look like' needs a verified description of the file contents to be answered honestly."
+        ],
+        "input_digest": "402cece0b784e54176d585dc462c393fd30574e351e96a702512e157eb6b5209"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "payoff must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "quality-04",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 4,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "'Signal dropped. Can you still read your note?' names an everyday moment for the stated audience (people reading saved notes while travelling or on weak signal). It opens a real question that slide 4 answers and slides 5-6 qualify. The bridge 'Sometimes' keeps it honest rather than clickbait.",
+          "clarity_2s": "The first frame shows a phone with a weak signal bar over a note, and the question names both the problem and the object. The subject is clear in two seconds. The mild drag is that 'it depends on one thing' (slide 1 bridge) sets up a single condition, but the carousel later states three: cached, signed-in device, Skwirl kept open.",
+          "payoff": "Slide 4 plans a filmable, supported demonstration on a seeded demo account: note open, connection turned off, cached note still readable, 'show the real result only'. This matches the offline_notes source (cached note fallback when the request fails or returns 5xx). Slides 5-6 state the limits (cached notes only, not the whole library, page must stay open, no cold start, no new-save processing), so the payoff is bounded and earned.",
+          "originality": "Nothing in the supplied history (ideas backlog, handbook, posted captions) covers cached or offline reading. The myth-bust structure (belief struck through, then condition, proof, limits) differs from the previous recipe, search and import pieces. It is a new angle, not a lexical variation of an existing piece.",
+          "brand_fit": "The voice is plain and calm, and it states limits openly ('Do not count on it...'). There are no guarantees, invented numbers or hype. The CTA is low-pressure ('Try Skwirl. Link in bio.'), and the lavender wordmark close fits the brand."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "hook",
+            "text": "Signal dropped. Can you still read your note?",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "A question, not an assertion. The answer is bounded by offline_notes and its limits."
+          },
+          {
+            "path": "caption",
+            "text": "While Skwirl stays open, you can read notes already cached on this device if the connection drops.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for offline_notes."
+          },
+          {
+            "path": "caption",
+            "text": "Do not expect it to start fresh with no signal, or new saves to process.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "Matches the limit: no cold-start offline loading and no offline processing of new saves."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A generic call to action with no product or outcome claim."
+          },
+          {
+            "path": "slides.0.text",
+            "text": "Signal dropped. Can you still read your note?",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "A question; the answer is scoped later."
+          },
+          {
+            "path": "slides.0.bridge",
+            "text": "Sometimes. It depends on one thing.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "'Sometimes' is honest, but 'one thing' understates the three conditions in the limits (cached, signed-in device, app kept open). A wording imprecision, not a false product claim."
+          },
+          {
+            "path": "slides.1.text",
+            "text": "The belief: no signal means no notes.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Framing of a belief to bust, not a product claim."
+          },
+          {
+            "path": "slides.1.bridge",
+            "text": "Not always. Look at this case.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "The hedged 'Not always' is consistent with the scoped feature."
+          },
+          {
+            "path": "slides.2.text",
+            "text": "It depends on whether the note is already on this device.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "Matches the limit 'only already cached notes on this signed-in device'. It omits the keep-open condition, which slides 4-5 add."
+          },
+          {
+            "path": "slides.2.bridge",
+            "text": "Here is what that looks like.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A transition with no claim."
+          },
+          {
+            "path": "slides.3.text",
+            "text": "While Skwirl stays open, you can read notes already cached on this device if the connection drops.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy. The planned real capture on a seeded demo account must show only the actual result."
+          },
+          {
+            "path": "slides.3.bridge",
+            "text": "Now the limits, in plain words.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A transition with no claim."
+          },
+          {
+            "path": "slides.4.text",
+            "text": "Only notes already kept on this signed-in device. Not your whole library.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "Restates the limit 'not your entire library' and the signed-in device scope. 'Kept' is a synonym for 'cached' and matches the code's kept store."
+          },
+          {
+            "path": "slides.4.bridge",
+            "text": "And Skwirl has to stay open.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "Matches 'Keep the page open'."
+          },
+          {
+            "path": "slides.5.text",
+            "text": "Do not count on it starting from scratch with no signal, or on new saves processing.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "Matches the limit against promising cold-start offline loading or offline processing of new saves."
+          },
+          {
+            "path": "slides.5.bridge",
+            "text": "That is the whole story.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "No product claim."
+          },
+          {
+            "path": "slides.6.text",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "A generic call to action."
+          },
+          {
+            "path": "platforms.instagram.caption",
+            "text": "While Skwirl stays open, you can read notes already cached on this device if the connection drops. Do not expect it to start fresh with no signal, or new saves to process.",
+            "feature_ids": [
+              "offline_notes"
+            ],
+            "supported": true,
+            "reason": "Same approved copy and limits as the caption."
+          }
+        ],
+        "issues": [
+          "Slide 1 bridge 'It depends on one thing' conflicts with the three conditions the carousel later states (note cached, signed-in device, Skwirl kept open). Reword it, e.g. 'It depends on a couple of things.' or 'Sometimes. Here are the conditions.'",
+          "Slide 3 visual ('the rest still in the cloud') adds an architecture implication beyond approved copy. Keep it as a neutral 'not on this device' illustration, or label it clearly as an illustration."
+        ],
+        "input_digest": "d4fc626abb424701264e48402b6a9549a5a2edd2af4dfadf02c75633a90feac2"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "Judge found claims or editorial issues, or omitted its complete audit"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "quality-05",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "hook_strength": 3,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "hook_strength": "\"Skwirl Plus tip: fix a note's category by hand.\" is a label-plus-instruction, not an open question. The draft's own question (\"can you fix it yourself?\") and the myth-bust format are not carried into frame zero. The audience problem (a note in the wrong category) is implied rather than felt, and a brand-first opener adds no tension. It is understandable but generic.",
+          "clarity_2s": "The subject (a note's category, manual fix, Plus) is clear from the on-screen text, and the staged wrong-category note with a visible Plus badge supports it. Slightly diluted by the \"tip\" framing.",
+          "payoff": "The planned two-tap demo (remove the wrong chip, add the right existing one) matches correct_category and is filmable. Beat 3's \"category view with the note listed there\" is not covered by the cited source (turnOn toggle on the note), so that part is unevidenced. The limit beat is honest about manual and existing categories.",
+          "originality": "No history item covers category correction, so the topic is new. The structure is a plain feature tip. It is tagged myth-bust but states no myth to bust, so the format is nominal. Compared with the generic app-tour pieces in history, it is only mildly distinct.",
+          "brand_fit": "Plain, useful, non-hype voice, honest manual limit, no guarantees or invented numbers. The repeated \"Skwirl Plus\" prefix in every unit reads a little like a spec sheet, and the entitlement wording (see issues) is slightly too absolute."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [
+          "Plus only (beats.4.on_screen) and \"Skwirl Plus only\" (beats.4.vo): the feature limits say early accounts have different entitlements, so \"only\" overstates exclusivity.",
+          "Category view showing the note listed there (beats.3 shot): no source evidence for this view in the cited feature."
+        ],
+        "claim_audit": [
+          {
+            "path": "hook",
+            "text": "fix a note's category by hand",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Manual correction is within the approved claim and limits."
+          },
+          {
+            "path": "caption",
+            "text": "With Skwirl Plus, tap a category on a note to add or remove it.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Exact approved copy."
+          },
+          {
+            "path": "caption",
+            "text": "It needs categories that already exist, and it is a manual fix.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Matches the stated limits."
+          },
+          {
+            "path": "cta",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "Plain CTA, no product claim."
+          },
+          {
+            "path": "beats.0.on_screen",
+            "text": "Skwirl Plus tip: fix a note's category by hand.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Within the approved claim."
+          },
+          {
+            "path": "beats.0.vo",
+            "text": "Skwirl Plus tip: fix a category by hand.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Within the approved claim."
+          },
+          {
+            "path": "beats.1.on_screen",
+            "text": "Skwirl Plus: fix it on the note",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "The action happens on the note."
+          },
+          {
+            "path": "beats.1.vo",
+            "text": "You can fix it right on the note.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Consistent with the tap-on-note source."
+          },
+          {
+            "path": "beats.2.on_screen",
+            "text": "Skwirl Plus: tap to add or remove",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Approved claim."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "With Skwirl Plus, tap a category on a note to add or remove it.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Exact approved copy."
+          },
+          {
+            "path": "beats.3.on_screen",
+            "text": "Skwirl Plus: your category",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "Describes the user-chosen category."
+          },
+          {
+            "path": "beats.3.vo",
+            "text": "Now the note carries the category you chose.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": true,
+            "reason": "The result of the toggle. The companion shot about a category view is unevidenced."
+          },
+          {
+            "path": "beats.4.on_screen",
+            "text": "Plus only. Manual fix.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": false,
+            "reason": "\"Plus only\" ignores that early accounts have different entitlements; use \"With Skwirl Plus\" phrasing instead."
+          },
+          {
+            "path": "beats.4.vo",
+            "text": "Skwirl Plus only, and the category must already exist. You fix it by hand.",
+            "feature_ids": [
+              "correct_category"
+            ],
+            "supported": false,
+            "reason": "Same entitlement overstatement. The existing-category and manual limits are correct."
+          },
+          {
+            "path": "beats.5.on_screen",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "CTA only."
+          },
+          {
+            "path": "beats.5.vo",
+            "text": "Try Skwirl. Link in bio.",
+            "feature_ids": [],
+            "supported": true,
+            "reason": "CTA only."
+          }
+        ],
+        "issues": [
+          "Hook is a generic feature label, not an honest open question that the payoff answers; it does not use the myth-bust format or the draft's own question. Rewrite around the felt problem, e.g. a visibly wrong category with a question the demo answers.",
+          "Myth-bust format is declared but no myth is stated or busted, so originality is only nominal.",
+          "\"Plus only\" / \"Skwirl Plus only\" overstates exclusivity given early-account entitlements; reword to \"With Skwirl Plus\" and avoid implying nobody else has it.",
+          "Beat 3 shot promises a category view listing the note, which the cited source does not evidence; drop it or add a source.",
+          "The CTA card line \"category fixes are a Skwirl Plus feature\" carries the same entitlement overstatement."
+        ],
+        "input_digest": "abdd994735e0e102711fd1a118c2633e9f90f7d34ae9be942583d5d115948141"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "hook_strength must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    }
+  ]
+}

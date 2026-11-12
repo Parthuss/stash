@@ -1,0 +1,26 @@
+{
+  "scope": "Read-only smoke check on an EXISTING prior asset; no new video rendered and no editorial/viewer/approval verdict.",
+  "source": "promo/out/instagram/05-fridge/fridge-pov.mp4",
+  "duration_s": 34.6,
+  "size_bytes": 8117978,
+  "streams": [
+    {
+      "codec_type": "video",
+      "codec_name": "h264",
+      "width": 1080,
+      "height": 1920,
+      "r_frame_rate": "30/1",
+      "sample_rate": null
+    },
+    {
+      "codec_type": "audio",
+      "codec_name": "aac",
+      "width": null,
+      "height": null,
+      "r_frame_rate": "0/0",
+      "sample_rate": "96000"
+    }
+  ],
+  "integrated_lufs": -15.02,
+  "true_peak_dbtp": -0.98
+}

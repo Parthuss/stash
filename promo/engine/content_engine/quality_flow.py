@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .hooks import heuristic_score, norm_feature, validate_hook, numbers_in
-from .ideation import AUDIENCES, generate_ideas, load_formats, read_history
+from .ideation import generate_ideas, load_audiences, load_formats, read_history
 from .quality_judge import digest, judge_packet, run_judge, validate_judge
 from .validate_copy import catalogue, validate_copy
 from .validate_scripts import validate_script
@@ -91,7 +91,7 @@ def generate_plan(root: Path, model=None, n: int = 5, now: datetime | None = Non
     now=now or datetime.now(timezone.utc)
     history=planning_history(root)
     cat=catalogue()
-    initial=generate_ideas(cat,load_formats(root),audiences=[a for a in AUDIENCES if a['id']!='pro'],
+    initial=generate_ideas(cat,load_formats(root),audiences=[a for a in load_audiences(root) if a['id']!='pro'],
                            history=history,n=n,seed=now.date().isoformat(),now=now.replace(tzinfo=None))
     if model:
         drafts=parse_model_json(model(refine_prompt(initial['drafts'],history)))['drafts']
