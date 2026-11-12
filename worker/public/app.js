@@ -391,9 +391,22 @@ let flow = { email: "", name: "", invite: "", signup: false }, resendAt = 0, res
 function closeDlg(d) { if (d.open) d.close(); }
 function signedIn(t, created) {
   token = t; store.set("stash_token", token); store.set("sk_was_in", "1"); store.del("stash_link_saved");
-  closeDlg($("authDlg")); document.body.classList.remove("site-visit"); start();
-  if (created === false && flow.signup) toast("Welcome back. That email already had an account, so you're signed in to it.");
+  const welcome = created === false && flow.signup;
+  leaveAuth(() => { document.body.classList.remove("site-visit"); start(); if (welcome) toast("Welcome back. That email already had an account, so you're signed in to it."); });
 }
+// The auth view holds one history entry while it's open (no hash in the address bar), so Back closes
+// it, and closing it any way (×, Esc, signing in) takes that entry back out: nothing left behind.
+let authLeaving = false, authAfter = null;
+function authEntryGone() { authLeaving = false; const f = authAfter; authAfter = null; if (f) f(); }
+function dropAuthEntry() {
+  if (!history.state?.skAuth) return authEntryGone();
+  if (authLeaving) return; authLeaving = true; history.back();
+  setTimeout(() => { if (authLeaving) authEntryGone(); }, 700);  // a webview that never fires popstate
+}
+// Close the view, then run `then` once its history entry is gone.
+function leaveAuth(then) { authAfter = then || null; if ($("authDlg").open) $("authDlg").close(); else dropAuthEntry(); }
+$("authDlg").addEventListener("close", dropAuthEntry);
+window.addEventListener("popstate", () => { if ($("authDlg").open) $("authDlg").close(); else if (authLeaving) authEntryGone(); });
 // Show email sign-in only when it's on; until then the sign-in link box is the way in.
 function authModes(mode) {
   const on = !!mode.email_login;
@@ -402,24 +415,56 @@ function authModes(mode) {
   if (!on) $("tokenAlt").open = true;
   if (mode.google_client_id) loadGoogle(mode.google_client_id);
 }
-function step(which) { $("stepEmail").hidden = which !== "email"; $("stepCode").hidden = which !== "code"; }
-function openSignin(msg, at = "email") {
+// Steps of the auth view: "create" and "email" (the two tabs), then "code".
+const AUTH_TEXT = { create: ["Create your account", "Free to try. iPhone, Android or computer."],
+  email: ["Welcome back", "Enter the email on your account. We'll send you a 6-digit code."] };
+function step(which) {
+  $("stepCreate").hidden = which !== "create"; $("stepEmail").hidden = which !== "email"; $("stepCode").hidden = which !== "code";
+  $("authTabs").hidden = which === "code";
+  $("authDlg").setAttribute("aria-labelledby", which === "code" ? "codeTitle" : "authTitle");
+  if (which === "code") return;
+  [$("authTitle").textContent, $("authLede").textContent] = AUTH_TEXT[which];
+  for (const [id, on] of [["tabCreate", which === "create"], ["tabSignin", which === "email"]]) {
+    $(id).setAttribute("aria-selected", String(on)); $(id).tabIndex = on ? 0 : -1;
+  }
+}
+function authFocus(at) {
+  const el = at === "code" ? $("codeIn") : at === "create" ? $("joinName") : $("signEmail").offsetParent ? $("signEmail") : $("token");
+  setTimeout(() => el.focus(), 80);
+}
+// at: "create" (Start free), "email" (Sign in) or "code" (after a code went out).
+function openAuth(at, msg = "") {
   const d = $("authDlg");
   joinInfo.then(authModes);
-  if (at === "email") { flow.signup = false; $("codeNameRow").hidden = true; }
-  step(at); $("authErr").textContent = msg || "";
+  if (at !== "code") { flow.signup = false; $("codeNameRow").hidden = true; }
+  step(at); $("authErr").textContent = msg; $("authErr").className = "msg err";
   if (at === "code") { $("codeTo").textContent = flow.email; $("codeIn").value = ""; cooldown(); }
-  else if (flow.email) $("signEmail").value = flow.email;
-  if (!d.open) d.showModal();
-  setTimeout(() => (at === "code" ? $("codeIn") : $("signEmail").offsetParent ? $("signEmail") : $("token")).focus(), 80);
+  else if (flow.email && at === "email") $("signEmail").value = flow.email;
+  if (!d.open) {
+    d.showModal();
+    if (!history.state?.skAuth) history.pushState({ ...history.state, skAuth: 1 }, "");
+  }
+  renderGoogle(); authFocus(at);
 }
+const openSignin = (msg, at = "email") => openAuth(at, msg || "");
 document.addEventListener("click", (e) => {
-  if (e.target.closest("[data-signin]")) { e.preventDefault(); tr("click", "signin"); openSignin(""); }
+  if (e.target.closest("[data-signin]")) { e.preventDefault(); tr("click", "signin"); openAuth("email"); }
+  else if (e.target.closest("[data-start]")) { e.preventDefault(); tr("click", "start"); openAuth("create"); }
 });
+function authTab(at) { $("authErr").textContent = ""; step(at); renderGoogle(); authFocus(at); }
+$("tabCreate").addEventListener("click", () => authTab("create"));
+$("tabSignin").addEventListener("click", () => authTab("email"));
+$("authTabs").addEventListener("keydown", (e) => {
+  if (!["ArrowLeft", "ArrowRight"].includes(e.key) || !e.target.closest("[role=tab]")) return;
+  const to = e.target.id === "tabCreate" ? "email" : "create";
+  step(to); renderGoogle(); $(to === "create" ? "tabCreate" : "tabSignin").focus();
+});
+// × closes; so does a click on the backdrop (outside the card; on a phone the view is the whole screen).
 $("authDlg").addEventListener("click", (e) => {
-  if (e.target.closest("[data-close]") || e.target === $("authDlg")) closeDlg($("authDlg"));
-  else if (e.target.closest("[data-back]")) { step("email"); $("codeNameRow").hidden = true; $("authErr").textContent = ""; $("signEmail").focus(); }
-  else if (e.target.closest("[data-create]")) { closeDlg($("authDlg")); document.body.classList.remove("site-visit"); show("auth"); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 300); }
+  const d = $("authDlg"), r = d.getBoundingClientRect();
+  const outside = e.target === d && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom);
+  if (e.target.closest("[data-close]") || outside) closeDlg(d);
+  else if (e.target.closest("[data-back]")) { $("codeNameRow").hidden = true; authTab(flow.signup ? "create" : "email"); }
 });
 // "Send a new code" waits 30 s between sends.
 function cooldown() {
@@ -474,15 +519,24 @@ function loadGoogle(clientId) {
   const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
   s.onload = () => {
     google.accounts.id.initialize({ client_id: clientId, callback: onGoogle, ux_mode: "popup", auto_select: false, context: "signin" });
-    for (const id of ["gJoin", "gDlg"]) {
-      const box = $(id); box.hidden = false;
-      google.accounts.id.renderButton(box.querySelector(".gbtn"), { theme: "outline", size: "large", shape: "pill", text: "continue_with", width: 300 });
-    }
+    googleReady = true; for (const id of ["gJoin", "gDlg"]) $(id).hidden = false;
+    renderGoogle();
   };
   document.head.appendChild(s);
 }
+// Google draws its own button at a fixed pixel width, so draw it (once per width) when its pane shows.
+let googleReady = false;
+function renderGoogle() {
+  if (!googleReady) return;
+  for (const id of ["gJoin", "gDlg"]) {
+    const box = $(id).querySelector(".gbtn"), w = Math.min(400, Math.floor(box.clientWidth));
+    if (!w || box.dataset.w === String(w)) continue;
+    box.dataset.w = w; box.textContent = "";
+    google.accounts.id.renderButton(box, { theme: "outline", size: "large", shape: "pill", text: "continue_with", width: w });
+  }
+}
 async function onGoogle(resp) {
-  const err = $("authDlg").open ? $("authErr") : $("joinErr"); err.textContent = "";
+  const err = $("authErr"); err.textContent = "";
   let r; try { r = await postJson("/auth/google", { credential: resp.credential, name: $("joinName").value.trim(), invite: $("joinCode").value }); }
   catch { err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
   const b = await r.json().catch(() => ({}));
@@ -583,12 +637,11 @@ if (inApp) {
     : "You're in Instagram's browser, which can forget you. Tap <b>•••</b> at the top, then <b>Open in external browser</b>.";
   $("inAppNote").hidden = false; tr("card_shown", "inapp");
 }
-document.querySelectorAll("#toTop, [data-totop]").forEach((el) => el.addEventListener("click", (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("joinName").focus(), 400); }));
 // Create account: first name + email. With email sign-in on, we email a code and the account is
 // made when it comes back (so every address on file is real); without it, the account is made now.
 $("joinForm").addEventListener("submit", async (e) => {
   tr("join_submit");
-  e.preventDefault(); const err = $("joinErr"), button = e.currentTarget.querySelector("button[type=submit]");
+  e.preventDefault(); const err = $("authErr"), button = e.currentTarget.querySelector("button[type=submit]");
   if (button.disabled) return;
   button.disabled = true; err.textContent = "";
   const name = $("joinName").value.trim(), email = $("joinEmail").value.trim(), invite = $("joinCode").value;
@@ -613,7 +666,7 @@ async function signInWith(t) {
   try { r = await fetch("/v1/notes?limit=1", { headers: { Authorization: "Bearer " + token } }); }
   catch { token = null; return "Can't reach Skwirl. Check your connection and try again."; }
   tr("signin", r.ok ? "ok" : r.status);
-  if (r.ok) { store.set("stash_token", token); store.set("sk_was_in", "1"); closeDlg($("authDlg")); start(); return ""; }
+  if (r.ok) { store.set("stash_token", token); store.set("sk_was_in", "1"); leaveAuth(() => start()); return ""; }
   token = null;
   return r.status === 401 ? "That didn't work. Copy the whole sign-in link (or the token, starting stk_) and try again." : "Skwirl had a problem. Try again in a minute.";
 }
@@ -935,8 +988,12 @@ if (loginCode) {
 } else if (token) start().catch(() => {});
 else {
   show("auth"); joinMode(); plusSignedOut();
-  // Been signed in here before, the home-screen app, or a skwirl.app/#signin link: open sign-in.
-  if (store.get("sk_was_in") || standalone || location.hash === "#signin") openSignin("");
+  // A skwirl.app/#start or #signin link opens that tab (and the hash comes out of the address bar);
+  // been signed in here before, or the home-screen app: open sign-in.
+  const h = location.hash;
+  if (h === "#start" || h === "#signin") history.replaceState(history.state, "", location.pathname + location.search);
+  if (h === "#start") openAuth("create");
+  else if (store.get("sk_was_in") || standalone || h === "#signin") openSignin("");
 }
 function plusSignedOut() {
   const p = new URLSearchParams(location.search);
@@ -1256,7 +1313,7 @@ function renderPlus() {
 document.addEventListener("click", async (e) => {
   const buy = e.target.closest("[data-buy]"), portal = e.target.closest("[data-portal]");
   if (!buy && !portal) return;
-  if (buy && !token) { $("joinName").scrollIntoView({ behavior: "smooth", block: "center" }); return $("joinName").focus(); }
+  if (buy && !token) { tr("click", "start_from_plus"); return openAuth("create"); }
   tr("click", buy ? "plus_checkout_" + buy.dataset.buy : "plus_portal");
   const r = await (buy ? api("/v1/plus/checkout", { method: "POST", body: JSON.stringify({ interval: buy.dataset.buy }) }) : api("/v1/plus/portal")).catch(() => null);
   const b = r ? await r.json().catch(() => ({})) : {};
