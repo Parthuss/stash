@@ -177,7 +177,7 @@ body.sheet-open .sheet { transform: none; visibility: visible; transition-delay:
 /* Signed in and visiting the site: no join or sign-in, a way back to the app instead. */
 .lback, .lhero .siteback { display: none; } .lback { align-items: center; text-decoration: none; color: var(--ink); }
 body.site-visit .lback { display: inline-flex; } body.site-visit .lhero .siteback { display: flex; }
-body.site-visit .lsign, body.site-visit #joinForm, body.site-visit .haveacct, body.site-visit #gJoin, body.site-visit .signin-cta, body.site-visit #joinFine, body.site-visit #pwaIn, body.site-visit .work-cta [data-totop] { display: none !important; }
+body.site-visit .lsign, body.site-visit .lcta, body.site-visit .lfine, body.site-visit .signin-cta, body.site-visit #pwaIn, body.site-visit [data-start] { display: none !important; }
 .demo-toggle:not(:focus-visible) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .lsign { display: inline-flex; align-items: center; text-decoration: none; color: var(--ink); }
 .lhero { display: grid; gap: 34px; align-items: center; padding: 7vh 0 10px; }
@@ -186,21 +186,12 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit .haveacct, bo
 .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #2fbf71; box-shadow: 0 0 0 3px rgb(47 191 113 / .2); }
 .lhero h1 { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: clamp(42px, 9vw, 72px); line-height: 1; letter-spacing: -.03em; margin: 0 auto 18px; max-width: 11ch; }
 .lede { text-wrap: pretty; color: var(--muted); font-size: 18px; max-width: 32em; margin: 0 auto; }
-.joinbox { max-width: 440px; margin: 28px auto 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: rgb(255 255 255 / .92); border-radius: 999px; padding: 6px; box-shadow: var(--lift-1); }
-.joinbox input { flex: 1; min-width: 0; height: 48px; padding: 0 8px 0 18px; border: 0; background: none; text-align: left; outline-offset: -2px; }
-.joinbox input:focus-visible { outline: none; }
-.joinbox:focus-within { box-shadow: var(--lift-1), 0 0 0 2px var(--ink); }
-.joinbox #joinCode:not([hidden]) { border-left: 1px solid var(--line); border-radius: 0; }
-.joinbox { border-radius: 26px; }
-.joinfields { display: flex; flex: 1 1 100%; min-width: 0; }
-.joinfields input + input { border-left: 1px solid var(--line); }
-#joinForm > .btn { flex: 1 1 100%; }
-@media (max-width: 520px) { .joinfields { flex-direction: column; } .joinfields input { flex: none; width: 100%; } .joinfields input + input { border-left: 0; border-top: 1px solid var(--line); } }
-.haveacct { margin: 12px auto 0; max-width: 440px; font-size: 15px; color: var(--ink); }
+.lcta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 18px; margin-top: 30px; }
+.lcta .btn { height: 54px; padding: 0 34px; font-size: 17px; transition: transform .15s, box-shadow .2s; }
+.quietlink { color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: rgb(29 27 46 / .35); text-underline-offset: 4px; padding: 14px 6px; }
+.quietlink:hover { text-decoration-color: currentColor; }
+.lfine { margin-top: 14px; }
 .linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.gwrap { max-width: 440px; margin: 12px auto 0; display: grid; justify-items: center; gap: 10px; }
-.gwrap .or { font-size: 13px; color: var(--muted); }
-.gwrap .gbtn { min-height: 44px; }
 .signin-cta { text-align: center; margin-top: 56px; }
 .signin-cta p { color: var(--muted); margin: 0 0 10px; }
 .authdlg { border: 0; border-radius: 28px; padding: 28px 22px 20px; max-width: 400px; width: calc(100% - 32px); background: #fff; color: var(--ink); box-shadow: var(--lift-2); position: fixed; }
@@ -214,6 +205,34 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit .haveacct, bo
 .authdlg .msg:empty { display: none; }
 .authdlg .msg { margin: 10px 0 0; }
 .authdlg .msg.info { color: var(--ink); }
+/* The auth view (#authDlg): one centered column, everything the same width. A ~400px glass card on a
+   computer, the whole screen on a phone. */
+.authview { padding: 30px 28px 24px; max-height: calc(100dvh - 32px); overflow: auto; background: rgb(255 255 255 / .9); border: 1px solid rgb(255 255 255 / .85);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%); box-shadow: inset 0 1px 0 #fff, 0 24px 60px rgb(60 50 120 / .22); }
+.authview[open] { animation: rise .28s cubic-bezier(.2,.7,.2,1) both; }
+.authview::backdrop { background: rgb(40 32 90 / .26); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.authcol { max-width: 344px; margin: 0 auto; text-align: center; }
+.authbrand { display: inline-flex; align-items: center; gap: .26em; font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 24px; letter-spacing: -.02em; color: var(--ink); text-decoration: none; margin: 0 0 18px; pointer-events: none; }
+.authbrand img { width: 1.02em; height: 1.02em; }
+.authview h2 { margin: 0 0 6px; text-wrap: balance; }
+.authview .authlede { margin: 0; text-wrap: pretty; }
+.authtabs { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; margin: 20px 0 18px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.authtabs button { height: 40px; border: 0; border-radius: 999px; background: none; font: inherit; font-size: 15px; font-weight: 600; color: var(--muted); cursor: pointer; transition: background .15s, color .15s; }
+.authtabs [aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgb(60 50 120 / .14), 0 3px 10px rgb(60 50 120 / .08); }
+.authview #inAppNote { margin: 0 0 16px; text-align: left; }
+.authview .gwrap { display: grid; gap: 14px; margin: 0 0 14px; }
+.authview .gbtn { min-height: 44px; display: flex; justify-content: center; }
+.authview .or { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+.authview .or::before, .authview .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.authview .fine { margin: 14px 0 0; }
+.authview #stepCode p { margin-bottom: 6px; }
+.authview .tokenalt { text-align: left; }
+.authview .tokenalt summary { text-align: center; }
+@media (max-width: 560px) {
+  .authview { inset: 0; width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; border-radius: 0; box-shadow: none;
+    padding: calc(env(safe-area-inset-top) + 64px) 24px calc(env(safe-area-inset-bottom) + 28px); background: linear-gradient(180deg, #ecE9ff 0%, #fbfaff 38%, #fff 70%, #fff4ef 100%); }
+  .authview .dlgx { top: calc(env(safe-area-inset-top) + 14px); right: 14px; background: rgb(255 255 255 / .8); }
+}
 .dlgx { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--bg); font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink); }
 .dlgfoot { margin-top: 16px !important; text-align: center; font-size: 14px !important; }
 .dlgnote { background: var(--butter); color: var(--ink) !important; border-radius: 16px; padding: 10px 14px; margin: 6px 0 8px !important; }
@@ -221,17 +240,12 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit .haveacct, bo
 .tokenalt summary { cursor: pointer; color: var(--muted); padding: 6px 0; }
 .tokenalt[open] summary { margin-bottom: 8px; }
 .tokenalt code { font-family: var(--mono); font-size: 13px; background: var(--bg); padding: 1px 6px; border-radius: 8px; }
-.joinbox .btn { height: 48px; flex: none; transition: transform .15s, box-shadow .2s; }
-.joinbox .msg, .joinbox .fine { flex-basis: 100%; }
-.joinwrap .fine { margin-top: 10px; }
-@media (hover: hover) { .joinbox .btn:hover, .lend .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgb(29 27 46 / .25); } }
-.joinbox .msg:empty { display: none; }
+@media (hover: hover) { .lcta .btn:hover, .lend .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgb(29 27 46 / .25); } }
 .fine { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
-.lcopy > .msg:empty { display: none; }
 @media (min-width: 880px) {
   .lhero { grid-template-columns: 1.15fr .85fr; padding-top: 9vh; }
-  .lcopy { text-align: left; } .lhero h1, .lede { margin-left: 0; } .joinbox, .haveacct, .gwrap { margin-left: 0; } .gwrap { justify-items: start; }
-  .joinbox input { text-align: left; }
+  .lcopy { text-align: left; } .lhero h1, .lede { margin-left: 0; }
+  .lcta { justify-content: flex-start; }
 }
 
 .pwa-in { margin: 24px auto 0; max-width: 440px; background: var(--butter); border-radius: 28px; padding: 22px; text-align: center; box-shadow: var(--lift-1); }
@@ -622,19 +636,8 @@ body.on-phone .phone-handoff { display: none; }
       <h1>Everything you save, actually useful.</h1>
       <p class="lede">Share a reel and it becomes a note you can search. Claude Code brings the right one back while you work.</p>
       <div class="siteback inline-actions"><a class="btn" href="/" data-backapp>Back to my saves</a></div>
-      <form id="joinForm" class="joinbox" aria-label="Create your Skwirl account">
-        <div class="joinfields">
-          <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name" aria-label="First name" required>
-          <input id="joinEmail" type="email" autocomplete="email" maxlength="120" placeholder="Email" aria-label="Email" required>
-        </div>
-        <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
-        <button class="btn" type="submit">Create account</button>
-      </form>
-      <div class="gwrap" id="gJoin" hidden><span class="or">or</span><div class="gbtn"></div></div>
-      <p class="haveacct">Already have an account? <button class="linkbtn" type="button" data-signin>Sign in</button></p>
-      <p id="joinErr" role="alert" class="msg err"></p>
-      <p class="note-box" id="inAppNote" hidden></p>
-      <p class="fine" id="joinFine">No password to remember: we email you a code. iPhone, Android or computer.</p>
+      <div class="lcta"><a class="btn" href="#start" data-start>Start free</a><a class="quietlink" href="#signin" data-signin>Sign in</a></div>
+      <p class="fine lfine">Free to try. iPhone, Android or computer.</p>
     </div>
 
     <!-- The capability in one 15s loop: three different reels (a design tutorial, a recipe, a book) drop into
@@ -693,7 +696,7 @@ body.on-phone .phone-handoff { display: none; }
         <li><b>Making content</b><span>The hooks and formats you saved, there while you write.</span><small><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>3 hooks that stop the scroll</small></li>
       </ul>
     </div>
-    <div class="work-cta"><a class="btn" href="#" data-totop>Start free</a><a class="btn soft" href="/guides/use-saved-reels-in-claude">How to set it up</a></div>
+    <div class="work-cta"><a class="btn" href="#start" data-start>Start free</a><a class="btn soft" href="/guides/use-saved-reels-in-claude">How to set it up</a></div>
     <p class="fine work-fine">Claude Code checks your saves by itself. In ChatGPT or the Claude app, just say “check my Skwirl”.</p>
   </div>
 
@@ -770,7 +773,7 @@ body.on-phone .phone-handoff { display: none; }
         <small class="plusYearLine">no card needed</small>
         <ul><li>10 new saves a month</li><li>Your 25 latest Instagram saves brought in</li><li>Notes, recipes, lists, search</li><li>ChatGPT, Claude and Claude Code</li></ul>
         <span class="note">Read in turn, so on busy days it can take a few hours.</span>
-        <div class="inline-actions" style="margin-top:10px"><a class="btn sm soft" href="#" data-totop>Start free</a></div>
+        <div class="inline-actions" style="margin-top:10px"><a class="btn sm soft" href="#start" data-start>Start free</a></div>
       </div>
       <div class="plan plus" data-plus="pricing">
         <small>Skwirl Plus<span class="plusSoon"> · coming soon</span></small><b class="price"><span class="plusPrice">$4.99</span><em> / month</em></b>
@@ -796,7 +799,7 @@ body.on-phone .phone-handoff { display: none; }
 
   <div class="lsec lend reveal">
     <h2>Stop losing the good ones.</h2>
-    <a class="btn" href="#" id="toTop">Start Skwirl, free</a>
+    <a class="btn" href="#start" data-start>Start Skwirl, free</a>
   </div>
 
   <div class="lsec signin-cta">
@@ -1084,18 +1087,38 @@ body.on-phone .phone-handoff { display: none; }
   <p class="small" id="plusDoneFoot">Manage or cancel any time in Set up.</p>
   <form method="dialog"><button class="btn" style="width:100%">Done</button></form>
 </dialog>
-<!-- Sign in / finish creating an account: email, then the 6-digit code. -->
-<dialog class="authdlg" id="authDlg" aria-labelledby="authTitle">
+<!-- The auth view: Create account / Sign in (tabs), then the 6-digit code. Full page on a phone,
+     a centered card on a computer. Opened by every Start free / Sign in (and #start, #signin links). -->
+<dialog class="authdlg authview" id="authDlg" aria-labelledby="authTitle">
   <button class="dlgx" type="button" data-close aria-label="Close">×</button>
-  <div id="stepEmail">
-    <h2 id="authTitle">Sign in</h2>
+  <div class="authcol">
+  <a href="/" class="authbrand" tabindex="-1" aria-hidden="true"><img src="/mark.svg" alt="">Skwirl</a>
+  <div id="authTabs">
+    <h2 id="authTitle">Create your account</h2>
+    <p class="authlede" id="authLede">Free to try. iPhone, Android or computer.</p>
+    <div class="authtabs" role="tablist" aria-label="Create account or sign in">
+      <button type="button" role="tab" id="tabCreate" aria-controls="stepCreate" aria-selected="true">Create account</button>
+      <button type="button" role="tab" id="tabSignin" aria-controls="stepEmail" aria-selected="false" tabindex="-1">Sign in</button>
+    </div>
+    <p class="note-box" id="inAppNote" hidden></p>
+  </div>
+  <div id="stepCreate" role="tabpanel" aria-labelledby="tabCreate">
+    <div class="gwrap" id="gJoin" hidden><div class="gbtn"></div><span class="or">or</span></div>
+    <form id="joinForm" class="stack" aria-label="Create your Skwirl account">
+      <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name" aria-label="First name" required>
+      <input id="joinEmail" type="email" autocomplete="email" maxlength="120" placeholder="Email" aria-label="Email" required>
+      <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
+      <button class="btn" type="submit">Create account</button>
+    </form>
+    <p class="fine" id="joinFine">No password to remember: we email you a code.</p>
+  </div>
+  <div id="stepEmail" role="tabpanel" aria-labelledby="tabSignin" hidden>
+    <div class="gwrap" id="gDlg" hidden><div class="gbtn"></div><span class="or">or</span></div>
     <form id="emailForm" class="stack" data-on="email">
-      <p>Enter the email on your account. We'll send you a 6-digit code.</p>
-      <input id="signEmail" type="email" autocomplete="email" maxlength="120" placeholder="you@example.com" aria-label="Email" required>
-      <button class="btn" type="submit">Email me a code</button>
+      <input id="signEmail" type="email" autocomplete="email" maxlength="120" placeholder="Email" aria-label="Email" required>
+      <button class="btn" type="submit">Send code</button>
     </form>
     <p class="dlgnote" data-on="noemail" hidden>Email sign-in is switching on soon. Until then, open your sign-in link, or paste it below.</p>
-    <div class="gwrap" id="gDlg" hidden><span class="or">or</span><div class="gbtn"></div></div>
     <details class="tokenalt" id="tokenAlt">
       <summary>Have a sign-in link instead?</summary>
       <form id="authForm" class="stack">
@@ -1104,10 +1127,9 @@ body.on-phone .phone-handoff { display: none; }
       </form>
       <p class="small">Connected Telegram? Send <code>/login</code> to <a href="https://t.me/skwirl_bot" rel="noopener">@skwirl_bot</a> for a fresh link.</p>
     </details>
-    <p class="dlgfoot">New to Skwirl? <button class="linkbtn" type="button" data-create>Create an account</button></p>
   </div>
   <div id="stepCode" hidden>
-    <h2>Check your email</h2>
+    <h2 id="codeTitle">Check your email</h2>
     <form id="codeForm" class="stack">
       <p>We sent a 6-digit code to <b id="codeTo"></b>. It works for 10 minutes. Check spam if it's not there.</p>
       <input id="codeIn" class="codein" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="123456" aria-label="6-digit code" required>
@@ -1117,6 +1139,7 @@ body.on-phone .phone-handoff { display: none; }
     <p class="dlgfoot"><button class="linkbtn" type="button" id="codeResend">Send a new code</button> · <button class="linkbtn" type="button" data-back>Use a different email</button></p>
   </div>
   <p id="authErr" role="alert" class="msg err"></p>
+  </div>
 </dialog>
 
 <!-- Accounts from before email was required: add one (once skippable, then required). -->
