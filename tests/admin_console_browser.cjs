@@ -27,6 +27,7 @@ async function harness(browser, width, handler, run, signedIn = true) {
     requests.push({ path: url.pathname, search: url.search, method: request.method(), body: request.postDataJSON(), authorization: request.headers().authorization });
     if (url.pathname.startsWith('/v1/')) {
       if (handler && await handler(route, url, request)) return;
+      if (url.pathname === '/v1/admin/content') return route.fulfill({ json: { setup: [], ideas: [], drafts: [], scheduled: [], posted: [], controls: { configured: false, paused: true, can_approve: false } } });
       if (url.pathname === '/v1/admin/console') return route.fulfill({ json: clone(fixture) });
       if (url.pathname === '/v1/admin/journey') return route.fulfill({ json: clone(journey) });
       if (url.pathname.endsWith('/message')) return route.fulfill({ json: { ok: true } });
