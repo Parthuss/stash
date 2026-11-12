@@ -153,8 +153,8 @@
         {
           "path": "worker/public/app.js",
           "anchor": "I tried this",
-          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
-          "line": 314
+          "sha256": "f7f84649b3ef870e05ea786c907aef6791e16ef17ddf3a203461c7f5cca81816",
+          "line": 385
         }
       ],
       "name": "To try and Tried",
@@ -180,8 +180,8 @@
         {
           "path": "worker/public/app.js",
           "anchor": "Comes with Skwirl Plus",
-          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
-          "line": 1464
+          "sha256": "f7f84649b3ef870e05ea786c907aef6791e16ef17ddf3a203461c7f5cca81816",
+          "line": 1510
         }
       ],
       "name": "Your categories",
@@ -307,8 +307,8 @@
         {
           "path": "worker/public/app.js",
           "anchor": "Stopped sharing. The old link no longer works.",
-          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
-          "line": 802
+          "sha256": "f7f84649b3ef870e05ea786c907aef6791e16ef17ddf3a203461c7f5cca81816",
+          "line": 873
         }
       ]
     },
@@ -340,8 +340,8 @@
         {
           "path": "worker/public/app.js",
           "anchor": "a.download = \"skwirl-export.json\"",
-          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
-          "line": 955
+          "sha256": "f7f84649b3ef870e05ea786c907aef6791e16ef17ddf3a203461c7f5cca81816",
+          "line": 1027
         },
         {
           "path": "worker/src/v1.ts",
@@ -375,8 +375,8 @@
         {
           "path": "worker/public/app.js",
           "anchor": "else if ((!r || r.status >= 500) && kept.byId[id]) current = kept.byId[id];",
-          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
-          "line": 306
+          "sha256": "f7f84649b3ef870e05ea786c907aef6791e16ef17ddf3a203461c7f5cca81816",
+          "line": 377
         }
       ]
     },
@@ -403,14 +403,14 @@
         {
           "path": "worker/public/app.js",
           "anchor": "turnOn = !before.includes(name)",
-          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
-          "line": 744
+          "sha256": "f7f84649b3ef870e05ea786c907aef6791e16ef17ddf3a203461c7f5cca81816",
+          "line": 815
         },
         {
           "path": "worker/public/app.js",
           "anchor": "const r = await api(`/v1/notes/${encodeURIComponent(noteId)}/categories`",
-          "sha256": "315a2de363e8d4650a235c9bee2b8514c2a5e8808677ce1024d698d4e8532167",
-          "line": 748
+          "sha256": "f7f84649b3ef870e05ea786c907aef6791e16ef17ddf3a203461c7f5cca81816",
+          "line": 819
         }
       ],
       "implementation_evidence": "The category chip handler toggles an existing category name, posts {name,on} to the note categories endpoint, rerenders note chips, and rolls back on failure. Early-account entitlements may differ; do not use Plus only."
