@@ -33,7 +33,7 @@ Independent scoped UI review: [CONTENT-REVIEW.md](CONTENT-REVIEW.md), dispositio
 
 ## CI runner dependency repair
 
-The first pushed GitHub run failed because Ubuntu no longer includes ffprobe (116 passed, one optional render skipped, one media-measurement test failed). The workflow now installs FFmpeg explicitly, installs the locked Playwright package and Chromium, and supplies their paths so the real render case runs in CI rather than skipping. It uses the complete requirements.txt and checks the browser executable before pytest. This changes only the test workflow; the publishing workflow remains disabled.
+The first pushed GitHub run failed because Ubuntu no longer includes ffprobe (116 passed, one optional render skipped, one media-measurement test failed). The workflow now installs FFmpeg explicitly, installs the locked Playwright package and Chromium, and supplies their paths so the real render case runs in CI rather than skipping. It uses the complete requirements.txt and checks the browser executable before pytest. This changes only the test workflow; the publishing workflow remains disabled. The repaired [GitHub run](https://github.com/Parthuss/stash/actions/runs/43270701264) passed all 118 tests, including the real still render (no skips).
 
 ## What is live and what remains
 
