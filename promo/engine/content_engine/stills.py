@@ -199,11 +199,11 @@ h1{font:800 100px/1.08 Recursive;font-variation-settings:'CASL' 1;letter-spacing
 .chip{display:inline-block;background:#1d1b2e;color:#f8f7ff;font-size:32px;font-weight:700;line-height:1.2;padding:12px 26px;border-radius:999px;white-space:nowrap}
 /* hook: a Saved grid with one reel gone */
 .l-hook h1{font-size:112px}
-.panel{position:absolute;left:0;right:0;top:0;height:1100px;background:#fff;border:4px solid #1d1b2e;border-radius:48px;padding:34px 34px 0}
-.panel-h{display:flex;align-items:center;gap:14px;font:800 42px Recursive;font-variation-settings:'CASL' 1;margin-bottom:28px}
+.panel{position:absolute;left:70px;right:70px;top:0;background:#fff;border:4px solid #1d1b2e;border-radius:48px;padding:28px 30px 30px}
+.panel-h{display:flex;align-items:center;gap:14px;font:800 42px Recursive;font-variation-settings:'CASL' 1;margin-bottom:22px}
 .panel-h svg{width:42px;height:42px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.tile{aspect-ratio:3/4;border-radius:24px;overflow:hidden;position:relative;background:#dcd8ff}
+.tile{aspect-ratio:1/1;border-radius:24px;overflow:hidden;position:relative;background:#dcd8ff}
 .tile img{width:100%%;height:100%%;object-fit:cover}
 .tile .pl{position:absolute;left:18px;bottom:16px;width:44px;height:44px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
 .tile.gone{background:#fff4f0;border:5px dashed #ff7a59;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#b8452a;text-align:center;font-size:30px;font-weight:700;line-height:1.3}
@@ -215,8 +215,8 @@ h1{font:800 100px/1.08 Recursive;font-variation-settings:'CASL' 1;letter-spacing
 .node.save{background:#fff;border:4px solid #1d1b2e}
 .node.save svg{width:150px;height:150px;color:#1d1b2e;fill:#dcd8ff}
 .node.lost{border:5px dashed #1d1b2e;background:rgba(255,255,255,.35);color:#6a6880}
-.node.lost img{width:280px;height:280px;object-fit:cover;border-radius:28px;filter:grayscale(1);opacity:.55}
-.stamp{position:absolute;top:160px;left:50%%;transform:translateX(-50%%) rotate(-10deg);border:6px solid #1d1b2e;color:#1d1b2e;background:#ffd8cb;font:800 46px Recursive;font-variation-settings:'CASL' 1;padding:8px 26px;border-radius:16px;letter-spacing:1px}
+.node.lost img{width:280px;height:280px;object-fit:cover;border-radius:28px;filter:grayscale(1);opacity:.75}
+.stamp{position:absolute;top:200px;left:50%%;transform:translateX(-50%%) rotate(-10deg);border:6px solid #1d1b2e;color:#1d1b2e;background:#ffd8cb;font:800 46px Recursive;font-variation-settings:'CASL' 1;padding:8px 26px;border-radius:16px;letter-spacing:1px}
 .link{flex:1;height:0;border-top:7px dashed #1d1b2e;position:relative;margin:0 6px}
 .link .x{position:absolute;left:50%%;top:-46px;transform:translateX(-50%%);width:86px;height:86px;border-radius:50%%;background:#1d1b2e;padding:18px}
 /* phone: reel tile -> real screen in a phone frame */
@@ -237,7 +237,8 @@ h1{font:800 100px/1.08 Recursive;font-variation-settings:'CASL' 1;letter-spacing
 .flow .down{width:46px;height:70px}
 .flow-row{display:flex;align-items:center;gap:28px}
 /* promise */
-.card{margin:auto 0 120px;background:#cdf3e1;color:#1d1b2e;border-radius:40px;padding:52px 56px;font-size:42px;line-height:1.35;font-weight:600}
+.l-promise .text{margin-top:auto}
+.card{margin:64px 0 auto;background:#cdf3e1;color:#1d1b2e;border-radius:40px;padding:56px 60px;font-size:46px;line-height:1.35;font-weight:600}
 .card b{display:block;font-size:30px;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;color:#3d3b52}
 /* cta */
 .l-cta{align-items:center;text-align:center;justify-content:center;padding-top:0}
@@ -328,7 +329,8 @@ def build(script: Path, out: Path) -> Path:
                     elif label:
                         parts.append(label)
                     s = width / w
-                    parts.append(f'<div class="crop" data-region style="width:{width:.0f}px;height:{h * s:.0f}px"><img alt="{alt[c["asset"]]}" src="{uri[c["asset"]]}" '
+                    bare = "" if c.get("frame", True) else "border:0;background:none;box-shadow:none;"
+                    parts.append(f'<div class="crop" data-region style="{bare}width:{width:.0f}px;height:{h * s:.0f}px"><img alt="{alt[c["asset"]]}" src="{uri[c["asset"]]}" '
                                  f'style="width:{UI_W * s:.1f}px;transform:translate({-x * s:.1f}px,{-y * s:.1f}px)"></div>')
                 vis = f'<div class="vis"><div class="flow">{"".join(parts)}</div></div>'
             else:

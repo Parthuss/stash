@@ -19,7 +19,7 @@
       "layout": "hook",
       "bg": "lilac",
       "title": "The reel\nyou saved\ncan disappear.",
-      "body": "A save is only a link to someone else's post.",
+      "body": "Creators can delete or hide posts, and your save goes too.",
       "panel": "Saved",
       "tiles": [
         {"asset": "books"}, {"gone": true, "label": "Reel\nunavailable"}, {"asset": "tokyo"},
@@ -32,7 +32,7 @@
       "bg": "peach",
       "kicker": "The weak link",
       "title": "Deleted post.\nLost recipe.",
-      "body": "If the creator deletes it, your save can't bring it back.",
+      "body": "A save is only a link to their post. When it goes, so does the recipe.",
       "from": "Your save",
       "to": "Their post",
       "stamp": "Deleted",
@@ -56,8 +56,8 @@
       "kicker": "The useful part",
       "title": "The recipe,\nwritten down.",
       "crops": [
-        {"asset": "note-full", "crop": [20, 862, 352, 270], "width": 600, "left": 0, "top": 0, "rotate": -2},
-        {"asset": "note-full", "crop": [20, 1270, 352, 290], "width": 600, "left": 320, "top": 250, "rotate": 2}
+        {"asset": "note-full", "crop": [20, 862, 352, 270], "width": 560, "left": 0, "top": 0, "rotate": -2},
+        {"asset": "note-full", "crop": [20, 1270, 352, 290], "width": 560, "left": 360, "top": 320, "rotate": 2}
       ],
       "bridge": "Once the note is made, it lives in your Skwirl library."
     },
@@ -68,7 +68,7 @@
       "kicker": "Weeks later",
       "title": "Find it by what\nyou remember.",
       "crops": [
-        {"asset": "search", "crop": [14, 68, 362, 72], "width": 860},
+        {"asset": "search", "crop": [14, 68, 362, 72], "width": 860, "frame": false},
         {"asset": "search", "crop": [12, 196, 186, 232], "width": 430, "label": "There it is"}
       ],
       "bridge": "One honest thing before you try it."
