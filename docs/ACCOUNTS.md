@@ -26,8 +26,18 @@ Written 12 Nov 2026 on branch `crew/1112-121225-d392`. Not merged or deployed. T
 - On their next open, accounts with no email get **"Add your email"** with a **Not now** button. Tapping it is recorded on the server (`email_skip_at`). From the next open on, the prompt has no Not now, and Esc can't close it.
 - Adding the email sends a code; the address is saved once the code is entered.
 - **No lockout.** Once a code has gone out, a **Finish later** link appears, and the token keeps working the whole time. If adding fails (offline, address taken, send error, too many tries), **Finish later** appears right away. A failed send saves nothing: otherwise anyone could park an address they don't own by using up the sender's daily quota.
-- The owner account is never asked.
+- The owner account is asked too (once, with **Not now**; never required). See "The owner's email" below.
+- Until an account has an email, the app shows an "Add your email" banner (after Not now) instead of the old "save your sign-in link" one. With an email, no banner. Profile has an Email row (address + Change, or Add email) for everyone, owner included.
 - Changing your email in Profile also goes through a code, and it can't be blanked.
+
+### The owner's email (12 Nov, migration 0033)
+
+The owner has no user row (STASH_SECRET is the owner token), so it had no email to sign in with. Now:
+
+- The owner adds an address from the dialog or Profile → Email → Add email. A code goes to it; the address is saved in `owner_login` (one row) only once the code comes back. An address another account has proven can't be added, and once it's the owner's, no account can add it.
+- Signing in with that address (code, or Google for a Gmail address only: Google vouches for its own addresses, not for others on a Google account) mints an owner device token `sto_…`. It's stored as an HMAC keyed with STASH_SECRET, so **rotating STASH_SECRET signs every owner device out**. It works for `/v1/*`, admin pages and `/mcp/<token>`, but not for the `X-Stash-Secret` routes (daemon, admin setup), which still need the secret itself.
+- Extra caps for the owner address on top of everyone's: 6 codes and 10 guesses a day from all networks together (about 0.4% a year to guess a code under nonstop attack, and every attempt mails the owner a code). Trade-off: someone can burn the day's tries, so email sign-in to the owner is blocked until tomorrow; the secret link and signed-in devices keep working.
+- Every owner sign-in pings the owner (Telegram/email via notifyOwner) with the country and IP.
 
 ### Before the email sender is set up (today)
 

@@ -481,6 +481,13 @@ body.site-visit .lsign, body.site-visit #joinForm, body.site-visit .haveacct, bo
 .stat { background: rgb(255 255 255 / .88); border-radius: 22px; padding: 14px 16px; box-shadow: var(--lift-1); }
 .stat b { display: block; font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 30px; line-height: 1.1; }
 .stat span { color: var(--muted); font-size: 13px; }
+.emailrow { display: flex; align-items: center; gap: 12px; background: rgb(255 255 255 / .88); border-radius: 22px; padding: 14px 16px; box-shadow: var(--lift-1); margin: 12px 0 4px; }
+.emailrow > div { flex: 1; min-width: 0; }
+.emailrow small { display: block; color: var(--muted); font-size: 13px; }
+.emailrow b { display: block; overflow-wrap: anywhere; }
+.emailrow b.muted { color: var(--muted); font-weight: 500; }
+.emailrow p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.emailrow p:empty { display: none; }
 .ucard { background: rgb(255 255 255 / .88); border-radius: 24px; padding: 16px 18px; box-shadow: var(--lift-1); margin: 10px 0; }
 .ucard header { position: static; padding: 0; display: flex; align-items: center; gap: 10px; background: none; }
 .ucard h3 { font-family: var(--display); font-weight: 800; font-variation-settings: "CASL" 1; font-size: 22px; margin: 0; flex: 1; }
@@ -874,10 +881,10 @@ body.on-phone .phone-handoff { display: none; }
       <svg class="art" viewBox="0 0 360 170" role="img" aria-label="Phone home screen with the Skwirl icon among other apps"><rect x="110" y="6" width="140" height="158" rx="24" fill="#fff" stroke="#e3dffa" stroke-width="3"/><g fill="#e9e6fb"><rect x="126" y="26" width="24" height="24" rx="7"/><rect x="168" y="26" width="24" height="24" rx="7"/><rect x="210" y="26" width="24" height="24" rx="7"/><rect x="126" y="68" width="24" height="24" rx="7"/><rect x="210" y="68" width="24" height="24" rx="7"/><rect x="126" y="110" width="24" height="24" rx="7"/><rect x="168" y="110" width="24" height="24" rx="7"/></g><rect x="166" y="66" width="28" height="28" rx="8" fill="#dcd8ff" stroke="#1d1b2e" stroke-width="2"/><image href="/mark.svg" x="170" y="70" width="20" height="20"/><text x="180" y="105" font-size="8" text-anchor="middle" fill="#1d1b2e" font-weight="600">Skwirl</text></svg>
       <div id="homeIos">
         <ol class="steps">
-          <li><b>Copy your sign-in link</b><span>The home-screen version starts signed out on iPhone, so you'll paste this once.</span><div class="inline-actions"><button class="btn sm" data-copy="linkonly">Copy sign-in link</button></div></li>
+          <li id="homeLinkStep"><b>Copy your sign-in link</b><span>The home-screen version starts signed out on iPhone, so you'll paste this once.</span><div class="inline-actions"><button class="btn sm" data-copy="linkonly">Copy sign-in link</button></div></li>
           <li><b>Open this page in Safari</b><span>It has to be Safari. In other browsers the option isn't there.</span></li>
           <li><b>Tap Share, then <em>Add to Home Screen</em></b><span>Share is the square with an arrow at the bottom of Safari. Scroll down the list if you don't see it, then tap <em>Add</em>.</span></li>
-          <li><b>Open Skwirl from your home screen</b><span>Sign in with your email, or tap <em>Paste a sign-in link instead</em>.</span></li>
+          <li><b>Open Skwirl from your home screen</b><span>It starts signed out the first time. Sign in with your email and the code we send you.</span></li>
         </ol>
       </div>
       <div id="homeAnd" hidden>
@@ -893,7 +900,7 @@ body.on-phone .phone-handoff { display: none; }
   <details class="group" id="gTelegram" hidden>
     <summary><div style="flex:1"><h2>Save from Telegram</h2><small>Send or forward a link to the Skwirl bot</small></div><span class="badge opt" id="bTelegram">Optional</span></summary>
     <div class="gbody">
-      <p style="margin-top:0;color:var(--muted)">Handy for links friends send you, or if the share sheet isn't your thing. Connect once, then send the bot any Instagram, YouTube or X link. It also tells you when a big import finishes, sends 3 saves you haven't used every Sunday (<code>/digest off</code> stops them), and sends a fresh sign-in link if you lose yours (<code>/login</code>).</p>
+      <p style="margin-top:0;color:var(--muted)">Handy for links friends send you, or if the share sheet isn't your thing. Connect once, then send the bot any Instagram, YouTube or X link. It also tells you when a big import finishes, sends 3 saves you haven't used every Sunday (<code>/digest off</code> stops them), and can sign you in on a new device (<code>/login</code>).</p>
       <div class="inline-actions"><button class="btn sm" id="tgConnect" type="button">Connect Telegram</button><button class="btn sm soft" id="tgOff" type="button" hidden>Disconnect</button></div>
       <p class="msg" id="tgMsg" role="status"></p>
     </div>
@@ -975,6 +982,7 @@ body.on-phone .phone-handoff { display: none; }
   <div class="topbar"><button class="btn soft" id="meBack">← Back</button></div>
   <div class="setup-head mehead"><span class="avatar big" id="meAvatar">·</span><div><h1 id="meName">You</h1><p id="meSub"></p></div></div>
   <div class="stats" id="meStats"></div>
+  <div class="emailrow" id="meEmailRow"><div><small>Email</small><b id="meEmailVal"></b><p id="meEmailNote"></p></div><button class="btn sm soft" type="button" id="meEmailBtn">Add email</button></div>
   <p style="margin:0 0 14px"><a href="/" data-site class="btn sm soft">About Skwirl and pricing</a></p>
 
   <div class="group hub"><h2>Your setup</h2><p class="muted" style="margin:2px 0 10px">Everything you can turn on, in one place. Skipped something earlier? Do it here.</p><div id="hub"></div></div>
@@ -1007,11 +1015,11 @@ body.on-phone .phone-handoff { display: none; }
   </details>
 
   <details class="group" id="gData">
-    <summary><div style="flex:1"><h2>Account</h2><small>Sign-in link, export, sign out</small></div></summary>
+    <summary><div style="flex:1"><h2>Account</h2><small>Export, sign out, private link</small></div></summary>
     <div class="gbody">
-      <div class="inline-actions" style="margin-top:0"><button class="btn sm" data-copy="link">Save my sign-in link</button><button class="btn sm soft" data-copy="token">Copy token</button><button class="btn sm soft" id="exportBtn">Export my notes</button><button class="btn sm soft" id="signOutBtn">Sign out</button></div>
+      <div class="inline-actions" style="margin-top:0"><button class="btn sm soft" id="exportBtn">Export my notes</button><button class="btn sm soft" data-copy="link">Private sign-in link</button><button class="btn sm soft" data-copy="token">Copy token</button><button class="btn sm soft" id="signOutBtn">Sign out</button></div>
       <div class="inline-actions"><button class="btn sm soft" id="rotateBtn">Reset my token</button><button class="btn sm soft" id="deleteBtn" style="color:#a02d1a">Delete my account</button></div>
-      <p style="color:var(--muted);font-size:14px">Your sign-in link opens your Skwirl on any device. Keep it private. Export gives you everything as one JSON file. Resetting your token signs out every device and disconnects every AI app. Deleting erases all your saves for good.</p>
+      <p style="color:var(--muted);font-size:14px">To get back in on any device, sign in with your email (see Email at the top). The private link and token sign a device or app in without email, so keep them private. Export gives you everything as one JSON file. Resetting your token signs out every device and disconnects every AI app. Deleting erases all your saves for good.</p>
     </div>
   </details>
   <p class="legal"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/refunds">Refunds</a></p>

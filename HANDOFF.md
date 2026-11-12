@@ -20,6 +20,12 @@ when it's relevant instead of waiting to be asked.
 That's the whole point: **capture that survives you forgetting, recall that
 doesn't wait to be asked.**
 
+## 2026-11-12 (later): owner can add an email
+- Parth's "P" account is the OWNER (STASH_SECRET, OWNER_NAME "Parthus"), which had no way to add an email. Now it can: migration 0033 (owner_login + owner_token), `sto_` owner device tokens, owner caps 6 codes / 10 guesses a day, Telegram ping on each owner sign-in. Details: docs/ACCOUNTS.md "The owner's email". Tests: node tests/signin_otp.cjs (27 checks).
+- The yellow "No password here: your sign-in link..." banner was a race (shown before /v1/setup answered, never cleared for the owner). Now decided once setup is known: email on + has email = nothing; no email = "Add your email" dialog/banner; old banner only while email sign-in is off. Profile has an Email row for everyone.
+- Old domain: no 301 needed. public/move.js already sends signed-out visitors to skwirl.app and leaves signed-in/installed ones (per-origin localStorage token). sw.js caches nothing and assets are max-age=0, so the new app.js loads on next open.
+- Pre-existing failures (not from this change): tests/frontend_fixes.cjs needs playwright; plus_dodo.cjs and worker_audit_fixes.cjs fail on master (plus.ts exports).
+
 ## 2026-11-12: accounts live (email + 6-digit code, Google)
 - Merged aaf288e, privacy lines aee4602. Migration 0032_accounts applied to prod D1 once (email_code table, user.email_verified/google_sub/email_skip_at, feedback.reply_to; verified in sqlite_master). Secrets RESEND_API_KEY, EMAIL_FROM, GOOGLE_CLIENT_ID set; /join returns email_login:true + google_client_id.
 - Design and setup notes: docs/ACCOUNTS.md. Tests: node tests/signin_otp.cjs (23 checks). Old users get an "Add your email" prompt (skippable once). Stale device-code branch crew/1112-120240-1dc4 kept (3 unmerged commits), delete if not wanted.

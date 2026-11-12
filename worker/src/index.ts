@@ -45,7 +45,7 @@ import { collect, pruneAnalytics } from "./analytics";
 import { notifyOwner } from "./notify";
 import { pushProgress, pushUser, sendPush, sendScheduled } from "./push";
 import { applyAiCategories, applySortResult, categoriesOf, claimSortBatch } from "./categories";
-import { accountByEmail, checkCode, codeEmail, emailEnabled, limited, mintDeviceToken, newCode, normEmail, note, over, redeemLogin, sendEmail } from "./login";
+import { OWNER_SENDS_DAY, OWNER_TRIES_DAY, accountByEmail, checkCode, codeEmail, emailEnabled, googleOwnsAddress, isOwnerEmail, limited, mintDeviceToken, mintOwnerToken, newCode, normEmail, note, over, redeemLogin, sendEmail } from "./login";
 import { verifyGoogleIdToken } from "./google";
 import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
@@ -449,6 +449,13 @@ export default {
     };
     // An address just proved it belongs to whoever holds it: mark the account's copy verified.
     const markVerified = (id: string) => env.DB.prepare("UPDATE user SET email_verified = 1 WHERE id = ?").bind(id).run().catch(() => {});
+    // The owner's verified email signs in to the owner account (src/login.ts: owner caps, sto_ tokens).
+    // Every owner sign-in pings the owner, so a stranger getting in can't go unnoticed.
+    const ownerSignedIn = async (how: string) => {
+      ctx.waitUntil(notifyOwner(env, "new owner sign-in", `Someone just signed in to the Skwirl owner account with ${how} (${request.headers.get("CF-IPCountry") ?? "?"}, ${ip}).\n\nNot you? Rotate STASH_SECRET (wrangler secret put STASH_SECRET) to sign out every owner device.`).catch(() => {}));
+      await logEvent(env, null, "api", how === "Google" ? "signin_google" : "signin_email");
+      return json({ token: await mintOwnerToken(env), name: env.OWNER_NAME ?? "Owner", created: false });
+    };
 
     // Step 1: email me a code. Same answer whether or not the address has an account.
     if (path === "/auth/email/start" && request.method === "POST") {
@@ -460,7 +467,10 @@ export default {
       // Creating an account: say now if joining is closed or the invite code is wrong, before an
       // email goes out. Checked before looking the address up, so the answer can't reveal an account.
       if (b.signup) { const no = await joinGate(b.invite); if (no) return json({ error: no.error }, no.status); }
-      const acct = await accountByEmail(env, email);
+      const own = await isOwnerEmail(env, email);
+      if (own && await limited(env, "otpown:send", OWNER_SENDS_DAY, 86_400_000))
+        return json({ error: "We've sent a lot of codes to that email. Wait an hour, or check spam for one we sent." }, 429);
+      const acct = own ? { name: env.OWNER_NAME ?? "Owner" } : await accountByEmail(env, email);
       const code = await newCode(env, email, "signin", null, ip);
       if (!code) return json({ error: "We've sent a lot of codes to that email. Wait an hour, or check spam for one we sent." }, 429);
       try { await sendEmail(env, codeEmail(email, code, acct?.name ?? null, "signin")); }
@@ -475,6 +485,12 @@ export default {
       const b = ((await request.json().catch(() => null)) ?? {}) as any;
       const email = normEmail(b.email);
       if (!email) return json({ error: "That email doesn't look right." }, 400);
+      if (await isOwnerEmail(env, email)) {
+        if (await limited(env, "otpown:try", OWNER_TRIES_DAY, 86_400_000)) return json({ error: "Too many codes tried for this email today. Try again tomorrow." }, 429);
+        const spent = await checkCode(env, email, "signin", b.code, true);
+        if (!spent.ok) return json({ error: spent.error, left: spent.left }, 400);
+        return ownerSignedIn("an email code");
+      }
       const acct = await accountByEmail(env, email), name = cleanName(b.name);
       if (!acct && !name) {
         const peek = await checkCode(env, email, "signin", b.code, false);
@@ -503,6 +519,12 @@ export default {
       const g = await verifyGoogleIdToken(env, b.credential).catch((e) => { console.log("google verify", String(e)); return null; });
       if (!g) return json({ error: "Google didn't confirm that sign-in. Try again." }, 401);
       const email = normEmail(g.email);
+      // The owner's address: only a Gmail address, which Google itself vouches for. Anything else
+      // (a Google account can carry any address) has to use an email code.
+      if (email && await isOwnerEmail(env, email)) {
+        if (!googleOwnsAddress(email)) return json({ error: "Sign in to this account with an email code instead." }, 409);
+        return ownerSignedIn("Google");
+      }
       const bySub = await env.DB.prepare("SELECT id, name FROM user WHERE google_sub = ?").bind(g.sub).first<{ id: string; name: string }>();
       const acct = bySub ?? (email ? await accountByEmail(env, email) : null);
       if (acct) {
