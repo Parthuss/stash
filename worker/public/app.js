@@ -913,7 +913,8 @@ async function copy(text, label) {
 async function refreshSetup() {
   try { setupState = await (await api("/v1/setup")).json(); } catch { return; }
   askEmail(); signinBanner();
-  const st = setupState, phone = ["shortcut", "pwa", "web"].some((k) => (st.saved_from || {})[k]);
+  // On iPhone only the Shortcut counts: pasting a link in the app isn't sharing from Instagram.
+  const st = setupState, phone = (/iPhone|iPad|iPod/.test(navigator.userAgent) ? ["shortcut"] : ["shortcut", "pwa", "web"]).some((k) => (st.saved_from || {})[k]);
   // A one-off note from the owner (user.owner_msg): shown until tapped, then cleared server-side.
   if (st.owner_msg && bannerKey !== "net") {  // beats every banner but a connection error
     // An optional leading "#gGroq " names the Set up section the button opens (default: Save from your phone).
