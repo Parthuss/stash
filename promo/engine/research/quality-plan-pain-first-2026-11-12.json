@@ -15,8 +15,7 @@
       "format_id": "loss-then-keep",
       "feature_ids": [
         "notes",
-        "recipes",
-        "search"
+        "recipes"
       ],
       "hook_candidates": [
         {
@@ -84,10 +83,6 @@
         {
           "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
           "feature_id": "recipes"
-        },
-        {
-          "text": "Search your saved notes by meaning.",
-          "feature_id": "search"
         }
       ],
       "slides": [
@@ -111,7 +106,7 @@
           "n": 3,
           "job": "switch",
           "text": "Turn a shared reel into a note with a summary and a next step.",
-          "bridge": "What does that note hold?",
+          "bridge": "Now delete the post.",
           "visual": "Demo pasta reel, Share arrow, the real note screen in a phone frame (demo account).",
           "feature_ids": [
             "notes"
@@ -119,22 +114,22 @@
         },
         {
           "n": 4,
-          "job": "payoff",
-          "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
-          "bridge": "And weeks later?",
-          "visual": "Zoom-ins on the real demo note Ingredients and Steps.",
+          "job": "proof",
+          "text": "Reel unavailable. The note is still here.",
+          "bridge": "And the useful part is in it.",
+          "visual": "Split frame, demo data: left, the Saved tile showing Reel unavailable; right, the same pasta note open and readable in Skwirl.",
           "feature_ids": [
-            "recipes"
+            "notes"
           ]
         },
         {
           "n": 5,
-          "job": "later",
-          "text": "Weeks later? Search your saved notes by meaning.",
+          "job": "payoff",
+          "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
           "bridge": "Now the honest limit.",
-          "visual": "Real search box with the words remembered, arrow, the matching demo note card.",
+          "visual": "Zoom-ins on that demo note Ingredients and Steps.",
           "feature_ids": [
-            "search"
+            "recipes"
           ]
         },
         {
@@ -171,11 +166,11 @@
       ],
       "hook_candidates": [
         {
-          "text": "Send me that pasta reel?",
+          "text": "Send me that dumpling reel?",
           "framework": "question"
         },
         {
-          "text": "Your friend wants the pasta reel. You saved it. Now what?",
+          "text": "Your friend wants that dumpling reel. You saved it. Now what?",
           "framework": "curiosity"
         },
         {
@@ -183,11 +178,11 @@
           "framework": "stop_doing"
         },
         {
-          "text": "Pause. Where did that pasta reel go?",
+          "text": "Pause. Where did that dumpling reel go?",
           "framework": "pattern_interrupt"
         },
         {
-          "text": "POV: your friend asks for the pasta reel you saved.",
+          "text": "POV: your friend asks for the dumpling reel you saved.",
           "framework": "pov"
         },
         {
@@ -203,15 +198,15 @@
           "framework": "pov"
         },
         {
-          "text": "Watch a saved pasta reel get found and sent back.",
+          "text": "Watch a saved dumpling reel get found and sent back.",
           "framework": "demonstration"
         },
         {
-          "text": "You saved the pasta reel. Now your friend wants it.",
+          "text": "You saved the dumpling reel. Now your friend wants it.",
           "framework": "curiosity"
         },
         {
-          "text": "Where is that pasta reel you promised to send?",
+          "text": "Where is that dumpling reel you promised to send?",
           "framework": "question"
         },
         {
@@ -220,11 +215,11 @@
         }
       ],
       "hooks_top3": [
-        "Send me that pasta reel?",
-        "Your friend wants the pasta reel. You saved it. Now what?",
+        "Your friend wants that dumpling reel. You saved it. Now what?",
+        "Send me that dumpling reel?",
         "Stop scrolling your Saved grid while a friend waits."
       ],
-      "hook": "Send me that pasta reel?",
+      "hook": "Your friend wants that dumpling reel. You saved it. Now what?",
       "caption": "Search your saved notes by meaning. Create a public link to a Skwirl note. Anyone with the link can read that shared note.\nSend this to the friend who always asks for that reel. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipes",
       "cta": "Try Skwirl. Link in bio.",
       "claims": [
@@ -240,20 +235,20 @@
       "beats": [
         {
           "t_start": 0,
-          "t_end": 3,
+          "t_end": 4,
           "role": "hook",
-          "vo": "Send me that pasta reel?",
-          "on_screen": "Send me that pasta reel?",
-          "shot": "Staged demo message on a phone from a fictional friend, labelled demo. No real names or chat app branding.",
+          "vo": "Your friend wants that dumpling reel. You saved it. Now what?",
+          "on_screen": "Your friend wants that dumpling reel. You saved it. Now what?",
+          "shot": "Staged demo message \"send me that dumpling reel?\" on a phone from a fictional friend, labelled demo. No real names or chat app branding.",
           "feature_ids": []
         },
         {
-          "t_start": 3,
+          "t_start": 4,
           "t_end": 7,
           "role": "re-hook",
-          "vo": "You saved it weeks ago. Now you have to find it.",
-          "on_screen": "Saved it. Now find it.",
-          "shot": "Thumb scrolls a long seeded demo Saved grid of food tiles while the message waits.",
+          "vo": "You shared it to Skwirl weeks ago. Now find it.",
+          "on_screen": "Shared to Skwirl. Now find it.",
+          "shot": "Text card over the waiting message: shared to Skwirl weeks ago. No product capture in this beat.",
           "feature_ids": []
         },
         {
@@ -262,7 +257,7 @@
           "role": "payoff",
           "vo": "Type what you remember about the dish. Search your saved notes by meaning.",
           "on_screen": "Search by what you remember",
-          "shot": "Real capture in the seeded demo Skwirl library: type a few words about the dish (not \"that pasta thing\", already used in reel 12) and show the real matching note.",
+          "shot": "Real capture in the seeded demo Skwirl library: type a few words about the dumplings and show the real matching note. Seed a dumpling recipe reel in the demo account first (pasta is already in reels 05, 11 and 12) and let Skwirl process it for real.",
           "feature_ids": [
             "search"
           ]
@@ -271,9 +266,9 @@
           "t_start": 13,
           "t_end": 19,
           "role": "handoff",
-          "vo": "Create a public link to a Skwirl note. Send that.",
-          "on_screen": "Send the note link",
-          "shot": "Real Share control on the matching demo note; paste the generated link into the staged reply. Keep sign-in tokens out of frame.",
+          "vo": "Create a public link to a Skwirl note. They get the note, not the video.",
+          "on_screen": "They get the note, not the video",
+          "shot": "Real Share control on the matching demo note; paste the generated link into the staged reply, then show the public note page the friend opens, signed out. Keep sign-in tokens out of frame.",
           "feature_ids": [
             "note_share"
           ]
@@ -307,9 +302,10 @@
       "audience": "cook",
       "question": "Which saved reel had the ingredients I need right now?",
       "question_type": "editorial_hypothesis",
-      "format_id": "pov-scene",
+      "format_id": "how-to",
       "feature_ids": [
-        "recipes"
+        "recipes",
+        "search"
       ],
       "hook_candidates": [
         {
@@ -463,42 +459,46 @@
         "POV: the reel is saved, the ingredients are not."
       ],
       "hook": "At the shop. Which saved reel had the ingredients?",
-      "caption": "Recipe notes include ingredient checklists and numbered steps when the source provides them.\nSend this to the friend who cooks from reels. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipeideas",
+      "caption": "Search your saved notes by meaning. Recipe notes include ingredient checklists and numbered steps when the source provides them.\nSend this to the friend who cooks from reels. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipeideas",
       "cta": "Try Skwirl. Link in bio.",
       "claims": [
         {
           "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
           "feature_id": "recipes"
+        },
+        {
+          "text": "Search your saved notes by meaning.",
+          "feature_id": "search"
         }
       ],
       "beats": [
         {
           "t_start": 0,
-          "t_end": 4,
+          "t_end": 3,
           "role": "hook",
           "vo": "At the shop. Which saved reel had the ingredients?",
           "on_screen": "At the shop. Which saved reel had the ingredients?",
-          "shot": "First-person view of a phone held in a shop aisle (staged scene), thumb scrolling a seeded demo Saved grid of food tiles, no real creator names.",
+          "shot": "Staged first-person shot in a shop aisle; thumb scrolling the Instagram Saved grid (demo tiles, labelled demo) and getting nowhere.",
           "feature_ids": []
         },
         {
-          "t_start": 4,
-          "t_end": 8,
+          "t_start": 3,
+          "t_end": 9,
           "role": "re-hook",
-          "vo": "And then you remember you saved it.",
-          "on_screen": "You did save it",
-          "shot": "Phone comes up and the seeded demo Skwirl library fills the screen.",
+          "vo": "Shared it to Skwirl? Skip the scroll. Search your saved notes by meaning.",
+          "on_screen": "Shared to Skwirl? Search what you remember",
+          "shot": "Real capture in the seeded demo Skwirl library: type a few words about the dish and the demo pasta note comes up. Matches are not guaranteed; show the real result.",
           "feature_ids": [
-            "recipes"
+            "search"
           ]
         },
         {
-          "t_start": 8,
+          "t_start": 9,
           "t_end": 16,
           "role": "payoff",
           "vo": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
           "on_screen": "Ingredient checklist. Numbered steps.",
-          "shot": "Real capture of one seeded demo recipe note: scroll from the ingredient checklist to the numbered steps. Quantities must be exactly what the seeded source contained.",
+          "shot": "Open that demo note: scroll from the ingredient checklist to the numbered steps. Quantities exactly as the seeded source gave them.",
           "feature_ids": [
             "recipes"
           ]
@@ -506,10 +506,10 @@
         {
           "t_start": 16,
           "t_end": 21,
-          "role": "other",
+          "role": "limit",
           "vo": "If the reel left out amounts, the note will too.",
           "on_screen": "Only what the source gave",
-          "shot": "Hold on one ingredient line in the demo note that has no amount because the demo source gave none. Add no shopping list screen or integration.",
+          "shot": "Back in the aisle: the checklist open on the phone, one line with no amount because the demo source gave none. No shopping-list screen or integration.",
           "feature_ids": [
             "recipes"
           ]
@@ -523,6 +523,10 @@
           "shot": "Skwirl wordmark over the aisle scene, softened.",
           "feature_ids": []
         }
+      ],
+      "supersedes": [
+        "I-04",
+        "I-06"
       ]
     },
     {
@@ -530,166 +534,70 @@
       "kind": "carousel",
       "slot": "lead",
       "audience": "workout savers",
-      "question": "Why do I never try the workouts I save?",
+      "question": "How do I actually start a stretch routine I saved?",
       "question_type": "editorial_hypothesis",
-      "format_id": "do-dont",
+      "format_id": "how-to",
       "feature_ids": [
         "notes",
         "tried"
       ],
       "hook_candidates": [
         {
-          "text": "You saved a workout reel for Monday. It is Friday.",
-          "framework": "pattern_interrupt",
-          "score": 82,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 1.0,
-            "payoff": 0.3
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "You saved a stretch routine for Monday. It is Friday.",
+          "framework": "pattern_interrupt"
         },
         {
           "text": "Pause. When did you last try something you saved?",
-          "framework": "pattern_interrupt",
-          "score": 88,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 0.67,
-            "payoff": 1.0
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "framework": "pattern_interrupt"
         },
         {
-          "text": "There is one thing a saved workout reel is missing.",
-          "framework": "curiosity",
-          "score": 100,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 1.0,
-            "payoff": 1.0
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "There is one thing a saved stretch routine is missing.",
+          "framework": "curiosity"
         },
         {
-          "text": "Why the workout you saved never gets done, and a small fix.",
-          "framework": "curiosity",
-          "score": 100,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 1.0,
-            "payoff": 1.0
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "Why the routine you saved never gets done, and a small fix.",
+          "framework": "curiosity"
         },
         {
-          "text": "A saved workout is not a plan. A next step is.",
-          "framework": "contrarian",
-          "score": 82,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 1.0,
-            "payoff": 0.3
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "A saved routine is not a plan. A next step is.",
+          "framework": "contrarian"
         },
         {
-          "text": "Two small steps to actually try a saved workout.",
-          "framework": "specific_number",
-          "score": 82,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 1.0,
-            "payoff": 0.3
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "Two small steps to actually start a saved routine.",
+          "framework": "specific_number"
         },
         {
-          "text": "POV: it is Friday and your Monday workout is still a tile.",
-          "framework": "pov",
-          "score": 59,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 0.33,
-            "payoff": 0.3
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "POV: it is Friday and your Monday stretch routine is still a tile.",
+          "framework": "pov"
         },
         {
-          "text": "POV: your Saved folder is full of plans you never started.",
-          "framework": "pov",
-          "score": 71,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 0.67,
-            "payoff": 0.3
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "POV: your Saved folder is full of routines you never started.",
+          "framework": "pov"
         },
         {
-          "text": "Stop saving workouts you have no plan to start.",
-          "framework": "stop_doing",
-          "score": 77,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 0.33,
-            "payoff": 1.0
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "Stop saving routines you have no plan to start.",
+          "framework": "stop_doing"
         },
         {
-          "text": "Why did the workout you saved never get done?",
-          "framework": "question",
-          "score": 100,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 1.0,
-            "payoff": 1.0
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "Why did the stretch routine you saved never get done?",
+          "framework": "question"
         },
         {
-          "text": "What was the last reel you saved and actually tried?",
-          "framework": "question",
-          "score": 88,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 0.67,
-            "payoff": 1.0
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "Monday plan, Friday reality. Start it anyway.",
+          "framework": "contrarian"
         },
         {
-          "text": "Watch a saved workout get a next step and a Tried tick.",
-          "framework": "demonstration",
-          "score": 100,
-          "parts": {
-            "length": 1.0,
-            "readability": 1.0,
-            "specificity": 1.0,
-            "payoff": 1.0
-          },
-          "method": "heuristic rank only; independent editorial judge required"
+          "text": "Watch a saved routine get a next step and a Tried tick.",
+          "framework": "demonstration"
         }
       ],
       "hooks_top3": [
-        "You saved a workout reel for Monday. It is Friday.",
-        "Why did the workout you saved never get done?",
-        "POV: your Saved folder is full of plans you never started."
+        "You saved a stretch routine for Monday. It is Friday.",
+        "POV: it is Friday and your Monday stretch routine is still a tile.",
+        "Stop saving routines you have no plan to start."
       ],
-      "hook": "You saved a workout reel for Monday. It is Friday.",
-      "caption": "Turn a shared reel into a note with a summary and a next step. Mark a note as Tried after you try it.\nSend this to a friend with a plan for Monday. Try Skwirl. Link in bio.\n#Skwirl #savedreels #workouts",
+      "hook": "You saved a stretch routine for Monday. It is Friday.",
+      "caption": "Turn a shared reel into a note with a summary and a next step. Mark a note as Tried after you try it.\nSend this to a friend with a plan for Monday. Try Skwirl. Link in bio.\n#Skwirl #savedreels #stretching",
       "cta": "Try Skwirl. Link in bio.",
       "claims": [
         {
@@ -705,63 +613,69 @@
         {
           "n": 1,
           "job": "hook",
-          "text": "You saved a workout reel for Monday. It is Friday.",
-          "bridge": "Here is where it stalls.",
-          "visual": "Large type on calm lavender with a small calendar showing Friday and one saved tile.",
+          "text": "You saved a stretch routine for Monday. It is Friday.",
+          "bridge": "Here is one way to start it today.",
+          "visual": "Large type on lavender with a small calendar on Friday and the seeded demo mobility tile.",
           "feature_ids": []
         },
         {
           "n": 2,
-          "job": "dont",
-          "text": "Don't: save it and hope you remember to start.",
-          "bridge": "Here is why that fails.",
-          "visual": "Red-cross card with a saved tile.",
+          "job": "problem",
+          "text": "The reel is still saved. Saving it was the easy part.",
+          "bridge": "So open it as a note.",
+          "visual": "The demo mobility tile in a Saved grid, untouched.",
           "feature_ids": []
         },
         {
           "n": 3,
-          "job": "why",
-          "text": "A bare save is a tile. It does not say where to start.",
-          "bridge": "So give it a starting point.",
-          "visual": "Grid of identical unlabelled tiles, labelled editorial illustration.",
-          "feature_ids": []
-        },
-        {
-          "n": 4,
-          "job": "do",
-          "text": "Do: keep one small next step with the reel.",
-          "bridge": "Here is how it looks.",
-          "visual": "Green-tick card with a note.",
-          "feature_ids": []
-        },
-        {
-          "n": 5,
           "job": "payoff",
           "text": "Turn a shared reel into a note with a summary and a next step.",
-          "bridge": "Then you can close the loop.",
-          "visual": "Real capture of a seeded demo workout note showing its summary and next step, labelled demo.",
+          "bridge": "Here is the next step it gave.",
+          "visual": "Real capture of the seeded demo mobility note: summary at the top.",
           "feature_ids": [
             "notes"
           ]
         },
         {
-          "n": 6,
+          "n": 4,
+          "job": "proof",
+          "text": "One small next step. Do only that, today.",
+          "bridge": "Then close the loop.",
+          "visual": "Zoom on the real Next step line of that demo note, exactly as written.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "n": 5,
           "job": "payoff",
           "text": "Mark a note as Tried after you try it. It is your tick, not a tracker.",
-          "bridge": "Your turn.",
-          "visual": "Real capture of the same demo note with the I tried this control tapped and the Tried state showing.",
+          "bridge": "That is it.",
+          "visual": "Real capture of the same demo note with the Tried state showing.",
           "feature_ids": [
             "tried"
           ]
+        },
+        {
+          "n": 6,
+          "job": "turn",
+          "text": "Friday. Started. Still counts.",
+          "bridge": "Your turn.",
+          "visual": "Calendar card: Friday ticked, labelled illustration.",
+          "feature_ids": []
         },
         {
           "n": 7,
           "job": "cta",
           "text": "Try Skwirl. Link in bio.",
           "bridge": "",
-          "visual": "Skwirl wordmark on calm lavender.",
+          "visual": "Skwirl wordmark on lavender.",
           "feature_ids": []
         }
+      ],
+      "supersedes": [
+        "I-05",
+        "I-11"
       ]
     },
     {
@@ -776,6 +690,10 @@
         "lists"
       ],
       "hook_candidates": [
+        {
+          "text": "You're in the right city. What was that cafe called?",
+          "framework": "pov"
+        },
         {
           "text": "You saved the place. Now remember its name.",
           "framework": "curiosity"
@@ -826,12 +744,12 @@
         }
       ],
       "hooks_top3": [
-        "You saved the place. Now remember its name.",
-        "Pause. What was that cafe called?",
+        "You're in the right city. What was that cafe called?",
+        "The cafe was in a reel. The name was said once.",
         "Stop screenshotting cafe names you never look at again."
       ],
-      "hook": "You saved the place. Now remember its name.",
-      "caption": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists. No maps or bookings, just the names you saved.\nSend this to your travel friend. Try Skwirl. Link in bio.\n#Skwirl #savedreels #travel",
+      "hook": "You're in the right city. What was that cafe called?",
+      "caption": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists. No maps or bookings, just the names you saved. Demo account shown.\nSend this to your travel friend. Try Skwirl. Link in bio.\n#Skwirl #savedreels #travel",
       "cta": "Try Skwirl. Link in bio.",
       "claims": [
         {
@@ -844,18 +762,18 @@
           "t_start": 0,
           "t_end": 3,
           "role": "hook",
-          "vo": "You saved the place. Now remember its name.",
-          "on_screen": "You saved the place. Now remember its name.",
-          "shot": "Staged street or cafe-front shot with a phone showing a seeded demo Saved grid of food and travel tiles. No real venue branding.",
+          "vo": "You're in the right city. What was that cafe called?",
+          "on_screen": "You're in the right city. What was that cafe called?",
+          "shot": "Staged street shot, phone in hand; on screen the seeded demo Tokyo reel tile. The forgotten-name problem is in the on-screen text from frame zero. No real venue branding.",
           "feature_ids": []
         },
         {
           "t_start": 3,
           "t_end": 8,
           "role": "re-hook",
-          "vo": "The name was in the reel. You never wrote it down.",
-          "on_screen": "Never wrote it down",
-          "shot": "Scrub through a demo travel reel where a place is named; no licensed creator footage.",
+          "vo": "It was in a reel you shared to Skwirl. The name was said once.",
+          "on_screen": "Said once. Never written down.",
+          "shot": "Scrub a demo travel reel whose audio names the cafe; caption that exact name. Label the frame Demo account. The Places entry must come from Skwirl processing that reel for real, never hand-edited.",
           "feature_ids": []
         },
         {
@@ -863,8 +781,8 @@
           "t_end": 15,
           "role": "payoff",
           "vo": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
-          "on_screen": "Places, collected into Lists",
-          "shot": "Real capture of the seeded demo Lists screen, Places section, with names that came from seeded demo notes.",
+          "on_screen": "There it is, in Places",
+          "shot": "Real capture of the seeded demo Lists screen, Places section, with the SAME cafe name visible that the reel said.",
           "feature_ids": [
             "lists"
           ]

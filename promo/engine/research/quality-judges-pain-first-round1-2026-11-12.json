@@ -1,0 +1,166 @@
+{
+  "status": "PARTIAL_COPY_REVIEW",
+  "reviews": [
+    {
+      "id": "I-01",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "scroll_stop": 4,
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 4,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "scroll_stop": "This is a lead slot. A stranger sees 'The reel you saved can disappear.' over a Saved grid with one 'Reel unavailable' tile. It names a real viewer loss (a save that is gone, a recipe that went with it) before any feature or the product name appears. It is not a niche or admin lead.",
+          "hook_strength": "It opens an honest question: what happens to a save when the post is deleted? Slides 2 to 6 answer it. A save is only a link, a note keeps the useful part, and the limit follows (the note is kept, not the video). The loss framing is specific, and the bridges set up each next slide.",
+          "clarity_2s": "Subject and stakes are clear in two seconds: saved reel, disappears. The first visual is the Saved grid with one tile marked unavailable. No jargon.",
+          "payoff": "The payoff is a filmable demonstration the packet supports: share a demo pasta reel, show the real note screen, zoom into Ingredients and Steps, then show a real search by remembered words returning the note. The limit slide states plainly that it keeps the note, not the video, and to share the reel while it is still up. The note surviving a deletion is implied rather than shown on screen, which keeps this at 4.",
+          "originality": "The loss-then-keep structure is distinct from the posted 'graveyard' carousel and the earlier I-01 reel brief (this draft's own idea). Slide 2 overlaps one beat of the retained I-05 draft ('a save is a link, it can vanish'). That is a minor overlap inside a different story, not a lexical rewording.",
+          "brand_fit": "The voice is plain and honest. It says 'note, not video', avoids backup or guarantee language, uses a demo account, and ends on a low-pressure CTA plus a send-to-a-friend line. This matches the handbook rule to say 'note', never 'copy' or 'backup'."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Turn a shared reel into a note with a summary and a next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for notes. Limit: processing takes time, and a note is not a video backup."
+          },
+          {
+            "path": "caption",
+            "text": "It keeps the note, not the video.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Matches the notes limit that a note is not a video backup. It states the limit and does not claim video preservation."
+          },
+          {
+            "path": "slides.2.text",
+            "text": "Turn a shared reel into a note with a summary and a next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy, with a real note screen as proof."
+          },
+          {
+            "path": "slides.3.text",
+            "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+            "feature_ids": [
+              "recipes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy. It keeps the 'when the source provides them' qualifier, and no quantities, nutrition or shopping integration are claimed."
+          },
+          {
+            "path": "slides.4.text",
+            "text": "Weeks later? Search your saved notes by meaning.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Approved search copy. 'Weeks later?' only frames the use case. No perfect-recall or ranking guarantee is made."
+          },
+          {
+            "path": "slides.5.text",
+            "text": "It keeps the note. Not the video. Share the reel while it is still up.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "States the notes limit and tells the viewer to share before deletion. It correctly implies the note applies only to reels already shared and processed."
+          }
+        ],
+        "issues": [],
+        "input_digest": "89fde8ca66f750e707c60eda00adc6c426d454aadf061d25fb21e0ef1616c40e"
+      },
+      "errors": [],
+      "verdict": "PASS"
+    },
+    {
+      "id": "I-02",
+      "review": {
+        "model": "Sonnet 5.5",
+        "reviewer": "independent editor",
+        "scores": {
+          "scroll_stop": 4,
+          "hook_strength": 3,
+          "clarity_2s": 4,
+          "payoff": 3,
+          "originality": 2,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "scroll_stop": "A stranger who saves recipe reels recognises a friend asking for a pasta reel they can't find. The frustration is named before the product appears, and the staged message is relatable. This is a real viewer moment, not a feature, so it clears the lead-slot rule.",
+          "hook_strength": "The hook is a bare request from a friend. It opens no question the payoff actually answers. The draft's own question is how to send the reel, but the payoff only finds a note by meaning and never shows or implies a send step. The re-hook then shifts the pain to 'can't remember who posted it', so the stakes move between beats.",
+          "clarity_2s": "The subject (a friend wants a pasta reel) is clear in two seconds. The staged message is labelled demo and has no app branding, so the setup reads cleanly.",
+          "payoff": "The planned capture is specific and supported: type a few words about the dish in the seeded library and show the real matching note. It does not close the loop the hook opened (sending the reel to the friend). The 'Open it. Check it.' beat only confirms the note, and the script explicitly avoids a share button. The viewer is left at 'found it' with no resolution of the ask.",
+          "originality": "This is a re-draft of the earlier backlog idea I-02, which has the identical hook 'Send me that pasta reel?'. The payoff duplicates I-03 ('You remember the idea. Not the creator.') and the posted/drafted reel 12 ('find it later by typing what you remember', 'that pasta thing'). Its caption line 'not who posted it' echoes I-03. Reels 05 and 11 also use pasta. Dodging the 'that pasta thing' phrase is a lexical change only, not a new structure or angle.",
+          "brand_fit": "The voice is plain, with no hype, no invented numbers and no guarantee. The demo is labelled, and the CTA is a simple 'Try Skwirl. Link in bio.'"
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Search your saved notes by meaning.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for the search feature. Limit: no perfect-recall or exact-ranking guarantee, and none is made."
+          },
+          {
+            "path": "caption",
+            "text": "Type what you remember about the reel, not who posted it.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "A plain paraphrase of meaning search, which finds notes by what they were about. It makes no guaranteed-match claim, so it stays within the search limits."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "Type what you remember about it. Search your saved notes by meaning.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Matches approved search copy. The planned real capture shows an actual matching note, so no overstated recall."
+          },
+          {
+            "path": "beats.2.on_screen",
+            "text": "Search by what you remember",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "A short restatement of meaning search with no guarantee."
+          }
+        ],
+        "issues": [
+          "Originality: the hook and idea are the earlier-backlog I-02, and the payoff and caption duplicate I-03 and posted reel 12. A different angle or structure is needed, not a lexical change.",
+          "Payoff mismatch: the draft's question is 'How do I send a friend that reel I saved?', but the script never shows or implies sending. The hook promises a handoff to the friend that the payoff does not deliver.",
+          "Hook strength: it is a generic request that does not open a question the payoff answers. The pain also drifts between 'send it' (hook) and 'who posted it' (re-hook)."
+        ],
+        "input_digest": "b317dddd9c919d751be0ce08048a46cff03ed44823b3881ba55dbf330edf8841"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "hook_strength must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    }
+  ]
+}

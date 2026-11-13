@@ -49,7 +49,7 @@ PAIN_CUES = ("lost", "lose", "losing", "gone", "disappear", "disappeared", "dele
 # Everyday moments a stranger recognises (cooking, travel, watching, learning, a friend asking).
 MOMENT_CUES = ("recipe", "pasta", "dinner", "cook", "cooking", "shop", "shopping", "ingredients", "cafe",
                "café", "place", "trip", "travel", "holiday", "restaurant", "movie", "film", "show", "book",
-               "tutorial", "workout", "friend", "mate", "tonight", "weekend", "try")
+               "tutorial", "stretch", "routine", "gym", "yoga", "friend", "mate", "tonight", "weekend", "try")
 # Words that mean a feature or the product is on screen. In a lead hook they must come after the pain.
 FEATURE_CUES = ("skwirl", "export", "json", "download", "link", "revoke", "stop sharing", "public",
                 "offline", "cache", "cached", "signal", "settings", "category", "categories",

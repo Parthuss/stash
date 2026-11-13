@@ -1,0 +1,477 @@
+{
+  "status": "COPY_REVIEW_ONLY_NO_MEDIA_APPROVAL",
+  "reviews": [
+    {
+      "id": "I-01",
+      "review": {
+        "model": "Sonnet 5.5",
+        "reviewer": "independent editor",
+        "scores": {
+          "scroll_stop": 4,
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 3,
+          "originality": 2,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "scroll_stop": "A stranger sees 'The reel you saved can disappear' over a Saved grid with one 'Reel unavailable' tile. It names a real loss (a save that vanishes) before any product or feature appears, so it is a viewer problem, not an admin feature. It is a statement rather than a sharply personal moment, so it stops at 4, not 5.",
+          "hook_strength": "It opens an honest question: what happens to a save when the post goes away? The deck answers it with the note, and the limit slide says the note is kept but the video is not. The loss framing is concrete and the 'Reel unavailable' tile gives a clear first-frame promise.",
+          "clarity_2s": "The subject (a saved reel that can vanish) is clear in two seconds. Slide 1 is the hook with a matching visual, and the bridges lead from slide to slide.",
+          "payoff": "The deck demonstrates a note being made (slide 3), its ingredients and steps (slide 4) and a search (slide 5). The headline question is about what survives deletion, yet no slide shows a note still readable after its source reel is gone. That is only stated, in the limit slide and the caption. The payoff answers a neighbouring question (what a note holds) more than the one the hook opens.",
+          "originality": "The same hook, 'The reel you saved can disappear.', and the same idea already exist in the history. promo/engine/ideas.md has it as I-01, a Reel with the same loss-then-keep story, with unknown posting status. The posted 'Your Saved folder is a graveyard' carousel (7 Nov) covers the same saving-is-not-keeping territory. This draft changes the format to a carousel and the wording slightly. That is a lexical and format change, not a distinct structure or angle.",
+          "brand_fit": "Plain, honest voice. It states the limit openly ('It keeps the note. Not the video.'), avoids hype, numbers and guarantees, and the CTA is simple."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Turn a shared reel into a note with a summary and a next step. It keeps the note, not the video.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "The first sentence is approved copy for notes. 'Keeps the note, not the video' matches the limit 'A note is not a video backup.'"
+          },
+          {
+            "path": "platforms.instagram.caption",
+            "text": "Turn a shared reel into a note with a summary and a next step. It keeps the note, not the video.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Same as the main caption: approved notes copy plus the stated limit."
+          },
+          {
+            "path": "slides.2.text",
+            "text": "Turn a shared reel into a note with a summary and a next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for the notes feature. The demo visual is a real note screen on a demo account."
+          },
+          {
+            "path": "slides.3.text",
+            "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+            "feature_ids": [
+              "recipes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for the recipes feature. It carries the 'when the source provides them' qualifier, with no invented quantities or nutrition."
+          },
+          {
+            "path": "slides.4.text",
+            "text": "Weeks later? Search your saved notes by meaning.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "'Search your saved notes by meaning' is approved copy. 'Weeks later?' is framing and implies no recall guarantee, but the filmed search should show a real matching result without implying perfect recall."
+          },
+          {
+            "path": "slides.5.text",
+            "text": "It keeps the note. Not the video. Share the reel while it is still up.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Consistent with the notes limit that a note is not a video backup. It correctly says the reel must be shared before it is deleted."
+          }
+        ],
+        "issues": [
+          "Originality: the hook 'The reel you saved can disappear.' is verbatim from the earlier I-01 backlog draft (promo/engine/ideas.md). The story is the same loss-then-keep idea as the posted 'Saved folder is a graveyard' carousel. Switching to a carousel format is not enough. It needs a distinct angle, such as a different save type, a different structure or a different proof.",
+          "Payoff: the hook asks what happens to a save when the reel is deleted, but no slide shows a Skwirl note still readable after its source reel is unavailable. Add a shot of a note beside an 'unavailable' tile, using demo data, so the question is answered visually and not just in the limit line.",
+          "Slide 6 visual is type only on ink. This is acceptable as a limit slide but contributes no demonstration."
+        ],
+        "input_digest": "89fde8ca66f750e707c60eda00adc6c426d454aadf061d25fb21e0ef1616c40e"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "payoff must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "I-02",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "scroll_stop": 4,
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 3,
+          "originality": 4,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "scroll_stop": "A stranger sees a friend's text asking for a pasta reel they saved. It names a real, relatable cooking and forgotten-save moment before any feature or product name, and the plain text makes the subject clear.",
+          "hook_strength": "'Send me that pasta reel?' opens a concrete question and the beats 1-2 deepen it with 'Saved it. Now find it.' The question is specific and filmable, but the payoff does not answer it completely (see payoff).",
+          "clarity_2s": "The chat bubble reads in two seconds as 'a friend wants a reel I saved.' The staged demo label and the absence of app branding keep the frame uncluttered.",
+          "payoff": "The script never establishes that the pasta reel was shared into Skwirl. Beat 1 shows a 'Saved grid' and says 'You saved it weeks ago,' then beat 2 searches 'your saved notes.' A stranger would take this to mean Skwirl searches their Instagram Saved folder. That is an implied scope claim beyond the feature, which only covers reels already turned into notes. The hook also asks to send the reel, but the handoff sends a public note link, and the script never shows that the note links back to the reel. The question is only partly answered. The search and share demonstrations themselves are specific and supported.",
+          "originality": "The send-back trigger followed by a public note link is a different structure from the posted reels. The demo query is explicitly kept away from 'that pasta thing' in reel 12. Pasta is already heavily used (reels 05, 11 and 12), so the payoff theme is close to earlier posts.",
+          "brand_fit": "Plain, calm voice, a labelled demo, no invented numbers or testimonials, and the sharing limit stated neutrally."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Search your saved notes by meaning.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Matches the approved copy for the search feature. The limit is no perfect-recall or exact ranking guarantee, and no such guarantee is made."
+          },
+          {
+            "path": "caption",
+            "text": "Create a public link to a Skwirl note. Anyone with the link can read that shared note.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Matches the approved copy and the stated limit. The page is public and read-only, and the copy does not call it private or collaborative."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "Search your saved notes by meaning.",
+            "feature_ids": [
+              "search"
+            ],
+            "supported": true,
+            "reason": "Approved search copy, and the beat shows a real capture of a matching note. The sentence 'Type what you remember about the dish' is a plausible demonstration, but it does not say the reel must have been shared into Skwirl first."
+          },
+          {
+            "path": "beats.3.vo",
+            "text": "Create a public link to a Skwirl note.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Approved note_share copy, shown with the real Share control."
+          },
+          {
+            "path": "beats.4.vo",
+            "text": "Anyone with the link can read that shared note.",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "Exact limit from the feature record."
+          },
+          {
+            "path": "beats.4.on_screen",
+            "text": "Anyone with the link can read it",
+            "feature_ids": [
+              "note_share"
+            ],
+            "supported": true,
+            "reason": "A faithful paraphrase of the approved limit."
+          }
+        ],
+        "issues": [
+          "The setup never says the pasta reel was shared into Skwirl. 'You saved it weeks ago' over a Saved grid, followed by a search of 'saved notes', implies Skwirl searches the Instagram Saved folder. Add an explicit beat or line, for example 'shared to Skwirl' before the search, or show the reel becoming a note.",
+          "The hook asks to send the reel, but the payoff sends a Skwirl note link. The script does not show the note linking to the reel, or say the friend gets the recipe note instead. Reframe the question or show what the friend receives.",
+          "Pasta is already used in reels 05, 11 and 12. Consider a different dish for the demo to avoid repeating the theme, or justify why the share handoff makes it distinct."
+        ],
+        "input_digest": "5eafb79a23a967b14610731a0f9bb8aec6e1865a70218b355f171eab0431acab"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "payoff must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "I-16",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "scroll_stop": 4,
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 3,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "scroll_stop": "A stranger sees a first-person shop-aisle scene and a question about a saved recipe reel they cannot place. The viewer problem (a cooking moment, a lost save) comes before any feature or the product name. It is relatable and not admin-feature-led, so it earns a 4 for the lead slot.",
+          "hook_strength": "'At the shop. Which saved reel had the ingredients?' opens a concrete question with a clear moment and a clear stake. The staged-scene framing is specific. The weakness is that the question is about locating the reel, which the script never answers.",
+          "clarity_2s": "Within two seconds the subject is clear: a person in a shop who needs ingredients from a saved reel. The seeded Saved grid of food tiles supports it.",
+          "payoff": "The hook asks WHICH saved reel had the ingredients, but the payoff only shows a recipe note's checklist and numbered steps. Nothing shows finding the reel, such as by search or by opening the note. The re-hook 'And then you remember you saved it' contradicts the hook's premise of not knowing which reel. The viewer is shown what a note contains, not how it answers the question. Claim support is fine, but the promise is only partly kept.",
+          "originality": "The history already holds the posted 'fridge' POV recipe reel ('11:40pm. Fridge open.'), the earlier recipe-note drafts I-04 ('Saved dinner. Still don't know what to buy?', ingredient checklist) and I-04 'lemons', and the week-17 'Pause. Rewind.' recipe piece. This draft uses the same recipe-checklist payoff and a POV-scene format. Moving the setting to a shop is a mostly lexical and scene change. The structure is not distinct enough.",
+          "brand_fit": "Plain, honest voice. The 'only what the source gave' beat respects the do-not-invent-quantities limit. There are no hype claims, no invented numbers, and no testimonial."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+            "feature_ids": [
+              "recipes"
+            ],
+            "supported": true,
+            "reason": "Matches the approved recipes copy verbatim; it is conditional on the source providing the content, and no quantities, nutrition or shopping integration are claimed."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+            "feature_ids": [
+              "recipes"
+            ],
+            "supported": true,
+            "reason": "Approved copy verbatim. The shot must use a real seeded note whose source actually contained the checklist and steps."
+          },
+          {
+            "path": "beats.2.on_screen",
+            "text": "Ingredient checklist. Numbered steps.",
+            "feature_ids": [
+              "recipes"
+            ],
+            "supported": true,
+            "reason": "A shortened form of the approved claim, with the 'when the source provides them' condition dropped here, but it is covered by the same beat's VO and by the demo note, which does contain both."
+          },
+          {
+            "path": "beats.3.vo",
+            "text": "If the reel left out amounts, the note will too.",
+            "feature_ids": [
+              "recipes"
+            ],
+            "supported": true,
+            "reason": "Consistent with the limit 'Do not invent quantities'. It is a limit statement, supported only if the demo capture really shows an amount-less line from a source without amounts."
+          },
+          {
+            "path": "beats.3.on_screen",
+            "text": "Only what the source gave",
+            "feature_ids": [
+              "recipes"
+            ],
+            "supported": true,
+            "reason": "Restates the no-invented-quantities limit for recipe notes; it is not an exhaustive-accuracy claim."
+          }
+        ],
+        "issues": [
+          "Payoff mismatch: the hook asks which saved reel had the ingredients (a retrieval question), but the payoff shows the note contents and never shows finding or opening the right reel or note. Either add a real, supported retrieval beat (for example meaning search of the demo library, with its no-perfect-recall limit) or change the hook to match what is demonstrated.",
+          "Beat 1 VO 'And then you remember you saved it' contradicts the hook's premise that you do not know which reel it was, and it adds no new information.",
+          "Originality: too close to the posted 'fridge' POV recipe reel, the I-04 ingredient-checklist drafts, and the week-17 'Pause. Rewind.' recipe piece. It reuses the same recipe-note payoff and POV-scene structure with only the setting changed. It needs a distinct structure or angle, or a gap of at least several days after any recipe post.",
+          "The hook-beat shot shows a thumb scrolling a 'Saved grid' without saying whether it is Instagram's grid or Skwirl's, which weakens the first-frame story."
+        ],
+        "input_digest": "61b9dfd4d25733691ad64a4d369612e3cd1f92f57f97110378270618d2ba676a"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "payoff must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "I-17",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "scroll_stop": 4,
+          "hook_strength": 4,
+          "clarity_2s": 4,
+          "payoff": 4,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "scroll_stop": "A stranger sees a familiar, specific failure before any product name: a workout reel saved for Monday, and it is already Friday. The calendar visual makes the gap concrete. It names a viewer frustration (saved but never tried) and leads with no feature.",
+          "hook_strength": "The two short sentences open an honest question (why is it still untouched?). Slides 2 to 6 answer it: a bare save does not say where to start, so keep a next step, then mark it Tried. The Monday/Friday contrast is more specific than the generic alternates.",
+          "clarity_2s": "The subject (a saved workout reel left undone) is clear from frame one, with large type and a calendar showing Friday. The do-dont structure is easy to follow, with a bridge on each slide.",
+          "payoff": "Slide 5 plans a real capture of a seeded, demo-labelled workout note showing its summary and next step (feature notes). Slide 6 plans a capture of the same note with 'I tried this' tapped and the Tried state showing (feature tried). Both are filmable and match source anchors and limits. The promise is a manual tick, which is honest.",
+          "originality": "The hook and workout framing are distinct, but the idea is not. It merges two retained drafts: I-05 ('give it a next step' carousel) and I-11 ('What was the last save you actually tried?' To try -> Tried). It also repeats the posted 7 Nov graveyard carousel's thesis ('Saving feels like doing. It isn't.'). The 'a bare save is a tile' slide restates that thesis. The workout and Monday angle is a lexical and topical change, not a new structure or insight.",
+          "brand_fit": "Plain, calm and practical. No hype, no guarantees, and the 'your tick, not a tracker' line respects the limit. The CTA is simple."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Turn a shared reel into a note with a summary and a next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for notes. Limit (processing takes time, not a video backup) is not contradicted."
+          },
+          {
+            "path": "caption",
+            "text": "Mark a note as Tried after you try it.",
+            "feature_ids": [
+              "tried"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for tried. It is a manual status tick."
+          },
+          {
+            "path": "slides.3.text",
+            "text": "Do: keep one small next step with the reel.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Notes carry a next step, so this is consistent with the notes feature. It is framed as advice and promises no automated outcome."
+          },
+          {
+            "path": "slides.4.text",
+            "text": "Turn a shared reel into a note with a summary and a next step.",
+            "feature_ids": [
+              "notes"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy. Planned capture of a labelled demo note shows summary and next step."
+          },
+          {
+            "path": "slides.5.text",
+            "text": "Mark a note as Tried after you try it. It is your tick, not a tracker.",
+            "feature_ids": [
+              "tried"
+            ],
+            "supported": true,
+            "reason": "Approved copy plus a limit-consistent clarification: manual status tick, not measured completion."
+          },
+          {
+            "path": "slides.4.bridge",
+            "text": "Then you can close the loop.",
+            "feature_ids": [
+              "tried"
+            ],
+            "supported": true,
+            "reason": "Loosely describes marking a note Tried as the follow-through step. It implies no tracking or outcome guarantee."
+          }
+        ],
+        "issues": [
+          "Originality is a 3: the concept overlaps retained drafts I-05 and I-11 and the posted 7 Nov graveyard carousel ('Saving feels like doing. It isn't.'). The workout framing changes the topic, not the structure or the point. Needs a distinct angle (for example one concrete workout shown being started rather than a general 'a save is not a plan' argument) or should be held until it does not duplicate those pieces.",
+          "Slide 4 ('keep one small next step with the reel') names a notes capability but has empty feature_ids. Tag it notes for consistency."
+        ],
+        "input_digest": "a577f118648aeacdd9842822a521e261d95dc9b0e5c1421297670f331be6227a"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "originality must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    },
+    {
+      "id": "I-14",
+      "review": {
+        "model": "claude-sonnet-5-5",
+        "reviewer": "independent editor",
+        "scores": {
+          "scroll_stop": 3,
+          "hook_strength": 3,
+          "clarity_2s": 3,
+          "payoff": 4,
+          "originality": 3,
+          "brand_fit": 4
+        },
+        "reasons": {
+          "scroll_stop": "A stranger sees a staged cafe-front shot and the line 'You saved the place. Now remember its name.' The frustration (a saved spot whose name you've forgotten) is only implied. The line is an imperative that reads as a dare or a scold rather than a felt moment of loss. The sharper candidates in the packet ('Pause. What was that cafe called?', 'You have the reel. You lost the name.') name the problem directly, and the weaker one was chosen. It does not use a feature as the lead, so no hard cap applies, but it is a generic curiosity opener.",
+          "hook_strength": "The hook does not open a clear question that the payoff answers. 'Now remember its name' is a command, and the viewer is not told what is lost or where. The re-hook ('The name was in the reel. You never wrote it down.') is the stronger statement of the pain and arrives at second 3, after the hook has already had to do its job.",
+          "clarity_2s": "In two seconds the subject is unclear. 'The place' is not tied to a reel, a cafe or travel until later. The first-frame visual (staged street or cafe-front plus a demo Saved grid) could be about maps, photos or memory generally. Neither the hook text nor the visual names the cafe or reel context that the stronger alternatives carry.",
+          "payoff": "The payoff is specific and filmable. A real capture of the seeded demo Lists screen, Places section, matches the 'lists' feature, and the limit beat ('No maps. Just the names.') matches the feature limits honestly. One gap: the planned shots do not visibly connect the scrubbed demo reel's named place to the matching entry in the Places list, so the answer to 'what was the name' is shown only implicitly. This should be tightened in production but does not make the demonstration impossible.",
+          "originality": "The structure repeats work already in history. The posted '40 book reels. 0 books read.' Lists reel, backlog I-13 (movies List) and the earlier I-14 'process vs product' places idea all use the same 'reels mention things, Lists collect them' payoff. The framing here, travel and cafe names, is a topic swap more than a distinct structure. The 'list-payoff' format id signals the same shape as the book reel.",
+          "brand_fit": "The voice is plain and calm. The limit beat ('No maps or bookings. Just the names you saved.') is honest and on-brand. The CTA is simple. The seeded demo is labelled with no real venue branding or licensed footage, consistent with brand rules."
+        },
+        "claims_complete": true,
+        "unsupported_claims": [],
+        "claim_audit": [
+          {
+            "path": "caption",
+            "text": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+            "feature_ids": [
+              "lists"
+            ],
+            "supported": true,
+            "reason": "Matches the approved copy for the 'lists' feature verbatim and is backed by listMentions in worker/src/v1.ts."
+          },
+          {
+            "path": "caption",
+            "text": "No maps or bookings, just the names you saved.",
+            "feature_ids": [
+              "lists"
+            ],
+            "supported": true,
+            "reason": "Consistent with the limits ('No maps, reservations, recommendation engine or streaming availability'). It narrows the claim rather than extending it. 'Bookings' is a fair plain-language match for reservations."
+          },
+          {
+            "path": "platforms.instagram.caption",
+            "text": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists. No maps or bookings, just the names you saved.",
+            "feature_ids": [
+              "lists"
+            ],
+            "supported": true,
+            "reason": "Same text as the main caption, supported by approved copy plus the stated limits."
+          },
+          {
+            "path": "beats.2.vo",
+            "text": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+            "feature_ids": [
+              "lists"
+            ],
+            "supported": true,
+            "reason": "Verbatim approved copy for the 'lists' feature."
+          },
+          {
+            "path": "beats.2.on_screen",
+            "text": "Places, collected into Lists",
+            "feature_ids": [
+              "lists"
+            ],
+            "supported": true,
+            "reason": "Places are a supported mention type in Lists. The shot is a real capture of the Places section."
+          },
+          {
+            "path": "beats.3.vo",
+            "text": "No maps or bookings. Just the names you saved.",
+            "feature_ids": [
+              "lists"
+            ],
+            "supported": true,
+            "reason": "Accurate limit statement with no extra capability implied."
+          },
+          {
+            "path": "beats.3.on_screen",
+            "text": "No maps. Just the names.",
+            "feature_ids": [
+              "lists"
+            ],
+            "supported": true,
+            "reason": "Accurate limit statement with no extra capability implied."
+          }
+        ],
+        "issues": [
+          "Lead slot: the hook 'You saved the place. Now remember its name.' implies the pain rather than naming it. It is an imperative with no clear subject (what place, saved where) and reads as generic curiosity. scroll_stop is 3 because a stranger would not immediately feel a specific lost-cafe moment.",
+          "Hook selection: stronger, more concrete candidates were available ('Pause. What was that cafe called?', 'You have the reel. You lost the name.', 'The cafe was in a reel. The name was said once.'). Use one of them, or rewrite so the first frame states the forgotten-name problem plainly.",
+          "Clarity: the first frame (staged street/cafe front plus a generic Saved grid) does not make 'saved reel, forgotten cafe name' obvious in two seconds. Put the problem in the on-screen text and visual, not just the voiceover.",
+          "Originality: the list-payoff structure and 'reels mention things, Lists collect them' payoff duplicate the posted books Lists reel and backlog items I-13 and I-14. A topic swap to places is not a distinct structure. Differentiate the narrative, for example a concrete moment of standing in the right city, with a different reveal.",
+          "Payoff linkage: the planned shots show a named place in a demo reel and, separately, a seeded Places list. Make sure the same place name visibly appears in both so the answer to the opening question is demonstrated, not implied."
+        ],
+        "input_digest": "314a267c7d67db884ea16ab8a32959e1d01b7cd96555f3cb879a2b1326db80f0"
+      },
+      "errors": [
+        {
+          "code": "quality.judge",
+          "detail": "scroll_stop must be finite and >=4/5"
+        }
+      ],
+      "verdict": "FAIL"
+    }
+  ]
+}
