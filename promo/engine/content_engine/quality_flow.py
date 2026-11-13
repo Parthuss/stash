@@ -10,8 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .hooks import heuristic_score, norm_feature, validate_hook, numbers_in
-from .ideation import generate_ideas, load_audiences, load_formats, read_history
-from .quality_judge import digest, judge_packet, run_judge, validate_judge
+from .ideation import generate_ideas, load_audiences, load_formats, rank_drafts, read_history
+from .quality_judge import digest, judge_packet, pain_first_errors, run_judge, validate_judge
 from .validate_copy import catalogue, validate_copy
 from .validate_scripts import validate_script
 
@@ -42,10 +42,11 @@ def parse_model_json(text: str):
     return json.loads(text)
 
 
-def planning_history(root: Path) -> list[dict]:
-    result = read_history(root)
+def planning_history(root: Path, exclude_ids=()) -> list[dict]:
+    """exclude_ids: ids of drafts being re-planned (e.g. promoted backlog I-01), so they are not their own duplicates."""
+    result = read_history(root, exclude_ids)
     if '/.crew/wt/' in str(root):
-        result += read_history(Path(str(root).split('/.crew/wt/')[0]))
+        result += read_history(Path(str(root).split('/.crew/wt/')[0]), exclude_ids)
     # Stable deduped packet keeps token use bounded without discarding substantive text.
     seen, rows = set(), []
     for row in result:
@@ -63,10 +64,17 @@ fresh audience questions (label those editorial_hypothesis). A real feature is t
 performance, customer, percentage or speed claims. Professionals campaign is parked; omit it. No real names,
 user data, competitors, open-source, TikTok, Threads, perfect/instant/unlimited claims. Only Claude Code may
 be automatic; prefer to avoid that topic since existing drafts cover it. No em dashes. Plain grade-8 copy.
-Remix a STRUCTURE, never another creator's wording. Avoid topics in the existing backlog where possible;
+Remix a STRUCTURE, never another creator's wording. Backlog topics are allowed when they carry the strongest frustration;
 change the situation and demonstration meaningfully, not just synonyms in a hook. An honest everyday
 problem, a specific turn/re-hook, and a visible supported payoff. No 'one weird trick', vague read-this
 clickbait, truisms or unearned promises. End with one clear action: "Try Skwirl. Link in bio."
+AUDIENCE PAIN FIRST (hard rule, overrides novelty): rank by what makes a stranger who has never heard of
+Skwirl stop scrolling. Every hook must name a real viewer frustration or desire (lost or forgotten saves,
+cannot find that reel, never actually used what they saved, cooking, travel, watching or learning moments)
+BEFORE any feature or the product name. Niche/admin features (export, JSON, public link, revoking a link,
+offline cache, settings, category fixes) may appear only as supporting beats or in a draft with "slot":"faq";
+never as a lead hook. Prefer the strongest proven frustrations even if the backlog touched them, as long as
+the situation, demonstration and wording are genuinely new. Add "slot":"lead"|"faq" to each draft.
 Return ONLY JSON {"drafts":[...]} with these keys per draft:
 id (short lowercase quality-01..05), kind (reel|carousel), audience (short string), question, question_type,
 format_id (real library id), feature_ids, hook_candidates (>=12 objects {text,framework}, across curiosity,
@@ -105,12 +113,13 @@ def generate_plan(root: Path, model=None, n: int = 5, now: datetime | None = Non
             draft['caption']=draft['hook']+'\n'+draft['claims'][0]['text']+' '+draft['cta']+'\n#Skwirl'
     if len(drafts) != n:
         raise ValueError(f'Expected {n} drafts, got {len(drafts)}')
+    drafts=rank_drafts(drafts)
     result={'version':1,'generated_at':now.isoformat(),'mode':mode,'history_digest':digest(history),
             'history_units':len(history),'drafts':drafts,'template_skips':len(initial['skipped']),
             'status':'DRAFTS_ONLY_NOT_APPROVABLE','checks':[]}
     from .ideation import find_duplicates
     for d in drafts:
-        errs=validate_copy(d)+validate_script(d)
+        errs=validate_copy(d)+validate_script(d)+pain_first_errors(d)
         dup=[m for m in find_duplicates([d['hook'],d['question']],history,weeks=6,now=now) if m['blocking']]
         if dup:errs.append({'code':'duplicate.recency','detail':dup})
         if len(d.get('hook_candidates',[]))<12 or len(d.get('hooks_top3',[]))!=3:

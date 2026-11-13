@@ -1,0 +1,813 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-12T23:40:00+05:30",
+  "mode": "pain-first-curated (Sonnet ideate + backlog I-01/I-02/I-14)",
+  "status": "DRAFTS_ONLY_NOT_APPROVABLE",
+  "source_run": "research/quality-run-pain-first-2026-11-12.json",
+  "drafts": [
+    {
+      "id": "I-01",
+      "slot": "lead",
+      "kind": "carousel",
+      "audience": "people with a big Saved folder",
+      "question": "What happens to your save when the creator deletes the reel?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "loss-then-keep",
+      "feature_ids": [
+        "notes",
+        "recipes"
+      ],
+      "hook_candidates": [
+        {
+          "text": "The reel you saved can disappear.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Reel unavailable. The recipe went with it.",
+          "framework": "pattern_interrupt"
+        },
+        {
+          "text": "Saving a reel is not the same as keeping it.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "Your save is only a link to their post.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "POV: you go back for the recipe and the reel is gone.",
+          "framework": "pov"
+        },
+        {
+          "text": "Stop trusting a save to keep the recipe.",
+          "framework": "stop_doing"
+        },
+        {
+          "text": "What happens to your save when the creator deletes the reel?",
+          "framework": "question"
+        },
+        {
+          "text": "One reel gone. One recipe gone with it.",
+          "framework": "specific_number"
+        },
+        {
+          "text": "Watch a saved reel become a note before it disappears.",
+          "framework": "demonstration"
+        },
+        {
+          "text": "Deleted post. Lost recipe.",
+          "framework": "pattern_interrupt"
+        },
+        {
+          "text": "The recipe you saved is only there while the post is.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Where did the reel you saved go?",
+          "framework": "question"
+        }
+      ],
+      "hooks_top3": [
+        "The reel you saved can disappear.",
+        "Reel unavailable. The recipe went with it.",
+        "Saving a reel is not the same as keeping it."
+      ],
+      "hook": "The reel you saved can disappear.",
+      "caption": "Turn a shared reel into a note with a summary and a next step. It keeps the note, not the video.\nSend this to the friend who saves every useful reel. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipes",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Turn a shared reel into a note with a summary and a next step.",
+          "feature_id": "notes"
+        },
+        {
+          "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+          "feature_id": "recipes"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "The reel you saved can disappear.",
+          "bridge": "Creators can delete or hide posts, and your save goes too.",
+          "visual": "Seeded demo Saved grid with one tile showing Reel unavailable (built sample slide 1).",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "problem",
+          "text": "Deleted post. Lost recipe. A save is only a link to their post.",
+          "bridge": "So keep the useful part yourself.",
+          "visual": "Diagram: your save points at their post, which is deleted.",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "switch",
+          "text": "Turn a shared reel into a note with a summary and a next step.",
+          "bridge": "Now delete the post.",
+          "visual": "Demo pasta reel, Share arrow, the real note screen in a phone frame (demo account).",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "n": 4,
+          "job": "proof",
+          "text": "Reel unavailable. The note is still here.",
+          "bridge": "And the useful part is in it.",
+          "visual": "Split frame, demo data: left, the Saved tile showing Reel unavailable; right, the same pasta note open and readable in Skwirl.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "payoff",
+          "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+          "bridge": "Now the honest limit.",
+          "visual": "Zoom-ins on that demo note Ingredients and Steps.",
+          "feature_ids": [
+            "recipes"
+          ]
+        },
+        {
+          "n": 6,
+          "job": "limit",
+          "text": "It keeps the note. Not the video. Share the reel while it is still up.",
+          "bridge": "Worth doing today.",
+          "visual": "Type only on ink.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "n": 7,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Skwirl mark on lavender, send-to-a-friend line.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "I-02",
+      "slot": "lead",
+      "kind": "reel",
+      "audience": "people who save recipe reels and get asked for them",
+      "question": "How do I send a friend that reel I saved?",
+      "question_type": "audience_report",
+      "format_id": "friend-asks-search",
+      "feature_ids": [
+        "search",
+        "note_share"
+      ],
+      "hook_candidates": [
+        {
+          "text": "Send me that dumpling reel?",
+          "framework": "question"
+        },
+        {
+          "text": "Your friend wants that dumpling reel. You saved it. Now what?",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Stop scrolling your Saved grid while a friend waits.",
+          "framework": "stop_doing"
+        },
+        {
+          "text": "Pause. Where did that dumpling reel go?",
+          "framework": "pattern_interrupt"
+        },
+        {
+          "text": "POV: your friend asks for the dumpling reel you saved.",
+          "framework": "pov"
+        },
+        {
+          "text": "Saving it was easy. Sending it back is the hard part.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "One text. One saved reel. Somewhere in your Saved grid.",
+          "framework": "specific_number"
+        },
+        {
+          "text": "POV: you promised to send the recipe an hour ago.",
+          "framework": "pov"
+        },
+        {
+          "text": "Watch a saved dumpling reel get found and sent back.",
+          "framework": "demonstration"
+        },
+        {
+          "text": "You saved the dumpling reel. Now your friend wants it.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Where is that dumpling reel you promised to send?",
+          "framework": "question"
+        },
+        {
+          "text": "Scrolling Saved while your friend waits is not a system.",
+          "framework": "contrarian"
+        }
+      ],
+      "hooks_top3": [
+        "Your friend wants that dumpling reel. You saved it. Now what?",
+        "Send me that dumpling reel?",
+        "Stop scrolling your Saved grid while a friend waits."
+      ],
+      "hook": "Your friend wants that dumpling reel. You saved it. Now what?",
+      "caption": "Search your saved notes by meaning. Create a public link to a Skwirl note. Anyone with the link can read that shared note.\nSend this to the friend who always asks for that reel. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipes",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Search your saved notes by meaning.",
+          "feature_id": "search"
+        },
+        {
+          "text": "Create a public link to a Skwirl note.",
+          "feature_id": "note_share"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 4,
+          "role": "hook",
+          "vo": "Your friend wants that dumpling reel. You saved it. Now what?",
+          "on_screen": "Your friend wants that dumpling reel. You saved it. Now what?",
+          "shot": "Staged demo message \"send me that dumpling reel?\" on a phone from a fictional friend, labelled demo. No real names or chat app branding.",
+          "feature_ids": []
+        },
+        {
+          "t_start": 4,
+          "t_end": 7,
+          "role": "re-hook",
+          "vo": "You shared it to Skwirl weeks ago. Now find it.",
+          "on_screen": "Shared to Skwirl. Now find it.",
+          "shot": "Text card over the waiting message: shared to Skwirl weeks ago. No product capture in this beat.",
+          "feature_ids": []
+        },
+        {
+          "t_start": 7,
+          "t_end": 13,
+          "role": "payoff",
+          "vo": "Type what you remember about the dish. Search your saved notes by meaning.",
+          "on_screen": "Search by what you remember",
+          "shot": "Real capture in the seeded demo Skwirl library: type a few words about the dumplings and show the real matching note. Seed a dumpling recipe reel in the demo account first (pasta is already in reels 05, 11 and 12) and let Skwirl process it for real.",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "t_start": 13,
+          "t_end": 19,
+          "role": "handoff",
+          "vo": "Create a public link to a Skwirl note. They get the note, not the video.",
+          "on_screen": "They get the note, not the video",
+          "shot": "Real Share control on the matching demo note; paste the generated link into the staged reply, then show the public note page the friend opens, signed out. Keep sign-in tokens out of frame.",
+          "feature_ids": [
+            "note_share"
+          ]
+        },
+        {
+          "t_start": 19,
+          "t_end": 22,
+          "role": "limit",
+          "vo": "Anyone with the link can read that shared note.",
+          "on_screen": "Anyone with the link can read it",
+          "shot": "Hold on the sent reply with the link. Neutral, no leaked-data drama.",
+          "feature_ids": [
+            "note_share"
+          ]
+        },
+        {
+          "t_start": 22,
+          "t_end": 25,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "I-16",
+      "kind": "reel",
+      "slot": "lead",
+      "audience": "cook",
+      "question": "Which saved reel had the ingredients I need right now?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "how-to",
+      "feature_ids": [
+        "recipes",
+        "search"
+      ],
+      "hook_candidates": [
+        {
+          "text": "At the shop. Which saved reel had the ingredients?",
+          "framework": "pattern_interrupt",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pause. What goes in that dish?",
+          "framework": "pattern_interrupt",
+          "score": 65,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "You saved the recipe. Then you stood in the shop with no list.",
+          "framework": "curiosity",
+          "score": 69,
+          "parts": {
+            "length": 0.9,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "The ingredients are not in your head. Where are they?",
+          "framework": "curiosity",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "A saved recipe reel is not much use at the shop.",
+          "framework": "contrarian",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Two things a saved recipe needs at the shop: ingredients and steps.",
+          "framework": "specific_number",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: the reel is saved, the ingredients are not.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you are at the shop and the recipe is somewhere in your Saved folder.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 0.7,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop rewatching a reel to catch the ingredients.",
+          "framework": "stop_doing",
+          "score": 85,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.83,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Where did you put the ingredients from that reel?",
+          "framework": "question",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Can you cook from a reel you saved last week?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a recipe reel become a checklist and numbered steps.",
+          "framework": "demonstration",
+          "score": 98,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.9,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "At the shop. Which saved reel had the ingredients?",
+        "Stop rewatching a reel to catch the ingredients.",
+        "POV: the reel is saved, the ingredients are not."
+      ],
+      "hook": "At the shop. Which saved reel had the ingredients?",
+      "caption": "Search your saved notes by meaning. Recipe notes include ingredient checklists and numbered steps when the source provides them.\nSend this to the friend who cooks from reels. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipeideas",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+          "feature_id": "recipes"
+        },
+        {
+          "text": "Search your saved notes by meaning.",
+          "feature_id": "search"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "At the shop. Which saved reel had the ingredients?",
+          "on_screen": "At the shop. Which saved reel had the ingredients?",
+          "shot": "Staged first-person shot in a shop aisle; thumb scrolling the Instagram Saved grid (demo tiles, labelled demo) and getting nowhere.",
+          "feature_ids": []
+        },
+        {
+          "t_start": 3,
+          "t_end": 9,
+          "role": "re-hook",
+          "vo": "Shared it to Skwirl? Skip the scroll. Search your saved notes by meaning.",
+          "on_screen": "Shared to Skwirl? Search what you remember",
+          "shot": "Real capture in the seeded demo Skwirl library: type a few words about the dish and the demo pasta note comes up. Matches are not guaranteed; show the real result.",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "t_start": 9,
+          "t_end": 16,
+          "role": "payoff",
+          "vo": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+          "on_screen": "Ingredient checklist. Numbered steps.",
+          "shot": "Open that demo note: scroll from the ingredient checklist to the numbered steps. Quantities exactly as the seeded source gave them.",
+          "feature_ids": [
+            "recipes"
+          ]
+        },
+        {
+          "t_start": 16,
+          "t_end": 21,
+          "role": "limit",
+          "vo": "If the reel left out amounts, the note will too.",
+          "on_screen": "Only what the source gave",
+          "shot": "Back in the aisle: the checklist open on the phone, one line with no amount because the demo source gave none. No shopping-list screen or integration.",
+          "feature_ids": [
+            "recipes"
+          ]
+        },
+        {
+          "t_start": 21,
+          "t_end": 24,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark over the aisle scene, softened.",
+          "feature_ids": []
+        }
+      ],
+      "supersedes": [
+        "I-04",
+        "I-06"
+      ]
+    },
+    {
+      "id": "I-17",
+      "kind": "carousel",
+      "slot": "lead",
+      "audience": "workout savers",
+      "question": "How do I actually start a stretch routine I saved?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "how-to",
+      "feature_ids": [
+        "notes",
+        "tried"
+      ],
+      "hook_candidates": [
+        {
+          "text": "You saved a stretch routine for Monday. It is Friday.",
+          "framework": "pattern_interrupt"
+        },
+        {
+          "text": "Pause. When did you last try something you saved?",
+          "framework": "pattern_interrupt"
+        },
+        {
+          "text": "There is one thing a saved stretch routine is missing.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Why the routine you saved never gets done, and a small fix.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "A saved routine is not a plan. A next step is.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "Two small steps to actually start a saved routine.",
+          "framework": "specific_number"
+        },
+        {
+          "text": "POV: it is Friday and your Monday stretch routine is still a tile.",
+          "framework": "pov"
+        },
+        {
+          "text": "POV: your Saved folder is full of routines you never started.",
+          "framework": "pov"
+        },
+        {
+          "text": "Stop saving routines you have no plan to start.",
+          "framework": "stop_doing"
+        },
+        {
+          "text": "Why did the stretch routine you saved never get done?",
+          "framework": "question"
+        },
+        {
+          "text": "Monday plan, Friday reality. Start it anyway.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "Watch a saved routine get a next step and a Tried tick.",
+          "framework": "demonstration"
+        }
+      ],
+      "hooks_top3": [
+        "You saved a stretch routine for Monday. It is Friday.",
+        "POV: it is Friday and your Monday stretch routine is still a tile.",
+        "Stop saving routines you have no plan to start."
+      ],
+      "hook": "You saved a stretch routine for Monday. It is Friday.",
+      "caption": "Turn a shared reel into a note with a summary and a next step. Mark a note as Tried after you try it.\nSend this to a friend with a plan for Monday. Try Skwirl. Link in bio.\n#Skwirl #savedreels #stretching",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Turn a shared reel into a note with a summary and a next step.",
+          "feature_id": "notes"
+        },
+        {
+          "text": "Mark a note as Tried after you try it.",
+          "feature_id": "tried"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "You saved a stretch routine for Monday. It is Friday.",
+          "bridge": "Here is one way to start it today.",
+          "visual": "Large type on lavender with a small calendar on Friday and the seeded demo mobility tile.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "problem",
+          "text": "The reel is still saved. Saving it was the easy part.",
+          "bridge": "So open it as a note.",
+          "visual": "The demo mobility tile in a Saved grid, untouched.",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "payoff",
+          "text": "Turn a shared reel into a note with a summary and a next step.",
+          "bridge": "Here is the next step it gave.",
+          "visual": "Real capture of the seeded demo mobility note: summary at the top.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "n": 4,
+          "job": "proof",
+          "text": "One small next step. Do only that, today.",
+          "bridge": "Then close the loop.",
+          "visual": "Zoom on the real Next step line of that demo note, exactly as written.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "payoff",
+          "text": "Mark a note as Tried after you try it. It is your tick, not a tracker.",
+          "bridge": "That is it.",
+          "visual": "Real capture of the same demo note with the Tried state showing.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "n": 6,
+          "job": "turn",
+          "text": "Friday. Started. Still counts.",
+          "bridge": "Your turn.",
+          "visual": "Calendar card: Friday ticked, labelled illustration.",
+          "feature_ids": []
+        },
+        {
+          "n": 7,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Skwirl wordmark on lavender.",
+          "feature_ids": []
+        }
+      ],
+      "supersedes": [
+        "I-05",
+        "I-11"
+      ]
+    },
+    {
+      "id": "I-14",
+      "slot": "lead",
+      "kind": "reel",
+      "audience": "people who save travel and food spots",
+      "question": "What was the name of that place I saved?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "list-payoff",
+      "feature_ids": [
+        "lists"
+      ],
+      "hook_candidates": [
+        {
+          "text": "You're in the right city. What was that cafe called?",
+          "framework": "pov"
+        },
+        {
+          "text": "You saved the place. Now remember its name.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Pause. What was that cafe called?",
+          "framework": "pattern_interrupt"
+        },
+        {
+          "text": "Stop screenshotting cafe names you never look at again.",
+          "framework": "stop_doing"
+        },
+        {
+          "text": "A saved travel reel is not a list of places.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "POV: you are in the right city and cannot remember the cafe.",
+          "framework": "pov"
+        },
+        {
+          "text": "What was the name of that place you saved?",
+          "framework": "question"
+        },
+        {
+          "text": "Watch places from saved reels collect into one list.",
+          "framework": "demonstration"
+        },
+        {
+          "text": "One trip. Lots of saved reels. Not one place name.",
+          "framework": "specific_number"
+        },
+        {
+          "text": "The cafe was in a reel. The name was said once.",
+          "framework": "curiosity"
+        },
+        {
+          "text": "Where was that place from the reel?",
+          "framework": "question"
+        },
+        {
+          "text": "You have the reel. You lost the name.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "POV: your friend asks where that cafe was.",
+          "framework": "pov"
+        }
+      ],
+      "hooks_top3": [
+        "You're in the right city. What was that cafe called?",
+        "The cafe was in a reel. The name was said once.",
+        "Stop screenshotting cafe names you never look at again."
+      ],
+      "hook": "You're in the right city. What was that cafe called?",
+      "caption": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists. No maps or bookings, just the names you saved. Demo account shown.\nSend this to your travel friend. Try Skwirl. Link in bio.\n#Skwirl #savedreels #travel",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+          "feature_id": "lists"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 3,
+          "role": "hook",
+          "vo": "You're in the right city. What was that cafe called?",
+          "on_screen": "You're in the right city. What was that cafe called?",
+          "shot": "Staged street shot, phone in hand; on screen the seeded demo Tokyo reel tile. The forgotten-name problem is in the on-screen text from frame zero. No real venue branding.",
+          "feature_ids": []
+        },
+        {
+          "t_start": 3,
+          "t_end": 8,
+          "role": "re-hook",
+          "vo": "It was in a reel you shared to Skwirl. The name was said once.",
+          "on_screen": "Said once. Never written down.",
+          "shot": "Scrub a demo travel reel whose audio names the cafe; caption that exact name. Label the frame Demo account. The Places entry must come from Skwirl processing that reel for real, never hand-edited.",
+          "feature_ids": []
+        },
+        {
+          "t_start": 8,
+          "t_end": 15,
+          "role": "payoff",
+          "vo": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+          "on_screen": "There it is, in Places",
+          "shot": "Real capture of the seeded demo Lists screen, Places section, with the SAME cafe name visible that the reel said.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "t_start": 15,
+          "t_end": 20,
+          "role": "limit",
+          "vo": "No maps or bookings. Just the names you saved.",
+          "on_screen": "No maps. Just the names.",
+          "shot": "Hold on the real Places list. No map pins, opening hours or reservation UI.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "t_start": 20,
+          "t_end": 23,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark.",
+          "feature_ids": []
+        }
+      ]
+    }
+  ]
+}

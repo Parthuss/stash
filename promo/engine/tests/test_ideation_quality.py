@@ -43,7 +43,8 @@ def test_hooks_distinct_scored_and_safe():
     assert len(c) >= 12 and len({x["text"] for x in c}) == len(c)
     assert {x["framework"] for x in c} == set(hooks.FRAMEWORKS)
     assert all(not hooks.validate_hook(x["text"], {"2"}) for x in c)
-    assert [x["score"] for x in c] == sorted((x["score"] for x in c), reverse=True)
+    # Ranked audience pain first (pain_first, scroll_stop), then the original heuristic score.
+    assert [hooks.rank_key(x) for x in c] == sorted(hooks.rank_key(x) for x in c)
     top = hooks.select_top3(c)
     assert len(top) == 3 and len({t["framework"] for t in top}) == 3
     assert "not an LLM judge" in c[0]["method"]
@@ -83,7 +84,7 @@ def test_drafts_contract_and_variety():
         assert len(x["hook_candidates"]) >= 12 and len(x["hooks_top3"]) == 3 and x["hook"] == x["hooks_top3"][0]
         assert set(x["feature_ids"]) <= {f["id"] for f in FEATURES} and "empty" not in x["feature_ids"]
         assert set(x) == {"id", "kind", "audience", "question", "format_id", "feature_ids", "hook_candidates", "hooks_top3",
-                          "hook", "caption", "cta", "beats" if x["kind"] == "reel" else "slides"}
+                          "hook", "slot", "scroll_stop", "caption", "cta", "beats" if x["kind"] == "reel" else "slides"}
     assert len({x["id"] for x in d}) == 6
     assert len({x["format_id"] for x in d}) >= 5 and len({x["audience"] for x in d}) >= 3 and len({tuple(x["feature_ids"]) for x in d}) >= 3
     assert len({x["hook"] for x in d}) == 6

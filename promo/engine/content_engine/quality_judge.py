@@ -9,10 +9,39 @@ import hashlib
 import json
 import math
 
+from .hooks import lead_support, pain_first
 from .validate_copy import catalogue, public_units
 
-DIMENSIONS = ('hook_strength', 'clarity_2s', 'payoff', 'originality', 'brand_fit')
+# scroll_stop = "would a stranger who has never heard of Skwirl stop for this hook?" It is weighted highest.
+DIMENSIONS = ('scroll_stop', 'hook_strength', 'clarity_2s', 'payoff', 'originality', 'brand_fit')
+WEIGHTS = {'scroll_stop': 3.0, 'hook_strength': 2.0, 'clarity_2s': 1.0, 'payoff': 1.0, 'originality': 1.0, 'brand_fit': 1.0}
 THRESHOLD = 4.0
+RUBRIC_VERSION = 2
+
+
+def draft_slot(draft: dict) -> str:
+    """A support-only (niche/admin) primary payoff is always FAQ; otherwise the draft's own slot, default lead."""
+    if lead_support(draft.get('feature_ids', [])):
+        return 'faq'
+    return draft.get('slot', 'lead')
+
+
+def pain_first_errors(draft: dict) -> list[dict]:
+    """Hard rule for lead drafts: the hook names the viewer's frustration/desire before any feature."""
+    if draft_slot(draft) != 'lead':
+        return []
+    check = pain_first(draft.get('hook', ''), draft.get('feature_ids', []))
+    return [] if check['ok'] else [{'code': 'quality.pain_first', 'detail': '; '.join(check['reasons'])}]
+
+
+def editorial_rank(review: dict, draft: dict | None = None) -> float:
+    """Weighted editor score for ordering a batch (scroll_stop x3, hook x2, rest x1). FAQ slots sort after leads.
+
+    Ordering only: it is not a forecast and never replaces validate_judge's per-dimension threshold.
+    """
+    scores = review.get('scores', {})
+    total = sum(WEIGHTS[d] * float(scores.get(d, 0)) for d in DIMENSIONS) / sum(WEIGHTS.values())
+    return round(total - (10 if draft is not None and draft_slot(draft) != 'lead' else 0), 3)
 
 
 def digest(value) -> str:
@@ -22,7 +51,7 @@ def digest(value) -> str:
 def judge_packet(draft: dict, history: list[dict], platforms: dict | None = None) -> dict:
     return {'draft': draft, 'public_units': public_units(draft), 'platforms': platforms or {},
             'features': catalogue(), 'history': history,
-            'rubric_version': 1}
+            'slot': draft_slot(draft), 'rubric_version': RUBRIC_VERSION}
 
 
 def judge_prompt(packet: dict) -> str:
@@ -32,7 +61,15 @@ a specific filmable, supported demonstration can earn payoff credit before it is
 quality belongs to a separate rendered viewer gate; do not pretend you saw a render or reject a script
 merely because this task prohibits rendering. Reject impossible or vague planned demonstrations.
 No prediction of virality.
-Score hook_strength, clarity_2s, payoff, originality, brand_fit on 1-5 anchors:
+AUDIENCE PAIN FIRST (hard rule, weighted highest). Score scroll_stop as: would a stranger who has never
+heard of Skwirl stop scrolling for this first frame? A lead hook must name a real viewer frustration or desire
+(a lost or forgotten save, cannot find that reel, never actually used what they saved, a cooking, travel,
+watching or learning moment) BEFORE any feature or the product name appears. Niche/admin features (export,
+JSON, public link or revoking it, offline cache, settings, category fixes) may only be supporting beats or an
+FAQ-slot post; if packet.slot is "lead" and the hook leads with such a feature or with no viewer problem,
+scroll_stop is at most 2 and say so in issues. An FAQ-slot post may answer a feature question directly, but
+scroll_stop still reflects a stranger, not an existing user.
+Score scroll_stop, hook_strength, clarity_2s, payoff, originality, brand_fit on 1-5 anchors:
 1=absent/misleading/confusing/copied/off-brand; 2=major rewrite; 3=understandable but generic or unearned;
 4=specific audience problem, clear first-frame promise, demonstrated supported payoff, distinct structure,
 plain useful brand voice; 5=exceptionally crisp, memorable and independently evidenced. No verbosity bonus.
@@ -42,8 +79,8 @@ Audit EVERY public unit and platform title/description for implied or explicit p
 claims, including unlabelled claims. Match to feature ids and limits, reject guarantees and invented numbers.
 Do not trust draft claims metadata. Claim wording beyond approved copy may still be unsupported.
 Return ONLY JSON: {"model":"actual model name", "reviewer":"independent editor",
-"scores":{"hook_strength":4,"clarity_2s":4,"payoff":4,"originality":4,"brand_fit":4},
-"reasons":{"hook_strength":"specific evidence", "clarity_2s":"...","payoff":"...","originality":"...","brand_fit":"..."},
+"scores":{"scroll_stop":4,"hook_strength":4,"clarity_2s":4,"payoff":4,"originality":4,"brand_fit":4},
+"reasons":{"scroll_stop":"what a stranger sees and feels","hook_strength":"specific evidence", "clarity_2s":"...","payoff":"...","originality":"...","brand_fit":"..."},
 "claims_complete":true,"unsupported_claims":[],"claim_audit":[{"path":"public unit path OR platforms.youtube.title",
 "text":"exact claim span", "feature_ids":["search"],"supported":true,"reason":"evidence and limitation"}],
 "issues":[]}. claim_audit must contain ONLY product/capability/outcome/testimonial assertions.
@@ -65,6 +102,9 @@ def run_judge(draft: dict, history: list[dict], model, platforms: dict | None = 
 def validate_judge(review: dict | None, packet: dict) -> list[dict]:
     def err(detail):
         return [{'code': 'quality.judge', 'detail': detail}]
+    pain = pain_first_errors(packet.get('draft', {}))
+    if pain:
+        return pain
     if not isinstance(review, dict) or review.get('input_digest') != digest(packet):
         return err('Missing or stale independent judge review')
     if not review.get('model') or not review.get('reviewer'):

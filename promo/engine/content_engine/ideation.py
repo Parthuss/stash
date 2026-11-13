@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable
 
-from .hooks import generate_hook_candidates, load_features, select_top3, tokens
+from .hooks import generate_hook_candidates, lead_support, load_features, scroll_stop_score, select_top3, tokens
 from .scripts import DEFAULT_CTA, build_carousel, build_reel
 
 _R = "https://www.reddit.com/r/Instagram/comments/"
@@ -42,6 +42,10 @@ AUDIENCES = [
      "moment": "you saved a tutorial to try later and never did", "pain": "you saved it and never tried it",
      "stop": "saving tutorials you never try", "send_to": "a friend with a project backlog",
      "questions": [{"text": "How do I actually act on the tutorials I save?", "type": "editorial_hypothesis", "source": "promo/engine/ideas.md I-05"}]},
+    {"id": "lost", "label": "people whose saved reels vanished", "thing": "saved reels", "one": "a saved reel",
+     "moment": "you go back for a reel you saved and it is gone", "pain": "the reel you saved is gone",
+     "stop": "trusting a bookmark to keep a reel", "send_to": "a friend with a huge Saved folder",
+     "questions": [{"text": "What happens when a reel you saved gets deleted?", "type": "editorial_hypothesis", "source": "promo/engine/ideas.md I-01"}]},
 ]
 
 
@@ -50,10 +54,19 @@ def load_formats(repo_root) -> list[dict]:
 
 
 def load_audiences(repo_root) -> list[dict]:
-    """Existing sourced questions plus explicitly labelled editorial hypotheses."""
+    """Existing sourced questions plus explicitly labelled editorial hypotheses.
+
+    Bank audiences default to slot "faq" (admin/feature questions): they may fill FAQ posts or
+    supporting beats but never outrank a pain-led idea.
+    """
     bank = Path(repo_root) / 'promo/engine/playbooks/audience_questions.json'
     extra = json.loads(bank.read_text())['audiences'] if bank.exists() else []
-    return AUDIENCES + extra
+    return AUDIENCES + [{"slot": "faq", **a} for a in extra]
+
+
+def slot_for(aud: dict, feature_ids) -> str:
+    """'lead' only for a pain-led audience whose payoff is not a support-only (niche/admin) feature."""
+    return "faq" if aud.get("slot") == "faq" or lead_support(feature_ids) else "lead"
 
 
 # ---------------------------------------------------------------- history / dedupe
@@ -229,7 +242,8 @@ def generate_ideas(features, formats: list[dict], audiences: list[dict] | None =
     history    from read_history(); drafts duplicating a blocking unit (see find_duplicates) are skipped.
     llm        optional callable(prompt)->str, hooks only (see hooks.generate_hook_candidates).
     Returns {"mode", "drafts", "skipped"}. Each draft has exactly: id, kind, audience, question, format_id,
-    feature_ids, hook_candidates, hooks_top3 (hook strings), hook, caption, cta, and beats (reel) or slides (carousel).
+    feature_ids, hook_candidates, hooks_top3 (hook strings), hook, slot ("lead"|"faq"), scroll_stop, caption, cta,
+    and beats (reel) or slides (carousel). Drafts come back ranked by rank_drafts (audience pain first).
     `skipped` lists {combo, reason} so the caller can see why fewer than n came back.
     """
     feats = [f for f in load_features(features) if f["claims"]]
@@ -254,7 +268,8 @@ def generate_ideas(features, formats: list[dict], audiences: list[dict] | None =
             fmt, aud, q, feat, kind, aff = c
             pen = 3 * used["f"].get(fmt["id"], 0) + 2.5 * used["m"].get(feat["id"], 0) + 2 * used["a"].get(aud["id"], 0) \
                 + 1.5 * used["k"].get(kind, 0) + 1 * used["q"].get(q["text"], 0)
-            return (-(aff - pen), _h(seed, fmt["id"], aud["id"], q["text"], feat["id"], kind))
+            # Audience pain first: every lead combo outranks every FAQ/support-only combo.
+            return (slot_for(aud, [feat["id"]]) != "lead", -(aff - pen), _h(seed, fmt["id"], aud["id"], q["text"], feat["id"], kind))
         pool.sort(key=rank)
         fmt, aud, q, feat, kind, _ = pool.pop(0)
         combo = f"{fmt['id']}/{aud['id']}/{feat['id']}/{kind}"
@@ -262,10 +277,16 @@ def generate_ideas(features, formats: list[dict], audiences: list[dict] | None =
         if not cands:
             skipped.append({"combo": combo, "reason": "no valid hook"})
             continue
+        slot = slot_for(aud, [feat["id"]])
+        if slot == "lead" and not any(c["pain_first"] for c in cands):
+            # Hard rule: a lead hook names the viewer's frustration/desire before any feature.
+            skipped.append({"combo": combo, "reason": "no pain-first hook"})
+            continue
         top3 = select_top3(cands)
-        # first candidate (top3, then the rest) that is not a near-duplicate of a batch hook or history
+        # first candidate (top3, then the rest) that is not a near-duplicate of a batch hook or history;
+        # a lead draft may only pick a pain-first hook
         hook, dups = None, []
-        for c in top3 + [c for c in cands if c not in top3]:
+        for c in [c for c in top3 + [c for c in cands if c not in top3] if slot != "lead" or c["pain_first"]]:
             dups = [d for d in find_duplicates([c["text"], q["text"]], history, dup_threshold, weeks, now) if d["blocking"]]
             dups += [{"id": d["id"]} for d in drafts if similarity(c["text"], d["hook"]) >= 0.5]
             if not dups:
@@ -280,7 +301,8 @@ def generate_ideas(features, formats: list[dict], audiences: list[dict] | None =
         base = {"id": re.sub(r"[^a-z0-9]+", "-", f"{fmt['id']}-{aud['id']}-{feat['id']}-{kind}".lower()) + f"-{_h(q['text']) % 1000:03d}",
                 "kind": kind, "audience": aud["id"], "question": q["text"], "format_id": fmt["id"],
                 "feature_ids": [feat["id"]], "hook_candidates": cands, "hooks_top3": [c["text"] for c in top3],
-                "hook": hook,
+                "hook": hook, "slot": slot,
+                "scroll_stop": next(c["scroll_stop"] for c in cands if c["text"] == hook),
                 "caption": f"{hook}\n\n{payoff}\n\nSend this to {aud.get('send_to', 'a friend who saves reels')}. {cta}",
                 "cta": cta}
         if kind == "reel":
@@ -291,4 +313,20 @@ def generate_ideas(features, formats: list[dict], audiences: list[dict] | None =
         drafts.append(base)
         for key, v in (("f", fmt["id"]), ("m", feat["id"]), ("a", aud["id"]), ("k", kind), ("q", q["text"])):
             used[key][v] = used[key].get(v, 0) + 1
-    return {"mode": "llm-assisted-hooks" if llm_used else "local-template", "drafts": drafts, "skipped": skipped}
+    return {"mode": "llm-assisted-hooks" if llm_used else "local-template", "drafts": rank_drafts(drafts), "skipped": skipped}
+
+
+def rank_drafts(drafts: list[dict]) -> list[dict]:
+    """Order a batch by audience pain first: lead slots before FAQ slots, then scroll-stop for a stranger.
+
+    Truth/style/recency checks stay separate; this only orders drafts. A draft without a slot is
+    classified from its primary feature (a support-only primary payoff is always FAQ).
+    """
+    def key(d):
+        fids = d.get("feature_ids", [])
+        s = d.get("scroll_stop")
+        if s is None:
+            s = scroll_stop_score(d.get("hook", ""), fids)["scroll_stop"]
+        slot = "faq" if lead_support(fids) else d.get("slot", "lead")
+        return (slot != "lead", -s)
+    return sorted(drafts, key=key)

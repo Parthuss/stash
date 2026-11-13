@@ -20,7 +20,7 @@ def main():
     if args.cmd=='ideate':
         result=generate_plan(root,cli_model(args.model) if args.model else None)
     elif args.cmd=='judge':
-        plan=json.loads(args.plan.read_text());history=planning_history(root);reviews=[]
+        plan=json.loads(args.plan.read_text());history=planning_history(root,[i for d in plan['drafts'] for i in [d['id'],*d.get('supersedes',[])]]);reviews=[]
         model=cli_model(args.model)
         for draft in plan['drafts']:
             platforms={'instagram':{'caption':draft['caption']}}

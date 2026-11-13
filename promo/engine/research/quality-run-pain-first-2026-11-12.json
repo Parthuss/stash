@@ -1,0 +1,1253 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-12T17:42:10.853991+00:00",
+  "mode": "llm-refined-grounded-templates",
+  "history_digest": "faa820bd216a06ef5313d9f3ed8c8047ec807849f6940063719dbabbc45bf606",
+  "history_units": 283,
+  "drafts": [
+    {
+      "id": "quality-01",
+      "kind": "reel",
+      "slot": "lead",
+      "audience": "everyday",
+      "question": "How do I find a saved reel when I only remember what it was about?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "friend-asks-search",
+      "feature_ids": [
+        "search"
+      ],
+      "hook_candidates": [
+        {
+          "text": "You saved that reel. You cannot remember who posted it.",
+          "framework": "pattern_interrupt",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pause. You saved it. Who posted it?",
+          "framework": "pattern_interrupt",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "The reel was about neck stretches. The account is a blur.",
+          "framework": "curiosity",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "You remember the reel. Not the account. There is a way back.",
+          "framework": "curiosity",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Remembering who posted it is not the only way to find a reel.",
+          "framework": "contrarian",
+          "score": 98,
+          "parts": {
+            "length": 0.9,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Two steps to find a saved reel by what it was about.",
+          "framework": "specific_number",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you remember the idea but not the account.",
+          "framework": "pov",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: the reel is saved and the account is gone from your head.",
+          "framework": "pov",
+          "score": 69,
+          "parts": {
+            "length": 0.9,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop scrolling your whole Saved grid for one reel.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.98,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Can you find a saved reel by what it was about?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Which reel was it? You only remember what it was about.",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a few plain words open the saved reel.",
+          "framework": "demonstration",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a stretch reel get found by its idea, not its poster.",
+          "framework": "demonstration",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "You saved that reel. You cannot remember who posted it.",
+        "POV: you remember the idea but not the account.",
+        "Stop scrolling your whole Saved grid for one reel."
+      ],
+      "hook": "You saved that reel. You cannot remember who posted it.",
+      "caption": "You remember the idea, not the account. Search your saved notes by meaning.\nSend this to the friend who always asks which reel it was. Try Skwirl. Link in bio.\n#Skwirl #savedreels #notes",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Search your saved notes by meaning.",
+          "feature_id": "search"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 4,
+          "role": "hook",
+          "vo": "You saved that reel. You cannot remember who posted it.",
+          "on_screen": "You saved that reel. You cannot remember who posted it.",
+          "shot": "Seeded demo Saved grid of unlabelled tiles scrolling, labelled demo, no real creator names or handles visible.",
+          "feature_ids": []
+        },
+        {
+          "t_start": 4,
+          "t_end": 8,
+          "role": "re-hook",
+          "vo": "You remember the idea. Not the account.",
+          "on_screen": "The idea, not the account",
+          "shot": "Thumb slows over the long Saved grid, then closes it and opens the Skwirl search box on the seeded demo account.",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "t_start": 8,
+          "t_end": 15,
+          "role": "payoff",
+          "vo": "Type what it was about. Search your saved notes by meaning.",
+          "on_screen": "Search by meaning",
+          "shot": "Real capture on the seeded demo library: type the plain words 'stretch for a stiff neck' into search and open the matching demo desk-stretch note, showing its title, summary and next step. Show the true result only.",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "t_start": 15,
+          "t_end": 19,
+          "role": "other",
+          "vo": "Open the note and check it is the one.",
+          "on_screen": "Check the note",
+          "shot": "Stay on the opened demo note and scroll slowly past the summary so the viewer can check it matches. No claim of exact ranking.",
+          "feature_ids": [
+            "search"
+          ]
+        },
+        {
+          "t_start": 19,
+          "t_end": 22,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-04",
+      "kind": "carousel",
+      "slot": "lead",
+      "audience": "podcast and show fans",
+      "question": "What was the name of the podcast a reel mentioned?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "how-to",
+      "feature_ids": [
+        "lists"
+      ],
+      "hook_candidates": [
+        {
+          "text": "A reel mentioned a great podcast. What was it called?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pause. What was that podcast called?",
+          "framework": "pattern_interrupt",
+          "score": 74,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.89,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "The podcast name was in the reel. Then it left your head.",
+          "framework": "curiosity",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "A reel can name a book, a show and a podcast. Do you remember any?",
+          "framework": "curiosity",
+          "score": 94,
+          "parts": {
+            "length": 0.7,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "You do not need a screenshot to keep a podcast name.",
+          "framework": "contrarian",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Two steps to get a podcast name out of a saved reel.",
+          "framework": "specific_number",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you heard a podcast name in a reel and did not write it down.",
+          "framework": "pov",
+          "score": 76,
+          "parts": {
+            "length": 0.7,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you recommend a podcast to a friend and blank on the name.",
+          "framework": "pov",
+          "score": 69,
+          "parts": {
+            "length": 0.9,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop screenshotting names from reels.",
+          "framework": "stop_doing",
+          "score": 76,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.37,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Where did that book, show or podcast from the reel go?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Why do names from reels vanish from your head?",
+          "framework": "question",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a podcast from a reel land in a list.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "A reel mentioned a great podcast. What was it called?",
+        "POV: you heard a podcast name in a reel and did not write it down.",
+        "Watch a podcast from a reel land in a list."
+      ],
+      "hook": "A reel mentioned a great podcast. What was it called?",
+      "caption": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.\nSend this to your podcast friend. Try Skwirl. Link in bio.\n#Skwirl #podcasts #savedreels",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+          "feature_id": "lists"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "A reel mentioned a great podcast. What was it called?",
+          "bridge": "Here is a two step fix.",
+          "visual": "Large type with a speech bubble and a question mark on calm lavender.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "problem",
+          "text": "You saved the reel, but the name only appears inside it.",
+          "bridge": "So start with the share.",
+          "visual": "A saved tile with no title, labelled editorial illustration.",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "step",
+          "text": "Share the reel to Skwirl.",
+          "bridge": "Then look in Lists.",
+          "visual": "Real screen capture of the share sheet with Skwirl chosen, using a licensed or self-made demo reel that names a demo podcast. Step 1 badge.",
+          "feature_ids": []
+        },
+        {
+          "n": 4,
+          "job": "payoff",
+          "text": "Books, movies, shows, podcasts and places mentioned in saves collect into Lists.",
+          "bridge": "Now the honest part.",
+          "visual": "Real capture of the seeded demo Lists screen with the demo podcast listed. Step 2 badge.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "n": 5,
+          "job": "limit",
+          "text": "Lists keep the name. They do not play it or pick one for you.",
+          "bridge": "That is all it takes.",
+          "visual": "Close-up of the list item with no play button, no ratings and no maps, labelled demo.",
+          "feature_ids": [
+            "lists"
+          ]
+        },
+        {
+          "n": 6,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-02",
+      "kind": "reel",
+      "slot": "lead",
+      "audience": "cook",
+      "question": "Which saved reel had the ingredients I need right now?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "pov-scene",
+      "feature_ids": [
+        "recipes"
+      ],
+      "hook_candidates": [
+        {
+          "text": "At the shop. Which saved reel had the ingredients?",
+          "framework": "pattern_interrupt",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pause. What goes in that dish?",
+          "framework": "pattern_interrupt",
+          "score": 65,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "You saved the recipe. Then you stood in the shop with no list.",
+          "framework": "curiosity",
+          "score": 69,
+          "parts": {
+            "length": 0.9,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "The ingredients are not in your head. Where are they?",
+          "framework": "curiosity",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "A saved recipe reel is not much use at the shop.",
+          "framework": "contrarian",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Two things a saved recipe needs at the shop: ingredients and steps.",
+          "framework": "specific_number",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: the reel is saved, the ingredients are not.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you are at the shop and the recipe is somewhere in your Saved folder.",
+          "framework": "pov",
+          "score": 82,
+          "parts": {
+            "length": 0.7,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop rewatching a reel to catch the ingredients.",
+          "framework": "stop_doing",
+          "score": 85,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.83,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Where did you put the ingredients from that reel?",
+          "framework": "question",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Can you cook from a reel you saved last week?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a recipe reel become a checklist and numbered steps.",
+          "framework": "demonstration",
+          "score": 98,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.9,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "At the shop. Which saved reel had the ingredients?",
+        "Stop rewatching a reel to catch the ingredients.",
+        "POV: the reel is saved, the ingredients are not."
+      ],
+      "hook": "At the shop. Which saved reel had the ingredients?",
+      "caption": "Recipe notes include ingredient checklists and numbered steps when the source provides them.\nSend this to the friend who cooks from reels. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipeideas",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+          "feature_id": "recipes"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 4,
+          "role": "hook",
+          "vo": "At the shop. Which saved reel had the ingredients?",
+          "on_screen": "At the shop. Which saved reel had the ingredients?",
+          "shot": "First-person view of a phone held in a shop aisle (staged scene), thumb scrolling a seeded demo Saved grid of food tiles, no real creator names.",
+          "feature_ids": []
+        },
+        {
+          "t_start": 4,
+          "t_end": 8,
+          "role": "re-hook",
+          "vo": "And then you remember you saved it.",
+          "on_screen": "You did save it",
+          "shot": "Phone comes up and the seeded demo Skwirl library fills the screen.",
+          "feature_ids": [
+            "recipes"
+          ]
+        },
+        {
+          "t_start": 8,
+          "t_end": 16,
+          "role": "payoff",
+          "vo": "Recipe notes include ingredient checklists and numbered steps when the source provides them.",
+          "on_screen": "Ingredient checklist. Numbered steps.",
+          "shot": "Real capture of one seeded demo recipe note: scroll from the ingredient checklist to the numbered steps. Quantities must be exactly what the seeded source contained.",
+          "feature_ids": [
+            "recipes"
+          ]
+        },
+        {
+          "t_start": 16,
+          "t_end": 21,
+          "role": "other",
+          "vo": "If the reel left out amounts, the note will too.",
+          "on_screen": "Only what the source gave",
+          "shot": "Hold on one ingredient line in the demo note that has no amount because the demo source gave none. Add no shopping list screen or integration.",
+          "feature_ids": [
+            "recipes"
+          ]
+        },
+        {
+          "t_start": 21,
+          "t_end": 24,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark over the aisle scene, softened.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-03",
+      "kind": "carousel",
+      "slot": "lead",
+      "audience": "workout savers",
+      "question": "Why do I never try the workouts I save?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "do-dont",
+      "feature_ids": [
+        "notes",
+        "tried"
+      ],
+      "hook_candidates": [
+        {
+          "text": "You saved a workout reel for Monday. It is Friday.",
+          "framework": "pattern_interrupt",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pause. When did you last try something you saved?",
+          "framework": "pattern_interrupt",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "There is one thing a saved workout reel is missing.",
+          "framework": "curiosity",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Why the workout you saved never gets done, and a small fix.",
+          "framework": "curiosity",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "A saved workout is not a plan. A next step is.",
+          "framework": "contrarian",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Two small steps to actually try a saved workout.",
+          "framework": "specific_number",
+          "score": 82,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: it is Friday and your Monday workout is still a tile.",
+          "framework": "pov",
+          "score": 59,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: your Saved folder is full of plans you never started.",
+          "framework": "pov",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop saving workouts you have no plan to start.",
+          "framework": "stop_doing",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Why did the workout you saved never get done?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "What was the last reel you saved and actually tried?",
+          "framework": "question",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch a saved workout get a next step and a Tried tick.",
+          "framework": "demonstration",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "You saved a workout reel for Monday. It is Friday.",
+        "Why did the workout you saved never get done?",
+        "POV: your Saved folder is full of plans you never started."
+      ],
+      "hook": "You saved a workout reel for Monday. It is Friday.",
+      "caption": "Turn a shared reel into a note with a summary and a next step. Mark a note as Tried after you try it.\nSend this to a friend with a plan for Monday. Try Skwirl. Link in bio.\n#Skwirl #savedreels #workouts",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Turn a shared reel into a note with a summary and a next step.",
+          "feature_id": "notes"
+        },
+        {
+          "text": "Mark a note as Tried after you try it.",
+          "feature_id": "tried"
+        }
+      ],
+      "slides": [
+        {
+          "n": 1,
+          "job": "hook",
+          "text": "You saved a workout reel for Monday. It is Friday.",
+          "bridge": "Here is where it stalls.",
+          "visual": "Large type on calm lavender with a small calendar showing Friday and one saved tile.",
+          "feature_ids": []
+        },
+        {
+          "n": 2,
+          "job": "dont",
+          "text": "Don't: save it and hope you remember to start.",
+          "bridge": "Here is why that fails.",
+          "visual": "Red-cross card with a saved tile.",
+          "feature_ids": []
+        },
+        {
+          "n": 3,
+          "job": "why",
+          "text": "A bare save is a tile. It does not say where to start.",
+          "bridge": "So give it a starting point.",
+          "visual": "Grid of identical unlabelled tiles, labelled editorial illustration.",
+          "feature_ids": []
+        },
+        {
+          "n": 4,
+          "job": "do",
+          "text": "Do: keep one small next step with the reel.",
+          "bridge": "Here is how it looks.",
+          "visual": "Green-tick card with a note.",
+          "feature_ids": []
+        },
+        {
+          "n": 5,
+          "job": "payoff",
+          "text": "Turn a shared reel into a note with a summary and a next step.",
+          "bridge": "Then you can close the loop.",
+          "visual": "Real capture of a seeded demo workout note showing its summary and next step, labelled demo.",
+          "feature_ids": [
+            "notes"
+          ]
+        },
+        {
+          "n": 6,
+          "job": "payoff",
+          "text": "Mark a note as Tried after you try it. It is your tick, not a tracker.",
+          "bridge": "Your turn.",
+          "visual": "Real capture of the same demo note with the I tried this control tapped and the Tried state showing.",
+          "feature_ids": [
+            "tried"
+          ]
+        },
+        {
+          "n": 7,
+          "job": "cta",
+          "text": "Try Skwirl. Link in bio.",
+          "bridge": "",
+          "visual": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    },
+    {
+      "id": "quality-05",
+      "kind": "reel",
+      "slot": "lead",
+      "audience": "learners",
+      "question": "Where was the detail I missed in that reel?",
+      "question_type": "editorial_hypothesis",
+      "format_id": "hidden-details",
+      "feature_ids": [
+        "depth"
+      ],
+      "hook_candidates": [
+        {
+          "text": "You watched it twice and still missed the detail.",
+          "framework": "pattern_interrupt",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Pause. Check the caption too.",
+          "framework": "pattern_interrupt",
+          "score": 58,
+          "parts": {
+            "length": 1.0,
+            "readability": 0.97,
+            "specificity": 0.33,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "The detail you missed was not in the video part.",
+          "framework": "curiosity",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Part of the tip was said out loud. The rest was typed.",
+          "framework": "curiosity",
+          "score": 65,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watching harder is not how you catch the detail.",
+          "framework": "contrarian",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Four places the detail in a reel can hide.",
+          "framework": "specific_number",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: the tip was in the caption and you never read it.",
+          "framework": "pov",
+          "score": 71,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 0.3
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "POV: you rewatch a reel for a detail it never said out loud.",
+          "framework": "pov",
+          "score": 86,
+          "parts": {
+            "length": 0.9,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Stop pausing a reel to catch the details.",
+          "framework": "stop_doing",
+          "score": 88,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.67,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Which part of the reel held the detail you missed?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Did you read the caption, or only watch the reel?",
+          "framework": "question",
+          "score": 100,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 1.0,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        },
+        {
+          "text": "Watch four clues in one reel turn into one note.",
+          "framework": "demonstration",
+          "score": 77,
+          "parts": {
+            "length": 1.0,
+            "readability": 1.0,
+            "specificity": 0.33,
+            "payoff": 1.0
+          },
+          "method": "heuristic rank only; independent editorial judge required"
+        }
+      ],
+      "hooks_top3": [
+        "You watched it twice and still missed the detail.",
+        "Stop pausing a reel to catch the details.",
+        "Four places the detail in a reel can hide."
+      ],
+      "hook": "You watched it twice and still missed the detail.",
+      "caption": "Skwirl reads audio, on-screen text, captions and available top comments.\nSend this to the friend who rewatches every reel. Try Skwirl. Link in bio.\n#Skwirl #savedreels #learning",
+      "cta": "Try Skwirl. Link in bio.",
+      "claims": [
+        {
+          "text": "Skwirl reads audio, on-screen text, captions and available top comments.",
+          "feature_id": "depth"
+        }
+      ],
+      "beats": [
+        {
+          "t_start": 0,
+          "t_end": 4,
+          "role": "hook",
+          "vo": "You watched it twice and still missed the detail.",
+          "on_screen": "You watched it twice and still missed the detail.",
+          "shot": "Controlled demo reel, labelled demo, of a plant care tip playing, with a question overlaid: How much water?",
+          "feature_ids": []
+        },
+        {
+          "t_start": 4,
+          "t_end": 9,
+          "role": "re-hook",
+          "vo": "The answer is split across the reel.",
+          "on_screen": "Split across the reel",
+          "shot": "On the demo reel, highlight one by one: the spoken line, the on-screen text, the caption and one top comment. The demo is built so each holds a different detail.",
+          "feature_ids": [
+            "depth"
+          ]
+        },
+        {
+          "t_start": 9,
+          "t_end": 17,
+          "role": "payoff",
+          "vo": "Skwirl reads audio, on-screen text, captions and available top comments.",
+          "on_screen": "Audio. Text. Caption. Comments.",
+          "shot": "Real capture: share the demo reel to Skwirl, then open the seeded demo note showing the spoken, on-screen, caption and comment details gathered together. Show the true note only.",
+          "feature_ids": [
+            "depth"
+          ]
+        },
+        {
+          "t_start": 17,
+          "t_end": 23,
+          "role": "other",
+          "vo": "Some comments may be unavailable, so check the note.",
+          "on_screen": "Check the note",
+          "shot": "Hold on the demo note and point at one line. Keep it honest: no claim that every detail is caught.",
+          "feature_ids": [
+            "depth"
+          ]
+        },
+        {
+          "t_start": 23,
+          "t_end": 26,
+          "role": "cta",
+          "vo": "Try Skwirl. Link in bio.",
+          "on_screen": "Try Skwirl. Link in bio.",
+          "shot": "Skwirl wordmark on calm lavender.",
+          "feature_ids": []
+        }
+      ]
+    }
+  ],
+  "template_skips": 0,
+  "status": "DRAFTS_ONLY_NOT_APPROVABLE",
+  "checks": [
+    {
+      "id": "quality-01",
+      "errors": [
+        {
+          "code": "duplicate.recency",
+          "detail": [
+            {
+              "id": "I-03",
+              "path": "promo/engine/ideas.md",
+              "similarity": 0.567,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            },
+            {
+              "id": "promo/out/instagram/12-no-no-yes/caption.txt#L3",
+              "path": "promo/out/instagram/12-no-no-yes/caption.txt",
+              "similarity": 0.567,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            }
+          ]
+        }
+      ],
+      "copy_structure_pass": false
+    },
+    {
+      "id": "quality-04",
+      "errors": [
+        {
+          "code": "duplicate.recency",
+          "detail": [
+            {
+              "id": "I-14",
+              "path": "promo/engine/ideas.md",
+              "similarity": 0.567,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            }
+          ]
+        }
+      ],
+      "copy_structure_pass": false
+    },
+    {
+      "id": "quality-02",
+      "errors": [],
+      "copy_structure_pass": true
+    },
+    {
+      "id": "quality-03",
+      "errors": [
+        {
+          "code": "duplicate.recency",
+          "detail": [
+            {
+              "id": "promo/out/engine/ideas.md#L62",
+              "path": "promo/out/engine/ideas.md",
+              "similarity": 0.567,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            },
+            {
+              "id": "promo/out/launch/share-copy.txt#L1",
+              "path": "promo/out/launch/share-copy.txt",
+              "similarity": 0.567,
+              "date": null,
+              "status": "unknown",
+              "blocking": true
+            }
+          ]
+        }
+      ],
+      "copy_structure_pass": false
+    },
+    {
+      "id": "quality-05",
+      "errors": [
+        {
+          "code": "quality.pain_first",
+          "detail": "no viewer frustration, desire or everyday moment"
+        }
+      ],
+      "copy_structure_pass": false
+    }
+  ]
+}

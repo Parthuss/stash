@@ -26,6 +26,96 @@ _WORDNUM = {v: k for k, v in _NUMWORDS.items()}
 PROMISE_CUES = ("here", "how", "why", "what", "instead", "watch", "before", "stop", "without", "find", "answer", "part")
 
 
+# ---------------------------------------------------------------- audience pain first
+# Hard rule (Parth, 12 Nov 2026): a lead hook names a real viewer frustration or desire BEFORE any
+# feature appears, and is judged first by "would a stranger who has never heard of Skwirl stop?".
+# Niche/admin features may only be supporting beats or FAQ-slot posts, never a top-ranked lead.
+SUPPORT_ONLY_FEATURES = frozenset({"export_notes", "note_share", "stop_sharing", "offline_notes",
+                                   "correct_category", "categories"})
+
+
+def lead_support(feature_ids: Iterable[str]) -> bool:
+    """True if the PRIMARY payoff (first feature id) is support-only. Later ids may be supporting beats."""
+    fids = list(feature_ids)
+    return bool(fids) and fids[0] in SUPPORT_ONLY_FEATURES
+# Viewer frustration / desire cues (matched on whole words or phrases, lower case).
+PAIN_CUES = ("lost", "lose", "losing", "gone", "disappear", "disappeared", "deleted", "vanish", "forgot",
+             "forget", "forgotten", "remember", "can't find", "cannot find", "couldn't find", "never",
+             "buried", "where", "which one", "what was", "send me", "still don't", "still do not",
+             "again", "scroll", "scrolling", "somewhere", "no idea", "name of", "its name", "the name",
+             "not the creator", "never tried", "never cooked", "never opened", "never used", "used it",
+             "actually", "wish", "want", "need", "missed", "miss", "twice", "rewatch", "rewatching",
+             "pausing", "unavailable")
+# Everyday moments a stranger recognises (cooking, travel, watching, learning, a friend asking).
+MOMENT_CUES = ("recipe", "pasta", "dinner", "cook", "cooking", "shop", "shopping", "ingredients", "cafe",
+               "café", "place", "trip", "travel", "holiday", "restaurant", "movie", "film", "show", "book",
+               "tutorial", "stretch", "routine", "gym", "yoga", "friend", "mate", "tonight", "weekend", "try")
+# Words that mean a feature or the product is on screen. In a lead hook they must come after the pain.
+FEATURE_CUES = ("skwirl", "export", "json", "download", "link", "revoke", "stop sharing", "public",
+                "offline", "cache", "cached", "signal", "settings", "category", "categories",
+                "plus", "app", "connector", "note", "notes", "lists", "search")
+ADMIN_CUES = ("export", "json", "download", "revoke", "stop sharing", "public link", "note link", "offline",
+              "cache", "cached", "signal", "settings", "category", "categories", "plus")
+
+
+def _first(text: str, cues: Iterable[str]) -> int | None:
+    low = " " + re.sub(r"[^a-z0-9'é]+", " ", text.lower().replace("’", "'")) + " "
+    hits = [low.find(f" {c} ") for c in cues]
+    hits = [h for h in hits if h >= 0]
+    return min(hits) if hits else None
+
+
+def pain_first(text: str, feature_ids: Iterable[str] = ()) -> dict:
+    """Deterministic hard-rule check for a LEAD hook.
+
+    ok is True only if the hook names a viewer frustration/desire (PAIN_CUES) or a recognisable everyday
+    moment (MOMENT_CUES) before any product/feature word (FEATURE_CUES), never leads with an admin
+    feature (ADMIN_CUES), and the primary payoff (first feature id) is not SUPPORT_ONLY_FEATURES.
+    Support-only features later in feature_ids are allowed as supporting beats.
+    """
+    pain, moment = _first(text, PAIN_CUES), _first(text, MOMENT_CUES)
+    viewer = min([p for p in (pain, moment) if p is not None], default=None)
+    feature, admin = _first(text, FEATURE_CUES), _first(text, ADMIN_CUES)
+    fids = list(feature_ids)
+    support = fids[:1] if lead_support(fids) else []
+    reasons = []
+    if viewer is None:
+        reasons.append("no viewer frustration, desire or everyday moment")
+    elif feature is not None and feature < viewer:
+        reasons.append("a feature or the product appears before the viewer's problem")
+    if admin is not None:
+        reasons.append("admin/settings wording in the hook")
+    if support:
+        reasons.append(f"support-only feature as the lead payoff: {', '.join(support)}")
+    return {"ok": not reasons, "reasons": reasons, "pain": pain is not None, "moment": moment is not None}
+
+
+def scroll_stop_score(text: str, feature_ids: Iterable[str] = ()) -> dict:
+    """0-100 'would a stranger who has never heard of Skwirl stop?' heuristic. NOT a popularity estimate.
+
+    parts: pain (names a frustration/desire, 0.4), moment (recognisable everyday scene, 0.2),
+    stranger (no brand name or in-app jargon, 0.25), order (problem before any feature, 0.15).
+    Support-only features and admin wording cap the score at 30 so they can never outrank a lead.
+    """
+    check = pain_first(text, feature_ids)
+    feature, viewer = _first(text, FEATURE_CUES), min(
+        [p for p in (_first(text, PAIN_CUES), _first(text, MOMENT_CUES)) if p is not None], default=None)
+    parts = {"pain": 1.0 if check["pain"] else 0.0, "moment": 1.0 if check["moment"] else 0.0,
+             "stranger": 0.0 if feature is not None else 1.0,
+             "order": 1.0 if viewer is not None and (feature is None or viewer < feature) else 0.0}
+    if parts["stranger"] == 0.0 and _first(text, ("skwirl", "plus", "connector", "json", "export")) is None:
+        parts["stranger"] = 0.5  # plain words like "note" or "link" are readable, just less magnetic
+    score = round(100 * (0.4 * parts["pain"] + 0.2 * parts["moment"] + 0.25 * parts["stranger"] + 0.15 * parts["order"]))
+    if not check["ok"] and (lead_support(feature_ids) or _first(text, ADMIN_CUES) is not None):
+        score = min(score, 30)
+    return {"scroll_stop": score, "pain_first": check["ok"], "pain_reasons": check["reasons"], "scroll_parts": parts}
+
+
+def rank_key(candidate: dict) -> tuple:
+    """Audience pain first, then scroll-stop, then the original readability/specificity heuristic."""
+    return (not candidate.get("pain_first", False), -candidate.get("scroll_stop", 0), -candidate["score"], candidate["text"])
+
+
 def tokens(text: str) -> list[str]:
     """Lower-cased content tokens with a light stem; stop words dropped."""
     out = []
@@ -189,12 +279,13 @@ def generate_hook_candidates(feature: dict, audience: dict, question: str,
             continue
         seen.append(key)
         h = heuristic_score(text, feature, audience, question)
-        out.append({"text": text, "framework": fw, "source": src, "feature_ids": [feature["id"]], **h})
-    return sorted(out, key=lambda c: (-c["score"], c["text"]))
+        out.append({"text": text, "framework": fw, "source": src, "feature_ids": [feature["id"]], **h,
+                    **scroll_stop_score(text, [feature["id"]])})
+    return sorted(out, key=rank_key)
 
 
 def select_top3(candidates: list[dict]) -> list[dict]:
-    """Top three by score, preferring distinct frameworks (falls back to score order to fill)."""
+    """Top three in rank order (pain-first, scroll-stop, heuristic), preferring distinct frameworks."""
     top, used = [], set()
     for c in candidates:
         if c["framework"] not in used:
