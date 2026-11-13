@@ -77,6 +77,14 @@ for q in json.load(sys.stdin): c.execute('EXPLAIN '+q['sql'],q['args'])
   r=await action('new','requeue',{});assert.equal(r.status,200);assert.equal((await r.json()).requeued,2);assert.equal(sql.prepare("SELECT status FROM capture WHERE id='explicit-failed'").get().status,'failed');assert.equal(sql.prepare("SELECT status FROM capture WHERE id='new0'").get().status,'done');ok('requeue owner-only and user-scoped, preserving other user and successful save');
   r=await action('new','message',{message:'#bad <script>x</script>'});assert.equal(r.status,200);assert.equal(sql.prepare("SELECT owner_msg FROM user WHERE id='new'").get().owner_msg,'#gSave #bad <script>x</script>');
   r=await action('new','message',{message:'x'.repeat(501)});assert.equal(r.status,400);r=await action('new','message',{message:''});assert.equal(r.status,200);assert.equal(sql.prepare("SELECT owner_msg FROM user WHERE id='new'").get().owner_msg,null);ok('owner messages validated, selector prefix forced, blank clears');
+  {const v1=(p,uid,m='GET')=>handleV1(new Request('https://skwirl.app'+p,{method:m}),env,p,uid,async()=>{throw Error('no ingest');});
+  r=await action('expired','tip',{tip:'shortcut'},'previous');assert.equal(r.status,404);r=await action('expired','tip',{tip:'<b>x'});assert.equal(r.status,400);r=await action('expired','tip',{});assert.equal(r.status,400);
+  r=await action('expired','tip',{tip:'shortcut'});assert.equal(r.status,200);assert.equal(sql.prepare("SELECT owner_tip FROM user WHERE id='expired'").get().owner_tip,'shortcut');
+  assert.equal((await (await v1('/v1/setup','expired')).json()).owner_tip,'shortcut');
+  r=await action('new','tip',{tip:'shortcut'});assert.equal(r.status,200);assert.equal((await (await v1('/v1/setup','new')).json()).owner_tip,null);
+  r=await v1('/v1/owner-tip/seen','expired','POST');assert.equal(r.status,200);assert.equal(sql.prepare("SELECT owner_tip FROM user WHERE id='expired'").get().owner_tip,null);
+  assert.equal(sql.prepare("SELECT owner_tip FROM user WHERE id='new'").get().owner_tip,'shortcut');r=await action('new','tip',{tip:''});assert.equal(sql.prepare("SELECT owner_tip FROM user WHERE id='new'").get().owner_tip,null);
+  ok('one-time tips: owner-only, preset keys only, hidden once they save via Shortcut, seen clears only their own');}
   r=await action('new','push',{body:''});assert.equal(r.status,400);r=await action('new','push',{body:'Hello'});assert.equal(r.status,409);r=await action('missing','message',{message:'hi'});assert.equal(r.status,404);ok('push validation and missing-configuration states are explicit');
   r=await get('/v1/admin/console');assert.equal(r.status,401);r=await get('/v1/admin/console','invalid');assert.equal(r.status,401);
   const token='stk_normal';const hash=await webcrypto.subtle.digest('SHA-256',new TextEncoder().encode(token));ins("UPDATE user SET token_hash=? WHERE id='new'",Buffer.from(hash).toString('hex'));

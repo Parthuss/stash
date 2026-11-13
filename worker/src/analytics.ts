@@ -283,7 +283,7 @@ export async function ownerConsole(env: Env, days: number, now = Date.now()) {
       devices AS (SELECT user_id, COUNT(*) n FROM push_sub GROUP BY user_id)
       SELECT u.id, u.name, u.created_at, u.last_seen, u.email, u.email IS NOT NULL has_email,
       CASE WHEN u.plan = 'plus' AND u.plan_until > ? THEN 'plus' WHEN u.created_at < ? THEN 'early' ELSE 'free' END plan, u.plan_until,
-      u.found_via, u.groq_key_enc IS NOT NULL own_key, u.owner_msg,
+      u.found_via, u.groq_key_enc IS NOT NULL own_key, u.owner_msg, u.owner_tip,
       COALESCE(c.total,0) total, COALESCE(c.done,0) done, COALESCE(c.pending,0) pending,
       COALESCE(c.failed,0) failed, COALESCE(p.n,0) push_devices
       FROM user u LEFT JOIN counts c ON c.user_id = u.id LEFT JOIN devices p ON p.user_id = u.id

@@ -245,7 +245,7 @@ async function openUser(id, action) {
   if(!user){toast('This user is outside the loaded table. Find them in the newest 500 accounts.');return;}
   selectedUser=user; opener=document.activeElement;
   const u=user;
-  $('drawerBody').innerHTML = `<h2 id="drawerName">${esc(u.name)}</h2><span class="plan ${u.plan==='plus'?'plus':''}">${esc(u.plan)}</span><dl class="facts drawer-facts"><div><dt>Joined</dt><dd>${esc(stamp(u.created_at))}</dd></div><div><dt>Last seen</dt><dd>${esc(stamp(u.last_seen))}</dd></div><div><dt>Saves</dt><dd>${num(u.done)} done · ${num(u.pending)} pending · ${num(u.failed)} failed</dd></div><div><dt>Email</dt><dd>${u.email ? `<a href="mailto:${esc(u.email)}">${esc(u.email)}</a>` : 'Not added'}</dd></div><div><dt>Found Skwirl via</dt><dd>${esc(u.found_via || 'Not recorded')}</dd></div><div><dt>Push devices</dt><dd>${num(u.push_devices)}</dd></div><div><dt>Own Groq key</dt><dd>${u.own_key ? 'Yes' : 'No'}</dd></div></dl><div class="drawer-actions"><button type="button" data-drawer-action="push" ${u.push_devices?'':'disabled'}>Send push</button><button type="button" data-drawer-action="message">Owner message</button><button type="button" data-drawer-action="requeue" ${u.failed?'':'disabled'}>Requeue ${num(u.failed)} failed</button></div><div id="actionEditor"></div><h3>Recent journey</h3><div id="journey">Loading visits and activity…</div>`;
+  $('drawerBody').innerHTML = `<h2 id="drawerName">${esc(u.name)}</h2><span class="plan ${u.plan==='plus'?'plus':''}">${esc(u.plan)}</span><dl class="facts drawer-facts"><div><dt>Joined</dt><dd>${esc(stamp(u.created_at))}</dd></div><div><dt>Last seen</dt><dd>${esc(stamp(u.last_seen))}</dd></div><div><dt>Saves</dt><dd>${num(u.done)} done · ${num(u.pending)} pending · ${num(u.failed)} failed</dd></div><div><dt>Email</dt><dd>${u.email ? `<a href="mailto:${esc(u.email)}">${esc(u.email)}</a>` : 'Not added'}</dd></div><div><dt>Found Skwirl via</dt><dd>${esc(u.found_via || 'Not recorded')}</dd></div><div><dt>Push devices</dt><dd>${num(u.push_devices)}</dd></div><div><dt>Own Groq key</dt><dd>${u.own_key ? 'Yes' : 'No'}</dd></div></dl><div class="drawer-actions"><button type="button" data-drawer-action="push" ${u.push_devices?'':'disabled'}>Send push</button><button type="button" data-drawer-action="message">Owner message</button><button type="button" data-drawer-action="tip">One-time tip</button><button type="button" data-drawer-action="requeue" ${u.failed?'':'disabled'}>Requeue ${num(u.failed)} failed</button></div><div id="actionEditor"></div><h3>Recent journey</h3><div id="journey">Loading visits and activity…</div>`;
   if(!$('userDrawer').open)$('userDrawer').showModal();
   if(action)editAction(action);
   const requestId=++journeyId;
@@ -261,25 +261,27 @@ async function openUser(id, action) {
 function editAction(action) {
   const u=selectedUser;if(!u)return;
   let content;
-  if(action==='requeue')content=`<p>Retry ${num(u.failed)} failed saves for ${esc(u.name)}. Completed saves are kept.</p><button class="primary" type="submit">Requeue failed saves</button>`;
+  if(action==='tip')content=`<label for="actionTip">One-time tip</label><p>A small card on a later visit than any fresh owner message, shown once. The Shortcut tip is skipped for anyone who already saves through the Shortcut.</p><select id="actionTip"><option value="">None (clear)</option><option value="shortcut" ${u.owner_tip==='shortcut'?'selected':''}>Set up the iPhone Share shortcut</option></select><button class="primary" type="submit">Save tip</button>`;
+  else if(action==='requeue')content=`<p>Retry ${num(u.failed)} failed saves for ${esc(u.name)}. Completed saves are kept.</p><button class="primary" type="submit">Requeue failed saves</button>`;
   else {
     const isPush=action==='push';
     const oldMessage=String(u.owner_msg||'').replace(/^#\w+ /,'');
     content=`<label for="actionText">${isPush ? 'Push notification' : 'Message in Skwirl'}</label><p>${isPush ? 'Send now to this person’s registered devices.' : 'Appears in their app until they dismiss it. Leave blank to clear the current message.'}</p><textarea id="actionText" maxlength="${isPush?240:500}" ${isPush?'required':''}>${isPush?'':esc(oldMessage)}</textarea><button class="primary" type="submit">${isPush?'Send push now':'Save owner message'}</button>`;
   }
   $('actionEditor').innerHTML=`<form class="action-form" id="actionForm" data-action="${action}">${content}<p id="actionStatus" class="action-status" role="status"></p></form>`;
-  const field=$('actionText');if(field)field.focus();else $('actionForm').querySelector('button').focus();
+  const field=$('actionText')||$('actionTip');if(field)field.focus();else $('actionForm').querySelector('button').focus();
 }
 $('userDrawer').addEventListener('submit',async event=>{
   if(event.target.id!=='actionForm')return;
   event.preventDefault();
   const form=event.target, action=form.dataset.action, user=selectedUser;
-  const value=$('actionText')?.value || '';
+  const value=(action==='tip'?$('actionTip'):$('actionText'))?.value || '';
   const button=form.querySelector('button[type="submit"]');button.disabled=true;
   try {
-    const result=await api('/v1/admin/users/'+encodeURIComponent(user.id)+'/'+action,{method:'POST',body:JSON.stringify(action==='message'?{message:value}:action==='push'?{body:value}:{})});
-    const message=action==='message'?'Owner message saved.':action==='requeue'?`${num(result.requeued)} failed saves requeued.`:result.devices?`${num(result.sent)} notifications sent; ${num(result.failed)} failed.`:'No registered push devices remain.';
+    const result=await api('/v1/admin/users/'+encodeURIComponent(user.id)+'/'+action,{method:'POST',body:JSON.stringify(action==='message'?{message:value}:action==='tip'?{tip:value}:action==='push'?{body:value}:{})});
+    const message=action==='message'?'Owner message saved.':action==='tip'?(value?'Tip queued.':'Tip cleared.'):action==='requeue'?`${num(result.requeued)} failed saves requeued.`:result.devices?`${num(result.sent)} notifications sent; ${num(result.failed)} failed.`:'No registered push devices remain.';
     if(action==='message')user.owner_msg=value;
+    if(action==='tip')user.owner_tip=value||null;
     if(action==='requeue') { await load(); if(selectedUser?.id===user.id)await openUser(user.id); }
     toast(message);
     if(selectedUser?.id===user.id && $('actionStatus'))$('actionStatus').textContent=message;

@@ -918,12 +918,19 @@ async function refreshSetup() {
   if (st.owner_msg && bannerKey !== "net") {  // beats every banner but a connection error
     // An optional leading "#gGroq " names the Set up section the button opens (default: Save from your phone).
     const [, target = "gSave", text] = st.owner_msg.match(/^(?:#(\w+) )?([\s\S]*)$/);
-    if (bannerKey !== "owner") tr("card_shown", "owner_msg");
+    if (bannerKey !== "owner") {
+      tr("card_shown", "owner_msg");
+      // The visit an owner note first shows, it's the only ask: no tip or prompt card competes with it.
+      let seen = {}; try { seen = JSON.parse(store.get("sk_omsg") || "{}"); } catch {}
+      if (seen.m !== st.owner_msg) store.set("sk_omsg", JSON.stringify(seen = { m: st.owner_msg, v: visitId }));
+      if (seen.v === visitId) promptSlot("owner");
+    }
     setBanner("owner", "info", text, target === "gSave" ? "Show me how" : target === "gCats" ? "Set them up" : target === "gGroq" ? "See options" : target === "gPlus" ? "See Plus" : "Fix it", () => {
       tr("click", "owner_msg"); clearBanner("owner"); api("/v1/owner-msg/seen", { method: "POST" }).catch(() => {});
       openSetup(false); const g = $(target) || $("gSave"); g.open = true; g.scrollIntoView({ behavior: "smooth" });
     });
   }
+  showTip();
   const set = (id, done, todo = "To do") => { const b = $(id); b.textContent = done ? "Done ✓" : todo; b.className = "badge" + (done ? " done" : id === "bGroq" ? " opt" : ""); };
   set("bSave", phone); set("bClaude", st.claude_connected); set("bGroq", st.has_groq_key, "Optional");
   $("groqPaid").hidden = !st.has_groq_key;
@@ -1065,6 +1072,7 @@ else {
   const h = location.hash;
   if (h === "#start" || h === "#signin") history.replaceState(history.state, "", location.pathname + location.search);
   if (h === "#start") openAuth("create");
+  else if (sessionStorage.getItem("pending_share")) openSignin("Sign in once here to save that reel. After this, sharing to Skwirl saves it in one tap."), $("authErr").className = "msg";
   else if (store.get("sk_was_in") || standalone || h === "#signin") openSignin("");
 }
 function plusSignedOut() {
@@ -1421,6 +1429,25 @@ $("pushNo").addEventListener("click", () => { try { localStorage.setItem("skwirl
 function promptSlot(name) {
   try { const cur = sessionStorage.getItem("sk_prompt"); if (cur && cur !== name) return false; sessionStorage.setItem("sk_prompt", name); } catch {}
   return true;
+}
+// One visit = one app open; sessionStorage lives exactly that long.
+const visitId = (() => { try { let v = sessionStorage.getItem("sk_visit"); if (!v) sessionStorage.setItem("sk_visit", v = String(Date.now())); return v; } catch { return "0"; } })();
+// ---- One-time tips the owner queues per user (user.owner_tip, owner console > One-time tip). A small
+// card, once, on a visit no fresh owner note has claimed. Cleared server-side as soon as it shows.
+const TIPS = { shortcut: { text: "Share reels to Skwirl straight from Instagram: one tap instead of copy and paste. Set it up in 1 minute.", label: "Set it up", go: "gSave" } };
+let tipOn = null;
+function showTip() {
+  const st = setupState, key = st && st.owner_tip, tip = TIPS[key];
+  if (tipOn || !tip || (key === "shortcut" && (st.saved_from || {}).shortcut) || !promptSlot("tip")) return;
+  tipOn = key; tr("card_shown", "tip_" + key);
+  api("/v1/owner-tip/seen", { method: "POST" }).catch(() => {});
+  const c = document.createElement("div"); c.id = "tipCard"; c.className = "fb"; c.setAttribute("role", "status");
+  c.innerHTML = '<b>Tip</b><p></p><div class="inline-actions"><button class="btn sm" type="button"></button><button class="btn sm soft" type="button">Not now</button></div>';
+  c.querySelector("p").textContent = tip.text;
+  const [go, no] = c.querySelectorAll("button"); go.textContent = tip.label;
+  go.onclick = () => { tr("click", "tip_" + key); c.remove(); openSetup(false); const g = $(tip.go); g.open = true; g.scrollIntoView({ behavior: "smooth" }); };
+  no.onclick = () => { tr("tip_dismissed", key); c.remove(); };
+  $("banner").after(c);
 }
 // ---- "How did you find Skwirl?": asked once, one tap.
 function showSourceCard() {
