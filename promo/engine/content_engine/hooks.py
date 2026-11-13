@@ -32,6 +32,12 @@ PROMISE_CUES = ("here", "how", "why", "what", "instead", "watch", "before", "sto
 # Niche/admin features may only be supporting beats or FAQ-slot posts, never a top-ranked lead.
 SUPPORT_ONLY_FEATURES = frozenset({"export_notes", "note_share", "stop_sharing", "offline_notes",
                                    "correct_category", "categories"})
+
+
+def lead_support(feature_ids: Iterable[str]) -> bool:
+    """True if the PRIMARY payoff (first feature id) is support-only. Later ids may be supporting beats."""
+    fids = list(feature_ids)
+    return bool(fids) and fids[0] in SUPPORT_ONLY_FEATURES
 # Viewer frustration / desire cues (matched on whole words or phrases, lower case).
 PAIN_CUES = ("lost", "lose", "losing", "gone", "disappear", "disappeared", "deleted", "vanish", "forgot",
              "forget", "forgotten", "remember", "can't find", "cannot find", "couldn't find", "never",
@@ -64,12 +70,14 @@ def pain_first(text: str, feature_ids: Iterable[str] = ()) -> dict:
 
     ok is True only if the hook names a viewer frustration/desire (PAIN_CUES) or a recognisable everyday
     moment (MOMENT_CUES) before any product/feature word (FEATURE_CUES), never leads with an admin
-    feature (ADMIN_CUES), and the draft is not built on a SUPPORT_ONLY_FEATURES payoff.
+    feature (ADMIN_CUES), and the primary payoff (first feature id) is not SUPPORT_ONLY_FEATURES.
+    Support-only features later in feature_ids are allowed as supporting beats.
     """
     pain, moment = _first(text, PAIN_CUES), _first(text, MOMENT_CUES)
     viewer = min([p for p in (pain, moment) if p is not None], default=None)
     feature, admin = _first(text, FEATURE_CUES), _first(text, ADMIN_CUES)
-    support = sorted(set(feature_ids) & SUPPORT_ONLY_FEATURES)
+    fids = list(feature_ids)
+    support = fids[:1] if lead_support(fids) else []
     reasons = []
     if viewer is None:
         reasons.append("no viewer frustration, desire or everyday moment")
@@ -98,7 +106,7 @@ def scroll_stop_score(text: str, feature_ids: Iterable[str] = ()) -> dict:
     if parts["stranger"] == 0.0 and _first(text, ("skwirl", "plus", "connector", "json", "export")) is None:
         parts["stranger"] = 0.5  # plain words like "note" or "link" are readable, just less magnetic
     score = round(100 * (0.4 * parts["pain"] + 0.2 * parts["moment"] + 0.25 * parts["stranger"] + 0.15 * parts["order"]))
-    if not check["ok"] and (set(feature_ids) & SUPPORT_ONLY_FEATURES or _first(text, ADMIN_CUES) is not None):
+    if not check["ok"] and (lead_support(feature_ids) or _first(text, ADMIN_CUES) is not None):
         score = min(score, 30)
     return {"scroll_stop": score, "pain_first": check["ok"], "pain_reasons": check["reasons"], "scroll_parts": parts}
 

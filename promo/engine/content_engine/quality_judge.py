@@ -9,7 +9,7 @@ import hashlib
 import json
 import math
 
-from .hooks import SUPPORT_ONLY_FEATURES, pain_first
+from .hooks import lead_support, pain_first
 from .validate_copy import catalogue, public_units
 
 # scroll_stop = "would a stranger who has never heard of Skwirl stop for this hook?" It is weighted highest.
@@ -20,8 +20,8 @@ RUBRIC_VERSION = 2
 
 
 def draft_slot(draft: dict) -> str:
-    """Support-only (niche/admin) features are always FAQ; otherwise the draft's own slot, default lead."""
-    if set(draft.get('feature_ids', [])) & SUPPORT_ONLY_FEATURES:
+    """A support-only (niche/admin) primary payoff is always FAQ; otherwise the draft's own slot, default lead."""
+    if lead_support(draft.get('feature_ids', [])):
         return 'faq'
     return draft.get('slot', 'lead')
 

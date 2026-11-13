@@ -63,7 +63,7 @@ def test_support_only_features_never_lead_the_batch():
     slots = [d["slot"] for d in drafts]
     assert slots == sorted(slots, key=lambda s: s != "lead")
     for d in drafts[:5]:
-        assert d["slot"] == "lead" and not set(d["feature_ids"]) & hooks.SUPPORT_ONLY_FEATURES, d["id"]
+        assert d["slot"] == "lead" and not hooks.lead_support(d["feature_ids"]), d["id"]
         assert hooks.pain_first(d["hook"], d["feature_ids"])["ok"], d["hook"]
     leads = [d["scroll_stop"] for d in drafts if d["slot"] == "lead"]
     assert leads == sorted(leads, reverse=True)
@@ -79,6 +79,13 @@ def test_rank_drafts_demotes_support_features_even_if_labelled_lead():
     ds = [{"id": "a", "hook": "Can you take your notes out of Skwirl?", "feature_ids": ["export_notes"], "slot": "lead"},
           {"id": "b", "hook": "Send me that pasta reel?", "feature_ids": ["search"]}]
     assert [d["id"] for d in ideation.rank_drafts(ds)] == ["b", "a"]
+
+
+def test_support_feature_allowed_as_supporting_beat_only():
+    assert hooks.pain_first("Send me that pasta reel?", ["search", "note_share"])["ok"]
+    assert not hooks.pain_first("Send me that pasta reel?", ["note_share", "search"])["ok"]
+    assert quality_judge.draft_slot({"feature_ids": ["search", "note_share"]}) == "lead"
+    assert quality_judge.draft_slot({"feature_ids": ["export_notes", "search"], "slot": "lead"}) == "faq"
 
 
 def _draft(hook, fids, slot=None):

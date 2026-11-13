@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable
 
-from .hooks import SUPPORT_ONLY_FEATURES, generate_hook_candidates, load_features, scroll_stop_score, select_top3, tokens
+from .hooks import generate_hook_candidates, lead_support, load_features, scroll_stop_score, select_top3, tokens
 from .scripts import DEFAULT_CTA, build_carousel, build_reel
 
 _R = "https://www.reddit.com/r/Instagram/comments/"
@@ -66,7 +66,7 @@ def load_audiences(repo_root) -> list[dict]:
 
 def slot_for(aud: dict, feature_ids) -> str:
     """'lead' only for a pain-led audience whose payoff is not a support-only (niche/admin) feature."""
-    return "faq" if aud.get("slot") == "faq" or set(feature_ids) & SUPPORT_ONLY_FEATURES else "lead"
+    return "faq" if aud.get("slot") == "faq" or lead_support(feature_ids) else "lead"
 
 
 # ---------------------------------------------------------------- history / dedupe
@@ -320,13 +320,13 @@ def rank_drafts(drafts: list[dict]) -> list[dict]:
     """Order a batch by audience pain first: lead slots before FAQ slots, then scroll-stop for a stranger.
 
     Truth/style/recency checks stay separate; this only orders drafts. A draft without a slot is
-    classified from its features (support-only features are always FAQ).
+    classified from its primary feature (a support-only primary payoff is always FAQ).
     """
     def key(d):
         fids = d.get("feature_ids", [])
         s = d.get("scroll_stop")
         if s is None:
             s = scroll_stop_score(d.get("hook", ""), fids)["scroll_stop"]
-        slot = "faq" if set(fids) & SUPPORT_ONLY_FEATURES else d.get("slot", "lead")
+        slot = "faq" if lead_support(fids) else d.get("slot", "lead")
         return (slot != "lead", -s)
     return sorted(drafts, key=key)

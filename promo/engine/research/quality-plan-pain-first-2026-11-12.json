@@ -166,7 +166,8 @@
       "question_type": "audience_report",
       "format_id": "friend-asks-search",
       "feature_ids": [
-        "search"
+        "search",
+        "note_share"
       ],
       "hook_candidates": [
         {
@@ -174,39 +175,39 @@
           "framework": "question"
         },
         {
-          "text": "POV: you remember the pasta, not the creator.",
-          "framework": "pov"
+          "text": "Your friend wants the pasta reel. You saved it. Now what?",
+          "framework": "curiosity"
         },
         {
           "text": "Stop scrolling your Saved grid while a friend waits.",
           "framework": "stop_doing"
         },
         {
-          "text": "Pause. Who posted that pasta reel?",
+          "text": "Pause. Where did that pasta reel go?",
           "framework": "pattern_interrupt"
-        },
-        {
-          "text": "Your friend wants the pasta reel. You saved it. Now what?",
-          "framework": "curiosity"
-        },
-        {
-          "text": "Saving it was easy. Finding it is the hard part.",
-          "framework": "contrarian"
-        },
-        {
-          "text": "One text. One saved reel. No idea who posted it.",
-          "framework": "specific_number"
         },
         {
           "text": "POV: your friend asks for the pasta reel you saved.",
           "framework": "pov"
         },
         {
-          "text": "Watch a saved pasta reel get found by what it was about.",
+          "text": "Saving it was easy. Sending it back is the hard part.",
+          "framework": "contrarian"
+        },
+        {
+          "text": "One text. One saved reel. Somewhere in your Saved grid.",
+          "framework": "specific_number"
+        },
+        {
+          "text": "POV: you promised to send the recipe an hour ago.",
+          "framework": "pov"
+        },
+        {
+          "text": "Watch a saved pasta reel get found and sent back.",
           "framework": "demonstration"
         },
         {
-          "text": "You saved the pasta reel. You forgot who posted it.",
+          "text": "You saved the pasta reel. Now your friend wants it.",
           "framework": "curiosity"
         },
         {
@@ -220,16 +221,20 @@
       ],
       "hooks_top3": [
         "Send me that pasta reel?",
-        "POV: you remember the pasta, not the creator.",
+        "Your friend wants the pasta reel. You saved it. Now what?",
         "Stop scrolling your Saved grid while a friend waits."
       ],
       "hook": "Send me that pasta reel?",
-      "caption": "Search your saved notes by meaning. Type what you remember about the reel, not who posted it.\nSend this to the friend who always asks for that reel. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipes",
+      "caption": "Search your saved notes by meaning. Create a public link to a Skwirl note. Anyone with the link can read that shared note.\nSend this to the friend who always asks for that reel. Try Skwirl. Link in bio.\n#Skwirl #savedreels #recipes",
       "cta": "Try Skwirl. Link in bio.",
       "claims": [
         {
           "text": "Search your saved notes by meaning.",
           "feature_id": "search"
+        },
+        {
+          "text": "Create a public link to a Skwirl note.",
+          "feature_id": "note_share"
         }
       ],
       "beats": [
@@ -246,16 +251,16 @@
           "t_start": 3,
           "t_end": 7,
           "role": "re-hook",
-          "vo": "You saved it. You just cannot remember who posted it.",
-          "on_screen": "Saved it. Can't remember who posted it.",
-          "shot": "Thumb scrolls a seeded demo Saved grid of food tiles, then stops.",
+          "vo": "You saved it weeks ago. Now you have to find it.",
+          "on_screen": "Saved it. Now find it.",
+          "shot": "Thumb scrolls a long seeded demo Saved grid of food tiles while the message waits.",
           "feature_ids": []
         },
         {
           "t_start": 7,
-          "t_end": 14,
+          "t_end": 13,
           "role": "payoff",
-          "vo": "Type what you remember about it. Search your saved notes by meaning.",
+          "vo": "Type what you remember about the dish. Search your saved notes by meaning.",
           "on_screen": "Search by what you remember",
           "shot": "Real capture in the seeded demo Skwirl library: type a few words about the dish (not \"that pasta thing\", already used in reel 12) and show the real matching note.",
           "feature_ids": [
@@ -263,19 +268,30 @@
           ]
         },
         {
-          "t_start": 14,
+          "t_start": 13,
           "t_end": 19,
-          "role": "other",
-          "vo": "Open the note and check it is the one.",
-          "on_screen": "Open it. Check it.",
-          "shot": "Open the matching demo note. Show only what the real note contains; no invented share button.",
+          "role": "handoff",
+          "vo": "Create a public link to a Skwirl note. Send that.",
+          "on_screen": "Send the note link",
+          "shot": "Real Share control on the matching demo note; paste the generated link into the staged reply. Keep sign-in tokens out of frame.",
           "feature_ids": [
-            "search"
+            "note_share"
           ]
         },
         {
           "t_start": 19,
           "t_end": 22,
+          "role": "limit",
+          "vo": "Anyone with the link can read that shared note.",
+          "on_screen": "Anyone with the link can read it",
+          "shot": "Hold on the sent reply with the link. Neutral, no leaked-data drama.",
+          "feature_ids": [
+            "note_share"
+          ]
+        },
+        {
+          "t_start": 22,
+          "t_end": 25,
           "role": "cta",
           "vo": "Try Skwirl. Link in bio.",
           "on_screen": "Try Skwirl. Link in bio.",
