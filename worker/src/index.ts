@@ -50,6 +50,7 @@ import { verifyGoogleIdToken } from "./google";
 import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./telegram";
 import { sharePage } from "./share";
 import { dodoWebhook, isPlus } from "./plus";
+import { handleUnsubscribe, saidYes, setConsent } from "./broadcast";
 import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
 export interface Env {
@@ -76,6 +77,9 @@ export interface Env {
   EMAIL?: { send(m: { to: string; from: { email: string; name: string }; subject: string; text: string; html: string }): Promise<unknown> };
   EMAIL_FROM?: string; // sender for sign-in codes, e.g. signin@skwirl.app
   RESEND_API_KEY?: string; // Resend (free plan): sends the codes with a plain fetch (src/login.ts)
+  EMAIL_UPDATES_FROM?: string; // sender for product updates (default updates@ + EMAIL_FROM's domain; src/broadcast.ts)
+  EMAIL_UNSUB_SECRET?: string; // signs unsubscribe links (default STASH_SECRET); set once, never rotate
+  BROADCAST_DAILY_MAX?: string; // product-update emails per 24 h (default 80: Resend free sends 100/day incl. codes)
   GOOGLE_CLIENT_ID?: string; // "Continue with Google" shows only when set (src/google.ts)
   VAPID_JWK?: string; // P-256 private JWK for Web Push (src/push.ts)
   PUBLIC_URL?: string; // where links in Telegram messages point (default: the live site) // optional: owner alerts still reach Telegram when D1 is down
@@ -388,6 +392,9 @@ export default {
       return res;
     }
 
+    // Product-update unsubscribe: signed link, works signed out; POST is RFC 8058 one-click (src/broadcast.ts).
+    if (path === "/unsubscribe") return handleUnsubscribe(request, env);
+
     const shareMatch = path.match(/^\/n\/([0-9a-f]{32})$/);
     if (shareMatch && request.method === "GET") return sharePage(env, shareMatch[1], url.origin);
 
@@ -504,11 +511,13 @@ export default {
       if (!spent.ok) return json({ error: spent.error, left: spent.left }, 400);
       if (acct) {
         if (!acct.email_verified) await markVerified(acct.id);
+        if (saidYes(b.updates)) await setConsent(env, acct.id, true, "signup");
         await logEvent(env, acct.id, "api", "signin_email");
         return json({ token: await mintDeviceToken(env, acct.id), name: acct.name, created: false });
       }
       const user = await makeAccount(name, email, true).catch(() => null);  // lost a race for the address
       if (!user) return json({ error: "Something went wrong. Sign in with that email again." }, 409);
+      if (saidYes(b.updates)) await setConsent(env, user.id, true, "signup");
       return json({ token: user.token, name, created: true }, 201);
     }
 
@@ -536,6 +545,7 @@ export default {
           const linked = await env.DB.prepare("UPDATE user SET google_sub = ?, email_verified = 1 WHERE id = ? AND google_sub IS NULL").bind(g.sub, acct.id).run().catch(() => null);
           if (!linked?.meta?.changes) return json({ error: "That email's Skwirl account is linked to a different Google account. Sign in with an email code instead." }, 409);
         }
+        if (saidYes(b.updates)) await setConsent(env, acct.id, true, "signup_google");
         await logEvent(env, acct.id, "api", "signin_google");
         return json({ token: await mintDeviceToken(env, acct.id), name: acct.name, created: false });
       }
@@ -544,6 +554,7 @@ export default {
       const name = cleanName(b.name) || cleanName(g.given_name) || cleanName(g.name?.split(" ")[0]) || "there";
       const user = await makeAccount(name, email, true, g.sub).catch(() => null);
       if (!user) return json({ error: "Something went wrong. Try again." }, 409);
+      if (saidYes(b.updates)) await setConsent(env, user.id, true, "signup_google");
       return json({ token: user.token, name, created: true }, 201);
     }
 
@@ -557,7 +568,7 @@ export default {
     // ---- join without a code: only while no email sender is set up ------------------------
     // (With one, sign-up goes through /auth/email so every address on file is proven.)
     if (path === "/join" && request.method === "POST") {
-      const body = (await request.json().catch(() => null)) as { name?: string; code?: string; email?: string } | null;
+      const body = (await request.json().catch(() => null)) as { name?: string; code?: string; email?: string; updates?: unknown } | null;
       if ([body?.name, body?.code, body?.email].some((v) => v != null && typeof v !== "string"))
         return json({ error: "Name, email and invite code must be text." }, 400);
       if (emailEnabled(env)) return json({ error: "Reload the page: sign-up now emails you a code." }, 409);
@@ -567,6 +578,7 @@ export default {
       if (!email) return json({ error: body?.email ? "That email doesn't look right." : "Add your email so you can sign in again later." }, 400);
       const no = await joinGate(body?.code); if (no) return json({ error: no.error }, no.status);
       const user = await makeAccount(name, email, false);
+      if (saidYes(body?.updates)) await setConsent(env, user.id, true, "signup");
       return json({ token: user.token }, 201);
     }
 

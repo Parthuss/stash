@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/fonts.css">
   <link rel="stylesheet" href="/console.css">
   <script src="/console.js" defer></script>
+  <script src="/console-email.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#overview">Skip to overview</a>
@@ -24,6 +25,7 @@
     <a href="#processing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h5l3-8 4 16 3-8h5"/></svg>Processing</a>
     <a href="#traffic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 16V9M12 16V4M17 16v-5"/></svg>Traffic</a>
     <a href="#content"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/></svg>Content</a>
+    <a href="#email"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM3 6l9 7 9-7"/></svg>Email</a>
     <a href="#activity"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Activity</a>
   </nav>
   <div class="rail-foot"><a href="/">← Back to saves</a><span>Private owner workspace</span></div>
@@ -69,6 +71,36 @@
       <div class="content-block"><div class="subhead"><h3>This week’s drafts</h3><span class="muted">Awaiting your review</span></div><div id="contentDrafts" class="content-drafts"></div></div>
       <div class="content-block"><div class="subhead"><h3>Scheduled queue</h3><span class="muted">Dates shown in UTC</span></div><div class="panel table-wrap" id="contentScheduled"></div></div>
       <div class="content-block"><div class="subhead"><h3>Posted</h3><span class="muted">48-hour &amp; 7-day results</span></div><div class="panel table-wrap" id="contentPosted"></div></div>
+    </section>
+
+    <section id="email" class="section">
+      <div class="section-head"><div><h2>Email updates</h2><p>Write a product update, check it, and send it only to people who said yes.</p></div><span id="emTag" class="tag">Opted-in only</span></div>
+      <p id="emStatus" class="content-status" role="status" aria-live="polite">Loading email…</p>
+      <div class="email-grid">
+        <form id="emForm" class="panel padded email-compose" novalidate>
+          <div class="subhead"><h3>Compose</h3><label class="sr-only" for="emPick">Draft</label><select id="emPick"></select></div>
+          <label class="field">Subject<input id="emSubject" maxlength="120" required autocomplete="off"></label>
+          <label class="field">Headline <small>Optional. Leave blank to use the subject.</small><input id="emHero" maxlength="120" autocomplete="off"></label>
+          <label class="field">Message <small>Blank line starts a paragraph · <code>- </code> bullet · <code>**bold**</code> · <code>[text](https://…)</code> · <code>{name}</code> first name</small><textarea id="emBody" rows="16" maxlength="6000" required></textarea></label>
+          <div class="email-two"><label class="field">Button text <small>Optional</small><input id="emBtnText" maxlength="40" autocomplete="off"></label><label class="field">Button link <small>https:// only</small><input id="emBtnUrl" type="url" maxlength="500" placeholder="https://skwirl.app/…" autocomplete="off"></label></div>
+          <div class="content-actions"><button type="submit" class="primary" id="emSave">Save draft</button><button type="button" id="emTest">Send test to me</button><button type="button" id="emNew">New draft</button><button type="button" id="emDelete">Delete draft</button></div>
+          <p id="emNote" class="provider-note"></p>
+        </form>
+        <div class="panel padded email-preview">
+          <div class="subhead"><h3>Preview</h3><div class="seg" role="group" aria-label="Preview options"><button type="button" data-em-width="600" aria-pressed="true">Desktop</button><button type="button" data-em-width="375" aria-pressed="false">Phone</button><button type="button" id="emDark" aria-pressed="false">Dark</button></div></div>
+          <p class="em-subject"><span>Subject</span> <b id="emSubjectOut"></b></p>
+          <div class="email-frame"><iframe id="emFrame" title="Email preview" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe></div>
+          <details class="data-view"><summary>Plain-text version (always sent too)</summary><pre id="emText" class="em-text"></pre></details>
+        </div>
+      </div>
+      <div class="panel padded email-send">
+        <div class="subhead"><h3>Send</h3><span class="muted" id="emCap"></span></div>
+        <dl class="facts" id="emFacts"></dl>
+        <form id="emPostalForm" class="em-inline"><label class="field">Sender line <small>Shown in every update: a postal address (US law asks for one) and/or a contact email.</small><input id="emPostal" maxlength="240" autocomplete="off" placeholder="Skwirl, [street or PO box], [city], [country] · hello@skwirl.app"></label><button type="submit">Save sender line</button></form>
+        <form id="emSendForm" class="em-inline"><label class="field">Confirm <small id="emConfirmHint">Type the number of people to send to.</small><input id="emConfirm" inputmode="numeric" autocomplete="off" pattern="[0-9]*"></label><button type="submit" class="primary" id="emSend" disabled>Send</button></form>
+        <p id="emSendNote" class="provider-note"></p>
+      </div>
+      <div class="content-block"><div class="subhead"><h3>Sent</h3><span class="muted">Every broadcast, who sent it, and message ids</span></div><div class="panel table-wrap" id="emSent"></div></div>
     </section>
 
     <section id="activity" class="section">

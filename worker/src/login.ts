@@ -10,6 +10,7 @@
  * Also the older one-time #login= links the Telegram bot hands out (/login).
  */
 import type { Env } from "./index";
+import { codeLayout, renderEmail } from "./email";
 
 const hex = (n: number) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, "0")).join("");
 async function sha256(text: string): Promise<string> {
@@ -35,19 +36,22 @@ export function normEmail(raw: unknown): string | null {
  *  (Workers Paid). Either needs EMAIL_FROM, an address on a domain verified with that sender. */
 export const emailEnabled = (env: Env) => Boolean(env.EMAIL_FROM && (env.RESEND_API_KEY || env.EMAIL));
 
-type Mail = { to: string; subject: string; text: string; html: string };
-export async function sendEmail(env: Env, m: Mail): Promise<void> {
+export type Mail = { to: string; subject: string; text: string; html: string; from?: string; headers?: Record<string, string> };
+/** Sends one email. Returns the provider's message id when it gives one. */
+export async function sendEmail(env: Env, m: Mail): Promise<string | null> {
   if (!emailEnabled(env)) throw new Error("no email sender");
+  const from = m.from ?? env.EMAIL_FROM!;
   if (env.RESEND_API_KEY) {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ from: `Skwirl <${env.EMAIL_FROM}>`, to: [m.to], subject: m.subject, text: m.text, html: m.html }),
+      body: JSON.stringify({ from: `Skwirl <${from}>`, to: [m.to], subject: m.subject, text: m.text, html: m.html, ...(m.headers ? { headers: m.headers } : {}) }),
     });
     if (!r.ok) throw new Error(`resend ${r.status}: ${(await r.text()).slice(0, 200)}`);
-    return;
+    return ((await r.json().catch(() => null)) as { id?: string } | null)?.id ?? null;
   }
-  await env.EMAIL!.send({ to: m.to, from: { email: env.EMAIL_FROM!, name: "Skwirl" }, subject: m.subject, text: m.text, html: m.html });
+  await env.EMAIL!.send({ to: m.to, from: { email: from, name: "Skwirl" }, subject: m.subject, text: m.text, html: m.html, ...(m.headers ? { headers: m.headers } : {}) } as any);
+  return null;
 }
 
 // ---- rate limits (rows in join_attempt, keyed by a prefixed string) ----------------------------
@@ -195,21 +199,12 @@ export async function isOwnerToken(env: Env, token: string): Promise<boolean> {
 /** Gmail addresses are Google's own, so a Google sign-in proves them as well as a code does. */
 export const googleOwnsAddress = (email: string) => /@(gmail|googlemail)\.com$/.test(email);
 
-const escHtml = (s: string) => s.replace(/[<>&"]/g, "");
-/** The email with the code. Sign-in and sign-up get the same email apart from the greeting, so
- *  nothing in the page's answer says whether an address has an account. */
+/** The email with the code (src/email.ts layout). Sign-in and sign-up get the same email apart from
+ *  the greeting, so nothing in the page's answer says whether an address has an account. */
 export function codeEmail(to: string, code: string, name: string | null, purpose: Purpose): Mail {
   const why = purpose === "add" ? "to add this email to your Skwirl account" : name ? "to sign in to Skwirl" : "to create your Skwirl account";
-  const hi = name ? `Hi ${name},` : "Hi,";
-  return {
-    to, subject: `${code} is your Skwirl code`,
-    text: `${hi}\n\nYour code ${why}:\n\n${code}\n\nIt works once, for 10 minutes.\n\nDidn't ask for this? Ignore this email, nothing changes.\n\nSkwirl\nhttps://skwirl.app`,
-    html: `<div style="font-family:system-ui,sans-serif;font-size:16px;color:#1d1b2e;max-width:460px">` +
-      `<p>${escHtml(hi)}</p><p>Your code ${why}:</p>` +
-      `<p style="font-size:32px;font-weight:700;letter-spacing:6px;margin:18px 0">${code}</p>` +
-      `<p>It works once, for 10 minutes.</p><p style="color:#777;font-size:14px">Didn't ask for this? Ignore this email, nothing changes.</p>` +
-      `<p style="color:#777;font-size:14px">Skwirl · <a href="https://skwirl.app" style="color:#777">skwirl.app</a></p></div>`,
-  };
+  const l = codeLayout(code, name ? `Hi ${name},` : "Hi,", why);
+  return { to, subject: l.subject, ...renderEmail(l) };
 }
 
 // ---- Telegram /login links (unchanged) ---------------------------------------------------------

@@ -568,7 +568,7 @@ $("codeForm").addEventListener("submit", async (e) => {
   const name = $("codeNameRow").hidden ? flow.name : $("codeName").value.trim();
   if (!$("codeNameRow").hidden && !name) { $("authErr").textContent = "Add your first name."; $("codeName").focus(); return; }
   btn.disabled = true; $("authErr").textContent = ""; $("authErr").className = "msg err";
-  let r; try { r = await postJson("/auth/email/verify", { email: flow.email, code: $("codeIn").value, name, invite: flow.invite }); }
+  let r; try { r = await postJson("/auth/email/verify", { email: flow.email, code: $("codeIn").value, name, invite: flow.invite, updates: flow.updates === true }); }
   catch { btn.disabled = false; $("authErr").textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
   const b = await r.json().catch(() => ({})); btn.disabled = false;
   if (r.status === 409 && b.needs_name) { $("codeNameRow").hidden = false; $("authErr").className = "msg info"; $("authErr").textContent = b.error; $("codeName").focus(); return; }
@@ -608,7 +608,7 @@ function renderGoogle() {
 }
 async function onGoogle(resp) {
   const err = $("authErr"); err.textContent = "";
-  let r; try { r = await postJson("/auth/google", { credential: resp.credential, name: $("joinName").value.trim(), invite: $("joinCode").value }); }
+  let r; try { r = await postJson("/auth/google", { credential: resp.credential, name: $("joinName").value.trim(), invite: $("joinCode").value, updates: !$("stepCreate").hidden && $("joinUpdates").checked }); }
   catch { err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
   const b = await r.json().catch(() => ({}));
   if (!r.ok) { tr("signin_google", "err"); err.textContent = b.error || "Google sign-in didn't work. Try your email instead."; return; }
@@ -721,11 +721,11 @@ $("joinForm").addEventListener("submit", async (e) => {
   try {
     r = mode.email_login
       ? await postJson("/auth/email/start", { email, signup: true, invite })
-      : await postJson("/join", { name, code: invite, email });
+      : await postJson("/join", { name, code: invite, email, updates: $("joinUpdates").checked });
   } catch { button.disabled = false; err.textContent = "Can't reach Skwirl. Check your connection and try again."; return; }
   const body = await r.json().catch(() => ({})); button.disabled = false;
   if (!r.ok) { tr("join_err", r.status); err.textContent = body.error || "Couldn’t join. Try again."; return; }
-  if (mode.email_login) { tr("join_code_sent"); flow = { email, name, invite, signup: true }; openSignin("", "code"); return; }
+  if (mode.email_login) { tr("join_code_sent"); flow = { email, name, invite, signup: true, updates: $("joinUpdates").checked }; openSignin("", "code"); return; }
   tr("join_ok", "with_email");
   signedIn(body.token);
 });
@@ -1490,6 +1490,7 @@ async function openMe() {
   $("meEmailBtn").hidden = me.owner && !me.email_login;  // the owner's address is only ever saved proven
   $("meNameIn").value = me.name; $("meEmailIn").value = me.email || ""; $("meEmailIn").dataset.was = me.email || "";
   $("meConsentRow").hidden = true; $("meMsg").textContent = "";
+  $("meUpdates").checked = Boolean(me.updates); $("meUpdatesMsg").textContent = "";
   // Notifications on this device
   const can = pushReady() && setupState && setupState.push_key;
   const perm = can ? Notification.permission : "unsupported";
@@ -1517,6 +1518,12 @@ $("meForm").addEventListener("submit", async (e) => {
   await refreshSetup(); openMe();
 });
 $("mePushOn").addEventListener("click", () => enablePush($("mePushMsg"), openMe));
+$("meUpdates").addEventListener("change", async (e) => {
+  const on = e.target.checked, msg = $("meUpdatesMsg");
+  const r = await api("/v1/me/updates", { method: "PUT", body: JSON.stringify({ on }) }).catch(() => null);
+  if (!r || !r.ok) { e.target.checked = !on; msg.className = "msg err"; msg.textContent = "Couldn't save. Try again."; return; }
+  msg.className = "msg ok"; msg.textContent = on ? "You're in. A couple of emails a month at most, to your verified email." : "Done. No product updates.";
+});
 $("contactForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const r = await api("/v1/feedback", { method: "POST", body: JSON.stringify({ message: $("contactMsg").value }) }).catch(() => null);

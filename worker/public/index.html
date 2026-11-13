@@ -1011,6 +1011,8 @@ body.on-phone .phone-handoff { display: none; }
         <div class="inline-actions"><button class="btn sm" type="submit">Save</button></div>
         <p class="msg" id="meMsg" role="status"></p>
       </form>
+      <label class="fbok"><input type="checkbox" id="meUpdates"> Product updates (a couple of emails a month at most). Unsubscribe any time.</label>
+      <p class="msg" id="meUpdatesMsg" role="status"></p>
     </div>
   </details>
 
@@ -1108,6 +1110,7 @@ body.on-phone .phone-handoff { display: none; }
       <input id="joinName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name" aria-label="First name" required>
       <input id="joinEmail" type="email" autocomplete="email" maxlength="120" placeholder="Email" aria-label="Email" required>
       <input id="joinCode" type="text" autocomplete="off" autocapitalize="off" placeholder="Invite code" aria-label="Invite code" hidden>
+      <label class="fbok"><input type="checkbox" id="joinUpdates"> Product updates (a couple of emails a month at most)</label>
       <button class="btn" type="submit">Create account</button>
     </form>
     <p class="fine" id="joinFine">No password to remember: we email you a code.</p>

@@ -14,6 +14,7 @@
 import { TIERS_FROM } from "./tiers";
 export { TIERS_FROM } from "./tiers";
 import { categoriesOf, setCategories, setNoteCategory } from "./categories";
+import { ownerEmailRoute, setConsent } from "./broadcast";
 import { analyticsOverview, journey, ownerConsole, contentOverview } from "./analytics";
 import { contentAction, contentMedia } from "./content";
 import { okEndpoint, sendPush, vapidPublic } from "./push";
@@ -180,6 +181,8 @@ export async function deleteUser(env: Env, userId: string, origin: string): Prom
     env.DB.prepare("DELETE FROM cc_key WHERE user_key = ?").bind(userId),
     env.DB.prepare("DELETE FROM login_code WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM email_code WHERE user_id = ?").bind(userId),
+    env.DB.prepare("DELETE FROM email_consent_log WHERE user_id = ?").bind(userId),
+    env.DB.prepare("UPDATE email_send SET user_id = NULL WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM thumb WHERE note_id IN (SELECT id FROM note WHERE user_id = ?)").bind(userId),
     env.DB.prepare("DELETE FROM note_fts WHERE user_id = ?").bind(userId),
     env.DB.prepare("DELETE FROM note_vec WHERE user_key = ?").bind(userId),
@@ -337,6 +340,11 @@ export async function handleV1(
     if (path === "/v1/admin/content/action" && request.method === "POST") return contentAction(request, env);
     if (path === "/v1/admin/content/media" && request.method === "GET") return contentMedia(request, env);
     return json({ error: "not found" }, 404);
+  }
+
+  if (path === "/v1/admin/email" || path.startsWith("/v1/admin/email/")) {
+    if (userId !== null) return json({ error: "not found" }, 404);
+    return ownerEmailRoute(request, env, path);
   }
 
   if (path === "/v1/admin/console" && request.method === "GET") {
@@ -647,9 +655,19 @@ export async function handleV1(
       `SELECT (SELECT COUNT(*) FROM capture WHERE user_id IS ?1) saves, (SELECT COUNT(*) FROM note WHERE user_id IS ?1) notes,
               (SELECT COUNT(*) FROM note WHERE user_id IS ?1 AND status = 'used') used`,
     ).bind(userId).first<any>();
-    const u = userId ? await env.DB.prepare("SELECT name, email, created_at FROM user WHERE id = ?").bind(userId).first<any>() : null;
+    const u = userId ? await env.DB.prepare("SELECT name, email, email_verified, created_at, marketing_opt_in FROM user WHERE id = ?").bind(userId).first<any>() : null;
     const email = userId === null ? await ownerEmail(env) : u?.email ?? null;
-    return json({ owner: userId === null, name: u?.name ?? env.OWNER_NAME ?? "Owner", email, email_verified: userId === null ? Boolean(email) : Boolean(u?.email_verified), email_login: emailEnabled(env), joined: u?.created_at ?? null, ...counts });
+    return json({ owner: userId === null, name: u?.name ?? env.OWNER_NAME ?? "Owner", email, email_verified: userId === null ? Boolean(email) : Boolean(u?.email_verified), email_login: emailEnabled(env), joined: u?.created_at ?? null, updates: Boolean(u?.marketing_opt_in), ...counts });
+  }
+  // Product updates on/off (Profile). The answer is stored either way; only opted-in, verified
+  // addresses are ever sent to (src/broadcast.ts).
+  if (path === "/v1/me/updates" && request.method === "PUT") {
+    if (userId === null) return json({ error: "The owner account doesn't get product updates." }, 400);
+    const on = ((await request.json().catch(() => null)) as any)?.on;
+    if (typeof on !== "boolean") return json({ error: "on must be true or false" }, 400);
+    await setConsent(env, userId, on, "profile");
+    await logEvent(env, userId, "api", on ? "updates_on" : "updates_off");
+    return json({ ok: true, updates: on });
   }
   if (path === "/v1/me" && request.method === "PUT") {
     if (userId === null) return json({ error: "The owner account has no profile to edit." }, 400);
