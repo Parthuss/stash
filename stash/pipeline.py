@@ -125,8 +125,8 @@ def process(
 
     transcript_text = "\n\n".join(transcript_parts)
     if not videos:
-        transcript_reason = "static post/carousel; no audio"
-        transcript_via = "none (static post)"
+        transcript_reason = "static post/carousel; no audio" if images else "text-only post; no audio"
+        transcript_via = "none (static post)" if images else "none (text-only post)"
     else:
         transcript_reason = "; ".join(transcript_reasons)
         transcript_via = ", ".join(dict.fromkeys(transcript_backends)) or "none"
@@ -254,7 +254,8 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
 #: ingest; this re-checks on the machine that actually fetches, so a bug or a
 #: forged row upstream can't turn the owner's Mac into a scanner of its own LAN.
 ALLOWED_HOSTS = ("instagram.com", "tiktok.com", "youtube.com", "youtu.be",
-                 "x.com", "twitter.com", "facebook.com", "fb.watch")
+                 "x.com", "twitter.com", "facebook.com", "fb.watch",
+                 "reddit.com", "redd.it", "linkedin.com", "lnkd.in")
 
 
 def is_allowed_url(raw: str | None) -> bool:
