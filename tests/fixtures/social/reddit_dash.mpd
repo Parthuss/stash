@@ -1,0 +1,4 @@
+<MPD xmlns="urn:mpeg:dash:schema:mpd:2011"><Period>
+<AdaptationSet mimeType="video/mp4"><Representation bandwidth="100"><BaseURL>DASH_240.mp4</BaseURL></Representation><Representation bandwidth="400"><BaseURL>DASH_720.mp4</BaseURL></Representation></AdaptationSet>
+<AdaptationSet contentType="audio"><Representation bandwidth="128"><BaseURL>DASH_AUDIO_128.mp4</BaseURL></Representation></AdaptationSet>
+</Period></MPD>

@@ -1,0 +1,10 @@
+[
+  {"data":{"children":[{"kind":"t3","data":{"id":"abc123","title":"How do I preserve useful notes?","selftext":"Keep the source &amp; write one next step.","author":"example_author","is_self":true,"url":"https://www.reddit.com/r/example/comments/abc123/title/"}}]}},
+  {"data":{"children":[
+    {"kind":"t1","data":{"body":"Use a source link and a short summary.","score":12,"author":"example_reader"}},
+    {"kind":"t1","data":{"body":"[removed]","score":100,"author":"deleted"}},
+    {"kind":"t1","data":{"body":"Forum rules.","score":50,"author":"AutoModerator"}},
+    {"kind":"more","data":{"count":5}},
+    {"kind":"t1","data":{"body":"Review the note once a week.","score":3,"author":"example_other"}}
+  ]}}
+]
