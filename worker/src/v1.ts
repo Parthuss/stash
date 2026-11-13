@@ -58,10 +58,12 @@ export function allowedUrl(raw: string): string | null {
   if (h === "linkedin.com" || h.endsWith(".linkedin.com")) {
     if (!/^\/(?:posts\/[^/]+|feed\/update\/urn:li:activity:\d+)\/?$/i.test(u.pathname)) return null;
     u.hostname = "www.linkedin.com";
+    u.pathname = u.pathname.replace(/\/$/, "") + "/";
     u.search = ""; u.hash = "";
   }
   if (h === "lnkd.in" || h.endsWith(".lnkd.in")) {
     if (!/^\/[a-z0-9_-]+\/?$/i.test(u.pathname)) return null;
+    u.hostname = "lnkd.in";
     u.search = ""; u.hash = "";
   }
   return u.toString();

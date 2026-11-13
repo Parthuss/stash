@@ -32,7 +32,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -q httpx PyYAML yt-dlp sqlite-vec
       # ubuntu-latest no longer ships ffmpeg (transcribe.py needs ffmpeg and ffprobe).
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg >/dev/null && ffprobe -version >/dev/null
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg poppler-utils >/dev/null && ffprobe -version >/dev/null
       - run: python -m stash daemon --once --guests-only --quiet
         env:
           STASH_WORKER_URL: ${{ secrets.STASH_WORKER_URL }}

@@ -30,7 +30,7 @@ class FetchError(RuntimeError):
 @dataclass
 class MediaItem:
     position: int
-    kind: Literal["image", "video"]
+    kind: Literal["image", "video", "document"]
     source_url: str = ""
     path: Path | None = None
     duration: float = 0.0
@@ -77,6 +77,10 @@ def fetch(*, permalink: str | None, media_url: str | None = None) -> MediaBundle
         raise FetchError("capture has neither a permalink nor a media_url")
 
     key = _key(source_url)
+    # These adapters deliberately never use Instagram's cookie/download routes.
+    from . import social
+    if permalink and social.platform(permalink):
+        return social.fetch_public(permalink, key, CONFIG.media_dir)
     errors: list[str] = []
     if media_url:
         try:

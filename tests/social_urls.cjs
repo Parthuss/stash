@@ -1,4 +1,4 @@
-// Recorded URL shapes and real handlers, no network or live database calls.
+// Representative URL shapes and real handlers, no network or live database calls.
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const assert = require('node:assert/strict'), { webcrypto } = require('node:crypto');
 const esbuild = require('../worker/node_modules/esbuild');
@@ -22,6 +22,9 @@ const fixtures = [
   ['https://instagram.com/reel/test/', 'https://instagram.com/reel/test/'],
 ];
 for (const [raw, normalized] of fixtures) assert.equal(v1.allowedUrl(raw), normalized, raw);
+assert.equal(v1.allowedUrl('https://linkedin.com/posts/example'), 'https://www.linkedin.com/posts/example/');
+assert.equal(v1.allowedUrl('https://www.lnkd.in/abc'), 'https://lnkd.in/abc');
+assert.equal(v1.allowedUrl('https://www.redd.it/ABC'), 'https://www.reddit.com/comments/abc/');
 for (const raw of [
   'http://reddit.com/comments/abc/', 'https://user:pass@linkedin.com/posts/x',
   'https://reddit.com:444/comments/abc/', 'https://reddit.com.evil.test/comments/abc/',
