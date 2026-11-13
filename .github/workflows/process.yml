@@ -40,3 +40,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEYS: ${{ secrets.GROQ_API_KEYS }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # Unset by default. Only after written platform permission for anonymous
+          # access and note retention; ordinary Reddit OAuth approval is insufficient.
+          STASH_REDDIT_PUBLIC_ACCESS: ${{ vars.STASH_REDDIT_PUBLIC_ACCESS }}
+          STASH_LINKEDIN_PUBLIC_ACCESS: ${{ vars.STASH_LINKEDIN_PUBLIC_ACCESS }}
