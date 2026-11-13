@@ -285,6 +285,8 @@ export function ftsQuery(raw: string, joiner = " OR "): string {
 }
 
 const MSG_NEXT = "\n%%next\n";
+// One-time tips the owner can queue per user (user.owner_tip). The app holds the wording (app.js TIPS).
+const OWNER_TIPS = ["shortcut"];
 export const DAILY_SHARED = 30, DAILY_OWN_KEY = 200;
 // Old saves from an Instagram export: how many one person can queue, by key type.
 export const IMPORT_SHARED = 100, IMPORT_OWN_KEY = 1000;
@@ -341,7 +343,7 @@ export async function handleV1(
     if (userId !== null) return json({ error: "not found" }, 404);
     return json(await ownerConsole(env, Number(url.searchParams.get("days")) || 7));
   }
-  const ownerUserAction = path.match(/^\/v1\/admin\/users\/([a-zA-Z0-9_-]{1,80})\/(message|requeue|push)$/);
+  const ownerUserAction = path.match(/^\/v1\/admin\/users\/([a-zA-Z0-9_-]{1,80})\/(message|tip|requeue|push)$/);
   if (ownerUserAction && request.method === "POST") {
     if (userId !== null) return json({ error: "not found" }, 404);
     const target = ownerUserAction[1], action = ownerUserAction[2];
@@ -350,7 +352,12 @@ export async function handleV1(
       const r = await env.DB.prepare("UPDATE capture SET status = 'pending', attempts = 0, error = NULL, claimed_at = NULL, lease = NULL WHERE user_id = ? AND (status = 'failed' OR (status != 'done' AND attempts >= 3))").bind(target).run();
       return json({ requeued: r.meta.changes });
     }
-    const body = await request.json().catch(() => null) as { message?: unknown; body?: unknown; title?: unknown } | null;
+    const body = await request.json().catch(() => null) as { message?: unknown; tip?: unknown; body?: unknown; title?: unknown } | null;
+    if (action === "tip") {
+      if (body?.tip !== "" && !OWNER_TIPS.includes(body?.tip as string)) return json({ error: `Tip must be one of: ${OWNER_TIPS.join(", ")} (or blank to clear).` }, 400);
+      await env.DB.prepare("UPDATE user SET owner_tip = ? WHERE id = ?").bind(body!.tip || null, target).run();
+      return json({ ok: true });
+    }
     if (action === "message") {
       if (typeof body?.message !== "string" || body.message.length > 500) return json({ error: "Message must be 500 characters or fewer." }, 400);
       // Leading '#' is app navigation markup in older owner messages. Prefix plain messages so
@@ -556,13 +563,18 @@ export async function handleV1(
     return json({ ok: true });
   }
 
+  if (path === "/v1/owner-tip/seen" && request.method === "POST") {
+    if (userId) await env.DB.prepare("UPDATE user SET owner_tip = NULL WHERE id = ?").bind(userId).run();
+    return json({ ok: true });
+  }
+
   if (path === "/v1/setup" && request.method === "GET") {
     const sources = await env.DB.prepare(
       "SELECT source, COUNT(*) n FROM capture WHERE user_id IS ? GROUP BY source",
     ).bind(userId).all<{ source: string; n: number }>();
     const counts = Object.fromEntries((sources.results ?? []).map((r) => [r.source, r.n]));
     const u = userId
-      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, email_verified, email_skip_at, found_via, owner_msg, plan, plan_until, created_at FROM user WHERE id = ?").bind(userId).first<any>()
+      ? await env.DB.prepare("SELECT name, mcp_calls, groq_key_enc, email, email_verified, email_skip_at, found_via, owner_msg, owner_tip, plan, plan_until, created_at FROM user WHERE id = ?").bind(userId).first<any>()
       : null;
     const plus = isPlus(u), tier = tierOf(u, userId);
     // The owner's email lives in owner_login; asked once with "Not now" (then a banner), never required.
@@ -594,6 +606,8 @@ export async function handleV1(
       push_key: vapidPublic(env),
       asked_source: Boolean(u?.found_via) || userId === null,
       owner_msg: u?.owner_msg ? u.owner_msg.split(MSG_NEXT)[0] : null,
+      // The share-sheet tip is moot once they've saved through the Shortcut.
+      owner_tip: u?.owner_tip && !(u.owner_tip === "shortcut" && counts.shortcut) ? u.owner_tip : null,
       categories: (await categoriesOf(env, userId)).names,
       telegram: env.TELEGRAM_BOT_TOKEN ? { connected: await telegramConnected(env, userId) } : null,
     });
