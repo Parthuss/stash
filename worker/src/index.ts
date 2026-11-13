@@ -51,9 +51,12 @@ import { handleTelegram, setupTelegram, telegramUser, weeklyDigest } from "./tel
 import { sharePage } from "./share";
 import { dodoWebhook, isPlus } from "./plus";
 import { handleUnsubscribe, saidYes, setConsent } from "./broadcast";
-import { adminOverview, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
+import { adminOverview, allowedUrl, socialAccessReason, createUser, decryptKey, deleteUser, handleV1, logEvent, userFromBearer, userFromToken } from "./v1";
 
 export interface Env {
+  /** Only set after explicit written permission for credential-free public fetching. */
+  REDDIT_PUBLIC_ACCESS?: string;
+  LINKEDIN_PUBLIC_ACCESS?: string;
   DB: D1Database;
   AI?: { run(model: string, input: unknown): Promise<unknown> }; // Workers AI, for meaning-based search
   MEDIA?: R2Bucket;
@@ -610,9 +613,13 @@ export default {
       if (!body?.url && !body?.media_url) {
         return json({ error: "need url or media_url" }, 400);
       }
+      const safeUrl = body.url == null ? null : typeof body.url === "string" ? allowedUrl(body.url) : null;
+      if (body.url != null && !safeUrl) return json({ error: "That link isn't from a supported site." }, 400);
+      const accessReason = safeUrl && socialAccessReason(safeUrl, env);
+      if (accessReason) return json({ error: accessReason }, 422);
       const result = await insertCapture(env, {
         source: body.source || "shortcut",
-        permalink: body.url ?? null,
+        permalink: safeUrl,
         media_url: body.media_url ?? null,
         note: body.note ?? null,
       });

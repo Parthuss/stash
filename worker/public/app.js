@@ -1435,7 +1435,7 @@ function promptSlot(name) {
 const visitId = (() => { try { let v = sessionStorage.getItem("sk_visit"); if (!v) sessionStorage.setItem("sk_visit", v = String(Date.now())); return v; } catch { return "0"; } })();
 // ---- One-time tips the owner queues per user (user.owner_tip, owner console > One-time tip). A small
 // card, once, on a visit no fresh owner note has claimed. Cleared server-side as soon as it shows.
-const TIPS = { shortcut: { text: "Share reels to Skwirl straight from Instagram: one tap instead of copy and paste. Set it up in 1 minute.", label: "Set it up", go: "gSave" } };
+const TIPS = { shortcut: { text: "Share posts to Skwirl from your phone. Reddit and LinkedIn public posts need approved platform access. Set it up in 1 minute.", label: "Set it up", go: "gSave" } };
 let tipOn = null;
 function showTip() {
   const st = setupState, key = st && st.owner_tip, tip = TIPS[key];
@@ -1537,7 +1537,7 @@ function renderHub(me, perm) {
   const st = setupState || {}, i = importInfo;
   const go = (group) => `data-hub="${group}"`;
   const rows = [
-    ["Save from your phone", "Share a reel straight to Skwirl", (st.saved_from || {}).shortcut || (st.saved_from || {}).pwa ? "On" : null, `<button class="btn sm soft" ${go("gSave")}>Set up</button>`],
+    ["Save from your phone", "Share a post straight to Skwirl", (st.saved_from || {}).shortcut || (st.saved_from || {}).pwa ? "On" : null, `<button class="btn sm soft" ${go("gSave")}>Set up</button>`],
     ["Notifications", "A heads-up when new notes are ready", perm === "granted" ? "On" : null,
       perm === "default" ? `<button class="btn sm soft" data-hub="push">Turn on</button>` : `<small>${perm === "denied" ? "Blocked in settings" : "Home-screen app only"}</small>`],
     ["ChatGPT or Claude", "Let your AI search your saves", st.claude_connected ? "Connected" : null, `<button class="btn sm soft" ${go("gClaude")}>Connect</button>`],

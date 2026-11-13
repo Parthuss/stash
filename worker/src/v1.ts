@@ -36,19 +36,57 @@ const json = (body: unknown, status = 200) =>
 // user submits, so an open URL field would let a guest aim it at the owner's
 // home network (http://192.168.x.x, localhost, cloud metadata). Keep this list
 // in sync with ALLOWED_HOSTS in stash/pipeline.py, which re-checks on the runner.
-const ALLOWED_HOSTS = ["instagram.com", "tiktok.com", "youtube.com", "youtu.be", "x.com", "twitter.com", "facebook.com", "fb.watch"];
+const ALLOWED_HOSTS = ["instagram.com", "tiktok.com", "youtube.com", "youtu.be", "x.com", "twitter.com", "facebook.com", "fb.watch", "reddit.com", "redd.it", "linkedin.com", "lnkd.in"];
 export function allowedUrl(raw: string): string | null {
   let u: URL;
   try { u = new URL(raw); } catch { return null; }
   if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443") || raw.length > 500) return null;
   const h = u.hostname.toLowerCase();
-  return ALLOWED_HOSTS.some((d) => h === d || h.endsWith("." + d)) ? u.toString() : null;
+  if (!ALLOWED_HOSTS.some((d) => h === d || h.endsWith("." + d))) return null;
+  // Share redirects stay on the runner, which validates every hop.
+  if (h === "redd.it" || h.endsWith(".redd.it")) {
+    const id = u.pathname.match(/^\/([a-z0-9]+)\/?$/i)?.[1];
+    return id ? `https://www.reddit.com/comments/${id.toLowerCase()}/` : null;
+  }
+  if (h === "reddit.com" || h.endsWith(".reddit.com")) {
+    const id = u.pathname.match(/^\/(?:r\/[^/]+\/)?comments\/([a-z0-9]+)(?:\/|$)/i)?.[1];
+    if (id) return `https://www.reddit.com/comments/${id.toLowerCase()}/`;
+    if (!/^\/r\/[^/]+\/s\/[a-z0-9]+\/?$/i.test(u.pathname)) return null;
+    u.hostname = "www.reddit.com";
+    u.search = ""; u.hash = "";
+  }
+  if (h === "linkedin.com" || h.endsWith(".linkedin.com")) {
+    if (!/^\/(?:posts\/[^/]+|feed\/update\/urn:li:activity:\d+)\/?$/i.test(u.pathname)) return null;
+    u.hostname = "www.linkedin.com";
+    u.search = ""; u.hash = "";
+  }
+  if (h === "lnkd.in" || h.endsWith(".lnkd.in")) {
+    if (!/^\/[a-z0-9_-]+\/?$/i.test(u.pathname)) return null;
+    u.search = ""; u.hash = "";
+  }
+  return u.toString();
+}
+
+/** Permission is checked before quota or queue writes, including the owner ingest path. */
+export function socialAccessReason(raw: string, env: Env): string | null {
+  const h = new URL(raw).hostname.toLowerCase();
+  const reddit = h === "redd.it" || h.endsWith(".redd.it") || h === "reddit.com" || h.endsWith(".reddit.com");
+  const linkedin = h === "lnkd.in" || h.endsWith(".lnkd.in") || h === "linkedin.com" || h.endsWith(".linkedin.com");
+  if (reddit && env.REDDIT_PUBLIC_ACCESS !== "approved") return "Reddit saving needs platform access approval; anonymous API access is unavailable.";
+  if (linkedin && env.LINKEDIN_PUBLIC_ACCESS !== "approved") return "LinkedIn saving needs platform access approval.";
+  return null;
 }
 
 /** Turn a raw worker error into something a person can act on. Never returns raw text. */
 export function friendlyReason(error: string | null, failed: boolean): string {
   const e = (error ?? "").toLowerCase();
   if (!e) return failed ? "Something went wrong reading this one." : "Reading this now.";
+  if (e.includes("linkedin") && (e.includes("signed-in") || e.includes("login")))
+    return "LinkedIn only shows this post to signed-in members.";
+  if ((e.includes("linkedin") || e.includes("reddit")) && (e.includes("approval") || e.includes("permission")))
+    return `${e.includes("linkedin") ? "LinkedIn" : "Reddit"} saves need approved platform access. Skwirl can't read this post yet.`;
+  if (e.includes("linkedin")) return "LinkedIn didn't make this post available publicly. It may need sign-in or have been removed.";
+  if (e.includes("reddit")) return "Reddit didn't let Skwirl read this post. It may be private, removed or temporarily blocked.";
   if (e.includes("429") || e.includes("rate limit") || e.includes("request too large") || e.includes("tokens per"))
     return failed ? "Skwirl was too busy to finish this. Retry it, or add your own Groq key in Set up." : "Skwirl is busy. It'll retry on its own.";
   if (e.includes("empty media") || e.includes("private") || e.includes("not accessible") || e.includes("login required") || e.includes("unavailable"))
@@ -404,7 +442,9 @@ export async function handleV1(
       return json({ error: "URL, note and source must be text." }, 400);
     if (!body?.url) return json({ error: "need url" }, 400);
     const safeUrl = allowedUrl(body.url);
-    if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, Facebook, YouTube and X links." }, 400);
+    if (!safeUrl) return json({ error: "That link isn't supported. Skwirl takes Instagram, Facebook, TikTok, YouTube, X, Reddit and LinkedIn post links." }, 400);
+    const accessReason = socialAccessReason(safeUrl, env);
+    if (accessReason) return json({ error: accessReason }, 422);
     if (userId) {  // per-user brakes so one account can't flood the queue
       const { tier, u } = await userTier(env, userId);
       const q = await env.DB.prepare(
