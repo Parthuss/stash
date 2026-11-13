@@ -10,11 +10,19 @@
 #define name Skwirl
 #define color violet
 #define glyph archive
-#define inputs url
+#define inputs url, text
 #define from sharesheet
 #define noinput stopwith "Share a link to Skwirl."
 
 #include 'actions/web'
 
-@link = urlEncode("{ShortcutInput}")
+// Apps may share a title followed by a URL as text. Send only the first URL.
+@urls = getURLs("{ShortcutInput}")
+@urlCount = count(@urls)
+if @urlCount == 0 {
+    show("Share a link to Skwirl.")
+    stop()
+}
+@firstURL = getFirstItem(@urls)
+@link = urlEncode("{@firstURL}")
 openURL("{{WORKER_URL}}/?url={@link}&src=shortcut")
