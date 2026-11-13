@@ -1,0 +1,49 @@
+{
+  "at": "2026-11-13T04:49:26.635065+00:00",
+  "worker": "https://skwirl.app",
+  "source_network_calls": 0,
+  "notes_created": 0,
+  "checks": [
+    {
+      "source": "Reddit",
+      "kind": "text",
+      "url": "https://www.reddit.com/r/learnpython/comments/1vwda97/new_to_programming_what_do_you_learn/",
+      "ingest_status": 422,
+      "ingest_error": "Reddit saving needs platform access approval; anonymous API access is unavailable.",
+      "pipeline": "Reddit saving needs platform access approval. Anonymous Reddit API access is unavailable.",
+      "result": "permission-denied; source fetch and note quality untested"
+    },
+    {
+      "source": "Reddit",
+      "kind": "video",
+      "url": "https://www.reddit.com/r/aww/comments/90bu6w/heat_index_was_110_degrees_so_we_offered_him_a/",
+      "ingest_status": 422,
+      "ingest_error": "Reddit saving needs platform access approval; anonymous API access is unavailable.",
+      "pipeline": "Reddit saving needs platform access approval. Anonymous Reddit API access is unavailable.",
+      "result": "permission-denied; source fetch and note quality untested"
+    },
+    {
+      "source": "LinkedIn",
+      "kind": "text+image",
+      "url": "https://www.linkedin.com/posts/github_at-github-universe-we-announced-github-as-activity-7393712835454889984-RLfD",
+      "ingest_status": 422,
+      "ingest_error": "LinkedIn saving needs platform access approval.",
+      "pipeline": "LinkedIn saving needs platform access approval.",
+      "result": "permission-denied; source fetch and note quality untested"
+    },
+    {
+      "source": "LinkedIn",
+      "kind": "video",
+      "url": "https://www.linkedin.com/posts/the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7",
+      "ingest_status": 422,
+      "ingest_error": "LinkedIn saving needs platform access approval.",
+      "pipeline": "LinkedIn saving needs platform access approval.",
+      "result": "permission-denied; source fetch and note quality untested"
+    }
+  ],
+  "account_deleted": true,
+  "account_counts": {
+    "saves": 0,
+    "notes": 0
+  }
+}
