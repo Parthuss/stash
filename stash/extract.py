@@ -549,9 +549,13 @@ def _post_groq(messages: list[dict[str, Any]], max_tokens: int) -> httpx.Respons
 def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[str, Any]:
     response = None
     for attempt in range(3):
-        # 429s get their own budget here and never consume `attempt`.
+        # Busy shared keys get their own bounded retry budget; keep the same model.
         for _ in range(6):
             response = _post_groq(messages, max_tokens)
+            if response.status_code == 503:
+                if next_shared_key(CONFIG, 60):
+                    continue
+                break
             if response.status_code != 429:
                 break
             if "Request too large" in response.text:
@@ -568,6 +572,8 @@ def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[st
                 if next_shared_key(CONFIG, delay):  # this shared key is spent: the next free one
                     continue
                 break  # nowhere left: fail now, the queue retries later
+            if next_shared_key(CONFIG, delay):
+                continue
             time.sleep(delay)
         # Observed live: an occasional 400 "json_validate_failed" with an
         # EMPTY failed_generation — not a malformed request (the identical

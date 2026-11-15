@@ -458,3 +458,74 @@ def test_extraction_rejects_empty_or_non_string_title(monkeypatch):
         monkeypatch.setattr(extract, "_groq_request", lambda *a, **k: {"title": title})
         with pytest.raises(extract.ExtractError, match="title"):
             extract._extract_groq(permalink=None, user_note=None, transcript_text="text")
+
+
+
+def _stub_shared_retry(monkeypatch, responses, keys=("shared-a", "shared-b")):
+    import httpx
+    from stash import config
+
+    monkeypatch.setattr(config, "_spent_until", {})
+    monkeypatch.setattr(extract, "CONFIG", SimpleNamespace(
+        groq_api_key=keys[0], groq_api_keys=keys, extract_model="same-model",
+    ))
+    sent = []
+
+    def post(url, **kwargs):
+        sent.append((kwargs["headers"]["Authorization"], kwargs["json"]["model"]))
+        status = responses[len(sent) - 1]
+        if status == 200:
+            return httpx.Response(200, json={"choices": [{"message": {"content": '{"title":"ok"}'}}]})
+        return httpx.Response(status, text="temporarily busy", headers={"retry-after": "10"})
+
+    monkeypatch.setattr(extract.httpx, "post", post)
+    def no_sleep(seconds):
+        raise AssertionError("unexpected sleep")
+
+    monkeypatch.setattr(extract.time, "sleep", no_sleep)
+    return sent
+
+
+def test_shared_503_rotates_key_without_changing_model(monkeypatch):
+    sent = _stub_shared_retry(monkeypatch, [503, 200])
+    assert extract._groq_request([], max_tokens=10) == {"title": "ok"}
+    assert sent == [("Bearer shared-a", "same-model"), ("Bearer shared-b", "same-model")]
+
+
+def test_short_shared_429_rotates_before_sleeping(monkeypatch):
+    sent = _stub_shared_retry(monkeypatch, [429, 200])
+    assert extract._groq_request([], max_tokens=10) == {"title": "ok"}
+    assert sent == [("Bearer shared-a", "same-model"), ("Bearer shared-b", "same-model")]
+
+
+def test_exhausted_shared_503_returns_to_queue_without_spinning(monkeypatch):
+    import pytest
+
+    sent = _stub_shared_retry(monkeypatch, [503, 503])
+    with pytest.raises(extract.ExtractError, match="groq 503"):
+        extract._groq_request([], max_tokens=10)
+    assert len(sent) == 2
+
+
+def test_own_key_import_503_never_uses_shared_keys(monkeypatch):
+    import pytest
+    from stash.config import using_groq_key
+
+    sent = _stub_shared_retry(monkeypatch, [503])
+    with using_groq_key("own-import", spill=False):
+        with pytest.raises(extract.ExtractError, match="groq 503"):
+            extract._groq_request([], max_tokens=10)
+    assert sent == [("Bearer own-import", "same-model")]
+
+
+
+def test_own_key_import_daily_429_never_uses_shared_keys(monkeypatch):
+    import pytest
+    from stash.config import using_groq_key
+
+    sent = _stub_shared_retry(monkeypatch, [429])
+    monkeypatch.setattr(extract, "_retry_delay", lambda response: 3600)
+    with using_groq_key("own-import", spill=False):
+        with pytest.raises(extract.ExtractError, match="groq 429"):
+            extract._groq_request([], max_tokens=10)
+    assert sent == [("Bearer own-import", "same-model")]
