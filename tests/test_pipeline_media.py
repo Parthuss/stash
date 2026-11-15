@@ -227,3 +227,32 @@ def test_guest_caption_fallback_hides_fetch_exception(monkeypatch, capsys):
     output = capsys.readouterr().out
     assert "guest-secret" not in output
     assert "falling back to caption only" in output
+
+
+def test_import_never_enables_openrouter_even_with_stale_plus_lane(monkeypatch):
+    import dataclasses
+    from types import SimpleNamespace
+    from stash import config, remote
+
+    monkeypatch.setattr(pipeline, "CONFIG", dataclasses.replace(
+        pipeline.CONFIG, worker_url="https://queue.example.invalid", worker_secret="test"))
+    monkeypatch.setenv("OPENROUTER_API_KEY", "paid-test-key")
+    monkeypatch.setattr(config, "_openrouter_down_until", [0.0])
+    captures = iter([
+        remote.Row({"id": source, "user_id": "friend", "source": source, "lane": "plus"})
+        for source in ("import", "web")
+    ] + [None])
+    monkeypatch.setattr(remote, "claim_next", lambda: next(captures))
+    monkeypatch.setattr(remote, "media_url_for", lambda capture: None)
+    monkeypatch.setattr(pipeline, "_forget_media", lambda *args: None)
+    finished, seen = [], []
+    monkeypatch.setattr(remote, "finish_capture", lambda capture_id, **kwargs: finished.append(kwargs))
+
+    def process(conn, capture, **kwargs):
+        seen.append((capture["source"], config.openrouter_key()))
+        return SimpleNamespace(title="Test note", guest=False)
+
+    monkeypatch.setattr(pipeline, "process", process)
+    assert len(pipeline.drain(None, verbose=False)) == 2
+    assert seen == [("import", ""), ("web", "paid-test-key")]
+    assert len(finished) == 2 and all(result["ok"] for result in finished)

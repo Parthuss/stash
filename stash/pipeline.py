@@ -413,7 +413,7 @@ def drain(
             try:
                 lane = capture["lane"] if "lane" in capture.keys() else None
                 with using_groq_key(own_key, spill=capture["source"] != "import"), guest_run(_is_guest(capture)), \
-                        plus_lane(lane == "plus"), collect_usage() as usage:
+                        plus_lane(lane == "plus" and capture["source"] != "import"), collect_usage() as usage:
                     result = process(conn, capture, verbose=verbose, media_url=override)
             finally:
                 if _is_guest(capture):
