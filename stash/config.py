@@ -146,6 +146,11 @@ def groq_key(cfg) -> str:
     return _groq_override.get() or _shared_key(cfg)
 
 
+def has_own_groq_key() -> bool:
+    """Whether this run is using a user-provided key rather than the shared pool."""
+    return bool(_groq_override.get())
+
+
 # Plus saves (the worker marks them lane="plus") run on OpenRouter when OPENROUTER_API_KEY is set: same
 # model, paid, no daily cap. If OpenRouter refuses (no credit, key limit, outage) the save falls back to the
 # free Groq keys and OpenRouter is skipped for a while, so nothing gets stuck.

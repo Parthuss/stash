@@ -529,3 +529,25 @@ def test_own_key_import_daily_429_never_uses_shared_keys(monkeypatch):
         with pytest.raises(extract.ExtractError, match="groq 429"):
             extract._groq_request([], max_tokens=10)
     assert sent == [("Bearer own-import", "same-model")]
+
+
+
+def test_exhausted_short_shared_429_returns_to_queue_without_sleeping(monkeypatch):
+    import pytest
+
+    sent = _stub_shared_retry(monkeypatch, [429, 429])
+    with pytest.raises(extract.ExtractError, match="groq 429"):
+        extract._groq_request([], max_tokens=10)
+    assert sent == [("Bearer shared-a", "same-model"), ("Bearer shared-b", "same-model")]
+
+
+def test_own_key_short_429_keeps_existing_wait_and_key(monkeypatch):
+    from stash.config import using_groq_key
+
+    sent = _stub_shared_retry(monkeypatch, [429, 200])
+    waits = []
+    monkeypatch.setattr(extract.time, "sleep", waits.append)
+    with using_groq_key("own-import", spill=False):
+        assert extract._groq_request([], max_tokens=10) == {"title": "ok"}
+    assert sent == [("Bearer own-import", "same-model"), ("Bearer own-import", "same-model")]
+    assert waits == [10]

@@ -24,7 +24,7 @@ from typing import Any, TypeVar
 
 import httpx
 
-from .config import CONFIG, groq_key, is_guest_run, next_shared_key, openrouter_failed, openrouter_key, record_usage, spill_to_shared_key
+from .config import CONFIG, groq_key, has_own_groq_key, is_guest_run, next_shared_key, openrouter_failed, openrouter_key, record_usage, spill_to_shared_key
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -574,6 +574,8 @@ def _groq_request(messages: list[dict[str, Any]], *, max_tokens: int) -> dict[st
                 break  # nowhere left: fail now, the queue retries later
             if next_shared_key(CONFIG, delay):
                 continue
+            if not has_own_groq_key():
+                break  # all shared keys busy: let the queue schedule the next try
             time.sleep(delay)
         # Observed live: an occasional 400 "json_validate_failed" with an
         # EMPTY failed_generation — not a malformed request (the identical
