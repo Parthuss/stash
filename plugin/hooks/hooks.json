@@ -9,7 +9,7 @@
             "args": [
               "-sf",
               "-m",
-              "3",
+              "2",
               "-X",
               "POST",
               "-H",
@@ -20,7 +20,7 @@
               "@-",
               "https://skwirl.app/v1/recall"
             ],
-            "timeout": 5
+            "timeout": 3
           }
         ]
       }
