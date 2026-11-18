@@ -22,6 +22,7 @@ import json
 from typing import Annotated, Any
 
 from mcp.server.mcpserver import MCPServer
+from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from . import db
@@ -52,6 +53,13 @@ Limit = Annotated[int, Field(ge=1, le=20, description="Integer number of compact
 NoteId = Annotated[str, Field(min_length=1, description="Nonempty string: exact note ID or vault filename returned by search/recent, never a guessed ID; example: '0123456789abcdef'.", examples=["0123456789abcdef"])]
 MentionKind = Annotated[str, Field(pattern=r"^(|book|movie|show|podcast|place|product|person|other)$", description="String: book, movie, show, podcast, place, product, person, other, or empty for all; example: 'book'.", examples=["book"])]
 UsedWhere = Annotated[str, Field(min_length=1, description="Nonempty string describing where the save was applied; example: 'picked langgraph'.", examples=["picked langgraph"])]
+
+_LOCAL_READ = ToolAnnotations(
+    read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False,
+)
+_WRITE_USAGE = ToolAnnotations(
+    read_only_hint=False, destructive_hint=True, idempotent_hint=True, open_world_hint=False,
+)
 
 
 def _render(items: list[dict[str, Any]]) -> str:
@@ -123,7 +131,7 @@ def _render_compact(items: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-@mcp.tool(structured_output=True)
+@mcp.tool(structured_output=True, annotations=_LOCAL_READ)
 def search_stash(
     query: Query, topic: Topic = "", status: Status = "", limit: Limit = 5
 ) -> str:
@@ -139,6 +147,14 @@ def search_stash(
     get_stash_note(id) on whichever one turns out to matter for the full
     transcript, next step, and permalink.
 
+    Searches this local Skwirl vault by keyword and, when available, meaning.
+    Results are relevance-ordered, with title, clipped summary, note ID, date,
+    topic, status and tools. No numeric relevance score is returned. For newest
+    saves regardless of relevance use recent_stash; for topic filters use
+    list_stash_topics. Queries with no searchable words fall back to recent saves.
+    Does not change saves or fetch live social posts. Returns text plus the same
+    string in structured result.result; an empty search returns "No matching saves.".
+    Invalid arguments and database failures are tool errors.
     Example: search_stash(query="animation patterns", status="unused", limit=5).
 
     Args:
@@ -157,11 +173,18 @@ def search_stash(
         conn.close()
 
 
-@mcp.tool(structured_output=True)
+@mcp.tool(structured_output=True, annotations=_LOCAL_READ)
 def get_stash_note(note_id: NoteId) -> str:
     """Read one saved post in full, including its transcript and on-screen notes.
 
-    Returns note markdown, or a message when the note does not exist.
+    Reads one existing note from the local Skwirl vault after search_stash or
+    recent_stash supplies its ID. Use those tools to discover notes first.
+    Returns the saved markdown file, including available summary, next step,
+    transcript and source permalink; if the file is absent, returns the indexed
+    note fields as JSON text. Does not fetch the source or change usage status.
+    Returns text plus the same string in structured result.result. A missing ID
+    returns "No note matching ..."; invalid arguments, database and file-read
+    failures are tool errors. Use mark_stash_used only after applying the note.
     Example: get_stash_note(note_id="0123456789abcdef") after a matching search.
 
     Args:
@@ -180,12 +203,18 @@ def get_stash_note(note_id: NoteId) -> str:
         conn.close()
 
 
-@mcp.tool(structured_output=True)
+@mcp.tool(structured_output=True, annotations=_LOCAL_READ)
 def list_stash_topics() -> str:
     """List the topics present in the user's saves, with counts.
 
     Useful for orienting before a search, or for answering "what do I collect?".
-    Returns topic names with counts, or an empty-vault message. Takes no parameters.
+    Enumerates nonempty topic names in the local Skwirl vault, ordered by save
+    count descending. Use returned names as search_stash(topic=...) filters;
+    use list_stash_mentions for named books, places or people instead of topics.
+    Takes no parameters and does not change saves or contact external services.
+    Returns text lines with topic and count, plus the same string in structured
+    result.result; no topics returns "The stash is empty.". Database failures
+    are tool errors.
     Example: list_stash_topics().
     """
     conn = _conn()
@@ -198,7 +227,7 @@ def list_stash_topics() -> str:
         conn.close()
 
 
-@mcp.tool(structured_output=True)
+@mcp.tool(structured_output=True, annotations=_LOCAL_READ)
 def list_stash_mentions(kind: MentionKind = "") -> str:
     """List books, movies, shows, podcasts, places, or people the user's saves have named.
 
@@ -206,7 +235,13 @@ def list_stash_mentions(kind: MentionKind = "") -> str:
     into a real answer — it's not one note's worth, it's everything ever
     mentioned across the whole stash, regardless of what that post was mainly about.
 
-    Returns named entities and their source note IDs, or a no-mentions message.
+    Reads stored mentions in the local Skwirl vault, newest source note first.
+    Returns name, type, source note title and ID; repeated mentions across notes
+    remain separate rows. Use get_stash_note for a source's context, or
+    list_stash_topics for broad topic counts. Does not search the live web,
+    deduplicate names, or change saves. Returns text plus the same string in
+    structured result.result; no matches returns a no-mentions message.
+    Invalid arguments and database failures are tool errors.
     Example: list_stash_mentions(kind="book").
 
     Args:
@@ -226,11 +261,17 @@ def list_stash_mentions(kind: MentionKind = "") -> str:
         conn.close()
 
 
-@mcp.tool(structured_output=True)
+@mcp.tool(structured_output=True, annotations=_LOCAL_READ)
 def recent_stash(limit: Limit = 10, status: Status = "") -> str:
     """Show the most recently saved posts.
 
-    Returns compact notes newest first, or a no-matches message.
+    Lists a bounded number of local Skwirl saves newest first, optionally filtered
+    by usage status. This is a count limit, not a date range. Returns title,
+    clipped summary, note ID, date, topic, status and tools; use get_stash_note
+    for full content or search_stash for relevance-ranked discovery. Does not
+    change saves or contact external services. Returns text plus the same string
+    in structured result.result; no matches returns "No matching saves.".
+    Invalid arguments and database failures are tool errors.
     Example: recent_stash(limit=5, status="unused").
 
     Args:
@@ -245,7 +286,7 @@ def recent_stash(limit: Limit = 10, status: Status = "") -> str:
         conn.close()
 
 
-@mcp.tool(structured_output=True)
+@mcp.tool(structured_output=True, annotations=_WRITE_USAGE)
 def mark_stash_used(note_id: NoteId, where: UsedWhere) -> str:
     """Record that a saved post actually got used somewhere.
 
@@ -253,8 +294,15 @@ def mark_stash_used(note_id: NoteId, where: UsedWhere) -> str:
     made, a tool adopted. It is the only measure of whether this system is
     earning its keep, so err towards recording it.
 
-    Updates the note's used status and records where it was applied. Returns a
-    confirmation or a missing-note message.
+    Updates one existing local Skwirl note to status "used" and replaces its
+    previous used_where value with where. Use search_stash or recent_stash to
+    find the note, and get_stash_note to read it before applying it. Reading
+    alone is not usage. Does not delete the note or promise a ranking boost.
+    Repeating the same note_id and where leaves the same stored state; changing
+    where overwrites the previous context. Does not contact external services.
+    Returns confirmation text plus the same string in structured result.result;
+    a missing ID returns "No note matching ...". Invalid arguments and database
+    failures are tool errors.
     Example: mark_stash_used(note_id="0123456789abcdef", where="picked langgraph").
 
     Args:
