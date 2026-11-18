@@ -153,7 +153,7 @@ def search_stash(
     saves regardless of relevance use recent_stash; for topic filters use
     list_stash_topics. Queries with no searchable words fall back to recent saves.
     Does not change saves or fetch live social posts. Returns text plus the same
-    string in structured result.result; an empty search returns "No matching saves.".
+    string in structuredContent.result; an empty search returns "No matching saves.".
     Invalid arguments and database failures are tool errors.
     Example: search_stash(query="animation patterns", status="unused", limit=5).
 
@@ -182,7 +182,7 @@ def get_stash_note(note_id: NoteId) -> str:
     Returns the saved markdown file, including available summary, next step,
     transcript and source permalink; if the file is absent, returns the indexed
     note fields as JSON text. Does not fetch the source or change usage status.
-    Returns text plus the same string in structured result.result. A missing ID
+    Returns text plus the same string in structuredContent.result. A missing ID
     returns "No note matching ..."; invalid arguments, database and file-read
     failures are tool errors. Use mark_stash_used only after applying the note.
     Example: get_stash_note(note_id="0123456789abcdef") after a matching search.
@@ -212,8 +212,8 @@ def list_stash_topics() -> str:
     count descending. Use returned names as search_stash(topic=...) filters;
     use list_stash_mentions for named books, places or people instead of topics.
     Takes no parameters and does not change saves or contact external services.
-    Returns text lines with topic and count, plus the same string in structured
-    result.result; no topics returns "The stash is empty.". Database failures
+    Returns text lines with topic and count, plus the same string in
+    structuredContent.result; no topics returns "The stash is empty.". Database failures
     are tool errors.
     Example: list_stash_topics().
     """
@@ -240,7 +240,7 @@ def list_stash_mentions(kind: MentionKind = "") -> str:
     remain separate rows. Use get_stash_note for a source's context, or
     list_stash_topics for broad topic counts. Does not search the live web,
     deduplicate names, or change saves. Returns text plus the same string in
-    structured result.result; no matches returns a no-mentions message.
+    structuredContent.result; no matches returns a no-mentions message.
     Invalid arguments and database failures are tool errors.
     Example: list_stash_mentions(kind="book").
 
@@ -268,9 +268,9 @@ def recent_stash(limit: Limit = 10, status: Status = "") -> str:
     Lists a bounded number of local Skwirl saves newest first, optionally filtered
     by usage status. This is a count limit, not a date range. Returns title,
     clipped summary, note ID, date, topic, status and tools; use get_stash_note
-    for full content or search_stash for relevance-ranked discovery. Does not
+    for full content, search_stash for relevance, or list_stash_mentions for named entities. Does not
     change saves or contact external services. Returns text plus the same string
-    in structured result.result; no matches returns "No matching saves.".
+    in structuredContent.result; no matches returns "No matching saves.".
     Invalid arguments and database failures are tool errors.
     Example: recent_stash(limit=5, status="unused").
 
@@ -300,7 +300,7 @@ def mark_stash_used(note_id: NoteId, where: UsedWhere) -> str:
     alone is not usage. Does not delete the note or promise a ranking boost.
     Repeating the same note_id and where leaves the same stored state; changing
     where overwrites the previous context. Does not contact external services.
-    Returns confirmation text plus the same string in structured result.result;
+    Returns confirmation text plus the same string in structuredContent.result;
     a missing ID returns "No note matching ...". Invalid arguments and database
     failures are tool errors.
     Example: mark_stash_used(note_id="0123456789abcdef", where="picked langgraph").

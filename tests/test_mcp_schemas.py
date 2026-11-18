@@ -23,7 +23,7 @@ def test_every_stdio_tool_has_parameter_metadata_and_output_schema():
         assert tool.output_schema["properties"]["result"]["type"] == "string"
         assert tool.output_schema["required"] == ["result"]
         assert "Skwirl" in tool.description
-        assert "result.result" in tool.description
+        assert "structuredContent.result" in tool.description
         assert "tool errors" in tool.description
 
 
