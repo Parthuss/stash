@@ -19,9 +19,10 @@ Run:  python -m stash.mcp_server
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Annotated, Any
 
 from mcp.server.mcpserver import MCPServer
+from pydantic import Field
 
 from . import db
 from .config import CONFIG
@@ -41,6 +42,16 @@ mcp = MCPServer(
 
 def _conn():
     return db.connect(CONFIG.db_path)
+
+
+# Field metadata is exposed in tools/list; docstring Args alone are not schemas.
+Query = Annotated[str, Field(min_length=1, max_length=200, description="String of concept words or the underlying problem, 1-200 characters; example: 'animation patterns'.", examples=["animation patterns"])]
+Topic = Annotated[str, Field(description="String: exact topic from list_stash_topics, or empty for all; example: 'agent-building'.", examples=["agent-building"])]
+Status = Annotated[str, Field(pattern=r"^(|unused|used)$", description="String: 'unused', 'used', or empty for all saves; example: 'unused'.", examples=["unused"])]
+Limit = Annotated[int, Field(ge=1, le=20, description="Integer number of compact results, 1-20; example: 5.", examples=[5])]
+NoteId = Annotated[str, Field(min_length=1, description="Nonempty string: exact note ID or vault filename returned by search/recent, never a guessed ID; example: '0123456789abcdef'.", examples=["0123456789abcdef"])]
+MentionKind = Annotated[str, Field(pattern=r"^(|book|movie|show|podcast|place|product|person|other)$", description="String: book, movie, show, podcast, place, product, person, other, or empty for all; example: 'book'.", examples=["book"])]
+UsedWhere = Annotated[str, Field(min_length=1, description="Nonempty string describing where the save was applied; example: 'picked langgraph'.", examples=["picked langgraph"])]
 
 
 def _render(items: list[dict[str, Any]]) -> str:
@@ -112,9 +123,9 @@ def _render_compact(items: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(structured_output=True)
 def search_stash(
-    query: str, topic: str = "", status: str = "", limit: int = 5
+    query: Query, topic: Topic = "", status: Status = "", limit: Limit = 5
 ) -> str:
     """Search the user's saved social-media posts (Instagram reels, TikToks, videos).
 
@@ -127,6 +138,8 @@ def search_stash(
     Returns compact hits (title, one-line summary, tools) — call
     get_stash_note(id) on whichever one turns out to matter for the full
     transcript, next step, and permalink.
+
+    Example: search_stash(query="animation patterns", status="unused", limit=5).
 
     Args:
         query: Concept words, tool names, or the underlying problem, not the task as typed.
@@ -144,9 +157,12 @@ def search_stash(
         conn.close()
 
 
-@mcp.tool()
-def get_stash_note(note_id: str) -> str:
+@mcp.tool(structured_output=True)
+def get_stash_note(note_id: NoteId) -> str:
     """Read one saved post in full, including its transcript and on-screen notes.
+
+    Returns note markdown, or a message when the note does not exist.
+    Example: get_stash_note(note_id="0123456789abcdef") after a matching search.
 
     Args:
         note_id: The `id` from a search result (the vault filename).
@@ -164,11 +180,13 @@ def get_stash_note(note_id: str) -> str:
         conn.close()
 
 
-@mcp.tool()
+@mcp.tool(structured_output=True)
 def list_stash_topics() -> str:
     """List the topics present in the user's saves, with counts.
 
     Useful for orienting before a search, or for answering "what do I collect?".
+    Returns topic names with counts, or an empty-vault message. Takes no parameters.
+    Example: list_stash_topics().
     """
     conn = _conn()
     try:
@@ -180,13 +198,16 @@ def list_stash_topics() -> str:
         conn.close()
 
 
-@mcp.tool()
-def list_stash_mentions(kind: str = "") -> str:
+@mcp.tool(structured_output=True)
+def list_stash_mentions(kind: MentionKind = "") -> str:
     """List books, movies, shows, podcasts, places, or people the user's saves have named.
 
     This is what turns "did I save a book about X" or "what movies have I saved"
     into a real answer — it's not one note's worth, it's everything ever
     mentioned across the whole stash, regardless of what that post was mainly about.
+
+    Returns named entities and their source note IDs, or a no-mentions message.
+    Example: list_stash_mentions(kind="book").
 
     Args:
         kind: Optional exact filter: "book", "movie", "show", "podcast", "place",
@@ -205,9 +226,12 @@ def list_stash_mentions(kind: str = "") -> str:
         conn.close()
 
 
-@mcp.tool()
-def recent_stash(limit: int = 10, status: str = "") -> str:
+@mcp.tool(structured_output=True)
+def recent_stash(limit: Limit = 10, status: Status = "") -> str:
     """Show the most recently saved posts.
+
+    Returns compact notes newest first, or a no-matches message.
+    Example: recent_stash(limit=5, status="unused").
 
     Args:
         limit: How many, default 10.
@@ -221,13 +245,17 @@ def recent_stash(limit: int = 10, status: str = "") -> str:
         conn.close()
 
 
-@mcp.tool()
-def mark_stash_used(note_id: str, where: str) -> str:
+@mcp.tool(structured_output=True)
+def mark_stash_used(note_id: NoteId, where: UsedWhere) -> str:
     """Record that a saved post actually got used somewhere.
 
     Call this whenever a save influences real work — code written, a decision
     made, a tool adopted. It is the only measure of whether this system is
     earning its keep, so err towards recording it.
+
+    Updates the note's used status and records where it was applied. Returns a
+    confirmation or a missing-note message.
+    Example: mark_stash_used(note_id="0123456789abcdef", where="picked langgraph").
 
     Args:
         note_id: The `id` from a search result.
