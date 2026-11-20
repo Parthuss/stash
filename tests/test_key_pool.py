@@ -31,3 +31,16 @@ def test_plus_lane_uses_openrouter_until_it_fails(monkeypatch):
         assert config.openrouter_key() == "sk-or-x"
         config.openrouter_failed(600)
         assert config.openrouter_key() == ""  # back on the free keys for a while
+
+
+def test_free_lane_never_reaches_paid_openrouter_even_when_shared_keys_are_spent(monkeypatch):
+    """No free key left: a free save must fail fast (and be queued by the worker), never go to OpenRouter."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-x")
+    monkeypatch.setattr(config, "_spent_until", {})
+    monkeypatch.setattr(config, "_openrouter_down_until", [0.0])
+    cfg = SimpleNamespace(groq_api_key="a", groq_api_keys=("a", "b"))
+    assert config.next_shared_key(cfg, 3600) is True
+    assert config.next_shared_key(cfg, 3600) is False  # every free key spent
+    with config.plus_lane(False):  # the worker sends lane=None for free users and first reels
+        assert config.openrouter_key() == ""
+    assert config.openrouter_key() == ""  # default (no lane) is also free-only
