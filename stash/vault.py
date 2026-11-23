@@ -104,7 +104,7 @@ def render(
         ]
 
     if user_note:
-        body += ["", "## Your note at capture", "", f"> {user_note}"]
+        body += ["", "## Your note at capture", "", "> " + user_note.replace("\n", "\n> ")]
 
     if caption:
         body += ["", "## Caption", "", "> " + caption.strip().replace("\n", "\n> ")]
