@@ -59,7 +59,11 @@ def test_groq_vision_payload_uses_ordered_images_and_json_mode(tmp_path, monkeyp
     assert notes == ["Slide 1: one", "Slide 2: two"]
     assert seen["json"]["response_format"] == {"type": "json_object"}
     assert seen["json"]["reasoning_effort"] == "default"
-    content = seen["json"]["messages"][0]["content"]
+    system, user = seen["json"]["messages"]
+    assert system["role"] == "system"
+    assert "untrusted data" in system["content"]
+    assert user["role"] == "user"
+    content = user["content"]
     assert [part["type"] for part in content] == ["text", "image_url", "image_url"]
     assert content[1]["image_url"]["url"].startswith("data:image/jpeg;base64,")
     assert content[1]["image_url"]["detail"] == "low"
