@@ -25,6 +25,7 @@ from typing import Any, TypeVar
 import httpx
 
 from .config import CONFIG, groq_key, has_own_groq_key, is_guest_run, next_shared_key, openrouter_failed, openrouter_key, record_usage, spill_to_shared_key
+from .media_safety import FFMPEG_MEDIA_INPUT
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -492,7 +493,7 @@ def _vision_image(path: Path) -> tuple[bytes, str]:
     if shutil.which("ffmpeg"):
         proc = subprocess.run(
             [
-                "ffmpeg", "-v", "error", "-i", str(path),
+                "ffmpeg", "-v", "error", *FFMPEG_MEDIA_INPUT, "-i", str(path),
                 "-vf",
                 f"scale={VISION_IMAGE_PX}:{VISION_IMAGE_PX}"
                 ":force_original_aspect_ratio=decrease",
@@ -504,7 +505,17 @@ def _vision_image(path: Path) -> tuple[bytes, str]:
         )
         if proc.returncode == 0 and proc.stdout:
             return proc.stdout, "image/jpeg"
-    return path.read_bytes(), mimetypes.guess_type(path.name)[0] or "image/jpeg"
+    if path.stat().st_size > 8 * 1024 * 1024:
+        raise ExtractError("image is too large to read")
+    data = path.read_bytes()
+    mime = mimetypes.guess_type(path.name)[0]
+    if mime == "image/jpeg" and data.startswith(b"\xff\xd8\xff"):
+        return data, mime
+    if mime == "image/png" and data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return data, mime
+    if mime == "image/webp" and data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+        return data, mime
+    raise ExtractError("unsupported image data")
 
 
 def _post_groq(messages: list[dict[str, Any]], max_tokens: int) -> httpx.Response:

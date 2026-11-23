@@ -22,6 +22,7 @@ from pathlib import Path
 import httpx
 
 from .config import CONFIG, groq_key, record_usage, openrouter_failed, openrouter_key
+from .media_safety import FFMPEG_MEDIA_INPUT
 
 GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
@@ -83,7 +84,7 @@ def extract_audio(video: Path) -> Path | None:
         return wav
 
     proc = subprocess.run(
-        ["ffmpeg", "-y", "-i", str(video), "-vn", "-ac", "1", "-ar", "16000",
+        ["ffmpeg", "-y", *FFMPEG_MEDIA_INPUT, "-i", str(video), "-vn", "-ac", "1", "-ar", "16000",
          "-f", "wav", str(wav)],
         capture_output=True, text=True, timeout=300,
     )
@@ -98,7 +99,7 @@ def probe_audio(wav: Path) -> tuple[float, float]:
     duration = 0.0
     probe = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-         "-of", "default=noprint_wrappers=1:nokey=1", str(wav)],
+         "-of", "default=noprint_wrappers=1:nokey=1", *FFMPEG_MEDIA_INPUT, str(wav)],
         capture_output=True, text=True, timeout=60,
     )
     try:
@@ -107,7 +108,7 @@ def probe_audio(wav: Path) -> tuple[float, float]:
         duration = 0.0
 
     volume = subprocess.run(
-        ["ffmpeg", "-i", str(wav), "-af", "volumedetect", "-f", "null", "-"],
+        ["ffmpeg", *FFMPEG_MEDIA_INPUT, "-i", str(wav), "-af", "volumedetect", "-f", "null", "-"],
         capture_output=True, text=True, timeout=120,
     )
     mean = -99.0

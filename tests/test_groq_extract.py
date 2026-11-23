@@ -21,6 +21,7 @@ def test_groq_vision_payload_uses_ordered_images_and_json_mode(tmp_path, monkeyp
     second = tmp_path / "second.jpg"
     first.write_bytes(b"first")
     second.write_bytes(b"second")
+    monkeypatch.setattr(extract, "_vision_image", lambda image: (image.read_bytes(), "image/jpeg"))
     seen = {}
 
     class Response:
@@ -67,6 +68,8 @@ def test_groq_vision_payload_uses_ordered_images_and_json_mode(tmp_path, monkeyp
     assert [part["type"] for part in content] == ["text", "image_url", "image_url"]
     assert content[1]["image_url"]["url"].startswith("data:image/jpeg;base64,")
     assert content[1]["image_url"]["detail"] == "low"
+    assert content[1]["image_url"]["url"].endswith("Zmlyc3Q=")
+    assert content[2]["image_url"]["url"].endswith("c2Vjb25k")
 
 
 def test_groq_structured_result_is_coerced(monkeypatch):

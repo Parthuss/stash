@@ -16,7 +16,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 
 import httpx
 
@@ -59,6 +59,18 @@ def _key(url: str) -> str:
 
 
 VIDEO_SUFFIXES = {".mp4", ".mov", ".webm", ".m4v", ".mkv", ".avi", ".flv", ".ts", ".mpeg", ".mpg", ".3gp", ".ogv"}
+MAX_MEDIA_BYTES = 80 * 1024 * 1024
+
+
+def is_instagram_cdn(raw: str) -> bool:
+    try:
+        url = urlsplit(raw)
+        host = url.hostname or ""
+        return (url.scheme == "https" and not url.username and not url.password
+                and url.port in (None, 443)
+                and any(host == d or host.endswith("." + d) for d in ("cdninstagram.com", "fbcdn.net")))
+    except ValueError:
+        return False
 
 
 def _cached(key: str) -> Path | None:
@@ -116,7 +128,7 @@ def _cookie_args() -> list[str]:
 def _metadata(permalink: str) -> dict[str, Any]:
     argv = [
         "yt-dlp", "--dump-single-json", "--skip-download", "--write-comments",
-        "--ignore-no-formats-error", "--no-warnings", *_cookie_args(), permalink,
+        "--ignore-no-formats-error", "--no-warnings", *_cookie_args(), "--", permalink,
     ]
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=300)
     if proc.returncode != 0:
@@ -236,7 +248,8 @@ def _yt_dlp_video(permalink: str, key: str) -> Path:
     template = str(CONFIG.media_dir / f"{key}.%(ext)s")
     argv = [
         "yt-dlp", "--no-playlist", "--no-warnings", "--retries", "3",
-        "-o", template, "--print-json", "--no-simulate", *_cookie_args(), permalink,
+        "--max-filesize", str(MAX_MEDIA_BYTES), "-o", template, "--print-json", "--no-simulate",
+        *_cookie_args(), "--", permalink,
     ]
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=300)
     if proc.returncode != 0:
@@ -252,7 +265,8 @@ def _yt_dlp_item(permalink: str, key: str, position: int) -> Path:
     stem = f"{key}-{position:03d}"
     argv = [
         "yt-dlp", "--no-warnings", "--retries", "3", "-I", str(position),
-        "-o", str(CONFIG.media_dir / f"{stem}.%(ext)s"), *_cookie_args(), permalink,
+        "--max-filesize", str(MAX_MEDIA_BYTES), "-o", str(CONFIG.media_dir / f"{stem}.%(ext)s"),
+        *_cookie_args(), "--", permalink,
     ]
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=300)
     if proc.returncode != 0:
@@ -270,18 +284,27 @@ def _direct(url: str, key: str) -> MediaItem:
 
 
 def _download(url: str, target: Path, headers: dict[str, str] | None = None) -> None:
+    from . import remote
+
     request_headers = {"Referer": "https://www.instagram.com/", **(headers or {})}
+    worker_media = remote.is_worker_media(url)
+    if worker_media:
+        request_headers = remote._headers()
     # Unique partials let concurrent attempts publish independently without
     # exposing truncated media or replacing a previously complete file on error.
     with tempfile.NamedTemporaryFile(dir=target.parent, prefix=target.name + ".", suffix=".part", delete=False) as handle:
         partial = Path(handle.name)
     try:
         with httpx.stream(
-            "GET", url, headers=request_headers, follow_redirects=True, timeout=120
+            "GET", url, headers=request_headers, follow_redirects=not (worker_media or is_instagram_cdn(url)), timeout=120
         ) as response:
             response.raise_for_status()
+            size = 0
             with partial.open("wb") as handle:
                 for chunk in response.iter_bytes(64 * 1024):
+                    size += len(chunk)
+                    if size > MAX_MEDIA_BYTES:
+                        raise FetchError("media is too large to download")
                     handle.write(chunk)
         if partial.stat().st_size == 0:
             raise FetchError("media server returned an empty body")

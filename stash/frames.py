@@ -21,6 +21,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from .media_safety import FFMPEG_MEDIA_INPUT
 from .transcribe import Transcript
 
 #: Phrases that point at the screen. The audio around these is load-bearing but
@@ -156,7 +157,7 @@ def extract_with_requests(
         target = out_dir / f"{video.stem}_f{index:02d}.jpg"
         if not target.exists():
             proc = subprocess.run(
-                ["ffmpeg", "-y", "-ss", f"{request.timestamp:.2f}", "-i", str(video),
+                ["ffmpeg", "-y", "-ss", f"{request.timestamp:.2f}", *FFMPEG_MEDIA_INPUT, "-i", str(video),
                  "-frames:v", "1", "-vf", "scale=768:-2", "-q:v", "4", str(target)],
                 capture_output=True, text=True, timeout=120,
             )

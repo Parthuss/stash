@@ -20,6 +20,7 @@ from typing import Callable
 
 from . import db, extract, fetch, frames, notify, transcribe, vault
 from .config import CONFIG, collect_usage, guest_run, plus_lane, using_groq_key
+from .media_safety import FFMPEG_MEDIA_INPUT
 
 
 @dataclass
@@ -59,8 +60,13 @@ def process(
     user_note = capture["note"]
     caption = capture["caption"]
 
-    if _is_guest(capture) and permalink and not is_allowed_url(permalink):
+    instagram_dm = "source" in capture.keys() and capture["source"] == "ig_dm"
+    if (_is_guest(capture) or instagram_dm) and permalink and not is_allowed_url(permalink):
         raise fetch.FetchError("link isn't from a supported site")
+    if instagram_dm and media_url:
+        from .remote import is_worker_media
+        if not (fetch.is_instagram_cdn(media_url) or is_worker_media(media_url)):
+            media_url = None
 
     say("fetching…")
     try:
@@ -315,7 +321,7 @@ def thumbnail(items) -> bytes | None:
     seek = ["-ss", "1"] if first.kind == "video" else []
     try:
         proc = subprocess.run(
-            ["ffmpeg", "-v", "error", *seek, "-i", str(first.path),
+            ["ffmpeg", "-v", "error", *seek, *FFMPEG_MEDIA_INPUT, "-i", str(first.path),
              "-vf", f"scale={THUMB_PX}:-2", "-frames:v", "1",
              "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "6", "-"],
             capture_output=True, timeout=60,

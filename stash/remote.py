@@ -14,6 +14,7 @@ from typing import Any
 
 import base64
 import os
+import re
 
 import httpx
 
@@ -122,9 +123,18 @@ def media_url_for(capture: Row) -> str | None:
     would still be available whenever the Mac next wakes up.
     """
     key = capture["media_key"]
-    if key:
-        return f"{CONFIG.worker_url}/media/{key}"
+    if isinstance(key, str):
+        url = f"{CONFIG.worker_url}/media/{key}"
+        if is_worker_media(url):
+            return url
     return capture["media_url"]
+
+
+def is_worker_media(url: str) -> bool:
+    if not CONFIG.uses_remote_queue:
+        return False
+    prefix = f"{CONFIG.worker_url}/media/"
+    return url.startswith(prefix) and bool(re.fullmatch(r"ig/\d+-[a-f0-9]{16}\.mp4", url[len(prefix):]))
 
 
 def pending(limit: int = 20) -> list[Row]:

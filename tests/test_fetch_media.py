@@ -152,3 +152,57 @@ def test_failed_download_preserves_existing_file_and_cleans_partial(tmp_path, mo
         with pytest.raises(httpx.ReadError): fetch._download("https://cdn.example/video", target)
         assert sorted(p.name for p in tmp_path.iterdir()) == ([target.name] if existing else [])
         if existing: assert target.read_bytes() == b"original"
+
+
+def test_download_caps_stream_and_limits_runner_credentials_to_worker(tmp_path, monkeypatch):
+    import contextlib
+    from types import SimpleNamespace
+
+    import pytest
+    from stash import fetch, remote
+
+    config = SimpleNamespace(uses_remote_queue=True, worker_url="https://queue.example", worker_secret="fixture")
+    monkeypatch.setattr(remote, "CONFIG", config)
+    monkeypatch.setattr(fetch, "MAX_MEDIA_BYTES", 5)
+    requests = []
+
+    class Response:
+        def raise_for_status(self): pass
+        def iter_bytes(self, size):
+            yield b"first"
+            yield b"other"
+
+    @contextlib.contextmanager
+    def stream(_method, url, **kwargs):
+        requests.append((url, kwargs))
+        yield Response()
+
+    monkeypatch.setattr(fetch.httpx, "stream", stream)
+    target = tmp_path / "video.mp4"
+    for url in ("https://queue.example/media/ig/123-0123456789abcdef.mp4", "https://video.cdninstagram.com/example.mp4"):
+        with pytest.raises(fetch.FetchError, match="too large"):
+            fetch._download(url, target)
+    assert not list(tmp_path.iterdir())
+    assert [kwargs["follow_redirects"] for _, kwargs in requests] == [False, False]
+    assert requests[0][1]["headers"]["X-Stash-Secret"] == "fixture"
+    assert "X-Stash-Secret" not in requests[1][1]["headers"]
+
+
+def test_runner_decodes_a_normal_local_video_with_restricted_media_options(tmp_path):
+    import shutil
+    import subprocess
+
+    import pytest
+    from stash import pipeline, transcribe
+
+    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+        pytest.skip("FFmpeg tools are needed for this local fixture")
+    target = tmp_path / "sample.mp4"
+    subprocess.run([
+        "ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=blue:s=64x64:r=24",
+        "-f", "lavfi", "-i", "sine=frequency=440", "-t", "2", "-c:v", "mpeg4",
+        "-c:a", "aac", str(target),
+    ], check=True, capture_output=True, timeout=15)
+    wav = transcribe.extract_audio(target)
+    assert wav and transcribe.probe_audio(wav)[0] >= 1.9
+    assert pipeline.thumbnail([MediaItem(1, "video", path=target)]).startswith(b"\xff\xd8\xff")

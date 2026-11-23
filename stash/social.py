@@ -24,6 +24,7 @@ from urllib.parse import unquote, urljoin, urlsplit, urlunsplit
 import httpx
 
 from .fetch import FetchError, MediaBundle, MediaItem
+from .media_safety import FFMPEG_MEDIA_INPUT
 
 USER_AGENT = "Skwirl/0.1 (+https://skwirl.app; contact: support@skwirl.app)"
 PAGE_HOSTS = ("reddit.com", "redd.it", "linkedin.com", "lnkd.in")
@@ -299,7 +300,9 @@ def _dash(client, url, key, directory):
     output = directory / f"{key}-merged.mp4"
     if not shutil.which("ffmpeg"):
         raise FetchError("ffmpeg is required to combine Reddit video and audio")
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(video), "-i", str(audio), "-c", "copy", str(output)], check=True, capture_output=True, timeout=300)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *FFMPEG_MEDIA_INPUT, "-i", str(video),
+                    *FFMPEG_MEDIA_INPUT, "-i", str(audio), "-c", "copy", str(output)],
+                   check=True, capture_output=True, timeout=300)
     return output
 
 
@@ -347,7 +350,10 @@ def fetch_public(permalink: str, key: str, directory: Path) -> MediaBundle:
                     item.path = target
                 if item.kind == "video" and not item.duration and shutil.which("ffprobe"):
                     try:
-                        probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(item.path)], check=True, capture_output=True, text=True, timeout=60)
+                        probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                                "-of", "default=noprint_wrappers=1:nokey=1",
+                                                *FFMPEG_MEDIA_INPUT, str(item.path)],
+                                               check=True, capture_output=True, text=True, timeout=60)
                         item.duration = float(probe.stdout.strip())
                     except (ValueError, subprocess.SubprocessError):
                         pass  # transcription/first-frame fallback still works
