@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   drain:
-    # See README.md for enabling processing on a fork with STASH_ENABLED=true.
+    # Keep this repository enabled before and after the rename. Forks opt in with STASH_ENABLED.
     if: github.repository == 'Parthuss/stash' || github.repository == 'Parthuss/skwirl-runner' || vars.STASH_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -37,7 +37,7 @@ jobs:
       - run: python -m stash daemon --once --guests-only --quiet
         env:
           STASH_WORKER_URL: ${{ secrets.STASH_WORKER_URL }}
-          STASH_PROCESSOR_SECRET: ${{ secrets.STASH_PROCESSOR_SECRET || secrets.STASH_SECRET }}
+          STASH_PROCESSOR_SECRET: ${{ secrets.STASH_PROCESSOR_SECRET }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEYS: ${{ secrets.GROQ_API_KEYS }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
