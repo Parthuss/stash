@@ -25,11 +25,27 @@ echo "==> pip install"
 .venv/bin/pip install -q -e ".[mcp]"
 
 echo "==> .env"
-[ -f .env ] || cp .env.example .env
+if [ ! -f .env ]; then
+  (
+    umask 077
+    if [ -f .env.example ]; then
+      cat .env.example > .env
+    else
+      cat > .env <<'ENV'
+GROQ_API_KEY=
+STASH_WORKER_URL=
+STASH_PROCESSOR_SECRET=
+ENV
+    fi
+  )
+fi
 
-if ! grep -q '^GROQ_API_KEY=.\+' .env; then
-  read -rp "Groq key (console.groq.com/keys), or Enter to add it later: " key
-  [ -n "${key:-}" ] && sed -i.bak "s|^GROQ_API_KEY=.*|GROQ_API_KEY=$key|" .env && rm .env.bak
+if [ -t 0 ] && ! grep -q '^GROQ_API_KEY=.' .env; then
+  read -rsp "Groq key (console.groq.com/keys), or Enter to add it later: " key || true
+  printf '\n'
+  if [ -n "${key:-}" ]; then
+    printf '\nGROQ_API_KEY=%s\n' "$key" >> .env
+  fi
 fi
 
 echo "==> doctor"

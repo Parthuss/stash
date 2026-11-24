@@ -1,8 +1,6 @@
 #!/bin/sh
 # Install the stash daemon as a launchd user agent: starts at login, restarts
-# on crash. Run once, after STASH_WORKER_URL/STASH_SECRET are set in .env —
-# the daemon exits immediately without them, and launchd would just restart
-# it in a crash loop forever if it were loaded before that's true.
+# on crash. Configure the remote queue in .env before installing.
 set -eu
 
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -15,7 +13,11 @@ if [ ! -x "$PYTHON" ]; then
   exit 1
 fi
 if ! grep -q '^STASH_WORKER_URL=.\+' "$REPO/.env" 2>/dev/null; then
-  echo "STASH_WORKER_URL is not set in $REPO/.env — deploy the Worker first" >&2
+  echo "STASH_WORKER_URL is not set in $REPO/.env" >&2
+  exit 1
+fi
+if ! grep -Eq '^(STASH_PROCESSOR_SECRET|STASH_SECRET)=.' "$REPO/.env"; then
+  echo "Set STASH_PROCESSOR_SECRET or STASH_SECRET in $REPO/.env before installing" >&2
   exit 1
 fi
 

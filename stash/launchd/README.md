@@ -4,9 +4,10 @@
 sh stash/launchd/install.sh
 ```
 
-Requires `STASH_WORKER_URL` and `STASH_SECRET` already set in `.env` — the
-daemon exits immediately without a deployed Worker to poll, and installing it
-first would just make launchd crash-loop it forever.
+Set `STASH_WORKER_URL` in `.env` before installing. For a trusted Mac that
+processes owner saves, set `STASH_SECRET` and leave `STASH_PROCESSOR_SECRET`
+unset. For guest-only processing, set `STASH_PROCESSOR_SECRET`, which takes
+precedence when both variables are set.
 
 What it does: renders `com.stash.daemon.plist.template` with your actual
 Python and repo paths, installs it to `~/Library/LaunchAgents/`, and loads it.

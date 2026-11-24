@@ -1,14 +1,16 @@
 #!/bin/sh
-# Build the ONE generic Stash iOS Shortcut and put it where the Worker serves it
-# (worker/public/Stash.shortcut, deployed at <worker>/Stash.shortcut).
-#
-# It holds no secret: iOS asks for the user's token when they add it. Signed with
-# `-s=anyone` so it imports on any iPhone. Needs macOS + `brew install cherri`.
+# Build and sign the Skwirl iOS Shortcut on macOS (`brew install cherri`).
+# The share sheet opens the configured web app in Safari using its sign-in.
+# Pass an output file to place the build in a separate deployment checkout.
 set -eu
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 RENDERED="$REPO/shortcuts/.Skwirl.rendered.cherri"
-OUT="$REPO/worker/public/Skwirl.shortcut"
+BUILT="$REPO/shortcuts/Skwirl.shortcut"
+OUT="${1:-$BUILT}"
+
+[ "$#" -le 1 ] || { echo "usage: $0 [output.shortcut]" >&2; exit 1; }
+[ ! -d "$OUT" ] || { echo "output must be a file path" >&2; exit 1; }
 
 command -v cherri >/dev/null 2>&1 || { echo "cherri not installed — brew install cherri" >&2; exit 1; }
 
@@ -19,10 +21,11 @@ WORKER_URL=${WORKER_URL%/}
 
 sed -e "s|{{WORKER_URL}}|$WORKER_URL|g" "$REPO/shortcuts/Stash.cherri.template" > "$RENDERED"
 # cherri names its output after `#define name` and writes it next to the source
-# (it ignores -o's directory), so build in place, then move it into the Worker's assets.
+# (it ignores -o's directory), so build in place before handling a custom path.
 cherri "$RENDERED" -s=anyone
-mv "$REPO/shortcuts/Skwirl.shortcut" "$OUT"
+if [ ! "$BUILT" -ef "$OUT" ]; then
+  mv "$BUILT" "$OUT"
+fi
 
 echo
-echo "built $OUT  (points at $WORKER_URL, no secret inside)"
-echo "Deploy the Worker to publish it at $WORKER_URL/Skwirl.shortcut"
+echo "built $OUT (opens $WORKER_URL in Safari)"
