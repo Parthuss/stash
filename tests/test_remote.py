@@ -11,12 +11,31 @@ to run the Worker locally.
 from __future__ import annotations
 
 import dataclasses
+import os
+import subprocess
+import sys
 
 import httpx
 import pytest
 
 from stash import remote
 from stash.config import CONFIG
+
+
+@pytest.mark.parametrize(
+    ("processor", "legacy", "expected"),
+    [("processor", "legacy", "processor"), ("", "legacy", "legacy"), ("", "", "")],
+)
+def test_config_prefers_processor_secret_with_legacy_fallback(processor, legacy, expected):
+    subprocess.run(
+        [
+            sys.executable, "-c",
+            "import sys\nfrom stash.config import CONFIG\nassert CONFIG.worker_secret == sys.argv[1]",
+            expected,
+        ],
+        env={**os.environ, "STASH_PROCESSOR_SECRET": processor, "STASH_SECRET": legacy},
+        check=True,
+    )
 
 
 @pytest.fixture(autouse=True)

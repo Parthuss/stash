@@ -67,7 +67,7 @@ class Config:
     cobalt_url: str = os.environ.get("STASH_COBALT_URL", "")
 
     worker_url: str = os.environ.get("STASH_WORKER_URL", "").rstrip("/")
-    worker_secret: str = os.environ.get("STASH_SECRET", "")
+    worker_secret: str = os.environ.get("STASH_PROCESSOR_SECRET") or os.environ.get("STASH_SECRET", "")
 
     #: Private LAN receiver used by the iPhone Shortcut.
     local_secret: str = _local_receiver_secret()

@@ -39,7 +39,7 @@ class Row(dict):
 
 def _headers() -> dict[str, str]:
     if not CONFIG.uses_remote_queue:
-        raise RemoteError("STASH_WORKER_URL and STASH_SECRET are not both set")
+        raise RemoteError("Set STASH_WORKER_URL and STASH_PROCESSOR_SECRET (or legacy STASH_SECRET)")
     return {"X-Stash-Secret": CONFIG.worker_secret, "content-type": "application/json"}
 
 
