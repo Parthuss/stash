@@ -1,8 +1,9 @@
 # Cloud runner: drains other people's saves so the pilot doesn't need the owner's
 # Mac awake. The owner's own saves stay local-first (the Mac daemon claims those).
 #
-# Runs in a PUBLIC repo, so logs are public: --quiet prints counts only, never
-# links or titles. Secrets (Actions > Secrets): STASH_WORKER_URL, STASH_SECRET, GROQ_API_KEY (or GROQ_API_KEYS: several free keys, comma-separated).
+# The public run reports only processor counts and status. Configure
+# STASH_WORKER_URL, STASH_PROCESSOR_SECRET and GROQ_API_KEY (or GROQ_API_KEYS)
+# in Actions secrets.
 #
 # Limits: GitHub cron can't go under 5 min and often runs late. A run drains
 # everything pending, it is not one save per tick.
@@ -21,8 +22,8 @@ permissions:
 
 jobs:
   drain:
-    # Forks stay off until their owner sets the repo variable STASH_ENABLED=true (docs/SELF_HOST.md).
-    if: github.repository == 'Parthuss/stash' || vars.STASH_ENABLED == 'true'
+    # See README.md for enabling processing on a fork with STASH_ENABLED=true.
+    if: github.repository == 'Parthuss/stash' || github.repository == 'Parthuss/skwirl-runner' || vars.STASH_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -36,7 +37,7 @@ jobs:
       - run: python -m stash daemon --once --guests-only --quiet
         env:
           STASH_WORKER_URL: ${{ secrets.STASH_WORKER_URL }}
-          STASH_SECRET: ${{ secrets.STASH_SECRET }}
+          STASH_PROCESSOR_SECRET: ${{ secrets.STASH_PROCESSOR_SECRET || secrets.STASH_SECRET }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEYS: ${{ secrets.GROQ_API_KEYS }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

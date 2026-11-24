@@ -374,7 +374,7 @@ def test_single_image_vision_tolerates_unwrapped_or_split_answers(tmp_path, monk
         extract._describe_batch([img], ["Slide"], start=1)
 
 
-def test_guest_notes_get_a_neutral_prompt_and_no_owner_projects(monkeypatch):
+def test_guest_notes_get_a_neutral_prompt_and_no_owner_projects(monkeypatch, tmp_path):
     """Regression from the pilot audit: a friend's note said the reel 'fits your
     automation work' and listed the owner's local project folders."""
     from types import SimpleNamespace
@@ -389,14 +389,22 @@ def test_guest_notes_get_a_neutral_prompt_and_no_owner_projects(monkeypatch):
         return {"title": "T", "summary": "s", "topic": "tooling", "relevance": ["owner-secret-project"]}
 
     monkeypatch.setattr(extract, "_groq_request", fake_request)
-    monkeypatch.setattr(extract, "sibling_projects", lambda: ["owner-secret-project"])
-    monkeypatch.setattr(extract, "CONFIG", SimpleNamespace(groq_api_key="k", extract_model="m"))
+    (tmp_path / "private-checkout").mkdir()
+    monkeypatch.setattr(extract, "CONFIG", SimpleNamespace(
+        groq_api_key="k", extract_model="m", media_dir=tmp_path / "runner" / "media"
+    ))
+    monkeypatch.delenv("STASH_OWNER_PROJECTS", raising=False)
+    extract._extract_groq(permalink=None, user_note=None, transcript_text="t")
+    assert "private-checkout" not in seen["system"]
+
+    monkeypatch.setenv("STASH_OWNER_PROJECTS", "owner-secret-project, another-project\nthird-project")
     with guest_run(True):
         out = extract._extract_groq(permalink=None, user_note=None, transcript_text="t")
     assert out["relevance"] == []
     assert "owner-secret-project" not in seen["system"] and "AI agents" not in seen["system"]
     out = extract._extract_groq(permalink=None, user_note=None, transcript_text="t")
     assert "owner-secret-project" in seen["system"] and out["relevance"] == ["owner-secret-project"]
+    assert "  - another-project\n  - third-project" in seen["system"]
 
 
 def test_own_key_out_of_daily_quota_spills_to_the_shared_key(monkeypatch):

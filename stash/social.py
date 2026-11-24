@@ -1,8 +1,8 @@
 """Permission-gated public post adapters. No cookies, sessions or login fallback.
 
 Parsers are pure so recorded responses can be tested without contacting a site.
-The access switches attest to written permission for anonymous automated access,
-not merely ownership of a Skwirl account. See docs/SOCIAL_SOURCES.md.
+The access switches require written platform permission for anonymous automated
+access and retention of extracted notes.
 """
 from __future__ import annotations
 

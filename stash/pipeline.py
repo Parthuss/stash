@@ -256,8 +256,8 @@ def _caption_only(conn, capture, permalink, caption, user_note, say) -> Result:
     )
 
 
-#: Keep in sync with ALLOWED_HOSTS in worker/src/v1.ts. The Worker filters at
-#: ingest; this re-checks on the machine that actually fetches, so a bug or a
+#: Keep in sync with the Worker's supported capture hosts. The Worker filters
+#: at ingest; this re-checks on the machine that actually fetches, so a bug or a
 #: forged row upstream can't turn the owner's Mac into a scanner of its own LAN.
 ALLOWED_HOSTS = ("instagram.com", "tiktok.com", "youtube.com", "youtu.be",
                  "x.com", "twitter.com", "facebook.com", "fb.watch",

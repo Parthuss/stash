@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import json
 import mimetypes
+import os
 import re
 import shutil
 import subprocess
@@ -24,6 +25,7 @@ from typing import Any, TypeVar
 
 import httpx
 
+from ._public_logs import local_debug_enabled
 from .config import CONFIG, groq_key, has_own_groq_key, is_guest_run, next_shared_key, openrouter_failed, openrouter_key, record_usage, spill_to_shared_key
 from .media_safety import FFMPEG_MEDIA_INPUT
 
@@ -234,17 +236,6 @@ class ExtractError(RuntimeError):
     pass
 
 
-def sibling_projects() -> list[str]:
-    parent = CONFIG.media_dir.parent.parent
-    if not parent.is_dir():
-        return []
-    return sorted(
-        path.name for path in parent.iterdir()
-        if path.is_dir() and not path.name.startswith((".", "node_modules"))
-        and path.name != CONFIG.media_dir.parent.name
-    )
-
-
 def build_prompt(
     *,
     permalink: str | None,
@@ -430,8 +421,9 @@ def _extract_groq(
     if is_guest_run():
         system = SYSTEM.replace(OWNER_PERSONA, GUEST_PERSONA).format(projects="  (none: leave `relevance` empty)")
     else:
+        projects = os.environ.get("STASH_OWNER_PROJECTS", "").replace(",", "\n").splitlines()
         system = SYSTEM.format(
-            projects="\n".join(f"  - {project}" for project in sibling_projects()) or "  (none)"
+            projects="\n".join(f"  - {project.strip()}" for project in projects if project.strip()) or "  (none)"
         )
     prompt = build_prompt(
         permalink=permalink,
@@ -480,12 +472,11 @@ def _log_rate_limit(response: httpx.Response) -> None:
         remaining_n, limit_n = int(remaining), int(limit)
     except ValueError:
         return
-    if limit_n and remaining_n < limit_n * 0.25:
-        reset = response.headers.get("x-ratelimit-reset-tokens", "?")
-        print(
-            f"  groq tokens low: {remaining_n}/{limit_n} left, resets in {reset}",
-            flush=True,
-        )
+    if 0 <= remaining_n < limit_n <= 1_000_000_000 and remaining_n * 4 < limit_n:
+        detail = ""
+        if local_debug_enabled():
+            detail = f", resets in {headers.get('x-ratelimit-reset-tokens', '?')}"
+        print(f"  groq tokens low: {remaining_n}/{limit_n} left{detail}", flush=True)
 
 
 def _vision_image(path: Path) -> tuple[bytes, str]:
@@ -520,6 +511,8 @@ def _vision_image(path: Path) -> tuple[bytes, str]:
 
 def _post_groq(messages: list[dict[str, Any]], max_tokens: int) -> httpx.Response:
     if key := openrouter_key():
+        status = None
+        detail = ""
         try:
             response = httpx.post(
                 OPENROUTER_CHAT_URL,
@@ -540,11 +533,14 @@ def _post_groq(messages: list[dict[str, Any]], max_tokens: int) -> httpx.Respons
                 response.headers["x-via"] = "openrouter"
                 return response
             status = response.status_code
+            if local_debug_enabled():
+                detail = f" ({status})"
         except (httpx.HTTPError, ValueError) as exc:
-            status = f"error {exc}"
+            if local_debug_enabled():
+                detail = f" ({exc})"
         # No credit / key limit (402, 401, 403) waits an hour; anything else 10 minutes. Free keys meanwhile.
         openrouter_failed(3600 if status in (401, 402, 403) else 600)
-        print(f"  openrouter unavailable ({status}): this save and the next ones use the free keys", flush=True)
+        print(f"  openrouter unavailable{detail}: this save and the next ones use the free keys", flush=True)
     return httpx.post(
         GROQ_CHAT_URL,
         headers={

@@ -21,6 +21,7 @@ from pathlib import Path
 
 import httpx
 
+from ._public_logs import local_debug_enabled
 from .config import CONFIG, groq_key, record_usage, openrouter_failed, openrouter_key
 from .media_safety import FFMPEG_MEDIA_INPUT
 
@@ -143,6 +144,7 @@ def transcribe(video: Path) -> Transcript:
 def _groq(wav: Path) -> Transcript:
     response = None
     if key := openrouter_key():  # Plus: the same Whisper model, paid, on OpenRouter
+        status = None
         try:
             with wav.open("rb") as handle:
                 response = httpx.post(
@@ -152,12 +154,14 @@ def _groq(wav: Path) -> Transcript:
                           "timestamp_granularities[]": "segment"},
                     timeout=300,
                 )
-            if response.status_code != 200 or "text" not in response.json():
-                raise ValueError(response.status_code)
+            status = response.status_code
+            if status != 200 or "text" not in response.json():
+                raise ValueError(status)
         except (httpx.HTTPError, ValueError) as exc:
             response = None
-            openrouter_failed(3600 if str(exc) in ("401", "402", "403") else 600)
-            print(f"  openrouter transcription unavailable ({exc}): using the free keys", flush=True)
+            openrouter_failed(3600 if status in (401, 402, 403) else 600)
+            detail = f" ({exc})" if local_debug_enabled() else ""
+            print(f"  openrouter transcription unavailable{detail}: using the free keys", flush=True)
     via = "openrouter" if response is not None else "groq"
     if response is None:
         with wav.open("rb") as handle:

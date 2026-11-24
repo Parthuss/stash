@@ -40,6 +40,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from . import pipeline
+from ._public_logs import report_status
 from .config import CONFIG
 
 #: How stale a heartbeat can be before `doctor` calls the daemon dead. Set well
@@ -108,7 +109,8 @@ def run(
     """Poll the Worker forever (or once, for tests and manual runs)."""
     if not CONFIG.uses_remote_queue:
         raise RuntimeError(
-            "stash daemon needs STASH_WORKER_URL and STASH_SECRET set in .env — "
+            "stash daemon needs STASH_WORKER_URL and STASH_PROCESSOR_SECRET "
+            "(or legacy STASH_SECRET) set in .env — "
             "it has nothing to poll without a deployed Worker. `stash watch` or "
             "`stash receive` are the local-only alternatives."
         )
@@ -141,15 +143,21 @@ def run(
             try:
                 sorted_notes = pipeline.sort_categories(verbose=not quiet)
                 if sorted_notes:
-                    print(f"sorted {sorted_notes} note(s) into categories", flush=True)
+                    report_status(f"sorted {sorted_notes} note(s) into categories")
             except Exception as exc:  # noqa: BLE001
-                print("  category sort skipped" if quiet else f"  category sort skipped: {exc}", flush=True)
+                if quiet:
+                    report_status("  category sort skipped")
+                else:
+                    print(f"  category sort skipped: {exc}", flush=True)
         except Exception as exc:  # noqa: BLE001 — a transient Cloudflare blip must not kill this
             state.last_result = "error"
             state.last_error = str(exc)
             state.interval = min(max_interval, (state.interval or min_interval) * 2)
             # Quiet mode runs in public CI logs: say it failed, never why.
-            print("  poll failed" if quiet else f"  poll failed: {exc}  (retrying in {state.interval}s)", flush=True)
+            if quiet:
+                report_status("  poll failed")
+            else:
+                print(f"  poll failed: {exc}  (retrying in {state.interval}s)", flush=True)
             _write_state(state)
             if once:
                 return
@@ -158,7 +166,7 @@ def run(
 
         if results:
             if quiet:
-                print(f"processed {len(results)}", flush=True)
+                report_status(f"processed {len(results)}")
             for result in [] if quiet else results:
                 print("  -> (a friend's save)" if getattr(result, "guest", False) else f"  -> {result.title}", flush=True)
             state.last_result = "ok"
